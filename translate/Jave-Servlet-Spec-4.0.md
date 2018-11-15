@@ -1,5 +1,8 @@
-- 1  概述
+#目录
 
+----
+
+- 1  概述
   - 1.1  Servlet 是什么？
 
     - 1.2  Servlet 容器是什么？
@@ -272,3 +275,16 @@
     - 15.5.14  @WebServiceRef
     - 15.5.15  @WebServiceRefs
     - 15.5.16  需要支持 Java EE 上下文和依赖注入
+
+---
+
+# 概述
+
+----
+
+> Servlet 是什么？
+
+servlet 是一种基于 Java 的 Web 组件，由容器管理，产生动态内容。类似于其他基于 Java 的组件，servlet 也是平台无关的 Java 类，被编译称为跨平台的中间代码之后可以被任何支持 Java 的 Web 服务器动态加载并运行。容器，有时也称为 servlet 引擎，作为 Web 服务器的扩展提供对 servlet 的支持。servlets  通过容器实现的请求/响应范式与 Web 客户端互动。
+
+> Servlet 容器是什么？
+
