@@ -2,15 +2,13 @@
 
   - 1.1  Servlet 是什么？
 
-
-  - 1.2  Servlet 容器是什么？
-  - 1.3  一个例子
-  - 1.4  与其他技术的比较
-  - 1.5  与 JavaEE 的关系
-  - 1.6  与Java Servlet Spec V2.5 的比较
-    - 1.6.1  处理注解
+    - 1.2  Servlet 容器是什么？
+    - 1.3  一个例子
+    - 1.4  与其他技术的比较
+    - 1.5  与 JavaEE 的关系
+    - 1.6  与Java Servlet Spec V2.5 的比较
+      - 1.6.1  处理注解
 - 2  Servlet 接口
-
   - 2.1  请求 Request 处理方法
     - 2.1.1  HTTP Request 专门的处理方法
     - 2.1.2  附加方法
