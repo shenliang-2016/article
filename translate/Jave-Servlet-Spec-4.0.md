@@ -282,11 +282,11 @@
 
 ----
 
-> Servlet 是什么？
+> 1.1  Servlet 是什么？
 
 servlet 是一种基于 Java 的 Web 组件，由容器管理，产生动态内容。类似于其他基于 Java 的组件，servlet 也是平台无关的 Java 类，被编译称为跨平台的中间代码之后可以被任何支持 Java 的 Web 服务器动态加载并运行。容器，有时也称为 servlet 引擎，作为 Web 服务器的扩展提供对 servlet 的支持。servlets  通过容器实现的请求/响应范式与 Web 客户端互动。
 
-> Servlet 容器是什么？
+> 1.2  Servlet 容器是什么？
 
 servlet 容器作为 Web 服务器或者应用服务器的一部分，通过发送请求和响应提供网络服务。同时负责解码 MIME 请求数据和编码 MIME 类型的响应数据。servlet 整个生命周期都被容器持有和管理。
 
@@ -298,7 +298,7 @@ servlet 容器可以被内建进 Web 服务器，或者通过本地扩展 API �
 
 此版本 servlet 容器需要的最低语言版本是 Java SE 8 。
 
-> 例子
+> 1.3  例子
 
 下面是一个典型的事件序列：
 
@@ -307,4 +307,33 @@ servlet 容器可以被内建进 Web 服务器，或者通过本地扩展 API �
 3. 根据配置文件，容器确定应该调用哪个 servlet 处理请求，然后以请求对象和响应对象作为参数调用之；
 4. 通过请求对象，servlet 可以找出远程用户信息、请求方法以及其他相关数据。执行它被赋予的程序逻辑之后，产生的数据被发回给客户端。servlet通过响应对象将结果数据发送给客户端。
 5. 一旦完成请求的处理，servlet 容器确认响应数据已经完整发送，就将控制权交还给 Web 服务器。
+
+> 1.4  Servlet 与其他技术的比较
+
+从功能来看， servlet 提供了提供了比通用网关接口 CGI 更高一层的抽象，但是要比 JSF 之类的 web 框架的抽象层次要低一些。
+
+servlets 相比于其他服务器扩展机制有以下优点：
+
+- 由于采用了不同点处理模型，通常要比 CGI 脚本快。
+- 采用了很多 Web 服务器都支持的标准 API 。
+- 继承了 Java 语言的所有优点，包括部署简单和平台无关性。
+- 可以方便地使用 Java 平台提供的大量 API 。
+
+> 1.5  与 Java EE 平台的关系
+
+Java Servlet API v4.0 是 Java EE 8 的一部分必要 API 。为了运行在 Java EE 环境中，容器以及部署在其中的 servlet 必须满足 Java EE 规范所描述的其他需求。
+
+> 1.6  与 2.5 版本规范的区别
+
+> 1.6.1  配置注解  
+
+Servlet 2.5 中， metadata-complete 属性只是在部署过程中影响注解的扫描，而且也没有 web-fragments 的概念。在 servlet 3.0 之后，metadata-complete 属性会在部署过程中影响到所有指定部署信息的注解，同时还有 web-fragments 。部署描述符的版本绝对不能影响容器扫描应用中的注解。本规范的任何版本的实现都必须扫描所有该配置所支持的注解，除非指定了 metadata-complete 属性。
+
+# Servlet 接口
+
+----
+
+Servlet 接口是 Java Servlet API 的核心抽象。所有的 servlets 都必须直接或者间接实现该接口。Java Servlet API 中已经实现了 Servlet 接口的两个类是 GenericServlet 和 HttpServlet 。大多数情况下，开发者可以继承 HttpServlet 来实现自己的 servlets 。
+
+> 2.1  请求处理方法
 
