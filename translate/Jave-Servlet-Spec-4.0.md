@@ -337,3 +337,62 @@ Servlet 接口是 Java Servlet API 的核心抽象。所有的 servlets 都必�
 
 > 2.1  请求处理方法
 
+基本的 Servlet 接口定义了处理客户端请求的 service 方法。每个请求到来，容器将它路由到某个 servlet 实例，该方法就会被调用。
+
+为了处理并发请求，开发者需要将 servlet 设计成可多线程执行，也就是同一时刻可以有多个线程同时执行 service 方法。
+
+通常容器会在多线程中执行 service 方法来处理对同一个 servlet 的多个并发请求。
+
+> 2.1.1  HTTP 特定的请求处理方法
+
+HttpServlet 抽象子类在基本的 Servlet 接口基础上添加了被  service 接口调用的方法，用于处理基于 HTTP 的请求。
+
+- doGet 处理 HTTP GET 请求
+- doPost 处理 HTTP POST 请求
+- doPut 处理 HTTP PUT 请求
+- doDelete 处理 HTTP DELETE 请求
+- doHead 处理 HTTP HEAD 请求
+- doOptions 处理 HTTP OPTIONS 请求
+- doTrace 处理 HTTP TRACE 请求
+
+
+通常，开发基于 HTTP 的 servlet 的开发者仅仅只会关注 doGet 和 doPost 方法。其他几个方法是供那些对 HTTP 协议非常熟悉的开发者使用。
+
+> 2.1.2   附加方法
+
+doPut 和 doDelete 方法允许 Servlet 开发者支持那些支持此类特性的 HTTP/1.1 客户端。doHead 方法是 doGet 方法的一种特殊形式，它仅仅返回 doGet 产生的响应的头部。doOptions 方法返回 servlet 都支持哪些 HTTP 方法。doTrace 方法产生的响应包含了所有的 TRACE 请求的头部实例。
+
+CONNECT 方法不支持，因为它是作用于代理以及被绑定到服务访问点上的 Servlet API 。
+
+> 2.1.3  条件 GET 支持
+
+HttpServlet 抽象类定义的 getLastModified 方法支持条件 GET 操作。条件 GET 操作请求的资源，只有在某个时刻之后被修改过的情况下才会被返回给客户端。在适当的场景下，实现该方法可以改善网络资源的利用率。
+
+> 2.2  实例个数
+
+声明 servlet ，无论是通过注解还是部署描述符，都可以控制容器如何提供 servlet 实例。
+
+因为默认情况下， servlet 并不是生存在分布式环境中，因此容器必须为每个 servlet 声明产生唯一的实例。然而，由于 servlet 实现了 SingleThreadModel 接口，容器可以初始化多个实例以应对大量的请求，每个请求将被分配给某个特性的实例处理。
+
+如果 servlet 作为应用的一部分部署，而部署描述符又明确说明是分布式部署，那么容器可以为每个 Java 虚拟机提供唯一的 servlet 实例。然而，如果 servlet 实现了 SingleThreadModel 接口，容器就可以为每个虚拟机提供多个 servlet 实例。
+
+> 2.2.1  关于 Single Thread Model 的说明
+
+SingleThreadModel 接口的作用是保证在同一时刻只有一个线程可以执行给定 servlet 实例的 service 方法。需要特别注意的是，这个保证只是对于单个 servlet 实例而言，因为容器可以有选择地池化此类对象。那些可以同时被多个 servlet 实例访问的对象，比如 HttpSession 实例，可能在任何时刻对多个 servlet 都是可用的，SingleThreadModel 接口的实现应该包含此内容。
+
+推荐开发者采用其他方式解决以上问题，而不要实现 SingleThreadModel 接口。比如避免使用实例变量或者将访问此类资源的代码同步化。此版本规范中 SingleThreadModel 接口已被废弃。
+
+> 2.3  Servlet 生命周期
+
+servlet 的管理基于定义良好的生命周期。所谓的生命周期，定义了 servlet 应该如何被加载、实例化、初始化、处理请求以及如何从服务中被移除。在 API 生命周期的形式表现为 javax.servlet.Servlet 接口的 init，service 以及 destroy 方法。所有的 servlet 都必须直接实现该接口，或者通过继承 GenericServlet 或者 HttpServlet 抽象类间接实现该接口。
+
+> 2.3.1  加载和实例化
+
+容器负责加载和实例化 servlets 。加载和实例化可以发生在容器启动时，或者延迟到容器真正认为需要它处理请求时。
+
+当 servlet 引擎启动后，容器必须找到所需要的 servlet 类。容器利用通常的 Java 类的加载机制加载这些 servlet 类。可以从本地文件系统、远程文件系统甚至网络服务处加载。
+
+加载完 Servlet 类之后，容器将实例化它们以备使用。
+
+> 2.3.2  初始化
+
