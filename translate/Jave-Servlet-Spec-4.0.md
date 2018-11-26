@@ -396,3 +396,37 @@ servlet 的管理基于定义良好的生命周期。所谓的生命周期，定
 
 > 2.3.2  初始化
 
+servelt 对象实例化之后，必须经过容器的初始化才能处理来自客户端的请求。基于初始化机制，servlet 可以读取持久化配置数据，初始化动作消耗资源（比如基于的 JDBC API 的数据库连接），同时执行其他一些一次性的活动。容器通过调用 Servlet 接口的 init 方法来初始化 servlet 实例，该方法的参数是唯一的（每个 servlet 声明）实现了 ServletConfig 接口的类对象。servlet 可以通过这个配置对象从 Web 应用的配置信息中获取“名—值”对形式的初始化参数。还可以通过该对象获取描述 servlet 运行期环境的类对象（实现了 ServletContext 接口）。关于 ServletContext 接口的更多内容将在第四章中介绍。
+
+> 2.3.2.1  初始化的错误
+
+初始化过程中，servlet 实例可以抛出 UnavailableException 或者 ServletException 。这种情况下，servlet 必须被容器清理掉，不能放到活动的服务中去。这种情况被认为初始化失败，因此 destroy 方法不会被调用。
+
+在一次失败的初始化之后，容器可以实例化和初始化新的实例。唯一需要额外说明的就是 UnavailableException 表示一个最小时间段内的不可用状态，因此容器必须等待这个时间段过去然后再开始创建并初始化下一个 servlet 实例。
+
+> 2.3.2.2  工具考量
+
+静态初始化方法在工具加载并内省（反射）Web 应用过程中被触发的情况与 init 方法被调用的情况是不同的。开发者在Servlet 接口的 init 方法被调用之前都不能假定 servlet 已经在活动容器的运行时环境中了。比如说，servlet不应该在仅仅只有静态初始化方法被调用的情况下试图建立与数据库或者 EJB 容器的连接。
+
+> 2.3.3  请求处理
+
+servlet 正确初始化之后，就可以被容器用来处理客户端请求。请求由 ServletRequest 类型的请求对象表示。servlet 调用相应的处理方法并以 ServletResponse 类型的对象填充响应。这些对象作为参数被传递给 Servlet 接口的 service 方法。
+
+如果是 HTTP 请求，容器提供的对象类型就是 HttpServletRequest 和 HttpServletResponse 。
+
+特别的，被容器放进服务中的 servlet 实例可以在整个生命周期内不处理任何请求。
+
+> 2.3.3.1  多线程问题
+
+servlet 容器可以通过 servlet 的 service 方法发送并发请求。为了处理这些请求，servlet 开发者必须保证 service 方法的实现具有处理并发请求的能力。
+
+尽管不推荐，开发者可以采取实现 SingleThreadModel 接口的方式来要求容器保证同一时刻只有一个请求线程处于 service 方法内部。容器可以通过串行化请求或者将 servlet 实例池化的方式来满足此要求。如果应用已经被被指为可分布式的，那么当应用分布式部署时容器将在每个 JVM 内部都维护一个 servlet 实例池。
+
+由于 servlet 并未实现 SingleThreadModel 接口，如果 service 方法（或者由该方法分发到的 HttpServlet 抽象类的 doGet 或者 doPost 方法）被 synchronized 关键字修饰，容器将无法采用池化技术，而不得不强行将请求串行化。强烈建议开发者在这种环境下不要同步化 service 方法（或者由它分发到的方法），因为这将对性能造成决定性的影响。
+
+> 2.3.3.2  请求处理过程中的异常
+
+处理请求过程中 servlet 可以抛出 ServletException 或者 UnavailableException 异常。ServletException 表示在处理请求过程中发生了某些错误因而容器应该采取对应措施将请求清除掉。
+
+UnavailableException 表示 servlet 暂时或者永久性地无法处理请求。
+
