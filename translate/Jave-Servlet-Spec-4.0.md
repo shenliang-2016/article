@@ -430,3 +430,11 @@ servlet 容器可以通过 servlet 的 service 方法发送并发请求。为了
 
 UnavailableException 表示 servlet 暂时或者永久性地无法处理请求。
 
+如果 UnavailableException 表示永久性的不可用，容器就必须从服务中清除该 servlet ，调用它的 destroy 方法，然后释放该 servlet 实例。由此导致的被决绝的请求都必须返回 SC_NOT_FOUND (404) 响应。
+
+如果 UnavailableException 表示暂时性的不可用，容器可以选择在这段不可用的时间内不再将请求路由到该 servlet 。所有因此而被拒绝的请求都必须返回 SC_SERVICE_UNAVAILABEL (503) 状态的响应，同时附带 Retry-After 响应头用于表示不可用状态何时结束。
+
+容器可以选择不区分这两种情况，而认为 UnavailableException 就是表示永久性的不可用，而后直接将抛出该异常的 servlet 从服务中清除掉。
+
+> 2.3.3.3  异步处理
+
