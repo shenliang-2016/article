@@ -438,3 +438,23 @@ UnavailableException 表示 servlet 暂时或者永久性地无法处理请求�
 
 > 2.3.3.3  异步处理
 
+有时候一个过滤器和一个 servlet 不能立即完成请求的处理，比如需要等待其他资源，有时候甚至是等待响应的产生。比如，servlet 在产生响应之前可能需要等待可用的 JDBC 连接，来自远程服务的响应，JMS 消息，或者应用事件。等待这样的 servlet 是低效率的操作，因为它是一个阻塞性的行为，消耗线程和其他有限资源。很多时候，像数据库之类的慢资源会导致大量等待存取的线程阻塞，因而会导致线程饥饿甚至是整个 web 容器的服务质量下降。
+
+请求的异步处理机制的目的是允许将线程归还给容器执行其他任务。当请求的异步处理过程开始之后，另外一个线程或者回调可以要么产生响应然后调用 complete 方法，要么使用 AsyncContext.dispatch 方法分发请求因而它可以在容器的上下文中运行。典型的异步处理事件序列如下：
+
+1. 请求被接收到，通过正常的过滤器，比如身份认证，到达 servlet 。
+
+2. servlet 处理请求参数和请求内容以确定请求自身的特性。
+
+3. servlet 发出资源或者数据请求，比如，发送请求到远程服务或者加入 JDBC 连接的等待队列。
+4. servlet 立即返回，并不产生响应。
+5. 一段时间之后，请求的资源变为可用状态，处理该事件的线程要么在本线程内继续处理，要么通过 AsyncContext 将请求分发到容器内的资源。
+
+Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节中 “ 安全标识在 EJB 调用过程中的传播 ” ，都只是对处理初始请求的线程或者处理通过 AsyncContext.dispatch 方法分发到容器的请求的线程可用。  也可以对通过 AsyncContext.start ( Runnable ) 方法直接处理响应对象的其他线程可用。
+
+第八章中描述的 @WebServlet 和 @WebFilter 注解包含一个 boolean 类型的参数 asyncSupported ，默认值 false 。该属性为 true 时应用就能通过调用 startAsync 方法在独立的线程中开始异步处理，传递请求和响应对象的引用，然后在最初的线程上从容器退出。这意味着响应将逆序遍历相同的过滤器链，刚好跟请求进入的路径相反。响应直到 AsyncContext 上的 complete 方法被调用后才会被提交。应用负责在容器调用 startAsync 初始化分发的处理任务结果返回容器之前处理执行中的异步任务对请求和响应对象的并发访问。
+
+从 asyncSupported=true 的 servlet 分发请求到 asyncSupported=false 的 servlet 是允许的。这种情况下，响应在不支持异步的 servlet 的 service 方法退出之后才会被提交，而容器需要负责调用 AsyncContext 上的 complete 方法从而通知所有关注中的 AsyncListener 实例。AsyncListener.onComplete 通知也应该被过滤器使用，作为提供给异步任务执行的资源的清理机制。
+
+从同步 servlet 分发请求到异步 servlet 是不行的。不过抛出 IllegalStateException 的时机取决于应用合适调用 startAsync 方法。这将允许 servlet 可以同步或者异步执行。
+
