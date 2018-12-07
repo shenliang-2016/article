@@ -468,5 +468,46 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
 * public AsyncContext startAsyc ( ServletRequest  req , ServletResponse res )
 
-  这个方法将请求转化为异步模式，基于给定的请求对象和响应对象以及 getAsyncTimeout 方法返回的超时时间初始化对应的 AsyncContext 。
+  这个方法将请求转化为异步模式，基于给定的请求对象和响应对象以及 getAsyncTimeout 方法返回的超时时间初始化对应的 AsyncContext 。其中作为参数的 ServletRequest 和 ServletResponse 必须要么和被传递给 servlet 的 service 方法、或者过滤的 doFilter 方法的是同一个对象，要么是包装它们的 ServletRequestWrapper 或者 ServletResponseWrapper 的子类。调用本方法可以保证响应在应用退出 service 方法之前不会被提交。响应的提交时机是返回的 AsyncContext 上的 AsyncContext.complete 方法被调用、或者 AsyncContext 超时而又没有相应的监听器处理该超时事件。异步超时的定时器在请求连同对应的响应从容器返回之前不会开始计时。AsyncContext 可以用于从异步线程中将数据写入响应。当然也可以仅仅用来将响应尚未关闭和提交的通知消息发送出来。
 
+  以下情形调用 startAsync 是非法的：请求处于不支持异步操作的 servlet 或者过滤器的作用域中，或者响应已经被提交和关闭，或者通过同一次 dispatch 的再次调用。调用 startAsync 返回的 AsyncContext 接下来可以被用于后续的异步处理过程。在返回的 AsyncContext 上调用 AsyncContext.hasOriginalRequestResponse ( ) 将得到返回 false ，除非参数 ServletRequest 和 ServletResponse 都是最初的对象，或者尚未被应用包装过。任何响应返回方向上的过滤器在请求进入异步模式之后都可能将其作为标记，标记某些在请求进入路径上由它们添加的请求或者响应包装器，在异步操作中这些包装器可能需要保持不变，有关的资源可能不会被释放。一个在请求进入路径上被某个过滤器添加的 ServletRequestWrapper 可能在响应返回路径上被该过滤器释放，前提是用于初始化 AsyncContext 的 ServletRequest 将在 AsyncContext.getRequest ( ) 方法调用时被返回，而并不包含上面所说的 ServletRequestWrapper 。同样的规则也适用于 ServletResponseWrapper 实例。
+
+* public AsyncContext startAsync ( ) 
+
+  此方法的目的是方便在异步处理中使用初始的请求和响应对象。注意！此方法的用户应该将输出倾倒干净，如果在调用此方法之前他们对响应进行过包装，用户需要确保所有需要写入包装后的响应的数据已经全部写入。
+
+* public AsyncContext getAsyncContext ( ) 
+
+  返回调用 startAsync 方法创建或者重新初始化的 AsyncContext 。如果请求尚未处于异步状态，调用此方法是非法的。
+
+* public boolean isAsyncSupported ( ) 
+
+  如果请求支持异步处理则返回 true ，否则返回 false 。一旦请求经过不支持异步处理的 ( 通过注解或者声明 ) 过滤器或者 servlet 处理，请求马上就会变为不支持异步状态。
+
+* public boolean isAsyncStarted ( )
+
+  如果请求的异步处理已经开始，则返回 true ，否则返回 false 。如果请求已经被通过 AsyncContext.dispatch 方法分发，因此它已经进入异步模式，或者 AsyncContext.complete 被调用，则此方法返回 false 。
+
+* public DispatcherType getDispatcherType ( )
+
+  返回请求的分发器类型。容器根据请求的分发器类型选择哪些过滤器应该被应用与该请求。只有分发器类型和 url 模式都匹配的过滤器才会应用与请求。允许被配置了多种分发器类型的过滤器根据请求的不同分发器类型对请求采用不同的处理方式。初始的分发器类型定义为 DispatcherType.REQUEST 。被分发过的请求的分发器类型由分发方式决定，RequestDispatcher.forward ( ServletRequest, ServletResponse ) 产生的分发器类型是 DispatcherType.FORWARD ，而 RequestDispatcher.include ( ServletRequest, ServletResponse ) 产生的分发器类型是 DispatcherType.INCLUDE 。通过 AsyncContext.dispatch 方法分发的异步请求的分发器类型就是 DispatcherType.ASYNC 。最后，被容器的错误处理机制分发到错误页面的请求的分发器类型是 DispatcherType.ERROR 。
+
+> AsyncContext
+
+此类型表示开始于 ServletRequest 之上的异步操作的执行上下文。上文说过，当 ServletRequest.startAsync 被调用时 AsyncContext  被创建和初始化。下面列出该类的方法。
+
+* public ServletRequest getRequest ( )
+
+  返回通过调用 startAsync 方法用于初始化 AsyncContext 的请求。在异步周期中 complete 或者任何 dispatch 方法被调用之后再调用 getRequest 方法都会导致 IllegalStateException 。
+
+* public ServletResponse getResponse ( )
+
+  返回通过调用 startAsync 方法用于初始化 AsyncContext 的响应。在异步周期中 complete 或者任何 dispatch 方法被调用之后再调用 getResponse 方法都会导致 IllegalStateException 。
+
+* public void setTimeout ( long timeoutMilliseconds )
+
+  设定异步处理超时时间毫秒数。容器会调用此方法用来设置超时时间。如果没有通过此方法设置超时时间，则默认为30000 。0 或者更小的值表示异步操作将永远不会超时。一旦容器初始化分发开始，这个超时时间就将作用于 AsyncContext ，衡量的时间是 ServletRequest.startAsync 方法被调用直到返回容器为止。在异步周期被开始的容器初始化分发已经返回容器之后设置超时时间是非法的，此时调用此方法会导致 IllegalStateException 。
+
+* public long getTimeout ( )
+
+  获取 AsyncContext 关联的超时毫秒数。此方法返回的要么是容器默认的超时毫秒数，要么是最近一次调用 setTimeout 方法设定的超时毫秒数。
