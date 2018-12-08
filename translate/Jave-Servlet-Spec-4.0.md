@@ -563,4 +563,18 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
   以上3种 dispatch 方法，方法调用在将请求对象和响应对象传递给容器管理的线程之后会立即返回，该线程中执行分发操作。请求的分发器类型将被设置为 ASYNC 。不像 RequestDispatcher.forward( ServletRequest, ServletResponse ) 分发，响应缓冲和响应头部将不会被重置，而且在响应被提交之后进行分发就是非法的。对请求和响应的控制都委托给了分发目标，当分发目标执行完成之后响应就会被关闭。除非 ServletRequest.startAsync( ) 或者 ServletRequest.startAsync( ServletRequest, ServletResponse ) 被调用。如果有任何分发方法在调用 startAsync 方法的容器初始分发返回容器之前被调用，则在 dispatch 方法被调用直至控制权返回容器期间，下面的条件就必须保持。
 
-  1. 
+  1. 任何 dispatch 调用在此期间都将不生效，直到容器初始分发返回容器。
+  2. 任何 AsyncListener.onComplete( AsyncEvent ) ， AsyncListener.onTimeout( AsyncEvent ) ， AsyncListener.onError( AsyncEvent ) 调用都将延迟到容器初始分发返回容器之后。
+  3. 任何 request.isAsyncStarted( ) 在容器初始分发返回容器之前都必须返回 true 。
+
+  每个异步周期内最多只能有一个异步分发操作，它由 ServletRequest.startAsync 方法的一次调用开启。一个异步周期内任何执行额外的异步分发操作的企图都是非法的，将导致 IllegalStateException 。如果 startAsync 方法随后在被分发的请求上被调用，接下来任何 dispatch 方法的调用都需要满足上述约束。
+
+  在 dispatch 方法执行过程中发生的任何错误和异常都必须被容器捕获并处理。处理方法如下：
+
+  1. 调用所有注册到 ServletRequest 上的 AsyncListener 实例的 AsyncListener.onError( AsyncEvent ) 方法。同时通过 AsyncEvent.getThrowable( ) 暴露 Throwable 。
+  2. 如果没有任何监听器调用 AsyncContext.complete 或者 AsyncContext.dispatch 方法，就执行指向错误页面的分发，此时状态码是 HttpServletResponse.SC_INTERNAL_SERVER_ERROR ，然后暴露 Throwable ，同时给请求属性赋值 RequestDispatcher.ERROR_EXCEPTION 。
+  3. 如果没有匹配到错误页面，或者错误页面没有调用 AsyncContext.complete( ) 或者任何 AsyncContext.dispatch 方法，容器就必须自己调用 AsyncContext.complete 方法。
+
+* public boolean hasOriginalRequestAndResponse( ) 
+
+  此方法检查 AsyncContext 是否通过调用 ServletRequest.startAsync( ) 方法由初始的请求对象和响应对象初始化，或者通过调用 ServletRequest.startAsync( ServletRequest, ServletResponse ) 方法初始化，并且其中的 ServletRequest 和 ServletResponse 都没有经过任何包装，如果是这样，此方法返回 true 。
