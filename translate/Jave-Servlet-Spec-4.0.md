@@ -577,4 +577,91 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
 * public boolean hasOriginalRequestAndResponse( ) 
 
-  此方法检查 AsyncContext 是否通过调用 ServletRequest.startAsync( ) 方法由初始的请求对象和响应对象初始化，或者通过调用 ServletRequest.startAsync( ServletRequest, ServletResponse ) 方法初始化，并且其中的 ServletRequest 和 ServletResponse 都没有经过任何包装，如果是这样，此方法返回 true 。
+  此方法检查 AsyncContext 是否通过调用 ServletRequest.startAsync( ) 方法由初始的请求对象和响应对象初始化，或者通过调用 ServletRequest.startAsync( ServletRequest, ServletResponse ) 方法初始化，并且其中的 ServletRequest 和 ServletResponse 都没有经过任何包装，如果是这样，此方法返回 true 。如果通过 ServletRequest.startAsync( ServletRequest, ServletResponse ) 方法进行的 AsyncContext 的初始化基于包装过的请求和响应对象，此方法返回 false 。此信息可以被响应返回方向上的过滤器使用，在请求进入异步模式之后，决定在请求进入方向上由它们对请求和响应进行的包装在异步操作过程中是应当保留还是释放。
+
+* public void start( Runnable r ) 
+
+  此方法会导致容器分发一个线程，可能是从容器管理下的线程池中获取，以运行给定的 Runnable 。容器可以传递适当的上下文信息给该 Runnable 。
+
+* public void complete( ) 
+
+  如果 request.startAsync 被调用了，那么此方法就必须被调用以完成异步处理过程并提交和关闭响应。此方法能够被容器调用，如果请求被分发给不支持异步的 servlet ，或者 AsyncContext.dispatch 的目标 servlet 并没有接下来调用 startAsync 方法。这种情况下，容器就需要在servlet 的 service 方法退出时马上调用 complete 方法。如果 startAsync 方法没有被调用，则必须抛出 IllegalStateException 。在 ServletRequest.startAsync( ) 或者  ServletRequest.startAsync( ServletRequest, ServletResponse ) 方法调用之后，同时在任何的分发方法被调用之前，调用此方法都是合法的。如果此方法在调用 startAsync 方法的容器初始分发返回容器之前被调用，则如下条件就必须在 complete 方法调用直到控制权返回容器期间保持不变：
+
+  1. 指定 complete 的特定行为将不生效，直到容器初始分发返回容器；
+  2. 任何 AsyncListener.onComplete( AsyncEvent ) 调用都将延迟到容器初始分发返回容器；
+  3. 任何 request.isAsyncStarted( ) 调用都必须返回 true ，直到容器初始分发返回容器。
+
+> ServletRequestWrapper
+
+* public boolean isWrapperFor( ServletRequest req ) 
+
+  递归检查是否此包装器已经包装了给定的 ServletRequest ，是返回 true ，否则返回 false 。
+
+> ServletResponseWrapper
+
+* public boolean isWrapperFor( ServletResponse res ) 
+
+  递归检查是否此包装器已经包装了给定的 ServletResponse ，是返回 true ，否则返回 false 。
+
+> AsyncListener
+
+* public void onComplete( AsyncEvent event ) 
+
+  用于通知事件监听器开始于 ServletRequest 之上异步操作已经完成。
+
+* public void onTimeout( AsyncEvent event ) 
+
+  用于通知事件监听器开始于 ServletRequest 之上异步操作已经超时。
+
+* public void onError( AsyncEvent event ) 
+
+  用于通知事件监听器开始于 ServletRequest 之上异步操作已经失败。
+
+* public void onStartAsync( AsyncEvent event ) 
+
+  用于通知事件监听器一个新的异步周期已经通过 ServletRequest.startAsync 方法调用被初始化。对应于这个新的被重新初始化的异步操作的 AsyncContext 可以通过 AsyncEvent.getAsyncContext 方法从给定事件中获取。
+
+对于异步操作超时事件，容器必须执行以下步骤：
+
+* 在该异步操作初始化对应的 ServletRequest 上注册的所有 AsyncListener 实例上调用 AsyncListener.onTimeout 方法。
+* 如果所有监听器都没有调用 AsyncContext.complete( ) 或者任何 AsyncContext.dispatch 方法，则执行指向错误页面的分发，状态码为 HttpServletResponse.SC_INTERNAL_SERVER_ERROR 。
+* 如果没有找到匹配的错误页面，或者错误页面也没有调用 AsyncContext.complete( ) 或者任何 AsyncContext.dispatch 方法，则容器必须自己调用 AsyncContext.complete( ) 方法。
+* 如果在调用 AsyncListener 的方法是发生异常，应该把异常纪录在日志里，而不能影响其他的 AsyncListener 。
+* JSP 的异步处理被用于内容产生默认不支持，同时异步处理必须在内容产生之前完成。处理这种情况是容器的能力范围。一旦所有的异步活动都结束，指向 JSP 页面的分发，尽管采用了 AsyncContext.dispatch ，仍然可以用于内容产生。
+* 下面的图展示了所有异步操作的状态变迁。
+
+
+
+> 2.3.3.4  线程安全
+
+不同于 startAsync 和 complete 方法，请求和响应对象的实现都不保证线程安全。这意味着要么它们仅仅在处理请求的线程作用域内使用，要么应用必须保证对请求和响应对象的访问是线程安全的。
+
+如果一个线程由应用创建，使用容器管理下的对象，比如请求和响应对象，访问这些对象必须在它们的生命周期之内，对象的声明周期定义在下文3.13章节，“ 请求对象的生命周期 ”，以及5.8章节，“ 响应对象的生命周期 ”。注意，不同于 startAsync 和 complete 方法，请求和响应对象都不是线程安全的。如果这些对象在多线程环境中被访问，则访问必须被同步，或者通过一个包装器来添加线程安全。比如，同步所有对访问请求参数方法的调用，或者对一个线程内的响应对象使用本地输出流。
+
+> 2.3.3.5  升级处理
+
+在 HTTP/1.1 中，升级通用头部允许客户端指定它所支持的或者希望使用的附加通信协议。服务器根据该头部切换协议，然后后续的通信中就将采用新的协议。
+
+Servlet 容器提供了 HTTP 升级机制，然而容器本身并不了解协议升级。协议处理被封装在 HttpUpgradeHandler 中。容器和 HttpUpgradeHandler 之间的数据读写都是字节流形式。
+
+当携带协议升级信息的请求到来， servlet 能够调用 HttpServletRequest.upgrade 方法启动协议升级过程。该方法实例化给定的 HttpUpgradeHandler 类。返回的实例可以被进一步定制化。应用准备好并发送一个合适的响应给客户端。退出 servlet 的 service 方法之后，容器完成所有过滤器的处理同时将连接标记为需要 HttpUpgradeHandler 处理。然后它调用 HttpUpgradeHandler 的 init 方法，传入一个 WebConnection 以允许协议处理器访问数据流。
+
+Servlet 过滤器仅仅处理初始的 HTTP 请求和响应。它们不会参与后续的通信。换句话说，一旦请求升级，它们就不会再被调用。
+
+HttpUpgradeHandler 可以采用非阻塞式 IO 消费和生产消息。
+
+在处理 HTTP 协议升级的过程中，开发者需要保证访问 ServletInputStream 和 ServletOutputStream 的线程安全性。
+
+当协议升级完成， HttpUpgradeHandler.destroy 方法将被调用。
+
+> 2.3.4  服务结束
+
+Servlet 容器不需要保持任何时间点的 servlet 都被加载。servlet 实例在容器中可以存活若干毫秒，跟随容器的生命周期，几天，几个月或者几年，或者随便多长时间。
+
+当容器认为一个 servlet 实例应该从服务中移除，它将调用  Servlet 接口的 destroy 方法，允许该实例释放它所使用的所有资源，保存所有持久化状态。比如，容器进行内存回收或者被关闭时就会这么做。
+
+容器在调用 destroy 方法之前，必须允许当前运行在 service 方法中的所有线程完成运行，或者至少是执行一个服务器预定义的截止时间。
+
+一旦 servlet 实例上的 destroy 方法被调用，容器就不再将其他请求路由到该实例。如果容器需要重新使用该 servlet，就必须重新实例化该 servlet 。
+
+destroy 方法执行完成之后，容器必须释放该 servlet 实例，保证它可以被虚拟机垃圾回收。
