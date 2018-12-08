@@ -511,3 +511,56 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 * public long getTimeout ( )
 
   获取 AsyncContext 关联的超时毫秒数。此方法返回的要么是容器默认的超时毫秒数，要么是最近一次调用 setTimeout 方法设定的超时毫秒数。
+
+* public void addListener ( AsyncListener listener, ServletRequest req, ServletResponse res ) 
+
+  注册用于监听 onTimeout、 onError、onComplete 或者 onStartAsync 通知的监听器。前三个通知跟最近的通过调用 ServletRequest.startAsync 方法启动的异步周期有关。而 onStartAsync 则跟下一个通过调用 ServletRequest.startAsync 方法启动的新的异步周期相关。异步监听器将按照它们被添加到请求上的顺序依次被通知到。传入方法的请求和响应对象在监听器接收到通知时可以通过 AsyncEvent.getSuppliedRequest ( ) 和 AsyncEvent.getSuppliedResponse ( ) 方法获取。这些对象不应该被读取或者写入，因为由于 AsyncListener 的注册，可能会发生附加的对请求和响应对象的包装。不过这些对象可以用于释放相关资源操作。当容器初始化分发的异步周期开始并已经返回容器，而新的异步周期已经开始的时刻，调用此方法将导致 IllegalStateException 。
+
+* public < T extends AsyncListener > createListener ( Class< T >  clazz ) 
+
+  实例化给定的 AsyncListener 。返回的 AsyncListener 实例在通过下面将要说到的 addListener  方法注册到 AsyncContext 之前可以被进一步盯着。作为参数的 AsyncListener 必须定义一个无参构造器用来实例化。此方法支持任何 AsyncListener 适用的注解。
+
+* public void addListener ( AsyncListener ) 
+
+  注册用于监听 onTimeout、 onError、onComplete 或者 onStartAsync 通知的监听器。前三个通知跟最近的通过调用 ServletRequest.startAsync 方法启动的异步周期有关。而 onStartAsync 则跟下一个通过调用 ServletRequest.startAsync 方法启动的新的异步周期相关。如果请求上的 startAsync ( req, res ) 或者 startAsync ( ) 方法被调用，则请求和响应对象可以从 AsyncListener 监听到的通知事件 AsyncEvent 中获取。当然，此时的请求和响应可以是包装过的或者尚未包装过的。异步监听器将按照它们被添加到请求上的顺序依次被通知到。当容器初始化分发的异步周期开始并已经返回容器，而新的异步周期已经开始的时刻，调用此方法将导致 IllegalStateException 。
+
+* public void dispatch ( String path ) 
+
+  将用于初始化 AsyncContext 的请求和响应分发到给定路径对应的资源。给定的路径基于用于初始化 AsyncContext 的 ServletContext 进行解释。所有查询类型的请求路径必须说明分发对象，同时，初始的请求 URI、Context Path、路径信息以及请求字符串可以从请求属性中获取，具体细节在9.7.2章节中说明。这些属性必须始终反映最初的请求路径元素，及时经过多次分发。
+
+* public void dispatch ( ) 
+
+  将用于初始化 AsyncContext 的请求和响应分发的快捷方法。如果通过 startAsync ( ServletRequest, ServletResponse ) 初始化 AsyncContext ，而且作为参数传入的请求是一个 HttpServletRequest 实例，接下来分发到的 URI 可以通过 HttpServletRequest.getRequestURI ( ) 方法获取。否则该分发将转向请求最后一次被容器分发时的 URI 。下面的代码实例说明了不同情况下的分发目标 URI 。
+
+  ````java
+  // REQUEST to /url/A
+  AsyncContext ac = request.startAsync();
+  ...
+  ac.dispatch();	// ASYNC dispatch to /url/A
+  ````
+
+  ````java
+  // REQUEST to /url/A
+  // FORWARD to /url/B
+  request.getRequestDispatcher("/url/B").forward(request, response);
+  // Start async operation from within the target of the FORWARD
+  AsyncContext ac = request.startAsync();
+  ac.dispatch();	// ASYNC dispatch to /url/A
+  ````
+
+  ````java
+  // REQUEST to /url/A
+  // FORWARD to /url/B
+  request.getRequestDispatcher("/url/B").forward(request, response);
+  // Start async operation from within the target of the FORWARD
+  AsyncContext ac = request.startAsync(request, response);
+  ac.dispatch();	// ASYNC dispatch to /url/B
+  ````
+
+* public void dispatch( ServletContext context, String path ) 
+
+  在给定的 ServletContext 环境下将用于初始化 AsyncContext 的请求和响应分发到给定路径对应的资源。
+
+  以上3种 dispatch 方法，方法调用在将请求对象和响应对象传递给容器管理的线程之后会立即返回，该线程中执行分发操作。请求的分发器类型将被设置为 ASYNC 。不像 RequestDispatcher.forward( ServletRequest, ServletResponse ) 分发，响应缓冲和响应头部将不会被重置，而且在响应被提交之后进行分发就是非法的。对请求和响应的控制都委托给了分发目标，当分发目标执行完成之后响应就会被关闭。除非 ServletRequest.startAsync( ) 或者 ServletRequest.startAsync( ServletRequest, ServletResponse ) 被调用。如果有任何分发方法在调用 startAsync 方法的容器初始分发返回容器之前被调用，则在 dispatch 方法被调用直至控制权返回容器期间，下面的条件就必须保持。
+
+  1. 
