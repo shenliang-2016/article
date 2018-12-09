@@ -665,3 +665,73 @@ Servlet 容器不需要保持任何时间点的 servlet 都被加载。servlet �
 一旦 servlet 实例上的 destroy 方法被调用，容器就不再将其他请求路由到该实例。如果容器需要重新使用该 servlet，就必须重新实例化该 servlet 。
 
 destroy 方法执行完成之后，容器必须释放该 servlet 实例，保证它可以被虚拟机垃圾回收。
+
+----
+
+# 请求
+
+----
+
+请求对象封装了所有来自客户端请求的信息。在 HTTP 协议中，这些信息放在请求的 HTTP 协议头和消息体中从客户端传递给服务器。
+
+## 3.1 HTTP 协议参数
+
+Servlet 的请求参数就是一些由客户端发送给 servlet 容器的一些字符串，它们作为请求的一部分。当请求是 HttpServletRequest 对象，同时满足 “ 何时请求参数可用 ” 条件，容器将从请求的 URI 查询字符串中或者从被 POST 过来的数据中获取这些参数。
+
+这些参数通常以 “ 名－值 ” 对的形式存储。任何参数名称都可以有任意复杂程度的参数值。ServletRequest 接口的下列方法可用于访问参数：
+
+* getParameter
+* getParameterNames
+* getParameterValues
+* getParameterMap
+
+getParameterValues 方法返回一个字符串数组，包含了对应于参数名称的所有参数值。getParameter 方法的返回值必须是 getParameterValues 方法返回的字符串数组的第一个返回值。getParameterMap 方法返回请求参数的 java.util.Map ，其中参数名是键，参数值是值。
+
+从查询字符串和 post 请求体中得到的数据都被放进请求参数集合。查询字符串放在 post 请求体数据之前。例如，如果请求携带的查询字符串是 a=hello 而 post 体中的数据是 a=goodbye&a=world ，则最终参数集合会是 a=(hello, goodbye, world ) 。
+
+路径变量作为 GET 请求（由 HTTP 1.1 定义）的一部分，并不通过此接口暴露。它们必须由 getRequestURI 方法或者 getPathInfo 方法返回的字符串转化而来。
+
+### 3.1.1 何时请求参数可用
+
+只有当下面条件满足时 post 过来的表单数据才会被加入请求参数集合：
+
+1. 请求是 HTTP 或者 HTTPS 请求。
+2. HTTP 方法是 POST 。
+3. 内容类型是 application/x-www-form-urlencoded。
+4. servlet 已经执行过请求对象上的 getParameter 方法族中任一方法的初始化调用。
+
+如果条件不满足，则表单数据就不会被加入请求参数集合，那么 post 数据就必须仍然可以让 servlet 通过请求对象的输入流中获取到。如果条件满足，post 表单数据就将不再能直接从请求对象的输入流中读取。
+
+## 3.2 文件上传
+
+Servlet 容器支持文件上传，此时 content-type 设置为 multipart/form-data 。
+
+当下列任一条件满足时容器提供 multipart/form-data 处理功能：
+
+* 处理该请求的 servlet 被 @MultipartConfig 注解修饰，该注解在章节8.1.5中定义。
+* 部署描述文件中处理该请求的 servlet 描述包含 multipart-config 元素。
+
+内容类型为 multipart/form-data 的请求数据是否可以访问以及如何访问取决于 servlet 容器是否提供 multipart/form-data 处理功能：
+
+* 如果容器提供该处理功能，可以通过 HttpServletRequest 的下列方法访问请求数据：
+
+  * public Collection\<Part\> getParts( )
+  * public Part getPart( String name )
+
+  通过 Part.getInputStream 方法，每个 part 都支持访问头部、内容类型以及内容。
+
+  作为 Content-Disposition 的 form-data 部分，并没有文件名，不过仍然可以通过 HttpServletRequest 的 getParameter 和 getParameterValues 方法访问器字符串值。
+
+* 如果容器没有提供该处理功能，则数据可以通过 HttpServletRequest.getInputStream 方法访问。
+
+## 3.3 属性
+
+属性是一些与请求相关的对象。容器可以设置属性用于表示某些无法通过 API 表达的信息。Servlet 也可以设置属性用于通过 RequestDispatcher 与其它 servlet 通信。属性通过 ServletRequest 接口的下列方法访问：
+
+* getAttribute
+* getAttributeNames
+* setAttribute
+
+每个属性名只能关联唯一一个属性值。
+
+作为本规范的保留规则，所有的属性名都要以 java. 或者 javax. 这样的前缀开始。类似的，Oracle 公司的保留规则是所有的属性名以 sun. 或者 com.sun.  或者 oracle 或者 com.oracle 等前缀开头。建议所有被放进属性集合的属性都以逆序域名开始，就像 Java 语言规范中关于包命名规范的约定。
