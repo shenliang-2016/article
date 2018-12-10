@@ -282,11 +282,11 @@
 
 ----
 
-> 1.1  Servlet 是什么？
+## 1.1 Servlet 是什么
 
 servlet 是一种基于 Java 的 Web 组件，由容器管理，产生动态内容。类似于其他基于 Java 的组件，servlet 也是平台无关的 Java 类，被编译称为跨平台的中间代码之后可以被任何支持 Java 的 Web 服务器动态加载并运行。容器，有时也称为 servlet 引擎，作为 Web 服务器的扩展提供对 servlet 的支持。servlets  通过容器实现的请求/响应范式与 Web 客户端互动。
 
-> 1.2  Servlet 容器是什么？
+## 1.2  Servlet 容器是什么？
 
 servlet 容器作为 Web 服务器或者应用服务器的一部分，通过发送请求和响应提供网络服务。同时负责解码 MIME 请求数据和编码 MIME 类型的响应数据。servlet 整个生命周期都被容器持有和管理。
 
@@ -298,7 +298,7 @@ servlet 容器可以被内建进 Web 服务器，或者通过本地扩展 API �
 
 此版本 servlet 容器需要的最低语言版本是 Java SE 8 。
 
-> 1.3  例子
+## 1.3  例子
 
 下面是一个典型的事件序列：
 
@@ -308,7 +308,7 @@ servlet 容器可以被内建进 Web 服务器，或者通过本地扩展 API �
 4. 通过请求对象，servlet 可以找出远程用户信息、请求方法以及其他相关数据。执行它被赋予的程序逻辑之后，产生的数据被发回给客户端。servlet通过响应对象将结果数据发送给客户端。
 5. 一旦完成请求的处理，servlet 容器确认响应数据已经完整发送，就将控制权交还给 Web 服务器。
 
-> 1.4  Servlet 与其他技术的比较
+## 1.4  Servlet 与其他技术的比较
 
 从功能来看， servlet 提供了提供了比通用网关接口 CGI 更高一层的抽象，但是要比 JSF 之类的 web 框架的抽象层次要低一些。
 
@@ -319,13 +319,13 @@ servlets 相比于其他服务器扩展机制有以下优点：
 - 继承了 Java 语言的所有优点，包括部署简单和平台无关性。
 - 可以方便地使用 Java 平台提供的大量 API 。
 
-> 1.5  与 Java EE 平台的关系
+## 1.5  与 Java EE 平台的关系
 
 Java Servlet API v4.0 是 Java EE 8 的一部分必要 API 。为了运行在 Java EE 环境中，容器以及部署在其中的 servlet 必须满足 Java EE 规范所描述的其他需求。
 
-> 1.6  与 2.5 版本规范的区别
+## 1.6  与 2.5 版本规范的区别
 
-> 1.6.1  配置注解  
+### 1.6.1  配置注解  
 
 Servlet 2.5 中， metadata-complete 属性只是在部署过程中影响注解的扫描，而且也没有 web-fragments 的概念。在 servlet 3.0 之后，metadata-complete 属性会在部署过程中影响到所有指定部署信息的注解，同时还有 web-fragments 。部署描述符的版本绝对不能影响容器扫描应用中的注解。本规范的任何版本的实现都必须扫描所有该配置所支持的注解，除非指定了 metadata-complete 属性。
 
@@ -335,7 +335,7 @@ Servlet 2.5 中， metadata-complete 属性只是在部署过程中影响注解�
 
 Servlet 接口是 Java Servlet API 的核心抽象。所有的 servlets 都必须直接或者间接实现该接口。Java Servlet API 中已经实现了 Servlet 接口的两个类是 GenericServlet 和 HttpServlet 。大多数情况下，开发者可以继承 HttpServlet 来实现自己的 servlets 。
 
-> 2.1  请求处理方法
+## 2.1  请求处理方法
 
 基本的 Servlet 接口定义了处理客户端请求的 service 方法。每个请求到来，容器将它路由到某个 servlet 实例，该方法就会被调用。
 
@@ -343,7 +343,7 @@ Servlet 接口是 Java Servlet API 的核心抽象。所有的 servlets 都必�
 
 通常容器会在多线程中执行 service 方法来处理对同一个 servlet 的多个并发请求。
 
-> 2.1.1  HTTP 特定的请求处理方法
+### 2.1.1  HTTP 特定的请求处理方法
 
 HttpServlet 抽象子类在基本的 Servlet 接口基础上添加了被  service 接口调用的方法，用于处理基于 HTTP 的请求。
 
@@ -358,17 +358,17 @@ HttpServlet 抽象子类在基本的 Servlet 接口基础上添加了被  servic
 
 通常，开发基于 HTTP 的 servlet 的开发者仅仅只会关注 doGet 和 doPost 方法。其他几个方法是供那些对 HTTP 协议非常熟悉的开发者使用。
 
-> 2.1.2   附加方法
+### 2.1.2   附加方法
 
 doPut 和 doDelete 方法允许 Servlet 开发者支持那些支持此类特性的 HTTP/1.1 客户端。doHead 方法是 doGet 方法的一种特殊形式，它仅仅返回 doGet 产生的响应的头部。doOptions 方法返回 servlet 都支持哪些 HTTP 方法。doTrace 方法产生的响应包含了所有的 TRACE 请求的头部实例。
 
 CONNECT 方法不支持，因为它是作用于代理以及被绑定到服务访问点上的 Servlet API 。
 
-> 2.1.3  条件 GET 支持
+### 2.1.3  条件 GET 支持
 
 HttpServlet 抽象类定义的 getLastModified 方法支持条件 GET 操作。条件 GET 操作请求的资源，只有在某个时刻之后被修改过的情况下才会被返回给客户端。在适当的场景下，实现该方法可以改善网络资源的利用率。
 
-> 2.2  实例个数
+## 2.2  实例个数
 
 声明 servlet ，无论是通过注解还是部署描述符，都可以控制容器如何提供 servlet 实例。
 
@@ -376,17 +376,17 @@ HttpServlet 抽象类定义的 getLastModified 方法支持条件 GET 操作。�
 
 如果 servlet 作为应用的一部分部署，而部署描述符又明确说明是分布式部署，那么容器可以为每个 Java 虚拟机提供唯一的 servlet 实例。然而，如果 servlet 实现了 SingleThreadModel 接口，容器就可以为每个虚拟机提供多个 servlet 实例。
 
-> 2.2.1  关于 Single Thread Model 的说明
+### 2.2.1  关于 Single Thread Model 的说明
 
 SingleThreadModel 接口的作用是保证在同一时刻只有一个线程可以执行给定 servlet 实例的 service 方法。需要特别注意的是，这个保证只是对于单个 servlet 实例而言，因为容器可以有选择地池化此类对象。那些可以同时被多个 servlet 实例访问的对象，比如 HttpSession 实例，可能在任何时刻对多个 servlet 都是可用的，SingleThreadModel 接口的实现应该包含此内容。
 
 推荐开发者采用其他方式解决以上问题，而不要实现 SingleThreadModel 接口。比如避免使用实例变量或者将访问此类资源的代码同步化。此版本规范中 SingleThreadModel 接口已被废弃。
 
-> 2.3  Servlet 生命周期
+## 2.3  Servlet 生命周期
 
 servlet 的管理基于定义良好的生命周期。所谓的生命周期，定义了 servlet 应该如何被加载、实例化、初始化、处理请求以及如何从服务中被移除。在 API 生命周期的形式表现为 javax.servlet.Servlet 接口的 init，service 以及 destroy 方法。所有的 servlet 都必须直接实现该接口，或者通过继承 GenericServlet 或者 HttpServlet 抽象类间接实现该接口。
 
-> 2.3.1  加载和实例化
+### 2.3.1  加载和实例化
 
 容器负责加载和实例化 servlets 。加载和实例化可以发生在容器启动时，或者延迟到容器真正认为需要它处理请求时。
 
@@ -394,21 +394,21 @@ servlet 的管理基于定义良好的生命周期。所谓的生命周期，定
 
 加载完 Servlet 类之后，容器将实例化它们以备使用。
 
-> 2.3.2  初始化
+### 2.3.2  初始化
 
 servelt 对象实例化之后，必须经过容器的初始化才能处理来自客户端的请求。基于初始化机制，servlet 可以读取持久化配置数据，初始化动作消耗资源（比如基于的 JDBC API 的数据库连接），同时执行其他一些一次性的活动。容器通过调用 Servlet 接口的 init 方法来初始化 servlet 实例，该方法的参数是唯一的（每个 servlet 声明）实现了 ServletConfig 接口的类对象。servlet 可以通过这个配置对象从 Web 应用的配置信息中获取“名—值”对形式的初始化参数。还可以通过该对象获取描述 servlet 运行期环境的类对象（实现了 ServletContext 接口）。关于 ServletContext 接口的更多内容将在第四章中介绍。
 
-> 2.3.2.1  初始化的错误
+#### 2.3.2.1  初始化的错误
 
 初始化过程中，servlet 实例可以抛出 UnavailableException 或者 ServletException 。这种情况下，servlet 必须被容器清理掉，不能放到活动的服务中去。这种情况被认为初始化失败，因此 destroy 方法不会被调用。
 
 在一次失败的初始化之后，容器可以实例化和初始化新的实例。唯一需要额外说明的就是 UnavailableException 表示一个最小时间段内的不可用状态，因此容器必须等待这个时间段过去然后再开始创建并初始化下一个 servlet 实例。
 
-> 2.3.2.2  工具考量
+#### 2.3.2.2  工具考量
 
 静态初始化方法在工具加载并内省（反射）Web 应用过程中被触发的情况与 init 方法被调用的情况是不同的。开发者在Servlet 接口的 init 方法被调用之前都不能假定 servlet 已经在活动容器的运行时环境中了。比如说，servlet不应该在仅仅只有静态初始化方法被调用的情况下试图建立与数据库或者 EJB 容器的连接。
 
-> 2.3.3  请求处理
+### 2.3.3  请求处理
 
 servlet 正确初始化之后，就可以被容器用来处理客户端请求。请求由 ServletRequest 类型的请求对象表示。servlet 调用相应的处理方法并以 ServletResponse 类型的对象填充响应。这些对象作为参数被传递给 Servlet 接口的 service 方法。
 
@@ -416,7 +416,7 @@ servlet 正确初始化之后，就可以被容器用来处理客户端请求。
 
 特别的，被容器放进服务中的 servlet 实例可以在整个生命周期内不处理任何请求。
 
-> 2.3.3.1  多线程问题
+#### 2.3.3.1  多线程问题
 
 servlet 容器可以通过 servlet 的 service 方法发送并发请求。为了处理这些请求，servlet 开发者必须保证 service 方法的实现具有处理并发请求的能力。
 
@@ -424,7 +424,7 @@ servlet 容器可以通过 servlet 的 service 方法发送并发请求。为了
 
 由于 servlet 并未实现 SingleThreadModel 接口，如果 service 方法（或者由该方法分发到的 HttpServlet 抽象类的 doGet 或者 doPost 方法）被 synchronized 关键字修饰，容器将无法采用池化技术，而不得不强行将请求串行化。强烈建议开发者在这种环境下不要同步化 service 方法（或者由它分发到的方法），因为这将对性能造成决定性的影响。
 
-> 2.3.3.2  请求处理过程中的异常
+#### 2.3.3.2  请求处理过程中的异常
 
 处理请求过程中 servlet 可以抛出 ServletException 或者 UnavailableException 异常。ServletException 表示在处理请求过程中发生了某些错误因而容器应该采取对应措施将请求清除掉。
 
@@ -436,7 +436,7 @@ UnavailableException 表示 servlet 暂时或者永久性地无法处理请求�
 
 容器可以选择不区分这两种情况，而认为 UnavailableException 就是表示永久性的不可用，而后直接将抛出该异常的 servlet 从服务中清除掉。
 
-> 2.3.3.3  异步处理
+#### 2.3.3.3  异步处理
 
 有时候一个过滤器和一个 servlet 不能立即完成请求的处理，比如需要等待其他资源，有时候甚至是等待响应的产生。比如，servlet 在产生响应之前可能需要等待可用的 JDBC 连接，来自远程服务的响应，JMS 消息，或者应用事件。等待这样的 servlet 是低效率的操作，因为它是一个阻塞性的行为，消耗线程和其他有限资源。很多时候，像数据库之类的慢资源会导致大量等待存取的线程阻塞，因而会导致线程饥饿甚至是整个 web 容器的服务质量下降。
 
@@ -638,7 +638,7 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
 如果一个线程由应用创建，使用容器管理下的对象，比如请求和响应对象，访问这些对象必须在它们的生命周期之内，对象的声明周期定义在下文3.13章节，“ 请求对象的生命周期 ”，以及5.8章节，“ 响应对象的生命周期 ”。注意，不同于 startAsync 和 complete 方法，请求和响应对象都不是线程安全的。如果这些对象在多线程环境中被访问，则访问必须被同步，或者通过一个包装器来添加线程安全。比如，同步所有对访问请求参数方法的调用，或者对一个线程内的响应对象使用本地输出流。
 
-> 2.3.3.5  升级处理
+#### 2.3.3.5  升级处理
 
 在 HTTP/1.1 中，升级通用头部允许客户端指定它所支持的或者希望使用的附加通信协议。服务器根据该头部切换协议，然后后续的通信中就将采用新的协议。
 
@@ -735,3 +735,38 @@ Servlet 容器支持文件上传，此时 content-type 设置为 multipart/form-
 每个属性名只能关联唯一一个属性值。
 
 作为本规范的保留规则，所有的属性名都要以 java. 或者 javax. 这样的前缀开始。类似的，Oracle 公司的保留规则是所有的属性名以 sun. 或者 com.sun.  或者 oracle 或者 com.oracle 等前缀开头。建议所有被放进属性集合的属性都以逆序域名开始，就像 Java 语言规范中关于包命名规范的约定。
+
+## 3.4 头部
+
+servlet 可以通过 HttpServletRequest 接口的下列方法访问 HTTP 请求的头部：
+
+* getHeader
+* getHeaders
+* getHeaderNames
+
+getHeader 方法返回指定名称的头部字段。HTTP 请求可以有多个同名的头部字段，比如 Cache-Control ，这种情况下，getHeader 方法返回其中的第一个。而 getHeaders 方法可以将给定名称的头部字段的值以字符串 Enumeration 形式返回。
+
+头部可以包含字符串形式的 int 或者 Date 数据。可以用 HttpServletRequest 接口的下面几个方法访问这些数据：
+
+* getIntHeader
+* getDateHeader
+
+如果 getIntHeader 方法无法将给定的头部字段值转化为 int ，将会抛出 NumerFormatException 。如果 getDateHeader方法无法将给定的头部字段值转化为 Date ，将会抛出 IllegalArgumentException 。
+
+## 3.5 请求路径元素
+
+请求路径，用于将请求指引到为它提供服务的 servlet ，由几部分构成。以下元素可以通过请求对象从请求 URI 路径中获取：
+
+* Context Path：servlet 所在的 ServletContext 路径的前缀。如果该 context 是所谓的默认 context ，则它处在 web server 的 URL 命名空间的根路径上，此时本路径片段就是空字符串。否则，这个路径片段就会以 "/" 字符开头，但是并不以 “/” 字符结尾。
+* Servlet Path：本路径片段直接对应于请求对应的映射关系。它以 "/" 字符开始，除非请求符合 “/*” 或者 "" 映射关系，此时本路径片段是空字符串。
+* PathInfo：请求路径剩余的部分，要么是空，要么是 "/" 开头的字符串。
+
+HttpServletRequest 接口中的下列方法用来访问这些信息：
+
+* getContextPath
+* getServletPath
+* getPathInfo
+
+重要提示：除了 URL 编码的差异，请求 URI 和路径各个部分之间始终满足如下等式：
+
+requestURI = contextPath + servletPath + pathInfo
