@@ -770,3 +770,65 @@ HttpServletRequest 接口中的下列方法用来访问这些信息：
 重要提示：除了 URL 编码的差异，请求 URI 和路径各个部分之间始终满足如下等式：
 
 requestURI = contextPath + servletPath + pathInfo
+
+举个例子：
+
+Context 配置
+
+----
+
+Context Path		/catalog
+
+Servlet Mapping	Pattern: /lawn/*
+
+​				Servlet: LawnServlet
+
+Servlet Mapping	Pattern: /garden/*
+
+​				Servlet: GardenServlet
+
+Servlet Mapping	Pattern: *.jsp
+
+​				Servlet: JSPServlet
+
+----
+
+相应的行为：
+
+----
+
+Request Path				Path Elements
+
+/catalog/lawn/index.html		ContextPath: /catalog
+
+​						ServletPath: /lawn
+
+​						PathInfo: /index.html
+
+/catalog/garden/implements	ContextPath: /catalog
+
+​						ServletPath: /garden
+
+​						PathInfo: /implements
+
+/catalog/help/feedback.jsp	ContextPath: /catalog
+
+​						ServletPath: /help/feedback.jsp
+
+​						PathInfo: null
+
+----
+
+## 3.6 路径转化方法
+
+API 中有两个方法允许开发者获取特定的请求路径对应的系统路径：
+
+* ServletContext.getRealPath
+* HttpServletRequest.getPathTranslated
+
+getRealPath 方法需要一个字符串类型的参数，返回一个字符串，表示请求路径对应的文件在本地文件系统中的位置。getPathTranslated 方法计算请求的 pathInfo 的真实路径。
+
+某些情况下，servlet 容器无法确定有效的文件路径，比如说，当 Web 应用从打包文件启动，或者运行在远程文件系统上，或者运行在数据库服务器上，此时这两个方法都必须返回 null 。
+
+
+
