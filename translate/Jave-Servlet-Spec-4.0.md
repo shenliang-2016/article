@@ -830,5 +830,18 @@ getRealPath 方法需要一个字符串类型的参数，返回一个字符串�
 
 某些情况下，servlet 容器无法确定有效的文件路径，比如说，当 Web 应用从打包文件启动，或者运行在远程文件系统上，或者运行在数据库服务器上，此时这两个方法都必须返回 null 。
 
+JAR 包内部 META-INF/resources 目录下的资源文件需要被考虑到，只要容器将它们解压出来。如果 getRealPath( ) 方法被用于获取这些资源的路径，那么就必须返回解压后的文件位置。
 
+## 3.7 非阻塞 IO
+
+非阻塞式的请求处理可以提升 Web 容器的处理性能和可伸缩性，增加 Web 容器可以并发处理的连接数。servlet 容器中的非阻塞式 IO 机制允许开发者在数据可用时才及时读取或者写入。非阻塞式 IO 仅仅可以和 Servlets 和 Filters 中的异步请求处理协同工作，或者在协议升级过程中工作。否则，当调用 ServletInputStream.setReadListener 或者 ServletOutputStream.setWriteListener 方法时就必须抛出 IllegalStateException 异常。
+
+ReadListener 为非阻塞 IO 提供了如下回调方法：
+
+* ReadListener
+  * onDataAvailable()  当数据可以从到来的请求数据流中读取时 ReadListener 上的 onDataAvailable 方法被调用。当数据可读取时容器会首次调用此方法。当且仅当 ServletInputStream 上的 isReady 方法被调用并返回 false 时容器会再次调用此方法，然后数据就变为可读取状态。
+  * onAllDataRead()  当注册了 Listener 的 ServletRequest 中的数据读取完成时此方法会被调用。
+  * onError( Throwable t )  当请求处理过程中发生任何错误或异常时此方法被调用。
+
+Servlet 容器必须以线程安全的模式访问 ReadListener 的方法。
 
