@@ -631,8 +631,7 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 * 下面的图展示了所有异步操作的状态变迁。
 
 
-
-> 2.3.3.4  线程安全
+#### 2.3.3.4  线程安全
 
 不同于 startAsync 和 complete 方法，请求和响应对象的实现都不保证线程安全。这意味着要么它们仅仅在处理请求的线程作用域内使用，要么应用必须保证对请求和响应对象的访问是线程安全的。
 
@@ -654,7 +653,7 @@ HttpUpgradeHandler 可以采用非阻塞式 IO 消费和生产消息。
 
 当协议升级完成， HttpUpgradeHandler.destroy 方法将被调用。
 
-> 2.3.4  服务结束
+### 2.3.4  服务结束
 
 Servlet 容器不需要保持任何时间点的 servlet 都被加载。servlet 实例在容器中可以存活若干毫秒，跟随容器的生命周期，几天，几个月或者几年，或者随便多长时间。
 
@@ -775,49 +774,30 @@ requestURI = contextPath + servletPath + pathInfo
 
 Context 配置
 
-----
-
+````
 Context Path		/catalog
-
-Servlet Mapping	Pattern: /lawn/*
-
-​				Servlet: LawnServlet
-
-Servlet Mapping	Pattern: /garden/*
-
-​				Servlet: GardenServlet
-
-Servlet Mapping	Pattern: *.jsp
-
-​				Servlet: JSPServlet
-
-----
+Servlet Mapping		Pattern: /lawn/*
+					Servlet: LawnServlet
+Servlet Mapping		Pattern: /garden/*
+					Servlet: GardenServlet
+Servlet Mapping		Pattern: *.jsp
+					Servlet: JSPServlet
+````
 
 相应的行为：
 
-----
-
-Request Path				Path Elements
-
+````
+Request Path					Path Element
 /catalog/lawn/index.html		ContextPath: /catalog
-
-​						ServletPath: /lawn
-
-​						PathInfo: /index.html
-
-/catalog/garden/implements	ContextPath: /catalog
-
-​						ServletPath: /garden
-
-​						PathInfo: /implements
-
-/catalog/help/feedback.jsp	ContextPath: /catalog
-
-​						ServletPath: /help/feedback.jsp
-
-​						PathInfo: null
-
-----
+								ServletPath: /lawn
+								PathInfo: /index.html
+/catalog/garden/implements		ContextPath: /catalog
+								ServletPath: /garden
+								PathInfo: /implements
+/catalog/help/feedback.jsp		ContextPath: /catalog
+								ServletPath: /help/feedback.jsp
+								PathInfo: null
+````
 
 ## 3.6 路径转化方法
 
@@ -845,3 +825,13 @@ ReadListener 为非阻塞 IO 提供了如下回调方法：
 
 Servlet 容器必须以线程安全的模式访问 ReadListener 的方法。
 
+除此之外，ServletInputStream 中也添加了以下方法：
+
+* ServletInputStream
+  * boolean isFinished() 当请求关联的 ServletInputStream 中所有数据都被读取完毕时返回 true ，否则返回 false 。
+  * boolean isReady() 当数据可以被读取而无需等待时返回 true ，否则返回 false 。当 isReady 方法返回 false 情况下调用读取方法必须抛出 IllegalStateException 。
+  * void setReadListener( ReadListener listener ) 为数据的非阻塞读取方式设置上述的 ReadListener 。一旦此监听器与给定的 ServletInputStream 建立联系，当数据可以读取时容器就会调用监听器上的此方法，所有的数据都会被读取，除非请求处理过程中发生了错误。ReadListener 的注册将启动非阻塞 IO 。此时试图切换回传统的阻塞式 IO 是非法的，必须抛出 IllegalStateException 异常。当前请求作用域内 setReadListener 的再次调用是非法的，必须抛出 IllegalStateException 异常。
+
+## 3.8 HTTP/2 服务端推送
+
+HTTP/2 在 servlet API 中最明显的改进就是服务端推送。包括服务端推送在内的所有 HTTP/2 改进目的都是改善浏览器的用户体验。该特性可以奏效是基于这样的事实，那就是，服务端
