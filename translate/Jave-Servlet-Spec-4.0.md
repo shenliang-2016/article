@@ -834,4 +834,14 @@ Servlet 容器必须以线程安全的模式访问 ReadListener 的方法。
 
 ## 3.8 HTTP/2 服务端推送
 
-HTTP/2 在 servlet API 中最明显的改进就是服务端推送。包括服务端推送在内的所有 HTTP/2 改进目的都是改善浏览器的用户体验。该特性可以奏效是基于这样的事实，那就是，服务端
+HTTP/2 在 servlet API 中最明显的改进就是服务端推送。包括服务端推送在内的所有 HTTP/2 改进目的都是改善浏览器的用户体验。该特性可以奏效是基于这样的事实，那就是，服务端相对于客户端来说，在判断请求需要的额外资源（比如图片、样式表或者脚本等）方面，显然具有优势的。例如，当浏览器请求 ````index.html ```` 时，它肯定会接下来马上请求 ```` header.gif````、````footer.gif ```` 以及 ````style.css ```` 等，对服务端来说，获得这种认识是可能的。一旦获取了这些知识，服务端就可以在发送 ```` index.html ```` 的同时提前发送这些资源数据。
+
+使用服务端推送，需要从```` HttpServletRequest ````中获取````PushBuilder````引用，按需修改它，然后调用````push()````方法。请参考````javax.servlet.http.HttpServletRequest.newPushBuilder()````方法和````javax.servlet.http.PushBuilder````类的规范文档。本章节剩余部分对应于附录 “其它重要参考文献” 中的 HTTP/2 规范文档中的 "Server Push" 部分。
+
+除非显式排除，所有 Servlet 4.0 容器都必须遵循 HTTP/2 规范中 “Server Push” 部分内容支持服务端推送。当客户端使用 HTTP/2 协议时容器必须保证服务端推送可用，除非客户端通当前连接发送值为0的 SERRINGS_ENABLE_PUSH 信号显式关闭服务端推送。此时，对当前连接来说，服务端推送必须不可用。
+
+除了客户端通过上述设置主动关闭服务端推送的情况，当客户端请求不能接收推送响应时，servlet 容器必须将推送数据流标识为 CANCEL 或者 REFUSED_STREAM 。通常当资源在客户端缓存中已经存在时会出现这种交互。
+
+## 3.9 Cookies
+
+````HttpServletRequest````接口提供了````getCookies````方法用于从请求中获取 cookies 数组。这些 cookies 随着客户端产生的请求被发送到服务端。典型的情况，
