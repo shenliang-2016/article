@@ -844,4 +844,89 @@ HTTP/2 在 servlet API 中最明显的改进就是服务端推送。包括服务
 
 ## 3.9 Cookies
 
-````HttpServletRequest````接口提供了````getCookies````方法用于从请求中获取 cookies 数组。这些 cookies 随着客户端产生的请求被发送到服务端。典型的情况，
+````HttpServletRequest````接口提供了````getCookies````方法用于从请求中获取 cookies 数组。这些 cookies 随着客户端产生的请求被发送到服务端。典型的情况，客户端向服务端发送的 cookie 只包含名值对。其他可以在服务端设置的 cookie 属性，比如注释等，都不会被客户端返回。此规范也允许 HttpOnly cookies 存在。HttpOnly cookies 的作用是告诉客户端它们不应该暴露客户端脚本代码（只有当客户端知道去获取该属性时才有这个过滤）。使用 HttpOnly 可以防止某些跨站脚本攻击。
+
+## 3.10 SSL 属性
+
+当请求通过某种安全协议传输，比如 HTTPS ，此信息就必须通过 ServletRequest 接口的 isSecure 方法暴露出来。容器必须将下列属性暴露给 servlet 开发者：
+
+| Attribute                 | Attribute Name                       | Java Type |
+| ------------------------- | ------------------------------------ | --------- |
+| cipher suite              | javax.servlet.request.cipher_suite   | String    |
+| bit size of the algorithm | javax.servlet.request.key_size       | Integer   |
+| SSL session id            | javax.servlet.request.ssl_session_id | String    |
+
+如果请求中存在某种 SSL 凭证，它就必须被容器以````java.security.cert.X509Certificate````对象数组的形式暴露给 servlet 开发者，通过````ServletRequest````接口的````javax.servlet.request.X509Certificate````属性访问。该数组元素以预定义的信任顺序升序排列。数据链中第一个凭证由客户端设置，下一个元素就是用来对前面一个元素进行认证的，依此类推。
+
+ ## 3.11 国际化
+
+客户端可以有选择地通知 Web 服务器它希望接收的响应的语言。该信息可以通过````Accept-Language````头部的形式传递，或者 HTTP/1.1 规范描述的其他机制。````ServeltRequest````接口中的下列方法用于访问请求发送方的区域设置：
+
+* getLocale
+* getLocales
+
+````getLocale````方法将返回客户端希望获得响应的区域设置。参考 RFC 7231(HTTP/1.1) 的14.4章节获取更多有关如何设置````Accept-Language````头部以表达客户端希望的区域设置的知识。
+
+````getLocales````方法返回````Locale````对象的枚举，表示客户端可以接受的所有地区设置，按照客户端的接受程度降序排列。
+
+如果客户端没有显式声明区域设置，那么````getLocale````方法必须返回 servlet 容器的默认区域设置，````getLocales````方法必须返回只包含容器默认区域设置一个元素的枚举结果。
+
+## 3.12 请求数据编码
+
+目前，许多浏览器并不会通过 Contect-Type 请求头发送字符编码限定词，导致无法确定读取 HTTP 请求时采用何种字符编码。当没有字符编码限定词，而````Content-Type````是````application/x-www-form-urlencoded````时，容器用于创建请求数据读取器和 POST 数据转换器的字符编码必须是````US-ASCII````。任何````%nn````编码值必须被解码为 ISO-8859-1 。对其他的````Content-Type````，如果客户端请求、web 应用以及容器提供的配置（对容器内所有应用生效）都没有指定，那么容器用于创建请求数据读取器和 POST 数据转换器的字符编码必须是 ISO-8859-1 。不过，为了告知开发者字符编码限定词没有指定这种情况，此时````getCharacterEncoded()````方法必须返回````null````。
+
+如果客户端没有设置字符编码而请求数据又不是以上述默认情况进行了编码，服务端读取请求数据就会出错。为了处理这种情况，````ServletContext```` 中添加了````setRequestCharacterEncoding(String enc)````方法。````web.xml````中添加了````\<request-character-encoding\>````元素。````ServletRequest````接口中也添加了````setCharacterEncoding(String enc)````方法。开发者可以覆盖容器调用此方法设置的字符编码。此方法必须在读取请求输入数据或者转换 post 数据之前调用，一旦数据已经读取就无法再修改字符编码。
+
+## 3.13 请求对象的生存时间
+
+每个请求对象都只存活在 servlet 的````service````方法的作用域内，或者在过滤器的````doFilter````方法的作用域内。除非容器支持异步处理而且该请求对象上的````startAsync````方法被调用。异步处理过程中，请求对象可以存活到````AsyncContext````上的````complete````方法被调用。容器为了降低创建对象的额外资源消耗而复用请求对象。开发者在上述作用域之外维护其上的````startAsync````方法并没有被调用的请求对象的引用时要特别小心，这会导致不确定的结果。
+
+协议升级的情况下，上述规则依旧成立。
+
+----
+
+# Servlet Context
+
+----
+
+## 4.1 介绍
+
+````ServletContext````接口定义了 servlet 运行于其中的 Web 应用的 servlet 视角的视图。容器提供方必须在容器中提供````ServletContext````接口的实现。通过````ServletContext````接口实现类对象，servlet 可以记录事件、获取指向资源的 URL 、设置并保存当前上下文中能够访问的其他 servlets 的属性。
+
+````ServletContext````位于 Web 服务器的周知路径下。例如，servlet 上下文可以位于````http://example.com/catalog````下，所有以````/catalog````开头的请求路径，由于包含了上下文路径，因而都会被路由到该````ServletContext````对应的 Web 应用上。
+
+## 4.2 Servlet 接口的作用域
+
+每个部署到容器内的 Web 应用都有一个````ServletContext````接口对象与之关联。当容器分布在多台虚拟机器上时，Web 应用将在每个 JVM 中都有一个与之关联的````ServletContext````接口对象。
+
+容器中那些没有作为 Web 应用的组成部分部署的 servlets 都隐含地成为所谓的 “默认” 应用的组成部分，同时拥有相应的默认````ServletContext````接口对象。在分布式容器中，这个默认````ServletContext````接口对象只能存在于一个 JVM 中而不能是分布式的。
+
+## 4.3 初始化参数
+
+````ServletContext````接口的下列方法允许 servlet 访问应用开发者在部署描述器中为应用指定的上下文初始化参数。
+
+* getInitParameter
+* getInitParameterNames
+
+初始化参数通常被应用开发者用来传递配置信息。典型的例子是管理员的邮箱或者控制关键数据的系统的名称。
+
+## 4.4 配置方法
+
+从 Servlet 3.0 开始，下列方法就被添加到 ````ServletContext````接口中，用于以编程方式定义 servlets 、过滤器以及它们映射到的 url 匹配模式。这些方法只能在应用初始化过程中被调用，调用者要么是````ServletContextListener````实现对象的````contextInitialized````方法，要么是````ServletContainerInitializer````实现对象的````onStartup````方法。除了添加 servlets 和过滤器，我们还可以搜寻发现对应于 servlet 或者过滤器的````Registration````对象实例，或者有关 servlet 或者过滤器的所有````Registration````对象实例的 map。如果````ServletContext````实例对象被传入````ServletContextListener````的````contextInitialized````方法，而````ServletContextListener````既没有在````web.xml````或者````web-fragment.xml````中声明，也没有注解为````@WebListener````，此时为编程方式配置 servlets 、过滤器和监听器添加的方法都必须抛出````UnsupportedOperationException````。
+
+### 4.4.1 编程方式添加和配置 Servlets
+
+通过编程方式向上下文中添加 servlet 的能力对框架开发者非常有用。比如框架可以使用此方法声明一个控制器 servlet 。此方法的返回值是一个````ServletRegistration````实例对象或者````ServletRegistration.Dynamic````实例对象。接下来你可以为这个对象设置诸如````init-params````或````url-mapping````之类的属性。下面是此方法的三个重载版本：
+
+#### 4.4.1.1 ````addServlet(String servletName, String className)````
+
+此方法允许应用以编程方式基于给定的名称和类型名称声明一个 servlet ，并将其添加到上下文中。
+
+#### 4.4.1.2 ````addServlet(String servletName, Servlet servlet)````
+
+此方法允许应用以编程方式基于给定的名称和 servlet 对象实例声明 servlet ，并将其添加到上下文中。
+
+#### 4.4.1.3 ````addServlet(String servletName, Class<? extends Servlet> servletClass)````
+
+此方法允许应用以编程方式基于给定的名称和 servlet 类型对象实例声明 servlet ，并将其添加到上下文中。
+
