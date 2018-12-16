@@ -1072,8 +1072,69 @@ Context 属性处于创建它的 JVM 本地。这就使得````ServletContext````
 
 ## 4.6 资源
 
-````ServletContext````接口只提供了对作为 Web 应用一部分的静态文件的直接访问能力，这些静态文件包括 HTML、GIF 和 JPEG 文件。通过下列方法访问静态资源：
+````ServletContext````接口只提供了对作为 Web 应用一部分的静态文件层级结构的直接访问能力，这些静态文件包括 HTML、GIF 和 JPEG 文件。通过下列方法访问静态资源：
 
 * ````getResource````
 * ````getResourceAsStream````
+
+这两个方法使用以“/”开头的字符串作为参数，该字符串给出了资源相对于 context 根目录的位置，或者相对于web 应用的````WEB-INF/lib````目录下的 JAR 文件内````META-INF/resources````目录的位置。如果在````WEB-INF/lib````目录下的 JAR 文件内````META-INF/resources````实体中存在一个````WEB-INF````实体，则它自己和所有的子实体都只能作为静态资源。该````WEB-INF````实体中的任何类或者 jar 都不会被放在 context 的 classpath 下，任何 Servlets 配置描述符也不会被处理。这些方法会首先在应用上下文的根目录下搜索请求资源，然后才在````WEB-INF/lib````目录下的 jar 包内搜索。而扫描这些 jar 包的顺序是为定义的。这些文件的层级结构可以存在于服务器的文件系统中，或者在 Web 应用的归档文件里，或者在远程服务器上，或者在其它什么位置。
+
+这些方法不能用于获取动态资源。比如，在一个支持 JavaServerPages 规范的容器里，形如````getResource("/index.jsp")````的方法调用将返回该 JSP 文件的源代码，而不是处理之后的输出结果。获取动态内容的方法参见第9章 “分发请求” 。
+
+Web 应用的所有资源完整列表可以通过````getResourcePaths(String path)````获取。有关此方法的完整细节描述参见本规范的 API 文档。
+
+## 4.7 多个 Hosts 和 Servlet Contexts
+
+物理服务器上的Web 服务器可以支持多个逻辑主机共享一个 IP 地址。这种能力有时候被称为 “虚拟主机”。这中情况下，每个逻辑主机必须有它自己的 servlet context 或者 servlet context 集合。servlet context 不能在虚拟主机之间共享。
+
+````ServletContext````接口的````getVirtualServerName````方法用于访问该````ServletContext````部署于其中的逻辑主机的配置名称。容器可以支持多个逻辑主机，但是对于部署在同一个逻辑主机中的所有 servlet context 该方法必须返回同一个名字。每个虚拟主机上，该方法的返回值必须是独特而稳定的，同时应该是适合应用于逻辑主机所在的物理服务器的配置信息中。
+
+## 4.8 重新载入
+
+尽管容器提供类的重新载入机制的实现可以方便开发人员，但是该特性并不是本规范要求的。任何此类机制的实现都必须保证所有的 servlets 以及所有它们使用的类都是在同一个类加载器的作用域内被载入。这个要求保证了应用的行为如开发者所想。作为开发辅助工具，容器应该提供 session 绑定监听器所需通知的完整语义，用于重新载入类时会话终止的监控。
+
+之前版本的容器创建新的类加载器来加载 servlet，不同于在 servlet context 中用于加载其它 servlets 和类的类加载器。这样可能会导致 servlet context 中的对象引用指向不期望的类对象，从而导致期望之外的行为。本规范中的唯一类加载器的要求就是要避免这种问题。
+
+### 4.8.1 临时工作目录
+
+每个 servlet context 都需要临时工作目录。Servlet 容器必须为每个 servlet context 提供私有的临时工作目录，同时通过 context 的````javax.servlet.context.tempdir````属性暴露它的位置。该属性对应的对象类型必须是````java.io.File````。
+
+这条需求是很多 servlet 引擎通用的便利基础设施。当容器重启时并不需要维护临时工作目录的内容。但是，容器需要保证临时工作目录的内容对容器内的其它应用的 servlet contexts 是不可见的。
+
+----
+
+# 响应
+
+----
+
+响应对象封装了从服务端返回客户端的所有信息。在 HTTP 协议中，这些信息通过请求的 HTTP 头部或者消息体由服务端传输到客户端。
+
+## 5.1 缓冲
+
+本规范允许，但是并不强制要求，为了性能对即将发送给客户端的输出数据进行缓冲。典型的情形是服务器默认会提供该特性，同时允许 serlvet 指定各自的缓冲参数。
+
+````ServletResponse````接口的以下方法允许 servlet 访问并设置缓冲信息：
+
+* ````getBufferSize````
+* ````setBufferSize````
+* ````isCommitted````
+* ````reset````
+* ````resetBuffer````
+* ````flushBuffer````
+
+这些方法在````ServletResponse````接口中提供，目的是无论 servlet 使用````ServletOutputStream````还是````Writer````缓冲都能工作。
+
+````getBufferSize````方法返回正在使用的缓冲区的大小。如果当前并没有使用缓冲，该方法必须返回````int````值 0 。
+
+servlet 可以使用````setBufferSize````方法请求一个想要的缓冲大小。分配的缓冲区大小不一定要刚好等于 servlet 请求的，但是不能小于请求的大小。这就允许容器重复使用一个固定大小的缓冲区集合，在适当的时候提供更大的缓冲区给 servlet。该方法必须在任何内容通过````ServletOutputStream````或者````Writer````被写入之前被调用。如果已经有内容写入或者响应已经被提交，该方法必须抛出````IllegalStateException````。
+
+````isCommitted````方法返回一个逻辑值，表示是否有任何响应数据已经返回客户端。````flushBuffer````方法会强制奖缓冲区内容写入给客户端。
+
+````reset````方法在响应尚未提交时清空缓冲区数据。在调用该方法之前的头部数据、状态码以及 servlet 设置的````getWriter````或者````getOutputStream````方法调用的状态等也都必须清空。````resetBuffer````方法当响应未提交时晴空缓冲区内容，但是并不清空头部数据和状态码。
+
+如果响应已被提交，调用````reset````或者````resetBuffer````方法将会抛出````IllegalStateException````。响应以及有关缓冲将保持不变。
+
+当使用缓冲时，容器必须清空已经被装满的客户端缓冲区。如果这是首次发往客户端的数据，则响应被认为已经提交。
+
+## 5.2 头部
 
