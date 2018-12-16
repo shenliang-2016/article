@@ -930,3 +930,150 @@ HTTP/2 在 servlet API 中最明显的改进就是服务端推送。包括服务
 
 此方法允许应用以编程方式基于给定的名称和 servlet 类型对象实例声明 servlet ，并将其添加到上下文中。
 
+#### 4.4.1.4 ````addJspFile(String servletName, String jspfile)````
+
+此方法允许应用以编程方式基于给定的名称和对应于给定 jsp 文件的 servlet 类型对象实例声明 servlet ，并将其添加到上下文中。
+
+#### 4.4.1.5 ````<T extends Servlet> T createServlet(Class<T> clazz)````
+
+此方法实例化给定的````Servlet````类。此方法必须支持所有可用于````Servlet````的注解，除了````@WebServlet````。返回的````Servlet````实例在通过调用上面提到的````addServlet(String, Servlet)````方法被注册到````ServletContext````之前可以被进一步定制化。
+
+#### 4.4.1.6 ````ServletRegistration getServletRegistration(String servletName)````
+
+此方法返回对应于给定名称的 servlet 的````ServletRegistration````，如果不存在，则返回````null````。如果````ServletContext````实例对象被传入````ServletContextListener````的````contextInitialized````方法，而````ServletContextListener````既没有在````web.xml````或者````web-fragment.xml````中声明，也没有注解为````@WebListener````，此方法都必须抛出````UnsupportedOperationException````。
+
+#### 4.4.1.7 ````Map<String, ? extends ServletRegistration> getServletRegistrations()````
+
+此方法返回````ServletRegistration````对象的 map ，其中的 key 是注册到````ServletContext````中的所有````servlets````的名字。如果没有````servlet````注册到````ServletContext````中则返回空 map 。返回的 map 包含对应于所有声明的和注解的````servlets````，还包含所有通过````addServlet````或者````addJspFile````方法添加的````servlets````对应的````ServletRegistration````。对这个返回的 map 的任何改变都绝对不能影响````ServletContext````。如果````ServletContext````实例对象被传入````ServletContextListener````的````contextInitialized````方法，而````ServletContextListener````既没有在````web.xml````或者````web-fragment.xml````中声明，也没有注解为````@WebListener````，此方法都必须抛出````UnsupportedOperationException````。
+
+### 4.4.2 编程方式添加和配置过滤器
+
+#### 4.4.2.1 ````addFilter(String filterName, String className)````
+
+此方法允许应用以编程方式声明一个过滤器，并将该过滤器以给定的名称和类名添加到应用中。
+
+#### 4.4.2.2 ````addFilter(String filterName, Filter filter)````
+
+此方法允许应用以编程方式声明一个过滤器，并将该过滤器以给定的名称和过滤器实例添加到应用中。
+
+#### 4.4.2.3 ````addFilter(String filterName, Class<? extends Filter> filterClass)````
+
+此方法允许应用以编程方式声明一个过滤器，并将该过滤器以给定的名称和过滤器类型实例添加到应用中。
+
+#### 4.4.2.4 ````<T extends Filter> T createFilter(Class<T> clazz)````
+
+此方法实例化给定的````Filter````类。此方法必须支持所有可用于````Filters````的注解。返回的````Filter````实例在通过调用上面提到的````addFilter(String, Filter)````方法被注册到````ServletContext````之前可以被进一步定制化。给定的````Filter````类必须定义一个无参构造器用于实例化。
+
+#### 4.4.2.5 ````FilterRegistration getFilterRegistration(String filterName)````
+
+此方法返回对应于给定名称的过滤器的````ServletRegistration````，如果不存在，则返回````null````。如果````ServletContext````实例对象被传入````ServletContextListener````的````contextInitialized````方法，而````ServletContextListener````既没有在````web.xml````或者````web-fragment.xml````中声明，也没有注解为````@WebListener````，此方法都必须抛出````UnsupportedOperationException````。
+
+#### 4.4.2.6 ````Map<String, ? extends FilterRegistration> getFilterRegistrations()````
+
+此方法返回````FilterRegistration````对象的 map ，其中的 key 是注册到````ServletContext````中的所有````filters````的名字。如果没有````servlet````注册到````ServletContext````中则返回空 map 。返回的 map 包含对应于所有声明的和注解的````filters````，还包含所有通过````addFilter````方法添加的````filters````对应的````FilterRegistration````。对这个返回的 map 的任何改变都绝对不能影响````ServletContext````。如果````ServletContext````实例对象被传入````ServletContextListener````的````contextInitialized````方法，而````ServletContextListener````既没有在````web.xml````或者````web-fragment.xml````中声明，也没有注解为````@WebListener````，此方法都必须抛出````UnsupportedOperationException````。
+
+### 4.4.3 编程方式添加和配置监听器
+
+#### 4.4.3.1 ````void addListener(String className)````
+
+以给定的类名添加监听器到````ServletContext````。给定的类型将由该````ServletContext````表示的应用的类加载器加载，而且必须实现以下接口之一：
+
+* ````javax.servlet.ServletContextAttributteListener````
+* ````javax.servlet.ServletRequestListener````
+* ````javax.servlet.ServletRequestAttributeListener````
+* ````javax.servlet.http.HttpSessionListener````
+* ````javax.servlet.http.HttpSessionAttributeListener````
+* ````javax.servlet.http.HttpSessionIdListener````
+
+如果````ServletContext````被传入````ServletContainerInitializer````的````onStartup````方法，则给定的类可以实现上述接口的同时实现````javax.servlet.ServletContextListener````接口。作为此方法调用的一部分，容器必须加载给定类名的类型以确保所需的接口被实现。如果给定名称的类型实现了一个监听器接口，而该接口的调用顺序对应于它们的声明顺序，也就是说，如果它实现了````javax.servlet.ServletRequestListener````、````javax.servlet.ServletContextListener````或者````javax.servlet.http.HttpSessionListener````，则这个新的监听器将被添加到实现此接口的监听器有序列表的末尾。
+
+#### 4.4.3.2 ````<T extends EventListener> void addListener(T t)````
+
+将给定的监听器添加到````ServletContext````中。给定的监听器必须实现以下接口之一：
+
+* ````javax.servlet.ServletContextAttributteListener````
+* ````javax.servlet.ServletRequestListener````
+* ````javax.servlet.ServletRequestAttributeListener````
+* ````javax.servlet.http.HttpSessionListener````
+* ````javax.servlet.http.HttpSessionAttributeListener````
+* ````javax.servlet.http.HttpSessionIdListener````
+
+如果````ServletContext````被传入````ServletContainerInitializer````的````onStartup````方法，则给定的类可以实现上述接口的同时实现````javax.servlet.ServletContextListener````接口。作为此方法调用的一部分，容器必须加载给定类名的类型以确保所需的接口被实现。如果给定名称的类型实现了一个监听器接口，而该接口的调用顺序对应于它们的声明顺序，也就是说，如果它实现了````javax.servlet.ServletRequestListener````、````javax.servlet.ServletContextListener````或者````javax.servlet.http.HttpSessionListener````，则这个新的监听器将被添加到实现此接口的监听器有序列表的末尾。
+
+#### 4.4.3.3 ````void addListener(Class <? extends EventListener> listenerClass)````
+
+将规定类型的监听器添加到````ServletContext````。给定的监听器必须实现以下接口之一：
+
+- ````javax.servlet.ServletContextAttributteListener````
+- ````javax.servlet.ServletRequestListener````
+- ````javax.servlet.ServletRequestAttributeListener````
+- ````javax.servlet.http.HttpSessionListener````
+- ````javax.servlet.http.HttpSessionAttributeListener````
+- ````javax.servlet.http.HttpSessionIdListener````
+
+如果````ServletContext````被传入````ServletContainerInitializer````的````onStartup````方法，则给定的类可以实现上述接口的同时实现````javax.servlet.ServletContextListener````接口。作为此方法调用的一部分，容器必须加载给定类名的类型以确保所需的接口被实现。如果给定名称的类型实现了一个监听器接口，而该接口的调用顺序对应于它们的声明顺序，也就是说，如果它实现了````javax.servlet.ServletRequestListener````、````javax.servlet.ServletContextListener````或者````javax.servlet.http.HttpSessionListener````，则这个新的监听器将被添加到实现此接口的监听器有序列表的末尾。
+
+#### 4.4.3.4 ````<T extends EventListener> void createListener(Class <T> clazz)````
+
+实例化给定的````EventListener````类。给定的````EventListener````类必须实现以下接口之一：
+
+- ````javax.servlet.ServletContextAttributteListener````
+- ````javax.servlet.ServletRequestListener````
+- ````javax.servlet.ServletRequestAttributeListener````
+- ````javax.servlet.http.HttpSessionListener````
+- ````javax.servlet.http.HttpSessionAttributeListener````
+- ````javax.servlet.http.HttpSessionIdListener````
+
+此方法必须支持所有可用于由本规范定义的监听器接口的注解。返回的````EventListener````实例在通过调用上面提到的````addListener(T t)````方法被注册到````ServletContext````之前可以被进一步定制化。给定的````EventListener````类必须定义一个无参构造器用于实例化。
+
+#### 4.4.3.5 编程方式添加 Servlets、过滤器和监听器需要的注解
+
+当使用编程方式添加或创建一个 servlet 时，除了````addServlet````方法使用的一个实例，以下注解必须被标注在所使用的类型上。注解定义的元数据必须被使用，除非它被调用````ServletRegistration.Dynamic````或者````ServletRegistration````中的 API 而被覆盖。
+
+* @ServletSecurity
+* @RunAs
+* @DeclareRoles
+* @MultipartConfig
+
+以上注解对过滤器和监听器不是必需的。
+
+编程方式添加或创建以上组件所需要的资源，除了方法本身使用的实例之外，仅仅当组件是所谓的 CDI 管理的 Bean 时才被支持。详情请参考15.5.16章节 “ 上下文和依赖注入的 Java EE 需求” 部分内容。
+
+### 4.4.4 编程方式配置会话超时
+
+````ServletContext````接口中的下列方法允许应用访问和配置默认的会话超时时间，该超时时间作用于该应用创建的所有会话。````setSessionTimeout````方法中指定超时时间的单位是分钟，如果超时时间是0或者更小，容器保证默认行为是会话永不超时。
+
+* ````getSessionTimeout()````
+* ````setSessionTimeout(int timeout)````
+
+### 4.4.5 编程方式配置
+
+````ServletContext````接口中的下列方法允许应用访问和配置请求和响应的字符编码。
+
+* ````getRequestCharacterEncoding()````
+* ````setRequestCharacterEncoding(String encoding)````
+* ````getResponseCharacterEncoding()````
+* ````setResponseCharacterEncoding(String encoding)````
+
+如果部署描述器和容器配置（对容器中所有应用生效）中都没有指定请求字符编码，````getRequestCharacterEncoding()````方法返回````null````。如果部署描述器和容器配置（对容器中所有应用生效）中都没有指定响应字符编码，````getResponseCharacterEncoding()````方法返回````null````。
+
+## 4.5 Context 属性
+
+一个 servlet 可以通过名称将对象属性绑定到 context 。任何绑定到 context 的属性可以被同一个应用下的所有 servlet 公用。通过````ServletContext````接口中的下列方法可以访问这些属性：
+
+* ````setAttribute````
+* ````getAttribute````
+* ````getAttributeNames````
+* ````removeAttribute````
+
+### 4.5.1 分布式容器中的 Context 属性
+
+Context 属性处于创建它的 JVM 本地。这就使得````ServletContext````属性无法在分布式容器中的共享内存中存储。当运行在分布式环境中的 servlet 之间需要共享信息时，该信息就应该放进````session```` 中，存储到数据库中，或者设置到 Java EE Beans 组件中。
+
+## 4.6 资源
+
+````ServletContext````接口只提供了对作为 Web 应用一部分的静态文件的直接访问能力，这些静态文件包括 HTML、GIF 和 JPEG 文件。通过下列方法访问静态资源：
+
+* ````getResource````
+* ````getResourceAsStream````
+
