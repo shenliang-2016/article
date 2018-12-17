@@ -1138,3 +1138,42 @@ servlet 可以使用````setBufferSize````方法请求一个想要的缓冲大小
 
 ## 5.2 头部
 
+servlet 可以通过````HttpServletResponse````接口的下列方法设置 HTTP 响应的头部：
+
+* ````setHeader````
+* ````addHeader````
+
+````setHeader````方法将给定的字段名和字段值设置到响应头部中，之前的头部同名字段将会被覆盖。如果原先该字段值是一个集合，则该集合会被清除而被新的值覆盖。
+
+````addHeader````方法将给定的字段名和字段值添加到响应头部中。如果之前没有同名的头部字段，则会创建。
+
+头部可以包含表示````int````或者````Date````类型对象的数据。servlet 可以通过````HttpServletResponse````接口的下列方法将适当数据类型的数据对象设置到响应头部字段中：
+
+* ````setIntHeader````
+* ````setDateHeader````
+* ````addIntHeader````
+* ````addDateHeader````
+
+为了成功地从服务端传输到客户端，响应头部（除了头部 trailer 字段）数据必须在响应被提交之前设置。响应被提交之后设置头部（除了 trailer 字段）将会被容器忽略。如果 RFC 7230 中定义的 HTTP trailer 字段被放进响应中，它们就必须通过````HttpServletResponse````接口的````setTrailerFields()````方法设置。该方法必须在分块编码响应数据的最后一个数据分块被写入之前调用。
+
+servlet 开发者必须保证 servlet 产生的响应对象的````Content-Type````头部字段设置了适当的值。HTTP 1.1 规范并没有要求响应中该头部字段一定被赋值。当 servlet 开发者未设置时容器必须保证不对该字段赋默认值。
+
+本规范推荐容器使用````X-Powered-By```` HTTP 头部来发布其实现信息。该字段的值应该由一个或多个实现类型，比如 “Servlet/4.0”。容器还可以有选择地将容器的支持信息和基于的 Java 平台信息添加到实现类型之后。容器应该设置为禁用此头部字段。
+
+该头部字段的例子：
+
+````X-Powered-By: Servlet / 4.0````
+
+````X-Powered-By: Servlet / 4.0  JSP/2.3 (GlassFish Server Open Source Edition 5.0 Java/Oracle Corporation/1.8)````
+
+## 5.3 HTTP Trailer
+
+RFC 7230 中定义，Http Trailer 是一个特定类型的 HTTP 头部字段的集合，它在响应体之后发送。它们在分块转化编码的场景中非常有用，同时也用在附加通信协议的实现中。servlet 容器提供支持。
+
+如果该头部数据已经可以读取，````isTrailerFieldsReady()````方法将返回````true````。然后 servlet 就可以通过````HttpServletRequest````接口的````getTrailerFields()````方法读取 HTTP 请求的 trailer 头部数据。
+
+servlet 可以通过将````Supplier````传入````HttpServletResponse````接口的````setTrailerFields````方法来写入响应的 trailer 头部。放在响应 trailer 头部中的````Supplier````可以通过````HttpServletResponse````接口的````getTrailerFields()````方法访问。
+
+## 5.4 非阻塞 IO
+
+非阻塞 IO 只能跟异步请求处理过程配合工作。
