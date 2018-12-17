@@ -1176,4 +1176,27 @@ servlet 可以通过将````Supplier````传入````HttpServletResponse````接口�
 
 ## 5.4 非阻塞 IO
 
-非阻塞 IO 只能跟异步请求处理过程配合工作。
+非阻塞 IO 只能跟 servlet 或者过滤器中的异步请求处理过程配合工作，或者用在协议升级过程中。否则，````ServletInputStream.setReadListener````和````ServletInputStream.setWriteListener````方法必须抛出````IllegalStateException```` 。为了支持非阻塞写，````ServletRequest````中进行的修改都在3.7章节中进行了介绍。接下来的是对响应相关的类和接口的修改。
+
+````WriteListener````提供了如下回调方法供容器调用。
+
+* ````WriteListener````
+  * ````void onWritePossible()```` 当一个````WriteListener````被注册到````ServletOutputStream````时，如果数据可以写则此方法将首次被容器调用。容器接下来将继续调用````ServletOutputStream````的````onWritePossible````方法，当且仅当````ServletOutputStream````上的````isReady````方法返回````false````然后写操作接下来成为可能。
+  * ````onError```` 当响应处理过程中发生错误时被调用。
+
+以下方法被添加到````ServletOutputStream````类中，开发者可以通过它们在运行时检查数据是否可以向客户端写入。
+
+* ````ServletOutputStream````
+  * ````boolean isReady()```` 当向````ServletOutputStream````写入操作可行时返回````true````，否者返回````false````。如果此方法返回````true````，则数据写入操作就能成功。如果没有更多数据可以被写入````ServletOutputStream````，则此方法将一直返回````false````直到潜在的数据全部被写入。此时容器将调用````WriteListener````的````onWritePossible````方法。然后此方法的后续调用都将返回````true````。
+  * ````void setWriteListener(WriteListener listener)```` 将给定的````WriteListener````关联到当前````ServletOutputStream```` 。当数据可写入时容器将调用````WriteListener````上的这个回调方法。注册````WriteListener````将开始非阻塞 IO 。此时切换回传统的阻塞式 IO 是非法的。这种非法切换之后的任何 IO 相关方法都将产生不可预测的行为。
+
+容器必须以线程安全的方式调用````WriteListener````中的方法。
+
+## 5.5 便捷方法
+
+````HttpServletResponse````接口提供了以下便捷方法：
+
+* ````sendRedirect````
+* ````sendError````
+
+````sendRedirect````方法将设置适当的头部和请求体内容并把请求重定向到另外的 URL 。将相对路径作为参数是合法的，不过此时容器就必须先将相对路径转化成绝对路径再传递给客户端。如果由于任何原因导致参数只是一个 URL 片段而且无法转化成合法的 URL，则此方法必须抛出````IllegalArgumentException````。
