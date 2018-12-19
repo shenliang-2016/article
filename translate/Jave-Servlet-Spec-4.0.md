@@ -96,7 +96,7 @@
   - 5.4  非阻塞 IO
   - 5.5  核心方法
   - 5.6  国际化
-  - 5.7  响应对象闭包
+  - 5.7  响应对象关闭
   - 5.8  响应对象存活时间
 - 6  过滤 Filtering
 
@@ -1200,3 +1200,49 @@ servlet 可以通过将````Supplier````传入````HttpServletResponse````接口�
 * ````sendError````
 
 ````sendRedirect````方法将设置适当的头部和请求体内容并把请求重定向到另外的 URL 。将相对路径作为参数是合法的，不过此时容器就必须先将相对路径转化成绝对路径再传递给客户端。如果由于任何原因导致参数只是一个 URL 片段而且无法转化成合法的 URL，则此方法必须抛出````IllegalArgumentException````。
+
+````sendError````方法将为发送给客户端的错误信息相应设置适当的头部和主体数据。该方法的可选的字符串类型的参数可用于在错误相应主体数据中描述错误信息。
+
+这些方法对响应的提交有副作用，如果响应尚未被提交，则终止之。这些方法调用之后，servlet 就不应再向客户端发送任何其他数据。这些方法调用之后写入响应的数据都会被忽略。
+
+如果数据已经被写入响应数据缓冲区，但是尚未返回客户端，比如响应尚未提交的情形，则这些数据都必须被这些方法设置的数据替换掉。如果响应已经提交，则这些方法必须抛出````IllegalStateException````。
+
+## 5.6 国际化
+
+Servlets 应该设置区域和响应的字符编码。区域通过````ServletResponse.setLocale````方法设置，该方法可以重复调用，但是在响应提交之后调用是无效的。如果响应提交之前 servlet 并未设置区域信息，则容器的默认区域将生效。但是如何与客户端通信则没有规范定义，比如对 HTTP 来说通过````Content-Language````头部字段：
+
+````xml
+<locale-encoding-mapping-list>
+	<locale-encoding-mapping>
+		<locale>ja</locale>
+		<encoding>Shift_JIS</encoding>
+	</locale-encoding-mapping>
+</locale-encoding-mapping-list>
+````
+
+````<response-character-encoding>````元素可以用于显式指定给定应用所有响应的默认字符编码：
+
+````xml
+<response-character-encoding>UTF-8</response-character-encoding>
+````
+
+如果既没有上述元素，也没有提供映射关系，````setLocale````方法使用依赖容器的映射关系。````setCharacterEncoding````、````setContentType````、以及````setLocale````方法可以重复调用以改变字符编码。在响应的````getWriter````方法被调用或者响应已经被提交之后，这些方法将无法再修改字符编码。只有当给定的内容类型字符串提供了````charset````属性的值时才能调用````setContentType````方法设定字符编码。只有当````setCharacterEncoding````和````setContentType````方法都没有设定字符编码时才能调用````setLocale````方法设置字符编码。
+
+如果````ServletResponse````接口的````getWriter````方法被调用或者响应已经被提交之后 servlet 并未设置字符编码，默认使用````ISO-8859-1````。
+
+如果使用的协议提供了相应的机制，容器必须与客户端交流用于响应写入器的区域设置和字符编码设置信息。HTTP 的情形，区域信息通过````Content-Language````头部字段传输，字符编码作为字符媒体类型描述符的````Content-Type````头部的一部分。需要注意的是，如果 servlet 并未指定内容类型，则字符编码就不能通过 HTTP 头部传输，不过，它仍然会被用于响应内容的编码。
+
+## 5.7 响应对象关闭
+
+当响应被关闭，容器必须马上清理所有剩余的客户端缓冲区数据。以下事件表示 servlet 已经正确处理请求，而且响应对象即将关闭：
+
+* servlet 接口的````service````方法的终止。
+* ````setContentLength````或者````setContentLengthLong````方法设置的内容数据的数量大于零，而且数据已经被写入响应。
+* ````sendError````方法被调用。
+* ````sendRedirect````方法被调用。
+* ````AsyncContext````的````complete````方法被调用。
+
+## 5.8 相应对象的生存时间
+
+每个响应对象都只是在 servlet 的````service````方法作用域内可用，或者在过滤器的````doFilter````方法的作用域内。除非容器支持异步处理而且该请求对象上的````startAsync````方法被调用。异步处理过程中，响应对象可以存活到````AsyncContext````上的````complete````方法被调用。容器为了降低创建对象的额外资源消耗而复用响应对象。开发者在维护其对应的请求对象上的````startAsync````方法并没有被调用的响应对象的引用时要特别小心，这会导致不确定的结果。
+
