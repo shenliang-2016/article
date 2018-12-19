@@ -774,7 +774,7 @@ requestURI = contextPath + servletPath + pathInfo
 
 Context 配置
 
-````
+````xml
 Context Path		/catalog
 Servlet Mapping		Pattern: /lawn/*
 					Servlet: LawnServlet
@@ -786,7 +786,7 @@ Servlet Mapping		Pattern: *.jsp
 
 相应的行为：
 
-````
+````xml
 Request Path					Path Element
 /catalog/lawn/index.html		ContextPath: /catalog
 								ServletPath: /lawn
