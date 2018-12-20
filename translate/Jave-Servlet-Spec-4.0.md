@@ -1325,3 +1325,40 @@ servlet 过滤器 API 文档已经在线上公布。过滤器配置语法通过�
 
 ### 6.2.4 Web 应用中的过滤器配置
 
+过滤器可以通过本规范8.1.2章节中定义的````@WebFilter````注解声明，或者在部署描述器文件中用````<filter>````元素声明。在该部署描述器元素中，开发者可以声明以下属性：
+
+* ````filter-name````：用于将过滤器映射到一个 servlet 或者 URL 
+* ````filter-class````：容器用来确定过滤器类型
+* ````init-params````过滤器初始化参数
+
+开发者还可以有选择地位过滤器指定按钮、文字描述以及显示名称等属性用于其它工具操作。容器必须为部署描述器中每个过滤器声明实例化唯一一个该类型的实例。因此，如果部署描述器中声明了两个相同类型的过滤器，则容器将会实例化出两个相同类型的过滤器。
+
+这里是声明过滤器的例子：
+
+````xml
+<filter>
+  <filter-name>Image Filter</filter-name>
+  <filter-class>com.example.ImageServlet</filter-class>
+</filter>
+````
+
+一旦在部署描述器文件中声明了一个过滤器，装配器就会使用````<filter-mapping>````元素来定义该过滤器将要应用到其上的 servlets 和应用中的静态资源。过滤器可以通过````<servlet-name>````元素与 servlet 建立关联。下面这个例子中，Image Filter 过滤器映射到````ImageServlet````：
+
+````xml
+<filter-mapping>
+  <filter-name>Image Filter</filter-name>
+  <servlet-name>ImageServlet</servlet-name>
+</filter-mapping>
+````
+
+过滤器可以通过````<url-pattern>````过滤器映射方式关联到 servlets 组和静态资源：
+
+````xml
+<filter-mapping>
+  <filter-name>Logging Filter</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
+````
+
+这个例子中 Logging Filter 被应用于 Web 应用中所有的 servlets 和静态资源页面，因为每个请求的 URI 都会匹配上````/*```` URL 模式。
+
