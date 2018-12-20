@@ -1517,3 +1517,8 @@ http://www.example.com/catalog/index.html;jsessionid=1234
 ````
 
 URL 重写将会话 ID 暴露在日志、浏览器书签、引用页头部、缓存的 HTML 页面以及 URL 地址栏中。在 cookies 或者 SSL 会话机制可用时就不应该采用 URL 重写作为会话追踪机制。
+
+### 7.1.4 会话完整性
+
+当处理来自不支持 cookies 的客户端的 HTTP 请求时，Web 容器必须支持 HTTP 会话。为了满足此要求，Web 容器通常都支持 URL 重写机制。
+
