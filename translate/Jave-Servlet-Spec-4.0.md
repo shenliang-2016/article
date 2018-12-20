@@ -1351,7 +1351,7 @@ servlet 过滤器 API 文档已经在线上公布。过滤器配置语法通过�
 </filter-mapping>
 ````
 
-过滤器可以通过````<url-pattern>````过滤器映射方式关联到 servlets 组和静态资源：
+过滤器可以通过````<url-pattern>````过滤器映射风格关联到 servlets 组和静态资源：
 
 ````xml
 <filter-mapping>
@@ -1362,3 +1362,47 @@ servlet 过滤器 API 文档已经在线上公布。过滤器配置语法通过�
 
 这个例子中 Logging Filter 被应用于 Web 应用中所有的 servlets 和静态资源页面，因为每个请求的 URI 都会匹配上````/*```` URL 模式。
 
+当处理一个采用````<url-pattern>````风格的````<filter-mapping>````元素时，容器必须决定该````<url-pattern>````是否使用本规范第12章“映射请求到 Servlets ”中定义的路径映射规则匹配请求 URI 。
+
+容器创建应用于特定请求 URI 的过滤器链时的顺序如下：
+
+1. 首先，````<url-pattern>````按照这些元素在部署描述器中出现的顺序匹配过滤器映射。
+2. 接下来，````<servlet-name>````按照这些元素在部署描述器中出现的顺序匹配过滤器映射。
+
+如果一个过滤器映射元素同时包含````<servlet-name>````和````<url-pattern>````元素，容器必须扩展这个过滤器映射为多个过滤器映射（每个````<servlet-name>````或````<url-pattern>````元素对应一个过滤器映射），同时保留原有````<servlet-name>````和````<url-pattern>````元素的顺序。例如，下面这个过滤器映射：
+
+````xml
+<filter-mapping>
+    <filter-name>Multiple Mappings Filter</filter-name>
+    <url-pattern>/foo/*</url-pattern>
+    <servlet-name>Servlet1</servlet-name>
+    <servlet-name>Servlet2</servlet-name>
+    <url-pattern>/bar/*</url-pattern>
+</filter-mapping>
+````
+
+等同于：
+
+````xml
+<filter-mapping>
+    <filter-name>Multiple Mappings Filter</filter-name>
+    <url-pattern>/foo/*</url-pattern>
+</filter-mapping>
+<filter-mapping>
+    <filter-name>Multiple Mappings Filter</filter-name>
+    <servlet-name>Servlet1</servlet-name>
+</filter-mapping>
+<filter-mapping>
+    <filter-name>Multiple Mappings Filter</filter-name>
+    <servlet-name>Servlet2</servlet-name>
+</filter-mapping>
+<filter-mapping>
+    <filter-name>Multiple Mappings Filter</filter-name>
+    <url-pattern>/bar/*</url-pattern>
+</filter-mapping>
+````
+
+关于过滤器链的顺序要求意味着，当请求到来时，容器必须按照下列顺序处理请求：
+
+* 根据本规范随后将要介绍的“映射规范”定义的规则确定目标 Web 资源。
+* 
