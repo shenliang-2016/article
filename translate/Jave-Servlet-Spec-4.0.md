@@ -1405,4 +1405,115 @@ servlet 过滤器 API 文档已经在线上公布。过滤器配置语法通过�
 关于过滤器链的顺序要求意味着，当请求到来时，容器必须按照下列顺序处理请求：
 
 * 根据本规范随后将要介绍的“映射规范”定义的规则确定目标 Web 资源。
-* 
+* 如果存在过滤器按照 servlet 名称匹配，同时目标资源对应于一个````<servlet-name>```` 元素，容器就按照匹配到的过滤器在部署描述器中声明的顺序构建过滤器链。过滤器链上的最后一个过滤器对应于最后一个````<servlet-name>````匹配方式的过滤器。而这个过滤器就会直接访问目标 Web 资源。
+* 如果存在过滤器采用````<url-pattern>````匹配方式，而````<url-pattern>````根据本规范12.2章节将要介绍的“映射规范”定义的规则匹配到请求 URI ，容器就按照部署描述器中声明的顺序构建该````<url-pattern>````匹配方式的过滤器链。过滤器链最后一个过滤器就是匹配到请求 URI 的最后一个````<url-pattern>````匹配方式的过滤器。该过滤器奖调用````<servlet-name>````匹配方式的过滤器链上的第一个过滤器，如果后者不存在，则直接访问目标 Web 资源。
+
+高性能 Web 容器有所不同，它们可以缓存过滤器链，因而不需要为每个请求都重新构建。
+
+### 6.2.5 过滤器和请求分发器
+
+从 Java Servlet 规范2.4版本以来的一个新特性就是能够将过滤器配置到请求分发器的````forward()````和````include()````方法调用下供调用。
+
+通过在部署描述器中使用新的````<dispatcher>````元素，开发者可以告诉一个过滤器映射在如下情况下他是否希望过滤器应用于请求：
+
+1. 请求直接来自客户端
+
+   通过包含 REQUEST 值的````<dispatcher>````元素说明，或者根本没有````<dispatcher>````元素。
+
+2. 请求正在被一个代表匹配到````<url-pattern>````或者````<servlet-name>````的 Web 组件的请求分发器使用一个````forward()````调用处理中。
+
+   通过包含 FORWARD 值的````<dispatcher>````元素说明。
+
+3. 请求正在被一个代表匹配到````<url-pattern>````或者````<servlet-name>````的 Web 组件的请求分发器使用一个````include()````调用处理中。
+
+   通过包含 INCLUDE 值的````<dispatcher>````元素说明。
+
+4. 请求正在被一个对应于匹配到````<url-pattern>````的错误资源的错误页面机制，在下文“错误处理”中介绍，处理中。
+
+   通过包含 ERROR 值的````<dispatcher>````元素说明。
+
+5. 请求正在被一个异步上下文分发机制，在上文“异步处理”中介绍，调用````dispatch()````方法处理中。
+
+   通过包含 ASYNC 值的````<dispatcher>````元素说明。
+
+6. 或者以上各种情况的任意组合。
+
+例如：
+
+````xml
+<filter-mapping>
+  <filter-name>Logging Filter</filter-name>
+  <url-pattern>/products/*</url-pattern>
+</filter-mapping>
+````
+
+该过滤器映射将导致 Logging Filter 被 URI 以````/products/...````开头的客户端请求调用，但是并不在配置了````/products/...````路径的请求分发器调用之下。该 Logging Filter 可以被初始的请求分发调用，也可以被重新开始的请求调用。
+
+````xml
+<filter-mapping>
+  <filter-name>Logging Filter</filter-name>
+  <servlet-name>ProductServlet</servlet-name>
+  <dispatcher>INCLUDE</dispatcher>
+</filter-mapping>
+````
+
+这个过滤器映射将导致 Logging Filter 不被请求````ProductServlet````的客户端请求调用，也不在请求分发器的````forward()````方法调用````ProductServlet````之下，但是将被配置了````ProductServlet````名称的请求分发器的````include()````方法调用之下调用.
+
+````xml
+<filter-mapping>
+  <filter-name>Logging Filter</filter-name>
+  <url-pattern>/products/*</url-pattern>
+  <dispatcher>FORWARD</dispatcher>
+  <dispatcher>REQUEST</dispatcher>
+</filter-mapping>
+````
+
+该过滤器映射将导致 Logging Filter 被 URI 以````/products/...````开头的客户端请求调用，同时也在配置了````/products/...````路径的请求分发器````forward()````方法调用之下。
+
+````xml
+<filter-mapping>
+  <filter-name>All Dispatch Filter</filter-name>
+  <url-pattern>*</url-pattern>
+  <dispatcher>FORWARD</dispatcher
+</filter-mapping>
+````
+
+该过滤器映射将导致所有的分发过滤器被当通过名称或者路径获取到的请求分发器````forward()````方法调用下调用。
+
+----
+
+# 会话
+
+----
+
+超文本传输协议 HTTP 被设计为无状态的协议。为了创建有效的 Web 应用，将来自特定客户端的请求相互关联起来时非常必要的。随着时间推移，很多会话追踪策略被发展出来。然而开发者直接使用这些策略却往往很困难。
+
+本规范定义了一个简单的````HttpSession````接口，它允许 servlet 容器使用任何用户会话追踪方法，但是并不会使得应用开发者被任何具体的方法绑架。
+
+## 7.1 会话追踪机制
+
+以下章节描述了用户会话追踪方法。
+
+### 7.1.1 Cookies
+
+通过 HTTP cookies 进行会话追踪是最常用的会话追踪机制，因而所有 servlet 容器都必须支持。
+
+容器发送一个 cookie 给客户端。客户端将在后续的请求中附带该 cookie 送回服务器，从而将所有请求明确地关联到一个会话。用于会话追踪的 cookie 的标准名称必须是````JSESSIONID````。容器可以通过具体的配置允许使用定制化的会话追踪 cookie 名称。
+
+所有 servlet 容器必须提供可配置容器是否将会话追踪 cookie 标记为````HttpOnly````。约定俗成的配置必须应用到所有特定配置的上下文之上。如果应用配置了客户化的会话追踪 cookie 名称，如果会话 id 被编码进 URL 中，该名称也将作为 URI 参数的名称。
+
+### 7.1.2 SSL 会话
+
+安全套接层，用于 HTTPS 协议中的加密技术，内建了一套会话追踪机制，可以将来自客户端的多个请求明确标记为同一个会话的组成部分。servlet 容器可以利用该数据定义会话。
+
+### 7.1.3 URL 重写
+
+URL 重写是最普通的会话追踪技术。当客户端不支持 cookie 时，URL 重写就可以被服务器用于会话追踪。URL 重写添加会话 ID 到由容器解释的 URL 路径中将请求关联到一个会话。
+
+该会话 ID 必须作为路径参数被编码进 URL 字符串。参数名称必须是````jsessionid````。下面是一个包含编码路径信息的 URL 的例子：
+
+````html
+http://www.example.com/catalog/index.html;jsessionid=1234
+````
+
+URL 重写将会话 ID 暴露在日志、浏览器书签、引用页头部、缓存的 HTML 页面以及 URL 地址栏中。在 cookies 或者 SSL 会话机制可用时就不应该采用 URL 重写作为会话追踪机制。
