@@ -1574,4 +1574,123 @@ Servlet 可以按照名称将对象属性绑定到````HttpSession````实现。�
 
 ### 7.7.2 分布式环境
 
-在标记为分布式的应用中，所有作为一个会话组成部分的所有请求都必须被同一个 JVM 依次处理。
+在标记为分布式的应用中，所有作为一个会话组成部分的所有请求都必须被同一个 JVM 依次处理。容器必须能够恰当地使用````setAttribute````或者````putValue````方法处理所有放进````HttpSession````类对象中的对象。施加以下约束以满足这些要求：
+
+* 容器必须接受实现了````Serializable````接口的对象。
+* 容器可以选择支持将其它委托对象存储到````HttpSession````中，比如 JavaBeans 组件的引用和事务处理。
+* 会话迁移将由容器特定基础设施处理。
+
+当它缺少必要的支持机制以完成存储对象的会话的迁移时，分布式容器必须抛出````IllegalArgumentException````。
+
+分布式容器必须支持必要的机制以完成实现了````Serializable````接口的对象的迁移。
+
+这些约束意味着开发者可以认为在分布式容器中不会存在非分布式容器中额外的并发问题。
+
+容器提供者能够保证扩展性和服务质量，基于可以移动会话对象的能力提供负载均衡和故障转移，从分布式系统的任意活动节点迁移到别的节点。
+
+如果分布式容器持久化或者迁移会话以提供服务质量特性，它们并不受限于使用本地 JVM 序列化机制来序列化````HttpSession````和它们的属性。开发者并不被保证容器将在属性对象上调用它们实现的````readObject````和````writeObject````方法，但是被保证它们属性的````Serializable````闭包将被保留。
+
+会话迁移过程中容器必须通知任何实现````HttpSessionActivationListener````接口的会话属性对象。它们必须通知监听器在会话序列化之前休眠，而在会话反序列化之后重新激活。
+
+应用开发者编写分布式应用时应该注意，因为容器可以运行在不只一个 Java 虚拟机中，开发者不能依赖静态变量来存储应用状态。应用状态应该存储在企业级 Java Bean 组件或者数据库中。
+
+### 7.7.3 客户端语义
+
+cookies 或者 SSL 证书通常都由浏览器进程控制，但是与浏览器的特定窗口无关，基于该事实，来自一个客户端程序多个窗口的请求在 servlet 容器看来就可能是属于同一个会话的。最可能的情况，开发者应该始终假定客户端所有窗口都属于同一个会话。
+
+----
+
+# 注解和可插拔性
+
+----
+
+本章节介绍使用注解和其他保证框架的可插拔性的增强机制，以及在 Web 应用中使用的类库等。
+
+## 8.1 注解和可插拔性
+
+在  Web 应用中，使用注解的类只有当位于````WEB-INF/classes````路径下，或者它们被打包进 jar 文件中的````WEB-INF/lib````路径下时，它们包含的注解才会被处理。
+
+Web 应用的部署描述器文件中````web-app```` 元素包含````metadata-complete````属性。该属性定义是否该部署描述器和任何 web 片段，如果存在，是完备的，或者是否该模块下可用的类文件和同应用一起打包的类文件应该进行注解检查，以确定他们是否包含部署信息。部署信息在这里指的是已经由部署描述器制定的、随后会被类上的注解覆盖的任何信息。
+
+如果````metadata-complete````属性被指定为````true````，部署工具必须忽略任何打包到应用中的类中任何指定这些部署信息的注解。请参考8.2.3章节“从 web.xml、web-fragment.xml 和注解中装配部署描述器”，8.4章节“处理注解和片段”，15.5.1章节“处理 metadata-complete” 以获取更多有关````metadata-complete````处理的详细信息。
+
+如果````metadata-complete````属性没有被指定，或者其值为````false````，则部署工具必须检查应用中包含该注解的类文件。需要注意的是，````metadata-complete````属性的````true````值并不会优先与所有注解，而只是优先于下面这些：
+
+在部署 XSD 中没有对应词的注解，包含````javax.servlet.annotation.HandlesTypes````和所有 CDI 相关注解。这些注解必须在注解扫描过程中被处理，无论````metadata-complete````属性的取值。
+
+当 EJBs 被打包进````.war````文件中，而该````.war````文件包含````ejb-jar.xml````文件，该````ejb-jar.xml````文件中的````metadata-complete````属性确定了那些企业级 Java Beans 的注解的处理。如果不存在````ejb-jar.xml````文件，而````web.xml````文件指定了````metadata-complete````属性的值为````true````，其等效于````ejb-jar.xml````文件中的````metadata-complete````属性为````true````。更多细节可以参考 Enterprise JavaBeans 规范。
+
+下面是````javax.servlet.annotation````包下的注解。所有这些注解都有对应的 Web xsd 涵盖下的部署描述器元数据。
+
+* ````HttpConstraint````
+* ````HttpMethodConstraint````
+* ````MultipartConfig````
+* ````ServletSecurity````
+* ````WebFilter````
+* ````WebInitParam````
+* ````WebListener````
+* ````WebServlet````
+
+下列不同路径下的注解同样涵盖于````web.xml````和相关片段之下。
+
+````javax.annotation````包下：
+
+* ````PostConstruct````
+* ````PreDestroy````
+* ````Resource````
+* ````Resources````
+
+````javax.annotation.security````包下：
+
+* ````DeclareRoles````
+* ````RunAs````
+
+````javax.annotation.sql````包下：
+
+* ````DataSourceDefinition````
+* ````DataSourceDefinitions````
+
+````javax.ejb````包下：
+
+* ````EJB````
+* ````EJBs````
+
+````javax.jms````包下：
+
+* ````JMSConnectionFactoryDefinition````
+* ````JMSConnectionFactoryDefinitions````
+* ````JMSDestinationDefinition````
+* ````JMSDestinationDefinitions````
+
+````javax.mail````包下：
+
+* ````MailSessionDefinition````
+* ````MailSessionDefinitions````
+
+````javax.persistence````包下：
+
+* ````PersistenceContext````
+* ````PersistenceContexts````
+* ````PersistenceUnit````
+* ````PersistenceUnits````
+
+````javax.resource:````包下：
+
+* ````AdministeredObjectDefinition````
+* ````AdministeredObjectDefinitions````
+* ````ConnectionFactoryDefinition````
+* ````ConnectionFactoryDefinitions````
+
+下列包下的所有注解：
+
+* ````javax.jws````
+* ````javax.jws.soap````
+* ````javax.xml.ws````
+* ````javax.xml.ws.soap````
+* ````javax.xml.ws.spi````
+
+所有符合 Servlet 规范的 Web 容器都必须支持接下来的注解。
+
+### 8.1.1 ````@WebServlet````
+
+此注解用于在 web 应用中定义````Servlet````组件。
