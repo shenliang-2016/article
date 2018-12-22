@@ -1763,3 +1763,7 @@ public class MyListener implements ServletContextListener{
 
 ### 8.1.5 ````@MultipartConfig````
 
+此注解标注在````Servlet````上时，表示期望到来的请求是````multipart/form-data````类型。对应于该````servlet````的````HttpServletRequest````对象必须通过````getParts````和````getPart````方法使 mime 附件可用，目的是遍历所有的 mime 附件。````javax.servlet.annotation.MultipartConfig````的````location````属性，````<multipart-config>````的````<location>````元素会被解释为绝对路径，默认值就是````javax.servlet.context.tempdir````的值。如果指定了相对路径，就是相对于该````tempdir````而言。必须通过````java.io.File.isAbsolute````来判断到底是绝对路径还是相对路径。
+
+### 8.1.6 其它注解和约定
+
