@@ -630,6 +630,25 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 * JSP 的异步处理被用于内容产生默认不支持，同时异步处理必须在内容产生之前完成。处理这种情况是容器的能力范围。一旦所有的异步活动都结束，指向 JSP 页面的分发，尽管采用了 AsyncContext.dispatch ，仍然可以用于内容产生。
 * 下面的图展示了所有异步操作的状态变迁。
 
+````mermaid
+graph TD
+A(( )) -->B(Dispatching)
+B -- doFilter/service --> C(Dispatched)
+C -- return --> D(Completed)
+D -- onComplete --> Z(( ))
+C -- startAsync --> E(AsyncStarted)
+E -- dispatch --> F(ReDispatching)
+F -- return --> C
+E -- complete --> G(Completing)
+G -- return --> D
+E -- return --> H(AsyncWait)
+H -- dispatch --> B
+H -- complete --> D
+
+````
+
+
+
 
 #### 2.3.3.4  线程安全
 
