@@ -1693,4 +1693,73 @@ Web 应用的部署描述器文件中````web-app```` 元素包含````metadata-co
 
 ### 8.1.1 ````@WebServlet````
 
-此注解用于在 web 应用中定义````Servlet````组件。
+此注解用于在 web 应用中定义````Servlet````组件。此注解标注在类上，包含被声明````Servlet````的相关元数据。此注解的````urlPatterns```` 或者````value````属性必须存在。其它属性默认设置为可选。推荐的做法是，当注解上只有 url pattern 一个属性时使用````value````，而还有其他属性时使用````urlPatterns````。一个注解上同时使用````value````和````urlPatterns````属性是非法的。````Servlet````的默认名称如果没有专门指定则是类的全限定名。加上注解的````servlet````必须至少指定一个 url pattern 用于部署。如果同一个 servlet 类型在部署描述器中又以另外一个不同的名称声明，则另外一个新的 servlet 实例就必须被实例化。如果相同的 servlet 类通过程序方式 API 以不同的名称被添加到````ServletContext````中，则通过````@WebServlet````注解声明的属性值必须被忽略，指定名称的新的 servlet 实例必须被创建。
+
+标注了````@WebServlet````注解的类都必须继承````javax.servlet.http.HttpServlet````类。
+
+下面是这个注解如何使用的例子。
+
+````java
+@WebServlet("/foo")
+public class CalculatorServlet extends HttpServlet{
+    //...
+}
+````
+
+````java
+@WebServlet(name="MyServlet", urlPatterns={"/foo", "/bar"})
+public class SampleUsingAnnotationAttributes extends HttpServlet{
+    public void doGet(HttpServletRequest req, HttpServletResponse res){
+        //...
+    }
+}
+````
+
+### 8.1.2 ````@WebFilter````
+
+此注解用于在 web 应用中定义一个````Filter````。这个注解标注在类上，包含声明的过滤器的元数据。````Filter````的默认名称如果没有专门指定则就是类的全限定名。其````urlPatterns````、````servletNames````和````value````属性必须被指定。默认设定下其它所有属性是可选的。推荐的做法是，当注解上只有 url pattern 一个属性时使用````value````，而还有其他属性时使用````urlPatterns````。一个注解上同时使用````value````和````urlPatterns````属性是非法的。
+
+标注了````@WebFilter````注解的类都必须实现````javax.servlet.Filter````接口。
+
+下面是此注解使用的例子。
+
+````java
+@WebFilter("/foo")
+public class MyFilter implements Filter{
+    public void doFilter(HttpServletRequest req, HttpServletResponse res){
+        //...
+    }
+}
+````
+
+### 8.1.3 ````@WebInitParam````
+
+此注解用于指定任何需要传递给````Servlet````和````Filter````的初始化参数。它是````@WebServlet````和````@WebFilter````注解的一个属性。
+
+### 8.1.4 ````@WebListener````
+
+此注解用于在特定的 web 应用上下文中标注接收各种操作事件的监听器。此注解标注的类必须实现如下接口之一：
+
+* ````javax.servlet.ServletContextListener````
+* ````javax.servlet.ServletContextAttributeListener````
+* ````javax.servlet.ServletRequestListener````
+* ````javax.servlet.ServletRequestAttributeListener````
+* ````javax.servlet.http.HttpSessionListener````
+* ````javax.servlet.http.HttpSessionAttributeListener````
+* ````javax.servlet.htttp.HttpSessionIdListener````
+
+例子：
+
+````java
+@WebListener
+public class MyListener implements ServletContextListener{
+    public void contextInitialized(ServletContextEvent sce){
+        ServletContext sc = sce.getServletContext();
+        sc.addServlet("myServlet", "Sample servlet", "foo.bar.MyServlet", null, -1);
+        sc.addServletMapping("myServlet", new String[]{"/urlpattern/*"});
+    }
+}
+````
+
+### 8.1.5 ````@MultipartConfig````
+
