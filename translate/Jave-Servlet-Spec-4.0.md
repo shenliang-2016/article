@@ -1767,3 +1767,45 @@ public class MyListener implements ServletContextListener{
 
 ### 8.1.6 其它注解和约定
 
+除了这些注解，所有本规范15.5章节“注解和资源注入”中定义的注解都将可以和这些新注解共同在上下文中工作。
+
+默认情况下，所有应用的````welcome-file-lsit````文件列表中都包含````index.htm(l)````和````index.jsp````文件。部署描述器可以用来覆盖这些默认设定。
+
+当使用注解时，从````WEB-INF/classes````或者````WEB-INF/lib````下的框架 jar 包和类文件中加载监听器和 Servlets 的顺序是未指定的。如果此加载顺序很重要，则可以参考本规范后续关于部署描述器文件的介绍，该顺序只能由部署描述器指定。
+
+## 8.2 可插拔性
+
+### 8.2.1 ````web.xml````的模块化
+
+使用上面定义的注解时，可以有选择地使用````web.xml````。部署描述符被用于覆盖默认值或者通过注解设置的值。如前文所述，如果````web.xml````文件中的````metadata-complete````元素设置为````true````，类文件和 web-fragments 中指定部署信息的注解都将被忽略。这就暗示着应用的所有元数据实际上都是由````web.xml````部署描述器文件指定。
+
+为了更好的可插拔性，同时减少开发者的配置工作，我们引入了 web 模块部署描述器片段（ web fragment ）的概念。一个 web 片段可以是````web.xml````的一部分或者就是其本身，位于类库或者框架 jar 包的````META-INF````目录下。位于````WEB-INF/lib````路径下的不包含````web-fragment.xml````文件的普通 jar 文件同样被认为是一个 web 片段。其中指定的任何注解将按照8.2.3章节中的规则被处理。容器将按照下面的规则挑选并使用配置。
+
+Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用中的框架能够定义所有的应用组件，而不需要应用开发者在````web.xml````文件中编辑或者添加信息。它包含了几乎所有````web.xml````部署描述器使用的相同的元素。描述器的顶层元素必须是 web-fragment 而且相应的描述器文件名必须是````web-fragment.xml````。````web-fragment.xml````和````web.xml````文件中相关元素的顺序是不同的。更多细节可以参考本规范第14章内容。
+
+如果框架被打包成 jar 文件形式，而且其包含的元数据以部署描述器的形式存在，则````web-fragment.xml````描述器就必须位于 jar 文件的````META-INF/````路径下。
+
+如果一个框架希望它的````META-INF/web-fragment.xml````可以增强应用的````web.xml````，则该框架必须位于应用的````WEB-INF/lib````路径下。为了使得该框架的其它类型的资源对应用可用，该框架必须位于应用的类加载器委托链上的某个位置。换句话说，只有位于应用的````WEB-INF/lib````路径下的 JAR 文件，而不是那些高于类加载委托链的存在，需要基于````web-fragment.xml````文件被扫描。
+
+部署过程中，容器负责扫描上面指定的位置，找到````web-fragment.xml````然后处理它们。命名唯一性需求在只存在单独的````web.xml````文件和同时存在````web-fragment.xml````文件情况下是一样的。
+
+````xml
+<web-fragment>
+    <servlet>
+        <servlet-name>welcome</servlet-name>
+        <servlet-class>
+            WelcomeServlet
+        </servlet-class>
+    </servlet>
+    <listener>
+        <listener-class>
+            RequestListener
+        </listener-class>
+    </listener>
+</web-fragment>
+````
+
+上面的````web-fragment.xml````文件可以被包含进入框架的 jar 文件的````META-INF/````目录。来自该文件和注解的配置信息被应用的顺序是未定义的。如果对应用来说这个顺序很重要，请参考接下来定义的规则以获得期望的顺序。
+
+### 8.2.2 ````web.xml````和````web-fragment.xml````的顺序
+
