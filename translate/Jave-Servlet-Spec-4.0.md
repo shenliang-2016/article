@@ -628,26 +628,10 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 * 如果没有找到匹配的错误页面，或者错误页面也没有调用 AsyncContext.complete( ) 或者任何 AsyncContext.dispatch 方法，则容器必须自己调用 AsyncContext.complete( ) 方法。
 * 如果在调用 AsyncListener 的方法是发生异常，应该把异常纪录在日志里，而不能影响其他的 AsyncListener 。
 * JSP 的异步处理被用于内容产生默认不支持，同时异步处理必须在内容产生之前完成。处理这种情况是容器的能力范围。一旦所有的异步活动都结束，指向 JSP 页面的分发，尽管采用了 AsyncContext.dispatch ，仍然可以用于内容产生。
-* 下面的图展示了所有异步操作的状态变迁。
 
-````mermaid
-graph TD
-A(( )) -->B(Dispatching)
-B -- doFilter/service --> C(Dispatched)
-C -- return --> D(Completed)
-D -- onComplete --> Z(( ))
-C -- startAsync --> E(AsyncStarted)
-E -- dispatch --> F(ReDispatching)
-F -- return --> C
-E -- complete --> G(Completing)
-G -- return --> D
-E -- return --> H(AsyncWait)
-H -- dispatch --> B
-H -- complete --> D
+下面的图展示了所有异步操作的状态变迁：
 
-````
-
-
+![image-20181223193212373](/work/article/translate/assets/servlet/image-20181223193212373-5564732.png)
 
 
 #### 2.3.3.4  线程安全
