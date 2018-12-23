@@ -631,7 +631,7 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
 下面的图展示了所有异步操作的状态变迁：
 
-![image-20181223193212373](/work/article/translate/assets/servlet/image-20181223193212373-5564732.png)
+![image-20181223193212373](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181223193212373-5564732.png)
 
 
 #### 2.3.3.4  线程安全
