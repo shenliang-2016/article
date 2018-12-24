@@ -1812,3 +1812,66 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
 ### 8.2.2 ````web.xml````和````web-fragment.xml````的顺序
 
+由于此规范允许多个配置文件共同组成应用的配置资源，比如````web.xml````和````web-fragmeng.xml````文件，从若干不同的位置发现和加载它们，那么久必须考虑顺序问题。本章节说明了配置文件作者可以如何声明他们的组件的顺序需求。
+
+````web-fragment.xml````文件可以包含类型为````javaee:java-identifierType````的顶级````<name>````元素。每个````web-fragment.xml````文件中只能有一个````<name>````元素。如果该元素存在，则组件顺序就必须考虑它，除非如下文所述发生重名异常。
+
+两种情况必须被认为允许应用配置资源表达他们的顺序选择。
+
+1. 绝对顺序：````web.xml````中的````<absolute-ordering>````元素，每个````web.xml````文件中只能存在一个该元素。
+
+   a. 这种情况下，应该被按照下述第二种情况处理的顺序选择必须被忽略。
+
+   b. ````web.xml````和````WEB-INF/classes````必须在````absolute-ordering````元素的 web-fragments 列表中的所有成员之前被处理。
+
+   c. 任何````absolute-ordering````元素的直接孩子````<name>````元素都必须被解释为表示它们所指称的 web-fragments 的绝对顺序，无论是否存在，都必须被处理。
+
+   d. ````absolute-ordering````元素可以包含零个或者一个````<others/>````元素。该元素的行为要求下文给出。如果````absolute-ordering````元素不包含````<others/>````元素，任何没有在````<name/>````元素中特别提到的 web-fragment 都必须被忽略。被排除的 jars 中的注解标注的 servlets、过滤器以及监听器都不会被扫描。
+
+
+
+
+
+   ### 8.2.3 组装来自````web.xml````、````web-fragment.xml````和注解的部署描述符
+
+
+
+   ### 8.2.4 类库共享/运行时可插拔性
+
+
+
+
+
+   ## 8.3 JSP 容器可插拔性
+
+
+
+   ## 8.4 处理注解和片段
+
+   Web 应用可以同时包含注解、````web.xml````以及````web-fragment.xml````等部署描述器。如果没有部署描述器，或者存在部署描述器，但是````metadata-complete````属性没有被设置为````true````，则应用中存在的注解、````web.xml````以及````web-fragment.xml````等部署描述器都必须被处理。下表描述了在各种情况下是否应该处理注解、````web.xml````以及````web-fragment.xml````等部署描述器：
+
+   | 部署描述器           | metadata-complete | process annotations and web fragment |
+   | :------------------- | ----------------- | ------------------------------------ |
+   | web.xml 2.5          | yes               | no                                   |
+   | web.xml 2.5          | no                | yes                                  |
+   | web.xml 3.0 or later | yes               | no                                   |
+   | web.xml 3.0 or later | no                | yes                                  |
+
+   ----
+
+   # 请求分发
+
+   ----
+
+   构建 Web 应用时，将请求处理过程转发给别的 servlet 或者将别的 servlet 的输出包含在响应中是非常有用的。````RequestDispatcher````接口提供了该特性的实现机制。
+
+   当请求的异步处理可用时，````AsyncContext````允许用户将请求转发回 servlet 容器。
+
+   ## 9.1 获取````RequestDispatcher````
+
+   通过下面两个方法可以从````ServletContext````中获取实现了````RequestDispatcher````接口的对象：
+
+   * ````getRequestDispatcher````
+   * ````getNamedDispatcher````
+
+   ````getRequestDispatcher````方法使用一个字符串类型的参数，该参数描述````ServletContext````作用域内的一个路径。
