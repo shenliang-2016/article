@@ -1905,3 +1905,116 @@ rd.include(request, response);
 ````RequestDispatcher````接口的````include````方法可以在任何时候被调用。该方法的目标 servlet 拥有请求对象的全部访问权限。但是对响应对象的使用则是有限制的。它只能向响应对象中的````ServletOutputStream````或者````Writer````写入信息，以及通过向响应缓冲区之后吸入内容，或者直接调用````ServletResponse````接口的````flushBuffer````方法来提交响应。它不能设置响应头部，或者调用任何能够影响响应头部的方法，调用````HttpServletRequest.getSession()````和````HttpServletRequest.getSession(boolean)````方法将发生异常。任何修改响应头部的企图都将被忽略，调用````HttpServletRequest.getSession()````和````HttpServletRequest.getSession(boolean)````方法，这些方法调用将导致添加 Cookie 响应头部，如果响应已经被提交，则必须抛出````IllegalStateException````。
 
 如果默认 servlet 就是````RequestDispatcher.include()````方法的目标，同时请求的资源不存在，则默认 servlet 必须抛出````FileNotFoundException````。如果该异常没有被捕获并粗粒，则响应尚未提交，则响应状态码就必须设置为500。
+
+### 9.3.1 包含的请求参数
+
+除了通过````getNamedDispatcher````方法获取的 servlet ，别的 servlet 通过````RequestDispatcher````的````include````方法调用的 servlet ，都拥有它被调用时所在的路径的访问权限。
+
+下列请求属性必须设定：
+
+````java
+javax.servlet.include.request_uri
+javax.servlet.include.context_path
+javax.servlet.include.servlet_path
+javax.servlet.include.mapping
+javax.servlet.include.path_info
+javax.servlet.include.query_string
+````
+
+被包含的 servlet 这些属性可以通过请求对象的````getAttribute````方法访问，同时它们的值必须等于请求 URI 、上下文路径、servlet 路径、路径信息以及被包含的 servlet 的查询字符串。如果后续有请求被包含，则这些属性就会被包含进来的请求属性覆盖。如果被包含的 servlet 是通过````getNamedDispatcher````方法获取，则这些属性就不能被设置。
+
+## 9.4 Forward 方法
+
+````RequestDispatcher````接口的````forward````方法可以被调用，调用者 servlet 仅当输出尚未被提交给客户端时可以调用该方法。如果响应缓冲区中的输出数据尚未提交，则该内容在目标 servlet 的````service````方法被调用之前必须被清除。如果响应已经被提交，则必须抛出````IllegalStateException````异常。
+
+暴露给目标 servlet 的请求对象的路径元素必须表达用于获取````RequestDispatcher````的路径。
+
+唯一的例外就是通过````getNamedDispatcher````方法获取````RequestDispatcher````，这种情况下，请求对象的路径元素必须表示原始请求的路径。
+
+````RequestDispatcher````接口的````forward````正常返回之前，响应内容必须被发送和提交，同时被容器关闭，除非请求进入异步模式。如果````RequestDispatcher.forward()````方法发生错误，则该异常会反向传播，穿过所有调用方过滤器和 servlets ，最终返回容器。
+
+### 9.4.1 查询字符串
+
+请求分发机制在转发和包含请求的同时负责聚合查询字符串参数。
+
+### 9.4.2 转发请求参数
+
+除了通过````getNamedDispatcher````方法获取的 servlet ，别的 servlet 通过````RequestDispatcher````的````forward````方法调用的 servlet ，都拥有它被调用时所在的路径的访问权限。
+
+下列请求属性必须被设置：
+
+````java
+javax.servlet.forward.request_uri
+javax.servlet.forward.context_path
+javax.servlet.forward.servlet_path
+javax.servlet.forward.mapping
+javax.servlet.forward.path_info
+javax.servlet.forward.query_string
+````
+
+这些属性的值必须等于在请求对象上调用````HttpServletRequest````的````getRequestURI````、````getContextPath````、````getServletPath````、````getPathInfo````、````getQueryString````方法的返回值，传递给调用链上第一个 servlet 对象，该对象接收来自客户端的请求。
+
+这些属性可以通过请求对象上的````getAttribute````方法从被转发的 servlet 访问。注意，这些属性必须永远表示初始请求中的信息，即使是在多次转发和存在后续 includes 调用的情况下。
+
+如果被转发的 servlet 通过````getNamedDispatcher````方法获取，这些属性就不能被设置。
+
+## 9.5 错误处理
+
+如果作为请求转发目标的 servlet 抛出运行期异常或者受检查的异常，````ServletException````或者````IOException````异常，它应该被传递给调用方 servlet 。所有其它异常应该被包装成````ServletException````，同时异常的根原因设置为初始异常，这种异常也不应该被传播。
+
+## 9.6 获取异步上下文
+
+实现了````AsyncContext````接口的对象可以通过````startAsync````方法从````ServletRequest````中获取。一旦你拥有了一个````AsyncContext````，就可以使用它要么通过````complete()````方法完成请求处理，要么使用下面介绍的````dispatch````方法之一。
+
+## 9.7 Dispatch 方法
+
+使用下列方法可以从````AsyncContext````分发请求：
+
+* ````dispatch(path)````
+
+  使用一个字符串参数的````dispatch````方法，该字符串参数表示````ServletContext````范围内的一个路径。该路径必须相对于````ServletContext````的根路径，并以'/'开头。
+
+* ````dispatch(servletContext, path)````
+
+  使用一个字符串参数的````dispatch````方法，该字符串参数表示给定````ServletContext````范围内的一个路径。该路径必须相对于````ServletContext````的根路径，并以'/'开头。
+
+* ````dispatch()````
+
+  无参方法，使用初始 URI 作为路径。如果````AsyncContext````通过````startAsync(ServletRequest, ServletReponse)````方法被初始化，同时请求被作为````HttpServletRequest````实例被传递，则转发的目标就是`````HttpServletRequest.getRequestURI()````方法返回的 URI 。否则，如果该转发就是容器的最后一次，则转发目标就是请求的 URI 。
+
+````AsyncContext````接口的以上几个转发方法可以被等待异步事件发生的应用调用。如果````AsyncContext````的````complete()````方法已经被调用，就必须抛出````IllegalStateException````异常。各种分发方法立即返回并且放弃提交响应。
+
+暴露给目标 servlet 的请求对象的路径元素必须表示````AsyncContext.dispatch````指定的路径。
+
+### 9.7.1 查询字符串
+
+请求分发机制在分发请求的同时负责聚合查询字符串。
+
+### 9.7.2 被分发的请求参数
+
+通过````AsyncContext````的````dispatch````方法被调用的 servlet 拥有初始请求路径的访问权限。
+
+下列请求属性必须被设置：
+
+```java
+javax.servlet.async.request_uri
+javax.servlet.async.context_path
+javax.servlet.async.servlet_path
+javax.servlet.async.mapping
+javax.servlet.async.path_info
+javax.servlet.async.query_string
+```
+
+这些属性的值必须等于在请求对象上调用````HttpServletRequest````的````getRequestURI````、````getContextPath````、````getServletPath````、````getPathInfo````、````getQueryString````方法的返回值，传递给调用链上第一个 servlet 对象，该对象接收来自客户端的请求。
+
+这些属性可以通过请求对象上的````getAttribute````方法从被分发的 servlet 访问。注意，这些属性必须永远表示初始请求中的信息，即使是在多次分发的情况下。
+
+----
+
+# Web 应用
+
+----
+
+一个 Web 应用是一系列 servlets 、HTML 页面、类以及其它资源的集合，它们共同构成 Web 服务器上的完整应用。Web 应用可以被打包并运行在各个供应商提供的各种容器中。
+
+## 10.1 Web 服务器上的 Web 应用
