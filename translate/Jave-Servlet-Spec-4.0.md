@@ -2018,3 +2018,21 @@ javax.servlet.async.query_string
 一个 Web 应用是一系列 servlets 、HTML 页面、类以及其它资源的集合，它们共同构成 Web 服务器上的完整应用。Web 应用可以被打包并运行在各个供应商提供的各种容器中。
 
 ## 10.1 Web 服务器上的 Web 应用
+
+Web 应用位于 Web 服务器上特定路径下。例如，catalog 应用可能位于````http://www.example.com/catalog````路径。所有以该路径开头的请求都会被路由到表示该应用的````ServletContext````。
+
+servlet 容器能够建立规则以自动产生 Web 应用。比如，````~user/````映射可以被用于映射到位于````/home/user/public_html/````的应用。
+
+默认情况下，任何时候 Web 应用实例都必须只运行在一个虚拟机上，除非部署描述器文件中将该应用标志为分布式的。标志为分布式的应用必须遵循更多约束规则集合限制。这些限制规则遍布此规范始终。
+
+## 10.2 与 ServletContext 的关系
+
+容器必须强制保证 Web 应用和````ServletContext````的一一对应关系。````ServletContext````对象实际上提供了一个 servlet 以及 servlet 视角的应用视图。
+
+## 10.3 Web 应用元素
+
+Web 应用可以包含以下几种元素：
+
+* Servlets
+* JSP 页面
+* ​
