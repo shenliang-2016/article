@@ -2057,3 +2057,91 @@ Web 应用以文件夹层级结构的形式存在。该层级结构的根就是�
 * ````/WEB-INF/lib/*.jar```` Java JAR 文件，这些文件包含 servlets 、beans 、静态资源以及打包进 JAR 文件的 JSP，以及其它对应用很有用的通用类。应用的类加载器必须可以从所有这些压缩文件中加载类。
 
 应用的类加载器必须首先从````WEB-INF/classes````目录加载类，然后是````WEB-INF/lib````目录下的 JAR 文件。同时，除了打包进    JAR 文件的静态资源，任何访问````WEB-INF/````目录下资源的客户端请求都必须返回````SC_NOT_FOUND(404)````状态的响应。
+
+### 10.5.1 应用目录结构的例子
+
+下面是例子 Web 应用中所有文件的清单：
+
+````
+/index.html
+/howto.jsp
+/feedback.jsp
+/images/banner.gif
+/images/jumping.gif
+/WEB-INF/web.xml
+/WEB-INF/lib/jspbean.jar
+/WEB-INF/lib/catalog.jar!/META-INF/resources/catalog/moreOffers/books.html
+/WEB-INF/classes/com/mycorp/servlets/MyServlet.class
+/WEB-INF/classes/com/mycorp/util/MyUtils.class
+````
+
+## 10.6 Web 应用压缩文件
+
+Web 应用可以通过标准 Java 压缩工具被签名并打包成为 Web ARchive 格式文件（WAR）。例如，一个用于问题跟踪的应用可能被以````issuetrack.war````的形式发布。
+
+当被打包为该形式之后，````META-INF````文件夹将存在其中，包含打包工具使用的重要信息。该文件夹内容不能被容器直接提供给客户端请求，但是对 servlet 代码是可见的，servlet 可以通过在````ServletContext````上调用````getResource````和````getResourceAsStream````方法访问。同时，任何访问````META-INF/````目录下资源的客户端请求都必须返回````SC_NOT_FOUND(404)````状态的响应。
+
+## 10.7 部署描述器
+
+部署描述器包含以下几种类型的配置和部署信息：
+
+* ````ServletContext````初始化参数
+* 会话配置
+* Servlet/JSP 定义
+* Servlet/JSP 映射
+* MIME 类型映射
+* 欢迎页面列表
+* 错误信息页面
+* 安全
+
+### 10.7.1 对扩展的依赖
+
+当大量应用都用到相同的代码或者资源时，典型的做法是将这些内容作为库文件安装进容器中。这些文件通常是普通的标准 API ，因此可以任意使用而不牺牲其可移植性。只被一个或者少数几个应用使用的文件将被作为应用的一部分而对应用可见。容器必须为这些文件提供响应的文件目录。该目录下的文件必须对所有 Web 应用都是可用的。对于不同的容器这个路径不尽相同。容器用来加载这些库文件的类加载器必须与处于同一个 JVM 中的所有应用使用的类加载器一样。该类加载器实例必须在应用的类加载器的父类加载器链上。
+
+应用开发者必须知道哪些扩展被安装到了容器内，容器需要知道需要依赖这些类库文件中的哪些 servlets 以保持可移植性。
+
+依赖以上形式扩展的应用开发者必须在 WAR 文件中提供一个````META-INF/MANIFEST.MF````实体用于列出所有需要的扩展。该实体内容格式应该遵循标准 JAR manifest 文件格式。在应用部署过程中，容器必须采用准确版本的扩展，确定扩展版本的规则由 Optional Package Versioning 机制定义。
+
+````http://docs.oracle.com/javase8/docs/technotes/guides/extensions/versioning.html````
+
+容器也必须能够识别 WAR 包的````WEB-INF/lib````路径下的类库 JAR 文件内的 manifest 实体内容中声明的依赖。
+
+如果容器无法满足上述方式声明的依赖，则它应该通过包含准确信息的错误信息页面来拒绝该应用。
+
+### 10.7.2 Web 应用类加载器
+
+容器用于从 WAR 包中加载 servlet 的类加载器必须允许开发者通过正常的 Java SE 语法，使用````getResource````方法从 WAR 包中的类库文件中加载任意类型的资源。正如 Java EE 许可证文件中描述的，尽管 servlet 容器并不是 Java EE 产品的一部分，但是同样不能允许应用覆盖 Java SE 平台的类，比如````java.*````和````javax.*````命名空间下的类。容器不应该允许应用覆盖或者访问容器的实现类。推荐做法，应用的类加载器实现应该可以做到，打包进 WAR 包的类和资源可以在容器级别的类库文件中的类和资源之前被加载。一个实现必须保证对所有部署在容器内的应用，一个````Thread.currentThread.getContextClassLoader()````方法调用必须返回一个实现类本章节规范的````ClassLoader````实例。进一步的，该````ClassLoader````实例必须是专属于每个部署好的应用的。容器需要在让任何回调（包括监听器回调）进入应用之前，按照上面的描述设置线程上下文````ClassLoader````实例，同时一旦回调返回就将其设置回初始````ClassLoader````。
+
+## 10.8 替换应用
+
+服务器应该可以在不重启容器的情况下将应用更新为新版本。当一个应用被更新，容器应该提供一个健壮的方法用于保存应用中的会话数据。
+
+## 10.9 错误处理
+
+### 10.9.1 请求属性
+
+Web 应用必须能够做到，当错误发生时，可以利用其它资源用于产生错误响应的内容体。这些资源的规范在部署描述器中描述。
+
+如果错误处理器是 servlet 或者 JSP 页面，则：
+
+* 由容器创建的初始的未包装的请求和响应对象被传入这个 servlet 或者 JSP 页面。
+* 请求路径和属性被设置，就像指向错误资源的````RequestDispatcher.forward````方法被执行后一样。
+* 下面表中的请求属性必须被设置。
+
+| Request Attributes                 | Type                |
+| ---------------------------------- | ------------------- |
+| javax.servlet.error.status_code    | java.lang.Integer   |
+| javax.servlet.error.exception_type | java.lang.Class     |
+| javax.servlet.error.message        | java.lang.String    |
+| javax.servlet.error.exception      | java.lang.Throwable |
+| javax.servlet.error.request_uri    | java.lang.String    |
+| javax.servlet.error.servlet_name   | java.lang.String    |
+
+这些属性允许 servlet 基于状态码、异常类型、错误消息，被传播的异常对象、错误发生的 servlet（调用````getRequestURI````方法） 处理的请求的 URI 以及发生错误的 servlet 的逻辑名称等，产生特定的内容。
+
+规范2.3版本介绍的异常对象属性列表中，异常对象和错误信息属性是冗余的，保留它们是为了保持对早期版本的兼容性。
+
+### 10.9.2 错误页面
+
+为了允许开发者自定义由 servlet 产生并返回 Web 客户端的错误信息，部署描述器定义了一系列错误页面描述。
+
