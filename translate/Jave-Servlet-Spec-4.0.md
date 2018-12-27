@@ -2260,20 +2260,35 @@ Servlet 事件监听器支持````ServletContext````、````HttpSession````以及`
 
 servlet 上下文事件
 
-| 事件类型 | 描述                                 | 监听器接口                                    |
-| ---- | ---------------------------------- | ---------------------------------------- |
-| 生命周期 | Servlet 上下文刚被创建，已经对首个请求可用，或者即将被关闭。 | javax.servlet.ServletContextListener     |
-| 属性变化 | Servlet 上下文属性被添加、删除或者替换。           | javax.servlet.ServletContextAttributeListener |
+| 事件类型 | 描述                                                         | 监听器接口                                            |
+| -------- | ------------------------------------------------------------ | ----------------------------------------------------- |
+| 生命周期 | Servlet 上下文刚被创建，已经对首个请求可用，或者即将被关闭。 | ````javax.servlet.ServletContextListener````          |
+| 属性变化 | Servlet 上下文属性被添加、删除或者替换。                     | ````javax.servlet.ServletContextAttributeListener```` |
 
 HTTP 会话事件
 
-| 事件类型  | 描述                                | 监听器接口                                    |
-| ----- | --------------------------------- | ---------------------------------------- |
-| 生命周期  | ````HttpSession````已经被创建，不可用，或者超时 | javax.servlet.http.HttpSessionListener   |
-| 属性变化  | ````HttpSession````中的属性被添加、删除或者替换 | javax.servlet.http.HttpSessionAttributeListener |
-| id 变化 | ````HttpSession````的 id 已经改变      | javax.servlet.http.HttpSessionIdListener |
-| 会话迁移  | ````HttpSession````被激活或者冻结        | javax.servlet.http.HttpSessionActivationListener |
-| 对象绑定  | 对象被绑定到````HttpSession````或者被从其上解绑 | javax.servlet.http.HttpSessionBindingListener |
+| 事件类型 | 描述                                            | 监听器接口                                               |
+| -------- | ----------------------------------------------- | -------------------------------------------------------- |
+| 生命周期 | ````HttpSession````已经被创建，不可用，或者超时 | ````javax.servlet.http.HttpSessionListener````           |
+| 属性变化 | ````HttpSession````中的属性被添加、删除或者替换 | ````javax.servlet.http.HttpSessionAttributeListener````  |
+| id 变化  | ````HttpSession````的 id 已经改变               | ````javax.servlet.http.HttpSessionIdListener````         |
+| 会话迁移 | ````HttpSession````被激活或者冻结               | ````javax.servlet.http.HttpSessionActivationListener```` |
+| 对象绑定 | 对象被绑定到````HttpSession````或者被从其上解绑 | ````javax.servlet.http.HttpSessionBindingListener````    |
 
 Servlet 请求事件
+
+| 时间类型 | 描述                                             | 监听器接口                                            |
+| -------- | ------------------------------------------------ | ----------------------------------------------------- |
+| 生命周期 | Web 组件开始处理请求                             | ````javax.servlet.ServletRequestListener````          |
+| 属性变化 | ````ServletRequest````上的属性新增、删除或者替换 | ````javax.servlet.ServletRequestAttributeListener```` |
+| 异步事件 | 异步处理超时、连接终止或者完成                   | ````javax.servlet.AsyncListener````                   |
+
+有关 API 的细节请参考 API 参考文档。
+
+### 11.2.2 使用监听器的例子
+
+为了举例说明事件体系的使用，考虑一个简单的 Web 应用，包含一系列使用数据库的 servlet 。开发者已经提供了一个 servlet 上下文监听器类用于管理数据库连接。
+
+1. 当应用启动时，监听器类被通知。应用开始使用数据库，同时将数据库连接保存到 servlet 上下文中。
+2. 
 
