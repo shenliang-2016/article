@@ -2290,5 +2290,77 @@ Servlet 请求事件
 为了举例说明事件体系的使用，考虑一个简单的 Web 应用，包含一系列使用数据库的 servlet 。开发者已经提供了一个 servlet 上下文监听器类用于管理数据库连接。
 
 1. 当应用启动时，监听器类被通知。应用开始使用数据库，同时将数据库连接保存到 servlet 上下文中。
-2. 
+2. 在整个 Web 应用活动期间，应用中的 servlet 按需访问数据库连接。
+3. 当 Web 服务器被关闭时，或者应用被从服务器上删除，监听器被通知到，然后数据库连接被关闭。
+
+## 11.3 监听器类配置
+
+### 11.3.1 监听器类规范
+
+应用开发者提供的监听器类实现在````javax.servlet````API 中的一个或者多个监听器接口。每个监听器类都必须有一个公开的无参构造器。监听器类被打包进 WAR 包，要么在````WEB-INF/classes````路径下压缩包实体中，要么处于````WEB-INF/lib````目录下的 JAR 文件中。
+
+### 11.3.2 部署声明
+
+监听器类在应用的部署描述器中用````listener````元素声明。它们的类名按照将要被调用的顺序排列。与其它监听器不同，````AsyncListener````类型的监听器只能被通过编程方式注册（连同````ServletRequest````）。
+
+### 11.3.3 监听器注册
+
+容器在应用处理第一个请求之前创建每个监听器类实例并注册它用于监听通知事件。容器根据实现的接口以及出现在部署描述器中的顺序注册监听器实例。在应用执行过程中，监听器通常会按照注册顺序被调用，但是并不绝对。比如，````HttpSessionListener.destroy````就会被逆序调用。更多细节参见8.2.3章节。
+
+### 11.3.4 关闭时的通知
+
+当应用关闭时，监听器会被按照它们的声明顺序被逆序通知，首先通知会话监听器，然后通知上下文监听器。会话监听器必须在上下文监听器呗应用关闭事件通知到之前被会话无效事件通知到。
+
+## 11.4 部署描述器举例
+
+下面的例子说明如何在部署描述器中注册两个 servlet 上下文生命周期监听器和一个````HttpSession````监听器。
+
+假定````com.example.MyConnectionManager````和````com.example.MyLoggingModule````都实现了````java.servlet.ServletContextListener````接口，同时````com.example.MyLoggingModule````另外还实现了````java.servlet.http.HttpSessionListener````接口。开发者希望````com.example.MyConnectionManager````可以在````com.example.MyLoggingModule````之前被 servlet 上下文生命周期时间通知到。下面就是该应用的部署描述器：
+
+````xml
+<web-app>
+    <display-name>MyListeningApplication</display-name>
+    <listener>
+        <listener-class>com.example.MyConnectionManager</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.example.MyLoggingModule</listener-class>
+    </listener>
+    <servlet>
+        <display-name>RegistrationServlet</display-name>
+    </servlet>
+</web-app>
+````
+
+## 11.5 监听器实例和线程
+
+容器必须保证在应用开始处理第一个请求之前完成所有监听器类的实例化。容器必须维护每个监听器实例的引用直到最后一个请求被应用服务完成。
+
+````ServletContext````和````HttpSession````对象的属性变化必须同步发生。容器并不强制要求保证同步通知响应的属性监听器类实例。维护该状态的监听器类应该保证数据的完整性，同时应当明确地处理这种情况。
+
+## 11.6 监听器异常
+
+监听器内部的逻辑代码可以在执行过程中抛出异常。一些监听器通知发生在应用中其它组件的调用树之下。比如，一个 servlet 设定一个会话属性，而对应的会话监听器抛出了一个未经处理的异常。容器必须允许未处理的异常被错误页面机制处理。如果没有为该异常指定对应的错误页面，容器必须保证发送一个500状态码的响应。这种情况下该事件下其它监听器都不会被调用。
+
+某些异常不是发生在应用中其它组件的调用栈之下。比如，一个````SessionListener````接收到一个会话超时事件通知，然后抛出了一个未处理的异常，或者一个````ServletContextListener````在处理 servlet 上下文初始化事件通知过程中抛出一个未处理的异常，再或者一个````ServletRequestListener````处理请求对象初始化或者析构事件通知过程中抛出一个未处理的异常。这种情况下，开发者没有机会处理异常。容器可以对接下来的请求统统返回状态码500响应，表示出现了应用错误。
+
+开发者如果希望当监听器发生异常之后后续还能正常处理请求，则必须保证监听器在通知事件处理方法中自行处理该异常。
+
+## 11.7 分布式容器
+
+在分布式容器中，````HttpSession````实例的作用域局限于特定 JVM 服务的会话请求，````ServletContext````对象作用域就是容器所在的 JVM 。分布式容器不强制要求将 servlet 上下文事件或者````HttpSession````事件传播给别的 JVM 。监听器类实例作用域局限于每个 JVM 中的每个部署描述器。
+
+## 11.8 会话事件
+
+监听器类提供给开发者一种在应用中追踪会话的机制。会话追踪在某些情况下非常有用，比如判断会话实效是因为容器标记该会话超时，还是因为应用组件调用了````invalidate````方法。该区别可以直接由使用监听器和````HttpSession````接口方法决定。
+
+----
+
+# 映射请求到 Servlets
+
+----
+
+本章节中描述的映射技术被 Web 容器用于将客户端请求映射到 servlets 。
+
+## 12.1 URL 路径使用
 
