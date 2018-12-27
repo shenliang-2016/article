@@ -2236,3 +2236,44 @@ Servlet 容器，并不是 Java EE 技术规范的一部分，我们鼓励而不
 
 web 应用不一定要包含 web.xml 文件，如果应用中没有任何 servlet、过滤器或者监听器组件，也没有用注解声明这些组件，就不需要该文件。换句话说，如果应用只包含静态文件或者 JSP 页面，则并不需要 web.xml 文件。
 
+----
+
+# 应用生命周期事件
+
+----
+
+## 11.1 介绍
+
+应用事件机制给与应用开发者更大的控制力，包括对于````ServletContext````和````HttpSession````以及````ServletRequest````的生命周期的控制，允许更好的代码分解，以及更高效地管理应用中的资源。
+
+## 11.2 事件监听器
+
+应用事件监听器实现了一个或者多个 servlet 事件监听器接口。在应用部署过程中这些事件监听器被实例化并注册到容器中。它们由开发者在 WAR 包中提供。
+
+Servlet 事件监听器支持````ServletContext````、````HttpSession````以及````ServletRequest````对象中的状态发生变化时发出的事件通知。Servlet 上下文监听器用于管理应用中处于 JVM 层面的资源和状态的管理。HTTP 会话监听器用于管理来自同一个客户端或者用户的一系列请求相关的资源和状态。Servlet 请求监听器用于管理整个 servlet 请求生命周期中的状态。异步监听器用于管理异步处理超时或者完成等事件。
+
+可以有多个监听器在监听同一个类型的事件，开发者可以指定容器对每种事件类型以何种顺序调用其监听器实例。
+
+### 11.2.1 事件类型和监听器接口
+
+事件类型与监控它们的监听器接口如下：
+
+servlet 上下文事件
+
+| 事件类型 | 描述                                 | 监听器接口                                    |
+| ---- | ---------------------------------- | ---------------------------------------- |
+| 生命周期 | Servlet 上下文刚被创建，已经对首个请求可用，或者即将被关闭。 | javax.servlet.ServletContextListener     |
+| 属性变化 | Servlet 上下文属性被添加、删除或者替换。           | javax.servlet.ServletContextAttributeListener |
+
+HTTP 会话事件
+
+| 事件类型  | 描述                                | 监听器接口                                    |
+| ----- | --------------------------------- | ---------------------------------------- |
+| 生命周期  | ````HttpSession````已经被创建，不可用，或者超时 | javax.servlet.http.HttpSessionListener   |
+| 属性变化  | ````HttpSession````中的属性被添加、删除或者替换 | javax.servlet.http.HttpSessionAttributeListener |
+| id 变化 | ````HttpSession````的 id 已经改变      | javax.servlet.http.HttpSessionIdListener |
+| 会话迁移  | ````HttpSession````被激活或者冻结        | javax.servlet.http.HttpSessionActivationListener |
+| 对象绑定  | 对象被绑定到````HttpSession````或者被从其上解绑 | javax.servlet.http.HttpSessionBindingListener |
+
+Servlet 请求事件
+
