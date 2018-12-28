@@ -2260,28 +2260,28 @@ Servlet 事件监听器支持````ServletContext````、````HttpSession````以及`
 
 servlet 上下文事件
 
-| 事件类型 | 描述                                                         | 监听器接口                                            |
-| -------- | ------------------------------------------------------------ | ----------------------------------------------------- |
-| 生命周期 | Servlet 上下文刚被创建，已经对首个请求可用，或者即将被关闭。 | ````javax.servlet.ServletContextListener````          |
-| 属性变化 | Servlet 上下文属性被添加、删除或者替换。                     | ````javax.servlet.ServletContextAttributeListener```` |
+| 事件类型 | 描述                                 | 监听器接口                                    |
+| ---- | ---------------------------------- | ---------------------------------------- |
+| 生命周期 | Servlet 上下文刚被创建，已经对首个请求可用，或者即将被关闭。 | ````javax.servlet.ServletContextListener```` |
+| 属性变化 | Servlet 上下文属性被添加、删除或者替换。           | ````javax.servlet.ServletContextAttributeListener```` |
 
 HTTP 会话事件
 
-| 事件类型 | 描述                                            | 监听器接口                                               |
-| -------- | ----------------------------------------------- | -------------------------------------------------------- |
-| 生命周期 | ````HttpSession````已经被创建，不可用，或者超时 | ````javax.servlet.http.HttpSessionListener````           |
-| 属性变化 | ````HttpSession````中的属性被添加、删除或者替换 | ````javax.servlet.http.HttpSessionAttributeListener````  |
-| id 变化  | ````HttpSession````的 id 已经改变               | ````javax.servlet.http.HttpSessionIdListener````         |
-| 会话迁移 | ````HttpSession````被激活或者冻结               | ````javax.servlet.http.HttpSessionActivationListener```` |
-| 对象绑定 | 对象被绑定到````HttpSession````或者被从其上解绑 | ````javax.servlet.http.HttpSessionBindingListener````    |
+| 事件类型  | 描述                                | 监听器接口                                    |
+| ----- | --------------------------------- | ---------------------------------------- |
+| 生命周期  | ````HttpSession````已经被创建，不可用，或者超时 | ````javax.servlet.http.HttpSessionListener```` |
+| 属性变化  | ````HttpSession````中的属性被添加、删除或者替换 | ````javax.servlet.http.HttpSessionAttributeListener```` |
+| id 变化 | ````HttpSession````的 id 已经改变      | ````javax.servlet.http.HttpSessionIdListener```` |
+| 会话迁移  | ````HttpSession````被激活或者冻结        | ````javax.servlet.http.HttpSessionActivationListener```` |
+| 对象绑定  | 对象被绑定到````HttpSession````或者被从其上解绑 | ````javax.servlet.http.HttpSessionBindingListener```` |
 
 Servlet 请求事件
 
-| 时间类型 | 描述                                             | 监听器接口                                            |
-| -------- | ------------------------------------------------ | ----------------------------------------------------- |
-| 生命周期 | Web 组件开始处理请求                             | ````javax.servlet.ServletRequestListener````          |
+| 时间类型 | 描述                                  | 监听器接口                                    |
+| ---- | ----------------------------------- | ---------------------------------------- |
+| 生命周期 | Web 组件开始处理请求                        | ````javax.servlet.ServletRequestListener```` |
 | 属性变化 | ````ServletRequest````上的属性新增、删除或者替换 | ````javax.servlet.ServletRequestAttributeListener```` |
-| 异步事件 | 异步处理超时、连接终止或者完成                   | ````javax.servlet.AsyncListener````                   |
+| 异步事件 | 异步处理超时、连接终止或者完成                     | ````javax.servlet.AsyncListener````      |
 
 有关 API 的细节请参考 API 参考文档。
 
@@ -2364,3 +2364,31 @@ Servlet 请求事件
 
 ## 12.1 URL 路径使用
 
+收到客户端i请求后，容器决定将其转发给某个应用。被选中的应用必须拥有最长的匹配到请求 URL 的前缀的上下文路径。匹配到的 URL 部分就是请求映射到 servlet 时的上下文路径。请求 URL 被以 UTF-8 进行字符串编码，实现可以提供容器提供商指定的配置用于改变此编码，或者采用更有效的编码来对请求 URI 的路径和查询字符串进行编码。注意，URL 之后剩余部分的编码可以配置，细节参见3.12章节“请求数据编码”。
+
+容器接下来必须基于下面描述的路径映射过程来定位处理请求的 servlet 。
+
+用于映射到 servlet 的路径是来自请求对象的 URL 减去上下文路径和路径参数之后的结果。URL 路径映射以此执行以下规则。找到首个成功的匹配就不会继续尝试匹配。
+
+1. 容器将尝试发现一个请求路径到 servlet 路径的精确匹配，成功则选中该 servlet 。
+2. 容器将递归尝试匹配最长路径前缀。该过程就是通过沿着路径树目录搜索，采用“/”作为路径分隔符。最长匹配决定了 servlet 选择。
+3. 如果 URL 路径的最后一段包含一个扩展名，比如````.jsp````，则容器将尝试基于该扩展名匹配一个 servlet 来处理该请求。扩展名作为路径的最后一段，位于````.````字符之后。
+4. 如果上述三条规则都未能匹配到 servlet ，容器将尝试基于被请求的资源提供合适的内容。如果应用中定义了所谓的“默认” servlet ，则其将被使用。许多容器都明确提供了默认 servlet 用于提供内容。
+
+容器必须以大小写敏感的方式对路径进行字符串匹配。
+
+## 12.2 映射规范
+
+在应用的部署描述器文件中，下列语法用于定义映射：
+
+* 以 "/" 字符开头、以 "/*" 后缀结尾的的字符串用于路径映射。
+* 以 "*." 前缀开头的字符串被用作扩展映射。
+* 空字符串 “” 是一个特殊 URL 模式，精确映射到应用的上下文根目录。比如，形如````http://host:port/<context-path>/````的请求。这种情况下，路径信息就是 “/” ，而 servlet 路径和上下文路径都是空字符串 “”。
+* 只有一个 “/” 字符的字符串表示所谓的“默认” servlet 。这种i情况下，该 servlet 的路径就是请求 URL 减去上下文路径和路径信息，此时路径信息为空。
+* 其它所有字符串都仅仅用于精确匹配。
+
+如果有效的````web.xml````（合并所有应用片段和注解信息之后）包含任何可以映射到多个 servlet 的 url-pattern ，则应用部署必须失败。
+
+### 12.2.1 隐式映射
+
+如果容器拥有一个内部 JSP 容器，则````*.jsp````扩展名就会被映射到其上。
