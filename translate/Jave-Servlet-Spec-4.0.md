@@ -2510,3 +2510,63 @@ Web 应用包含的资源可以被很多用户访问。这些资源通常会穿�
 
 ### 13.4.1 ````@ServletSecurity````注解
 
+此注解提供了定义访问控制约束的另一种方式，等效于通过部署描述器中````security-constraint````元素实现的声明方式，或者通过````ServletRegistration````接口的````setServletSecurity````方法实现的编程方式。容器必须支持在实现了````javax.servlet.Servlet````接口的类及其子类上使用本注解。
+
+````java
+package javax.servlet.annotation;
+
+@Inherited
+@Documented
+@Target(value=TYPE)
+@Retention(value=RUNTIME)
+public @interface ServletSecurity{
+    HttpConstraint value();
+    HttpMethodConstraint[] httpMethodConstraints();
+}
+````
+
+| 元素                          | 描述                                                         | 默认                    |
+| ----------------------------- | ------------------------------------------------------------ | ----------------------- |
+| ````value````                 | 定义了应用于不在````httpMethodConstraints````方法返回的方法数组中的方法的保护措施 | ````@HttpConstraint```` |
+| ````httpMethodConstraints```` | HTTP 方法特定约束数组                                        | {}                      |
+
+````@HttpConstraint````
+
+此注解与````@ServletSecurity````注解共同使用，表示应用于所有 HTTP 协议方法的安全约束，因为相应的````@HttpMethodConstraint````没有与````@ServletSecurity````注解共同出现。
+
+
+
+----
+
+# 部署描述器
+
+----
+
+本章节详述 Java Servlet 规范必需的 Web 容器对部署描述器的支持。部署描述器在应用开发者、应用装配者和部署者之间传递 Web 应用的元素和配置信息。
+
+对于 Java Servlet v2.4 以及更高版本，部署描述器文件定义为一个 XML 概要文件。
+
+为了保持向下兼容性，任何按照更早版本规范编写的部署描述器文件必须在当前版本规范中仍然可用。实际的 XSD 文件参见````<http://xmlns.jcp.org/xml/ns/javaee/>````。
+
+## 14.1 部署描述器元素
+
+所有 servlet 容器中 Web 应用的部署描述器都必须支持以下类型的配置和部署信息：
+
+* ````ServletContext````初始化参数
+* 会话配置
+* Servlet 声明
+* Servlet 映射
+* 应用生命周期监听器类
+* 过滤器定义和过滤器映射
+* MIME 类型映射
+* 欢迎页面列表
+* 错误页面
+* 位置和编码映射
+* 安全配置，包含登录配置、安全约束、拒绝未覆盖的方法、安全角色、安全角色引用以及运行为
+
+## 14.2 部署描述器处理规则
+
+本节列出了一些容器和开发者处理应用的部署描述器时必须遵循的通用规则。
+
+* Web 容器必须为部署描述器中元素内容文本节点删除所有的首尾空白字符，空白字符在 XML 1.0 中定义(````http://www.w3.org/TR/2000/WD-xml-2e-20000814)。
+* 部署描述器必须符合相应规范。处理 Web 应用的容器和工具拥有很宽泛的选项来检查 WAR 包的合法性。包含检查包含在其中的部署描述器文件的合法性。
