@@ -2598,7 +2598,7 @@ public @interface ServletSecurity{
 
    此元素是 Web 应用部署描述器文件的根元素。此元素包含接下来介绍的元素。此元素包含一个必需属性````version````，用来指定部署描述器文件遵循的规范版本。此元素的所有子元素可以任意顺序出现。
 
-   ![web-app 元素结构](/work/article/translate/assets/servlet/image-20181231192603885-6255564.png)
+   ![web-app 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181231192603885-6255564.png)
 
 2. ````description````元素
 
@@ -2624,16 +2624,16 @@ public @interface ServletSecurity{
 
    过滤器元素在应用中声明一个过滤器。在````filter-mapping````元素中使用引用的````filter-name````值该过滤器被映射到一个 servlet 或者一个 URL 模式。过滤器能够访问运行时在部署描述器文件中通过````FilterConfig````接口声明的初始化参数。````filter-name```` 元素是过滤器的逻辑名称。在 Web 应用中过滤器名称必须是唯一的。````filter-name````元素内容必须非空。````filter-class````是过滤器对应类型的全限定类型名称。````init-param````元素包含过滤器初始化参数名值对。可选的````async-supported````元素，如果被指定，则表示该过滤器支持异步请求处理。
 
-   ![filter 元素结构](/work/article/translate/assets/servlet/image-20181231200742979-6258063.png)
+   ![filter 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181231200742979-6258063.png)
 
 8. ````filter-mapping````元素
 
    此元素被容器用于决定哪些过滤器将以何种顺序被应用于请求。````filter-name````的值必须是部署描述器文件中声明的一个过滤器。匹配到的请求可以被通过````url-pattern````或者````servlet-name````指定。
 
-   ![filter-mapping 元素结构](/work/article/translate/assets/servlet/image-20181231201652480-6258612.png)
+   ![filter-mapping 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181231201652480-6258612.png)
 
 9. ````listener````元素
 
    此元素表示一个应用监听器 bean 的部署属性。子元素````listener-class````声明一个类必须被注册成为一个 Web 应用监听器 bean 。其值时该监听器类的全限定类名。
 
-   ![listener 元素结构](/work/article/translate/assets/servlet/image-20181231202058729-6258858.png)
+   ![listener 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181231202058729-6258858.png)
