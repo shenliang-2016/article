@@ -449,3 +449,27 @@ HTTP 通信通常采用 TCP/IP 连接。默认端口是 TCP 80，但是也可以
 ## 2.2 基本规则
 
 下列规则贯穿整个规范文档，用于描述基本的语法结构。其中的 US-ASCII 编码字符集在 ANSI X3.4-1986 中定义。
+
+````
+OCTET		= <any 8-bit sequence of data>
+CHAR		= <any US-ASCII character (octets 0-127)>
+UPALPHA		= <any US-ASCII uppercase letter "A".."Z">
+LOALPHA		= <any US-ASCII lowercase letter "a".."z">
+ALPHA		= UPALPHA | LOALPHA
+DIGIT		= <any US-ASCII digit "0".."9">
+CTL			= <any US-ASCII control character (octets 0-31) and DEL (127)>
+CR			= <US-ASCII CR, carriage return (13)>
+LF			= <US-ASCII LF, linefeed (10)>
+SP			= <US-ASCII SP, space (32)>
+HT			= <US-ASCII HT, horizontal-tab (9)>
+<''>		= <US-ASCII double-quote mark (34)>
+````
+
+HTTP/1.1 定义````CR LF````序列为除了实体主体之外所有协议元素的行结束标志。而实体主体的行结束标志取决于它对应的媒体类型，在3.7章节中介绍。
+
+​	````CRLF	= CR LF````
+
+HTTP/1.1 协议首部字段值当连续行以空格或者水平制表符开头时可以被折行。所有的线性空白，包括折行，都有相同语义````SP````。一个可取的方案是在将解读字段值或者将消息向下游转发之前将所有线性空白替换为单个````SP````。
+
+​	````LWS	= [CRLF] 1*( SP | HT)````
+
