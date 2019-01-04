@@ -2399,7 +2399,7 @@ Servlet 请求事件
 
 考虑下面的映射集合：
 
-| 路径模式           | Servlet  |
+| 路径模式               | Servlet  |
 | ------------------ | -------- |
 | ````/foo/bar/*```` | servlet1 |
 | ````/baz/*````     | servlet2 |
@@ -2408,16 +2408,16 @@ Servlet 请求事件
 
 将导致如下行为：
 
-| 请求路径                     | 处理请求的 Servlet |
-| ---------------------------- | ------------------ |
-| ````/foo/bar/index.html````  | servlet1           |
-| ````/foo/bar/index.html````  | servlet1           |
-| ````/baz````                 | servlet2           |
-| ````/baz/index.html````      | servlet2           |
-| ````/catalog````             | servlet3           |
-| ````/catalog/index.html````  | 默认 servlet       |
-| ````/catalog/racecar.bop```` | servlet4           |
-| ````/index.bop````           | servlet4           |
+| 请求路径                         | 处理请求的 Servlet |
+| ---------------------------- | ------------- |
+| ````/foo/bar/index.html````  | servlet1      |
+| ````/foo/bar/index.html````  | servlet1      |
+| ````/baz````                 | servlet2      |
+| ````/baz/index.html````      | servlet2      |
+| ````/catalog````             | servlet3      |
+| ````/catalog/index.html````  | 默认 servlet    |
+| ````/catalog/racecar.bop```` | servlet4      |
+| ````/index.bop````           | servlet4      |
 
 注意，````/catalog/index.html````和````/catalog/racecar.bop````的情况下，对应于````/catalog````的 servlet 不会被使用，因为它不是最精确匹配。
 
@@ -2525,10 +2525,10 @@ public @interface ServletSecurity{
 }
 ````
 
-| 元素                          | 描述                                                         | 默认                    |
-| ----------------------------- | ------------------------------------------------------------ | ----------------------- |
+| 元素                            | 描述                                       | 默认                      |
+| ----------------------------- | ---------------------------------------- | ----------------------- |
 | ````value````                 | 定义了应用于不在````httpMethodConstraints````方法返回的方法数组中的方法的保护措施 | ````@HttpConstraint```` |
-| ````httpMethodConstraints```` | HTTP 方法特定约束数组                                        | {}                      |
+| ````httpMethodConstraints```` | HTTP 方法特定约束数组                            | {}                      |
 
 ````@HttpConstraint````
 
@@ -2637,3 +2637,7 @@ public @interface ServletSecurity{
    此元素表示一个应用监听器 bean 的部署属性。子元素````listener-class````声明一个类必须被注册成为一个 Web 应用监听器 bean 。其值时该监听器类的全限定类名。
 
    ![listener 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20181231202058729-6258858.png)
+
+10. servlet元素
+
+   此元素用于声明一个 servlet 。它包含 servlet 需要声明的数据。jsp-file元素包含应用中的 JSP 文件的完整路径，以/开头。如果一个jsp-file元素中指定了load-on-startup元素，则该 JSP 文件应该被预编译并加载。servlet-name元素包含了 servlet 的权威名称。应用中的每个 servlet 名称必须是唯一的。servlet-name元素内容必须非空。servlet-class元素包含 servlet 的全限定类名。run-as元素指定了组件执行时所用的 id 。它包含可选的description元素，以及由role-name元素指定的安全角色名称。load-on-startup表示该 servlet 在应用启动时就应该被实例化，并且其init()方法被调用。该元素内容必须时一个整数，表示该 servlet 被加载的顺序。如果该值是一个复数，或者没有该原色，容器就能够以任意顺序加载该 servlet 。如果该值是正数或者0，则容器必须在应用被部署时加载并初始化该 servlet 。容器必须保证按照指定的加载顺序号由小到大依次加载 servlet 。容器可以按照load-on-startup的值确定 servlet 的顺序。security-role-ref元素声明在组件或者部署组件的代码中的安全角色引用。它包含一个可选的description，安全角色名称role-name用在这里，同时，还有一个可选指向安全角色的的链接role-link。
