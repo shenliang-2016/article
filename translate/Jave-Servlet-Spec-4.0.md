@@ -2640,4 +2640,18 @@ public @interface ServletSecurity{
 
 10. servlet元素
 
-   此元素用于声明一个 servlet 。它包含 servlet 需要声明的数据。jsp-file元素包含应用中的 JSP 文件的完整路径，以/开头。如果一个jsp-file元素中指定了load-on-startup元素，则该 JSP 文件应该被预编译并加载。servlet-name元素包含了 servlet 的权威名称。应用中的每个 servlet 名称必须是唯一的。servlet-name元素内容必须非空。servlet-class元素包含 servlet 的全限定类名。run-as元素指定了组件执行时所用的 id 。它包含可选的description元素，以及由role-name元素指定的安全角色名称。load-on-startup表示该 servlet 在应用启动时就应该被实例化，并且其init()方法被调用。该元素内容必须时一个整数，表示该 servlet 被加载的顺序。如果该值是一个复数，或者没有该原色，容器就能够以任意顺序加载该 servlet 。如果该值是正数或者0，则容器必须在应用被部署时加载并初始化该 servlet 。容器必须保证按照指定的加载顺序号由小到大依次加载 servlet 。容器可以按照load-on-startup的值确定 servlet 的顺序。security-role-ref元素声明在组件或者部署组件的代码中的安全角色引用。它包含一个可选的description，安全角色名称role-name用在这里，同时，还有一个可选指向安全角色的的链接role-link。
+  此元素用于声明一个 servlet 。它包含 servlet 需要声明的数据。jsp-file元素包含应用中的 JSP 文件的完整路径，以/开头。如果一个jsp-file元素中指定了load-on-startup元素，则该 JSP 文件应该被预编译并加载。servlet-name元素包含了 servlet 的权威名称。应用中的每个 servlet 名称必须是唯一的。servlet-name元素内容必须非空。servlet-class元素包含 servlet 的全限定类名。run-as元素指定了组件执行时所用的 id 。它包含可选的description元素，以及由role-name元素指定的安全角色名称。load-on-startup表示该 servlet 在应用启动时就应该被实例化，并且其init()方法被调用。该元素内容必须时一个整数，表示该 servlet 被加载的顺序。如果该值是一个复数，或者没有该原色，容器就能够以任意顺序加载该 servlet 。如果该值是正数或者0，则容器必须在应用被部署时加载并初始化该 servlet 。容器必须保证按照指定的加载顺序号由小到大依次加载 servlet 。容器可以按照load-on-startup的值确定 servlet 的顺序。security-role-ref元素声明在组件或者部署组件的代码中的安全角色引用。它包含一个可选的description，安全角色名称role-name用在这里，同时，还有一个可选指向安全角色的的链接role-link。如果没有指定安全角色，部署者必须选择一个合适的安全角色。可选的````async-supported````元素，当它被指定时，表示 Servlet 可以支持异步请求处理。如果 servlet 支持文件上传功能和````mime-multipart````请求处理，可以通过部署描述器文件中的````multipart-config````元素来提供。该元素可以用来指定文件的存储位置、上传文件的最大尺寸、最大请求尺寸以及超过哪个阈值之后文件将会被写入磁盘。
+
+  ![servlet 元素结构](/work/article/translate/assets/servlet/image-20190105002917443-6619357.png)
+
+11. ````servlet-mapping````元素
+
+   本元素定义了一个 servlet 到一个 URL 模式的映射。
+
+   ![servlet-mapping 元素结构](/work/article/translate/assets/servlet/image-20190105002803410-6619283.png)
+
+12. ````session-config````元素
+
+   本元素为所在的 Web 应用定义会话参数。子元素````session-timeout````为所在应用中创建的所有会话定义默认超时时间。指定的超时时间必须表示为整数分钟数。如果超时时间是0或者更小，则容器需要保证会话的默认行为是永不超时。如果此元素没有指定，则容器必须自己设置默认超时时间。
+
+   ![session-config 元素结构](/work/article/translate/assets/servlet/image-20190105002707549-6619227.png)
