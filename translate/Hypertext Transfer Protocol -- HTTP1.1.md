@@ -457,11 +457,11 @@ UPALPHA		= <any US-ASCII uppercase letter "A".."Z">
 LOALPHA		= <any US-ASCII lowercase letter "a".."z">
 ALPHA		= UPALPHA | LOALPHA
 DIGIT		= <any US-ASCII digit "0".."9">
-CTL			= <any US-ASCII control character (octets 0-31) and DEL (127)>
-CR			= <US-ASCII CR, carriage return (13)>
-LF			= <US-ASCII LF, linefeed (10)>
-SP			= <US-ASCII SP, space (32)>
-HT			= <US-ASCII HT, horizontal-tab (9)>
+CTL		= <any US-ASCII control character (octets 0-31) and DEL (127)>
+CR		= <US-ASCII CR, carriage return (13)>
+LF		= <US-ASCII LF, linefeed (10)>
+SP		= <US-ASCII SP, space (32)>
+HT		= <US-ASCII HT, horizontal-tab (9)>
 <''>		= <US-ASCII double-quote mark (34)>
 ````
 
@@ -481,9 +481,9 @@ CRLF 只有作为首部字段的连词符时才允许出现在 TEXT 定义中。
 
 十六进制的数字字符可以用在若干种协议元素中。
 
-​	````HEX	        = "A" | "B" | "C" | "D" | "E" | "F" ````
+​	````HEX	        = "A" | "B" | "C" | "D" | "E" | "F" ````    
 
-​			````| "a" | "b" | "c" | "d" | "e" | "f" | DIGIT````
+​			    ```` | "a" | "b" | "c" | "d" | "e" | "f" | DIGIT````
 
 许多 HTTP/1.1 协议首部字段值由 LWS 或者其它特殊字符分隔的词语组成。这些特殊字符必须由引号包围，用于表示参数值。
 
@@ -491,11 +491,11 @@ CRLF 只有作为首部字段的连词符时才允许出现在 TEXT 定义中。
 
 ​	````separators	= "(" | ")" | "<" | ">" | "@" ````
 
-​					````| "," | ";" | ":" | "\" | <"> ````
+​					```` | "," | ";" | ":" | "\" | <"> ````
 
-​					````| "/" | "[" | "]" | "?" | "=" ````
+​					```` | "/" | "[" | "]" | "?" | "=" ````
 
-​					````| "{" | "}" | SP | HT````
+​					```` | "{" | "}" | SP | HT````
 
 一些 HTTP 首部字段都可以包含注释，用括号包围注释文本。注释仅仅允许用在包含````comment````作为字段值一部分的定义中。在其它所有字段中，括号都会被认为是字段值的一部分。
 
