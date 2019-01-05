@@ -2655,3 +2655,31 @@ public @interface ServletSecurity{
    本元素为所在的 Web 应用定义会话参数。子元素````session-timeout````为所在应用中创建的所有会话定义默认超时时间。指定的超时时间必须表示为整数分钟数。如果超时时间是0或者更小，则容器需要保证会话的默认行为是永不超时。如果此元素没有指定，则容器必须自己设置默认超时时间。
 
    ![session-config 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190105002707549-6619227.png)
+
+13. ````mime-mapping````元素
+
+    此元素定义了一个扩展到一种 mime 类型的映射。````extension````元素包含了一个扩展的文字描述，比如````txt````。
+
+    ![mime-mapping 元素结构](/work/article/translate/assets/servlet/image-20190105121714838-6661835.png)
+
+14. ````welcome-file-list````元素
+
+    此元素包含一个欢迎文件的有序列表。````welcome-file````子元素包含了作为默认欢迎文件的文件名。比如````index.html````。
+
+    ![welcome-file-list 元素结构](/work/article/translate/assets/servlet/image-20190105121946316-6661986.png)
+
+15. ````error-page````元素
+
+    此元素包含一个错误码或者一种异常类型到应用中相应资源的映射。不过，````error-code````或者````exception-type````元素在指定默认错误页面时可以忽略。````exception-type````子元素包含一个 java 异常类型的全限定类名。````location````子元素包含相应资源相对于应用根路径的位置。该位置的取值必须以````/````开头。
+
+    ![error-page 元素结构](/work/article/translate/assets/servlet/image-20190105123059980-6662660.png)
+
+16. ````jsp-config````元素
+
+    此元素用于为应用中的 JSP 文件提供全局配置信息。它包含两个字元素，````taglib````和````jsp-property-group````。````taglib````元素可以被用于为应用中的 JSP 页面使用的标签库提供信息。更多详情参见 JSP v2.1 规范。
+
+    ![jsp-config 元素结构](/work/article/translate/assets/servlet/image-20190105125027480-6663827.png)
+
+17. ````security-constraint````元素
+
+    此元素用于将一个或者多个 web 资源集合与安全约束关联起来。子元素````web-resource-collection````标识安全约束将被应用到的该应用中一个资源子集和作用于那些资源的 HTTP 方法，
