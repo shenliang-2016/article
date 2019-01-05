@@ -481,21 +481,25 @@ CRLF 只有作为首部字段的连词符时才允许出现在 TEXT 定义中。
 
 十六进制的数字字符可以用在若干种协议元素中。
 
-​	````HEX	        = "A" | "B" | "C" | "D" | "E" | "F" ````    
+````
+HEX	        = "A" | "B" | "C" | "D" | "E" | "F"   
 
-​			    ````    | "a" | "b" | "c" | "d" | "e" | "f" | DIGIT````
+			| "a" | "b" | "c" | "d" | "e" | "f" | DIGIT
+````
 
 许多 HTTP/1.1 协议首部字段值由 LWS 或者其它特殊字符分隔的词语组成。这些特殊字符必须由引号包围，用于表示参数值。
 
-​	````token	= 1*<any CHAR except CTLs or separators>````
+````
+token			= 1*<any CHAR except CTLs or separators>
 
-​	````separators	= "(" | ")" | "<" | ">" | "@" ````
+separators		= "(" | ")" | "<" | ">" | "@"
 
-​					````    | "," | ";" | ":" | "\" | <"> ````
+				| "," | ";" | ":" | "\" | <">
 
-​					````    | "/" | "[" | "]" | "?" | "=" ````
+				| "/" | "[" | "]" | "?" | "="
 
-​					````    | "{" | "}" | SP | HT````
+				| "{" | "}" | SP | HT`
+````
 
 一些 HTTP 首部字段都可以包含注释，用括号包围注释文本。注释仅仅允许用在包含````comment````作为字段值一部分的定义中。在其它所有字段中，括号都会被认为是字段值的一部分。
 
@@ -548,6 +552,81 @@ HTTP 协议并没有对 URI 长度进行任何限制。服务器必须能够处�
 注意：服务器使用长度超过 255 字节的 URI 时要格外小心，因为一些老版本的客户端或者代理服务器的实现可能不能支持这样的长度。
 
 ### 3.2.2 http URL
+
+HTTP 协议使用````http````体系来定位网络资源。本章节定义该体系特定的 http URLs 的语法和语义。
+
+````http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ] ]````
+
+如果````port````是空或者没有给出，则假定使用 80 端口。上面表达式的语义是访问的资源正位于服务器上，在````host````主机的````port````端口上监听着 TCP 连接，同时指向该资源的````Request-URI````就是````abs_path````。根据 RFC 1900 应该尽可能避免在 URLs 中使用 IP 地址。如果 URL 中没有````abs_path````，则当被用作指向某资源的````Request-URI````时必须给定其值为````/````。如果代理接收到的主机名不是完整的全限定域名，它就可以将自己的域名添加到它接收到的主机名中。如果代理接收到的主机名是完整的全限定域名，则它绝对不能改变该主机名。
+
+### 3.2.3 URI 对比
+
+当比较两个 URIs 以确定它们是否匹配时，客户端应该使用大小写敏感的方式逐字符比较整个 URIs，不过存在以下例外：
+
+* 对````URI-reference````来说端口号为空或者未给出等价于默认端口；
+* 主机名比较必须是大小写不敏感的；
+* 体系名称比较必须是大小写不敏感的；
+* 空````abs_path````等价于值为````/````的````abs_path````。
+
+不在保留字符集合或者不安全字符集中的其它字符都等价于它们各自的````"%" HEX HEX````编码。
+
+例如，下面几个 URIs 都是等价的：
+
+````
+http://abc.com:80/~smith/home.html
+http://ABC.com/%7Esmith/home.html
+http://ABC.com:/%7Esmith/home.html
+````
+
+## 3.3 日期时间格式
+
+### 3.3.1 完整日期
+
+HTTP 应用传统上允许使用三种不同的格式表示日期和时间戳：
+
+````
+Sun, 06 Nov 1994 08:49:37 GMT	; RFC 822, updated by RFC 1123
+Sunday, 06-Nov-94 08:49:37 GMT	; RFC 850, obsoleted by RFC 1036
+Sun Nov 6 08:49:37 1994			; ANSI C's asctime() format
+````
+
+第一种格式被广泛作为互联网标准，表示为一个固定长度的子集，由 RFC 1123 定义。第二种格式应用也很广泛，但是它基于已经淘汰的 RFC 850 日期格式，缺少四位数字的年份表示。HTTP/1.1 客户端和服务器必须接受所有这三种日期时间格式，保证兼容 HTTP/1.0 。然而它们必须只产生 RFC 1123 格式的 HTTP 日期值用于协议首部字段。更多细节参见 19.3 章节。
+
+注意：日期值的接收者被鼓励对接收来自非 HTTP 协议应用的日期值保持足够的鲁棒性。比如通过 SMTP 或者 NNTP 代理或者网关收发消息的情况。
+
+所有 HTTP 日期时间戳必须表示为格林威治标准时间 GMT ，没有例外。为了用于 HTTP ，GMT 完全等价于 UTC ( 协调世界时间 )。这就表示在前两种时间格式中结尾的 GMT 是作为时区的缩写。当阅读标准时间格式时必须假定该时区。HTTP 时间是大小写敏感的，除了语法定义中的 SP 绝对不能包含多余的线性空白。
+
+````
+HTTP-date 		= rfc1123-date | rfc850-date | asctime-date
+rfc1123-date 	= wkday "," SP date1 SP time SP "GMT"
+rfc850-date 	= weekday "," SP date2 SP time SP "GMT"
+asctime-date 	= wkday SP date3 SP time SP 4DIGIT
+date1 			= 2DIGIT SP month SP 4DIGIT
+				  ; day month year (e.g., 02 Jun 1982)
+date2 			= 2DIGIT "-" month "-" 2DIGIT
+				  ; day-month-year (e.g., 02-Jun-82)
+date3 			= month SP ( 2DIGIT | ( SP 1DIGIT ))
+				  ; month day (e.g., Jun 2)
+time 			= 2DIGIT ":" 2DIGIT ":" 2DIGIT
+ 				  ; 00:00:00 - 23:59:59
+wkday 			= "Mon" | "Tue" | "Wed"
+				| "Thu" | "Fri" | "Sat" | "Sun"
+weekday 		= "Monday" | "Tuesday" | "Wednesday"
+				| "Thursday" | "Friday" | "Saturday" | "Sunday"
+month 			= "Jan" | "Feb" | "Mar" | "Apr"
+				| "May" | "Jun" | "Jul" | "Aug"
+				| "Sep" | "Oct" | "Nov" | "Dec"
+````
+
+注意：HTTP 对时间格式的要求仅仅当时间用在协议数据流中时才起作用。客户端和服务器在进行用户数据展现或者请求日志记录时并不需要遵循此格式。
+
+### 3.3.2 时差秒数
+
+某些 HTTP 协议首部字段允许以十进制的整数秒数的形式表示从消息被接收到以来经过的时间：
+
+````delta-seconds = 1*DIGIT````
+
+## 3.4 字符集
 
 
 
