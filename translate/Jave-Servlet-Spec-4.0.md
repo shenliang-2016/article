@@ -2682,4 +2682,26 @@ public @interface ServletSecurity{
 
 17. ````security-constraint````元素
 
-    此元素用于将一个或者多个 web 资源集合与安全约束关联起来。子元素````web-resource-collection````标识安全约束将被应用到的该应用中一个资源子集和作用于那些资源的 HTTP 方法，
+    此元素用于将一个或者多个 web 资源集合与安全约束关联起来。子元素````web-resource-collection````标识安全约束将被应用到的该应用中一个资源子集和作用于那些资源的 HTTP 方法。````auth-constraint````元素表示被许可访问此资源集合的用户角色。这里使用的````role-name````必须要么对应于为此应用定义的某个````security-role````元素的````role-name````，要么是特殊的保留角色名````*````用来表示应用中的所有角色。如果````*````和角色名称都出现，则容器就认为是所有角色。如果没有定义角色，所有用户都不被允许访问````security-constraint````元素描述的资源。容器在确定访问权限时对角色名进行大小写敏感的匹配。````user-data-constraint````表示当数据在客户端和容器之间传输时应该被子元素````transport-guarantee````如何保护。````transport-guarantee````元素的合法取值是````NONE````,````INTEGRAL````,````CONFIDENTIAL````其中之一。
+
+    ![security-constraint 元素结构](/work/article/translate/assets/servlet/image-20190105205640658-6693000.png)
+
+18. ````deny-uncovered-http-methods````元素
+
+    此元素用于表示容器尚未覆盖的 http 方法是否会被拒绝。对每个目标是 security-constraint 的 url-pattern ，此元素导致所有指向该 url-pattern 的未被（security-constraint）覆盖 HTTP 方法被拒绝。
+
+19. ````login-config````元素
+
+    此元素用来配置应该使用的身份认证方法，该应用使用的领域名称，表单登陆机制需要使用的属性。子元素````auth-method````配置应用使用的身份认证机制。该元素内容必须是````BASIC````,````DIGEST````,````FORM````,````CLIENT-CERT````或者容器提供商特定的认证机制。````realm-name````表示用于为应用选择的认证机制的领域名称。````form-login-config````指定用于表单登录的登录和错误页面。如果使用的不是表单登录，则该元素会被忽略。
+
+    ![login-config 元素结构](/work/article/translate/assets/servlet/image-20190105213145133-6695105.png)
+
+20. ````security-role````元素
+
+    此元素定义一个安全角色。其子元素````role-name````指明该安全角色的名字。该名字必须遵循````NMTOKEN````的词汇规则。
+
+    ![security-role 元素结构](/work/article/translate/assets/servlet/image-20190105215013871-6696214.png)
+
+21. ````env-entry````元素
+
+    此元素声明一个应用的环境入口。子元素````env-entry-name````包含一个部署组件的环境入口的名称。JNDI 名称都是相对于````java:comp/env````上下文的。该名称在一个部署组件中必须是唯一的。
