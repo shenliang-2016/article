@@ -2706,10 +2706,10 @@ public @interface ServletSecurity{
 
     此元素声明一个应用的环境入口。子元素````env-entry-name````包含一个部署组件的环境入口的名称。JNDI 名称都是相对于````java:comp/env````上下文的。该名称在一个部署组件中必须是唯一的。````env-entry-type````包含应用代码所期待的环境入口值的完全限定的 Java 类型。子元素````env-entry-value````指明部署组件的环境入口的值。该值必须是````String````类型，可用于指定类型的只有一个字符串类型参数的构造器，或者只是一个单独的字符，类型是````java.lang.Character````。可选的````injection-target````元素被用于定义被命名的资源向字段或者 JavaBeans 属性的注射。````injection-target````指定资源应该被注入其中的一个类和它的名字。````injection-target-class````指定资源注射目标的全限定类名。````injection-target-name````指定在指定类中的目标。该目标首先作为 JavaBean 属性名被查找。如果没有找到，就以字段名被查找。初始化类过程中通过调用目标属性的 set 方法或者为该名称字段赋值，指定的资源将被注射进入目标。如果环境入口的````injection-target````被指定，则````env-entry-type````可以被忽略，否则必须匹配到注射目标类型。如果没有指定````injection-target````，则````env-entry-type````就是必需的。
 
-    ![env-entry 元素结构](/work/article/translate/assets/servlet/image-20190107224920567-6872560.png)
+    ![env-entry 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190107224920567-6872560.png)
 
 22. ````ejb-ref````元素
 
     此元素声明一个企业级 bean 的 home 引用。````ejb-ref-name````指定用在部署组件代码中的名称，该名称引用的就是该企业级 bean 。````ejb-ref-type````是被引用的 bean 的类型，是````Entity````或者````Session````。````home````定义被引用的 bean 的 home 接口的全限定名。````remote````定义被引用的 bean 的 remote 接口的全限定名。````ejb-link````指定一个 EJB 引用链接到该 bean 。除了这些元素，````injection-target````元素可被用于定义命名的企业级 bean 向组件字段或者属性的注射。
 
-    ![ejb-ref 元素结构](/work/article/translate/assets/servlet/image-20190107225037008-6872637.png)
+    ![ejb-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190107225037008-6872637.png)
