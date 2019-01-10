@@ -2713,3 +2713,186 @@ public @interface ServletSecurity{
     此元素声明一个企业级 bean 的 home 引用。````ejb-ref-name````指定用在部署组件代码中的名称，该名称引用的就是该企业级 bean 。````ejb-ref-type````是被引用的 bean 的类型，是````Entity````或者````Session````。````home````定义被引用的 bean 的 home 接口的全限定名。````remote````定义被引用的 bean 的 remote 接口的全限定名。````ejb-link````指定一个 EJB 引用链接到该 bean 。除了这些元素，````injection-target````元素可被用于定义命名的企业级 bean 向组件字段或者属性的注射。
 
     ![ejb-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190107225037008-6872637.png)
+
+23. ````ejb-local-ref````元素
+
+    此元素声明企业级 JAVA Bean 的本地路径引用。````local-home````定义了企业级 JAVA Bean 的本地路径接口的全限定名。````local````定义了企业级 JAVA Bean 的本地接口的全限定名。
+
+    ![ejb-local-ref 元素结构](/work/article/translate/assets/servlet/image-20190110201628236-7122588.png)
+
+24. ````service-ref````元素
+
+    此元素声明 Web service 的引用。````service-ref-name````声明模块内用于寻找 Web service 的组件的逻辑名称。推荐的做法是所有的服务引用名由````/service/````开头。````service-interface````定义客户端依赖的 JAX-WS Service 接口的全限定名。大多数情况下，该值将是````javax.xml.rpc.Service````。JAX-WS 生成的服务接口类可以同时被指定。````wsdl-file````元素包含一个 WSDL 文件的 URI 地址。该地址是相对于模块根目录的相对路径。````jaxrpc-mapping-file````包含描述该应用使用的 Java 接口与````wsdl-file````中描述的 WSDL 之间的 JAX-WS 映射关系文件的名称。该文件名是模块文件中的一个相对路径。````service-qname````元素声明被提及的特定 WSDL 服务元素。没有声明````wsdl-file````则不需要指定。````port-component-ref````元素声明一个将 Service Endpoint Interface 解析成 WSDL 端口的容器的客户端依赖。将 Service Endpoint Interface 关联到特定的端口组件是可选的。这个只是用于容器调用````Service.getPort(Class)````方法时。````handler````元素声明一个端口组件的处理器。处理器可以通过````HandlerInfo````接口访问````init-param````名值对。如果````port-name````没有指定，处理器久假定关联到所有服务端口。更过细节详见 JSR-109 规范````http://www.jcp.org/en/jsr/detail?id=109````。不作为 Java EE 规范实现一部分的那些容器不需要支持此元素。
+
+    ![service-ref 元素结构](/work/article/translate/assets/servlet/image-20190110204216880-7124137.png)
+
+25. ````resource-ref````元素
+
+    此元素包含部署组件对外部资源的引用声明。````res-ref-name````指定资源管理器连接工厂引用名称。相对于````java:comp/env````上下文的是一个 JNDI 名称。该名称在部署文件中必须是唯一的。````res-type````元素指定数据源的类型。该类型是数据源需要实现的全限定 Java 类或者接口的类型。````res-auth````指定是否部署组件代码是否负责资源管理，或者是否容器将代表部署组件负责资源管理。在后一种情况下，容器将使用部署者提供的信息。````res-sharing-scope````指定是否通过给定的资源管理器连接工厂引用获取的连接可以被共享。该值，如果被指定，必须要么是````Shareable````要么是````Unshareable````。可选的````injection-target````元素用于定义命名资源向字段或者 JavaBeans 属性的注射。
+
+    ![resource-ref 元素结构](/work/article/translate/assets/servlet/image-20190110210147505-7125307.png)
+
+26. ````resource-env-ref````元素
+
+    此元素包含部署组件中与部署组件环境中的资源相关联的管理对象的引用。````resource-env-ref````元素指定资源环境引用的名称。该值是部署组件代码中使用的环境入口名称，相对于````java:comp/env````上下文的是一个 JNDI 名称，该值在部署组件中必须是唯一的。````resource-env-ref-type````指定资源环境引用的类型。它是 Java 语言中类或者接口的全限定名。可选的````injection-target````元素用于定义命名资源向字段或者 JavaBeans 属性的注射。````resource-env-ref-type````必须被指定，除非当目标类型被使用时指定了注射目标。如果两个都被指定，该类型就必须与注射目标相兼容。
+
+    ![resource-env-ref 元素接口](/work/article/translate/assets/servlet/image-20190110211239791-7125960.png)
+
+27. ````message-destination-ref````元素
+
+    此元素包含一个部署组件的消息目的地引用的声明，该消息目的地关联于部署组件环境中的资源。````message-destination-ref-name````元素指定消息目的地引用的名称，其值时部署组件代码使用的环境入口的名称。相对于````java:comp/env````上下文的是一个 JNDI 名称，在企业级 beans 或者部署文件的 ejb-jar 文件中该值必须是唯一的。````message-destination-type````指定该目的地的类型。该类型由目的地需要实现的接口的类型决定。````message-destination-usage````指定该引用说明的消息目的地的使用。该值表示是否消息来自消息目的地、向目的地发送。装配器利用这些与消息生产者关联的信息将它与消费者联系起来。````message-destination-link````关联一个消息目的地引用或者关于消息目的地的消息驱动的 bean 。装配器设置该值以反映应用中的消息生产者和消费者之间的消息流。该值必须是在同一个部署文件中消息目的地的````message-destination-name````，或者是同一个 Java EE 应用单元的其它部署文件中。或者，该值可以由一个路径名称组成，该路径指定一个部署文件，包含被````message-destination-name````引用的消息目的地，它与该路径名通过````#````连接或者分隔。该路径名相对于包含引用该消息目的地的部署组件的部署文件。这就允许多个同名的消息目的地可以有各自的唯一标识符。可选的````injection-target````元素用于定义命名资源向字段或者 JavaBeans 属性的注射。该消息目的地类型必须指定，除非注射目标被指定，如果目标类型被使用。如果两者都被指定，则该类型必须与注射目标相兼容。
+
+    ````xml
+    <message-destination-ref>
+        <message-destination-ref-name>
+            jms/StockQueue
+        </message-destination-ref-name>
+        <message-destination-type>
+            javax.jms.Queue
+        </message-destination-type>
+        <message-destination-usage>
+            Consumes
+        </message-destination-usage>
+        <message-destination-link>
+            CorporateStocks
+        </message-destination-link>
+    </message-destination-ref>
+    ````
+
+    ![message-destination-ref 元素结构](/work/article/translate/assets/servlet/image-20190110214836290-7128116.png)
+
+28. ````message-destination````元素
+
+    此元素指定一个消息目的地。此元素描述的逻辑目的地被部署者映射到一个物理目的地。````message-destination-name````元素指定消息目的地的名称。该名称在部署文件中的所有消息目的地名称中必须是唯一的。
+
+    ````xml
+    <message-destination>
+        <message-destination-name>
+            CorporateStocks
+        </message-destination-name>
+    </message-destination>
+    ````
+
+    ![message-destination 元素结构](/work/article/translate/assets/servlet/image-20190110215428595-7128468.png)
+
+29. ````locale-encoding-mapping-list````元素
+
+    此元素包含区域和编码之间的映射关系，由子元素````locale-encoding-mapping````指定。
+
+    ````xml
+    <locale-encoding-mapping-list>
+        <locale-encoding-mapping>
+            <locale>ja</locale>
+            <encoding>Shift_JIS</encoding>
+        </locale-encoding-mapping>
+    </locale-encoding-mapping-list>
+    ````
+
+    ![locale-encoding-mapping-list 元素结构](/work/article/translate/assets/servlet/image-20190110220336807-7129016.png)
+
+30. ````default-context-path````元素
+
+    此元素提供了一个 web 应用的默认上下文路径。此元素的空值必须导致 web 应用被部署到容器的根目录下。否则，默认上下文路径必须以````/````开头但是不能以````/````结尾。Servlet 容器提供者可以提供的配置选项允许指定一个值用于覆盖此处指定的值。
+
+31. ````request-character-encoding````元素
+
+    此元素提供一个应用的默认请求字符编码方式。
+
+32. ````response-character-encoding````元素
+
+    此元素提供一个应用的默认响应字符编码方式。
+
+## 14.5 例子
+
+以下是部署描述器文件中的定义的使用举例。
+
+### 14.5.1 一个基本例子
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee web-app_4_0.xsd"
+         version="4.0">
+    <display-name>A Simple Application</display-name>
+    <context-param>
+        <param-name>Webmaster</param-name>
+        <param-value>webmaster@example.com</param-value>
+    </context-param>
+    <servlet>
+        <servlet-name>catalog</servlet-name>
+        <servlet-class>com.example.CatalogServlet</servlet-class>
+        <init-param>
+            <param-name>catalog</param-name>
+            <param-value>Spring</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>catalog</servlet-name>
+        <url-pattern>/catalog/*</url-pattern>
+    </servlet-mapping>
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+    <mime-mapping>
+        <extension>pdf</extension>
+        <mime-type>application/pdf</mime-type>
+    </mime-mapping>
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.htm</welcome-file>
+    </welcome-file-list>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/404.html</location>
+    </error-page>
+</web-app>
+````
+
+### 14.5.2 一个安全的例子
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee web-app_4_0.xsd"
+         version="4.0">
+    <display-name>A Secure Application</display-name>
+    <servlet>
+    	<servlet-name>catalog</servlet-name>
+       	<servlet-class>com.example.CatalogServlet</servlet-class>
+    	<init-param>
+       		<param-name>catalog</param-name>
+       		<param-value>Spring</param-value>
+    	</init-param>
+    	<security-role-ref>
+       		<role-name>MGR</role-name>
+       		<!-- role name used in code -->
+       		<role-link>manager</role-link>
+    	</security-role-ref>
+    </servlet>
+    <security-role>
+    	<role-name>manager</role-name>
+    </security-role>
+    <servlet-mapping>
+    	<servlet-name>catalog</servlet-name>
+    	<url-pattern>/catalog/*</url-pattern>
+    </servlet-mapping>
+    <security-constraint>
+    	<web-resource-collection>
+       		<web-resource-name>SalesInfo</web-resource-name>
+       		<url-pattern>/salesinfo/*</url-pattern>
+       		<http-method>GET</http-method>
+       		<http-method>POST</http-method>
+    	</web-resource-collection>
+    	<auth-constraint>
+        	<role-name>manager</role-name>
+    	</auth-constraint>
+    	<user-data-constraint>
+        	<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    	</user-data-constraint>
+    </security-constraint>
+</web-app>
+````
+
