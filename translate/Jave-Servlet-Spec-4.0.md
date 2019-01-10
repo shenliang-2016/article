@@ -2718,25 +2718,25 @@ public @interface ServletSecurity{
 
     此元素声明企业级 JAVA Bean 的本地路径引用。````local-home````定义了企业级 JAVA Bean 的本地路径接口的全限定名。````local````定义了企业级 JAVA Bean 的本地接口的全限定名。
 
-    ![ejb-local-ref 元素结构](/work/article/translate/assets/servlet/image-20190110201628236-7122588.png)
+    ![ejb-local-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110201628236-7122588.png)
 
 24. ````service-ref````元素
 
     此元素声明 Web service 的引用。````service-ref-name````声明模块内用于寻找 Web service 的组件的逻辑名称。推荐的做法是所有的服务引用名由````/service/````开头。````service-interface````定义客户端依赖的 JAX-WS Service 接口的全限定名。大多数情况下，该值将是````javax.xml.rpc.Service````。JAX-WS 生成的服务接口类可以同时被指定。````wsdl-file````元素包含一个 WSDL 文件的 URI 地址。该地址是相对于模块根目录的相对路径。````jaxrpc-mapping-file````包含描述该应用使用的 Java 接口与````wsdl-file````中描述的 WSDL 之间的 JAX-WS 映射关系文件的名称。该文件名是模块文件中的一个相对路径。````service-qname````元素声明被提及的特定 WSDL 服务元素。没有声明````wsdl-file````则不需要指定。````port-component-ref````元素声明一个将 Service Endpoint Interface 解析成 WSDL 端口的容器的客户端依赖。将 Service Endpoint Interface 关联到特定的端口组件是可选的。这个只是用于容器调用````Service.getPort(Class)````方法时。````handler````元素声明一个端口组件的处理器。处理器可以通过````HandlerInfo````接口访问````init-param````名值对。如果````port-name````没有指定，处理器久假定关联到所有服务端口。更过细节详见 JSR-109 规范````http://www.jcp.org/en/jsr/detail?id=109````。不作为 Java EE 规范实现一部分的那些容器不需要支持此元素。
 
-    ![service-ref 元素结构](/work/article/translate/assets/servlet/image-20190110204216880-7124137.png)
+    ![service-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110204216880-7124137.png)
 
 25. ````resource-ref````元素
 
     此元素包含部署组件对外部资源的引用声明。````res-ref-name````指定资源管理器连接工厂引用名称。相对于````java:comp/env````上下文的是一个 JNDI 名称。该名称在部署文件中必须是唯一的。````res-type````元素指定数据源的类型。该类型是数据源需要实现的全限定 Java 类或者接口的类型。````res-auth````指定是否部署组件代码是否负责资源管理，或者是否容器将代表部署组件负责资源管理。在后一种情况下，容器将使用部署者提供的信息。````res-sharing-scope````指定是否通过给定的资源管理器连接工厂引用获取的连接可以被共享。该值，如果被指定，必须要么是````Shareable````要么是````Unshareable````。可选的````injection-target````元素用于定义命名资源向字段或者 JavaBeans 属性的注射。
 
-    ![resource-ref 元素结构](/work/article/translate/assets/servlet/image-20190110210147505-7125307.png)
+    ![resource-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110210147505-7125307.png)
 
 26. ````resource-env-ref````元素
 
     此元素包含部署组件中与部署组件环境中的资源相关联的管理对象的引用。````resource-env-ref````元素指定资源环境引用的名称。该值是部署组件代码中使用的环境入口名称，相对于````java:comp/env````上下文的是一个 JNDI 名称，该值在部署组件中必须是唯一的。````resource-env-ref-type````指定资源环境引用的类型。它是 Java 语言中类或者接口的全限定名。可选的````injection-target````元素用于定义命名资源向字段或者 JavaBeans 属性的注射。````resource-env-ref-type````必须被指定，除非当目标类型被使用时指定了注射目标。如果两个都被指定，该类型就必须与注射目标相兼容。
 
-    ![resource-env-ref 元素接口](/work/article/translate/assets/servlet/image-20190110211239791-7125960.png)
+    ![resource-env-ref 元素接口](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110211239791-7125960.png)
 
 27. ````message-destination-ref````元素
 
@@ -2759,7 +2759,7 @@ public @interface ServletSecurity{
     </message-destination-ref>
     ````
 
-    ![message-destination-ref 元素结构](/work/article/translate/assets/servlet/image-20190110214836290-7128116.png)
+    ![message-destination-ref 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110214836290-7128116.png)
 
 28. ````message-destination````元素
 
@@ -2773,7 +2773,7 @@ public @interface ServletSecurity{
     </message-destination>
     ````
 
-    ![message-destination 元素结构](/work/article/translate/assets/servlet/image-20190110215428595-7128468.png)
+    ![message-destination 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110215428595-7128468.png)
 
 29. ````locale-encoding-mapping-list````元素
 
@@ -2788,7 +2788,7 @@ public @interface ServletSecurity{
     </locale-encoding-mapping-list>
     ````
 
-    ![locale-encoding-mapping-list 元素结构](/work/article/translate/assets/servlet/image-20190110220336807-7129016.png)
+    ![locale-encoding-mapping-list 元素结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/servlet/image-20190110220336807-7129016.png)
 
 30. ````default-context-path````元素
 
