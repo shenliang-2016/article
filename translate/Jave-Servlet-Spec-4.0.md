@@ -2856,42 +2856,42 @@ public @interface ServletSecurity{
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee web-app_4_0.xsd"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee web-app_4_0.xsd"
          version="4.0">
     <display-name>A Secure Application</display-name>
     <servlet>
-    	<servlet-name>catalog</servlet-name>
-       	<servlet-class>com.example.CatalogServlet</servlet-class>
-    	<init-param>
-       		<param-name>catalog</param-name>
-       		<param-value>Spring</param-value>
-    	</init-param>
-    	<security-role-ref>
-       		<role-name>MGR</role-name>
-       		<!-- role name used in code -->
-       		<role-link>manager</role-link>
-    	</security-role-ref>
+        <servlet-name>catalog</servlet-name>
+        <servlet-class>com.example.CatalogServlet</servlet-class>
+        <init-param>
+            <param-name>catalog</param-name>
+            <param-value>Spring</param-value>
+        </init-param>
+        <security-role-ref>
+            <role-name>MGR</role-name>
+            <!-- role name used in code -->
+            <role-link>manager</role-link>
+        </security-role-ref>
     </servlet>
     <security-role>
-    	<role-name>manager</role-name>
+        <role-name>manager</role-name>
     </security-role>
     <servlet-mapping>
-    	<servlet-name>catalog</servlet-name>
-    	<url-pattern>/catalog/*</url-pattern>
+        <servlet-name>catalog</servlet-name>
+        <url-pattern>/catalog/*</url-pattern>
     </servlet-mapping>
     <security-constraint>
-    	<web-resource-collection>
-       		<web-resource-name>SalesInfo</web-resource-name>
-       		<url-pattern>/salesinfo/*</url-pattern>
-       		<http-method>GET</http-method>
-       		<http-method>POST</http-method>
-    	</web-resource-collection>
-    	<auth-constraint>
-        	<role-name>manager</role-name>
-    	</auth-constraint>
-    	<user-data-constraint>
-        	<transport-guarantee>CONFIDENTIAL</transport-guarantee>
-    	</user-data-constraint>
+        <web-resource-collection>
+            <web-resource-name>SalesInfo</web-resource-name>
+            <url-pattern>/salesinfo/*</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>manager</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
 </web-app>
 ````
