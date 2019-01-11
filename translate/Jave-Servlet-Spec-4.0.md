@@ -1826,13 +1826,235 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    c. 任何````absolute-ordering````元素的直接孩子````<name>````元素都必须被解释为表示它们所指称的 web-fragments 的绝对顺序，无论是否存在，都必须被处理。
 
-   d. ````absolute-ordering````元素可以包含零个或者一个````<others/>````元素。该元素的行为要求下文给出。如果````absolute-ordering````元素不包含````<others/>````元素，任何没有在````<name/>````元素中特别提到的 web-fragment 都必须被忽略。被排除的 jars 中的注解标注的 servlets、过滤器以及监听器都不会被扫描。
+   d. ````absolute-ordering````元素可以包含零个或者一个````<others/>````元素。该元素的行为要求下文给出。如果````absolute-ordering````元素不包含````<others/>````元素，任何没有在````<name/>````元素中特别提到的 web-fragment 都必须被忽略。被排除的 jars 中的注解标注的 servlets、过滤器以及监听器都不会被扫描。然而，如果来自被排除的 jar 包的 servlet 、过滤器或者监听器被写入````web.xml````文件或者未被排除的````web-fragment.xml````文件，则除非被别的````metadata-complete````排除，相应的注解都将应用。在被排除的 jar 包的 TLD 文件中发现的````ServletContextListeners````并不能通过编程方式 APIs 配置过滤器和 servlet 。任何这么做的企图都将导致一个````IllegalStateException````异常。如果发现的````ServletContextListeners````是从被排除的 jar 包中加载，则它不会被忽略。与````metadata-complete````设定无关，被````<absolute-ordering>````元素排除的 jars 包中的类不会被任何````ServletContainerInitializer````扫描处理。
 
+   e. 重名异常：如果在遍历````<absolute-ordering>````元素的子元素时，发现包含相同````<name>````元素的多个子元素，则只有第一个出现的会生效。
 
+2. 相对顺序：````web-fragment.xml````文件中的一个````<ordering>````元素。每个````web-fragment.xml````文件中只能有一个````<ordering>````元素
 
+   a. ````web-fragment.xml````文件中可能包含一个````<ordering>````元素，如果包含，则该元素必须包含0个或者一个````<before>````元素和0个或者一个````<after>````元素。这些元素的含义且看下文分解。
 
+   b. ````web.xml````和 WEB-INF/classes 必须在````ordering````元素内列出的所有 web-fragments 之前被处理。
+
+   c. 重名异常：如果在遍历 web-fragments 过程中，发现多个具有相同````<name>````元素的成员被发现，应用必须记录相应的错误日志以帮助解决此问题，同时部署必须失败。比如，修复此问题的一种办法就是为用户使用绝对顺序，此时相对顺序就会被忽略。
+
+   d. 考虑这个简略的例子，3个 web-fragments ````MyFragment1````，````MyFragment2````，````MyFragment3````作为包含一个````web.xml````文件的应用的一部分。
+
+   ````xml
+   web-fragment.xml
+   <web-fragment>
+       <name>MyFragment1</name>
+       <ordering><after><name>MyFragment2</name></after></ordering>
+       ...
+   </web-fragment>
+   ````
+
+   ````xml
+   web-fragment.xml
+   <web-fragment>
+       <name>MyFragment2</name>
+       ...
+   </web-fragment>
+   ````
+
+   ````xml
+   web-fragment.xml
+   <web-fragment>
+       <name>MyFragment3</name>
+       <ordering><before><others/></before></ordering>
+       ...
+   </web-fragment>
+   ````
+
+   ````xml
+   web.xml
+   <web-app>
+       ...
+   </web-app>
+   ````
+
+   该例子中，处理顺序将是：
+
+   ````xml
+   web.xml
+   MyFragment3
+   MyFragment2
+   MyFragment1
+   ````
+
+   上面的例子表明了一些，单并不是全部，如下原则：
+
+   * ````<before>````意味着文件顺序必须在````<name>````元素中指定名称的文件之前。
+
+   * ````<after>````意味着文件顺序必须在````<name>````元素中指定名称的文件之后。
+
+   * 存在一个特殊的````<others/>````元素，它可能被````<before>````或者````<after>````元素包含0次或者一次，或者直接被````<absolute-ordering>````元素包含0次或者一次。该````<others>````元素必须如下处理。
+
+     * 如果````<before>````元素包含一个内部````<others>````，则该文件将被移到有序文件列表的开头。如果````<before><others/>````包含多个文件，则它们都将被移到有序文件列表的开头，不过这些文件组内部顺序则是不确定的。
+     * 如果````<after>````元素包含一个内部````<others>````，则该文件将被移到有序文件列表的末尾。如果````<after><others/>````包含多个文件，则它们都将被移到有序文件列表的末尾，不过这些文件组内部顺序则是不确定的。
+     * 在````<before>````或者````<after>````元素中，如果存在一个````<others/>````元素，但是并不是它的父元素唯一的````<name>````元素，则同一个父元素的其它子元素必须按照此顺序处理。
+     * 如果````<others/>````元素直接出现在````<absolute-ordering>````元素中，运行时就必须保证任何没有明确在````<absolute-ordering>````小节中命名 web-fragments 按照该处理顺序被包含在该处。
+
+   * 如果一个````web-fragment.xml````文件中没有````<ordering>````元素，或者````web.xml````文件中不包含````<absolute-ordering>````元素，则该组件就假定不存在任何顺序依赖。
+
+   * 如果运行时发现循环引用，则必须记录一条日志，同时应用部署必须失败。再者，用户就可以使用````web.xml````文件中的绝对顺序。
+
+   * 上面的例子可以被扩展来展示````web.xml````文件包含一个 ordering 小节的情况。
+
+     ````xml
+     web.xml
+     <web-app>
+         <absolute-ordering>
+             <name>MyFragment3</name>
+             <name>MyFragment2</name>
+         </absolute-ordering>
+         ...
+     </web-app>
+     ````
+
+     这个例子中，元素的处理顺序是：
+
+     ````xml
+     web.xml
+     MyFragment3
+     MyFragment2
+     ````
+
+     下面是一些使用相对顺序的例子：
+
+     文件 A：
+
+     ````xml
+     <after>
+         <others/>
+         <name>
+             C
+         </name>
+     </after>
+     ````
+
+     文件 B：
+
+     ````xml
+     <before>
+         <others/>
+     </before>
+     ````
+
+     文件 C：
+
+     ````xml
+     <after>
+         <others/>
+     </after>
+     ````
+
+     文件 D：无顺序。
+
+     文件 E：无顺序。
+
+     文件 F：
+
+     ````xml
+     <before>
+         <others/>
+         <name>
+             B
+         </name>
+     </before>
+     ````
+
+     导致的顺序是：
+
+     web.xml，F，B，D，E，C，A。
+
+     文件 <no id> ：
+
+     ````xml
+     <after>
+         <others/>
+     </after>
+     <before>
+         <name>
+             C
+         </name>
+     </before>
+     ````
+
+     文件 B：
+
+     ````xml
+     <before>
+         <others/>
+     </before>
+     ````
+
+     文件 C：无顺序。
+
+     文件 D：
+
+     ````xml
+     <after>
+         <others/>
+     </after>
+     ````
+
+     文件 E：
+
+     ````xml
+     <before>
+         <others/>
+     </before>
+     ````
+
+     文件 F：无顺序。
+
+     导致的顺序将是如下之一：
+
+     * B，E，F，<noid>，C，D
+     * B，E，F，<noid>，D，C
+     * E，B，F，<noid>，C，D
+     * E，B，F，<noid>，D，C
+     * E，B，F，D，<noid>，C
+     * E，B，F，C，<noid>，D
+
+     文件 A：
+
+     ````xml
+     <after>
+         <name>
+             B
+         </name>
+     </after>
+     ````
+
+     文件 B：无顺序。
+
+     文件 C：
+
+     ````xml
+     <before>
+         <others/>
+     </before>
+     ````
+
+     文件 D：无顺序。
+
+     导致的顺序：C，B，D，A。
+
+     也可能是：C，D，B，A 或者 C，B，A，D。
 
    ### 8.2.3 组装来自````web.xml````、````web-fragment.xml````和注解的部署描述符
+
+如果监听器、servlet 和过滤器被调用的顺序对一个应用是很重要的，则必须使用部署描述器文件。同时，如果有必要，上面定义的顺序元素可以被使用。就像上面描述的，当通过注解定义监听器、servlet 和过滤器时，它们被调用的顺序是不确定的。下面是一系列可用于组装应用最终的部署描述器文件的规则集合：
+
+1. 如果监听器、servlets 和过滤器的顺序很重要，则该顺序必须在````web-fragment.xml````文件或者````web.xml````文件中指定。
+
+2. 该顺序将基于它们在部署描述器中定义的顺序，如果存在，则基于````web.xml````中的````absolute-ordering````元素，或者基于````web-fragment.xml````文件中的````ordering````元素。
+
+   a. 匹配到请求的过滤器会按照它们在````web.xml````文件中被声明的顺序被组成过滤器链。
+
+   b. servlets 被初始化，要么在请求处理时懒加载，或者在部署过程中饥饿加载。
 
 
 
