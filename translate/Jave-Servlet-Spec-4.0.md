@@ -2070,7 +2070,11 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
 首先，一个 web 容器必须为所有监听器声明扫描 TLD 资源。在 servlet 3.0 及更高版本，该职责可以被委派给 JSP 容器。内置在 servlet 容器中的 JSP 容器可以提供自己的````ServletContainerInitializer````实现，为所有 TLD 资源搜索````ServletContext````传入它的````onStartup````方法，为监听器声明扫描这些资源，注册相应的监听器到````ServletContext````。
 
-另外，在 servlet 3.0 之前，JSP 容器曾经必须为任何````jsp-config````相关配置扫描应用的部署描述器文件。
+另外，在 servlet 3.0 之前，JSP 容器曾经必须为任何````jsp-config````相关配置扫描应用的部署描述器文件。在 servlet 3.0 及更高版本中，servlet 容器必须可以通过````ServletContext.getJspConfigDescriptor````方法访问来自应用的````web.xml````和````web-fragment.xml````部署描述器文件的任何````jsp-config````相关配置。
+
+任何在 TLD 中的````ServletContextListeners````，通过编程方式注册，受限于它们提供的功能。任何调用它们之上````ServletContext````API 方法的企图都将导致一个````UnsupportedOperationException````异常。
+
+进一步地，兼容 servlet 3.0 及以上版本的 servlet 容器必须提供一个````ServletContext````属性，该属性名为````javax.servlet.context.orderedLibs````，其值类型为````java.util.List<java.lang.String>````，其值包含````ServletContext````表示的应用的````WEB-INF/lib````目录下的 JAR 文件名列表，按照它们 web fragment 名称排序，可能存在排除的情况，如果片段 jar 包被从````absolute-ordering````中排除，或者其值为````null````如果应用没有指定任何绝对或者相对顺序。
 
    ## 8.4 处理注解和片段
 
