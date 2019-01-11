@@ -2054,7 +2054,7 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    a. 匹配到请求的过滤器会按照它们在````web.xml````文件中被声明的顺序被组成过滤器链。
 
-   b. servlets 被初始化，要么在请求处理时懒加载，或者在部署过程中饥饿加载。
+   b. servlets 被初始化，要么在请求处理时懒加载，或者在部署过程中饥饿加载。在后一种情况中，它们会按照它们的````local-on-startup````元素说明的顺序被初始化。
 
 
 
@@ -2066,7 +2066,11 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    ## 8.3 JSP 容器可插拔性
 
+````ServletContainerInitializer````以及编程式注册特性使得提供一个 servlet 和 JSP 容器的清楚的区别成为可能，servlet 容器的职责是仅仅处理````web.xml````和````web-fragment.xml````资源，同时将标签类库描述符资源的转化委派给 JSP 容器。
 
+首先，一个 web 容器必须为所有监听器声明扫描 TLD 资源。在 servlet 3.0 及更高版本，该职责可以被委派给 JSP 容器。内置在 servlet 容器中的 JSP 容器可以提供自己的````ServletContainerInitializer````实现，为所有 TLD 资源搜索````ServletContext````传入它的````onStartup````方法，为监听器声明扫描这些资源，注册相应的监听器到````ServletContext````。
+
+另外，在 servlet 3.0 之前，JSP 容器曾经必须为任何````jsp-config````相关配置扫描应用的部署描述器文件。
 
    ## 8.4 处理注解和片段
 
