@@ -450,18 +450,18 @@ HTTP 通信通常采用 TCP/IP 连接。默认端口是 TCP 80，但是也可以
 
 下列规则贯穿整个规范文档，用于描述基本的语法结构。其中的 US-ASCII 编码字符集在 ANSI X3.4-1986 中定义。
 
-````
+````xml
 OCTET		= <any 8-bit sequence of data>
 CHAR		= <any US-ASCII character (octets 0-127)>
 UPALPHA		= <any US-ASCII uppercase letter "A".."Z">
 LOALPHA		= <any US-ASCII lowercase letter "a".."z">
 ALPHA		= UPALPHA | LOALPHA
 DIGIT		= <any US-ASCII digit "0".."9">
-CTL		= <any US-ASCII control character (octets 0-31) and DEL (127)>
-CR		= <US-ASCII CR, carriage return (13)>
-LF		= <US-ASCII LF, linefeed (10)>
-SP		= <US-ASCII SP, space (32)>
-HT		= <US-ASCII HT, horizontal-tab (9)>
+CTL			= <any US-ASCII control character (octets 0-31) and DEL (127)>
+CR			= <US-ASCII CR, carriage return (13)>
+LF			= <US-ASCII LF, linefeed (10)>
+SP			= <US-ASCII SP, space (32)>
+HT			= <US-ASCII HT, horizontal-tab (9)>
 <''>		= <US-ASCII double-quote mark (34)>
 ````
 
@@ -481,7 +481,7 @@ CRLF 只有作为首部字段的连词符时才允许出现在 TEXT 定义中。
 
 十六进制的数字字符可以用在若干种协议元素中。
 
-````
+````xml
 HEX	        = "A" | "B" | "C" | "D" | "E" | "F"   
 
 			| "a" | "b" | "c" | "d" | "e" | "f" | DIGIT
@@ -584,7 +584,7 @@ http://ABC.com:/%7Esmith/home.html
 
 HTTP 应用传统上允许使用三种不同的格式表示日期和时间戳：
 
-````
+````xml
 Sun, 06 Nov 1994 08:49:37 GMT	; RFC 822, updated by RFC 1123
 Sunday, 06-Nov-94 08:49:37 GMT	; RFC 850, obsoleted by RFC 1036
 Sun Nov 6 08:49:37 1994			; ANSI C's asctime() format
@@ -596,7 +596,7 @@ Sun Nov 6 08:49:37 1994			; ANSI C's asctime() format
 
 所有 HTTP 日期时间戳必须表示为格林威治标准时间 GMT ，没有例外。为了用于 HTTP ，GMT 完全等价于 UTC ( 协调世界时间 )。这就表示在前两种时间格式中结尾的 GMT 是作为时区的缩写。当阅读标准时间格式时必须假定该时区。HTTP 时间是大小写敏感的，除了语法定义中的 SP 绝对不能包含多余的线性空白。
 
-````
+````xml
 HTTP-date 		= rfc1123-date | rfc850-date | asctime-date
 rfc1123-date 	= wkday "," SP date1 SP time SP "GMT"
 rfc850-date 	= weekday "," SP date2 SP time SP "GMT"
@@ -686,14 +686,14 @@ RFC 1950 定义的”zlib“格式与 RFC 1951 定义的“deflate”压缩机�
 
 传输编码被用于表示一种编码转换，该转换已经被、能够被、或者可能需要被用于实体数据以保证在网络中进行所谓的“安全传输”。它与内容编码的区别在于，传输编码时消息的属性，而不是初始数据实体的属性。
 
-````
+````xml 
 transfer-coding     = "chunked" | transfer-extension
 transfer-extension  = token * ( ";" parameter )
 ````
 
 参数表示为 参数/值 对形式。
 
-````
+````xml 
 parameter  = attribute "=" value
 attribute  = token
 value      = token | quoted-string
