@@ -868,3 +868,35 @@ HTTP/1.1 只定义了一个范围单位````bytes````。HTTP/1.1 协议实现可�
 ## 4.1 消息类型
 
 HTTP 消息包括客户端向服务端发送的请求和服务端向客户端发送的响应。
+
+````xml
+HTTP-message	= Request | Response	; HTTP/1.1 messages
+````
+
+````Request````和````Response````消息使用 RFC 822 中的一般消息格式来传输数据实体，也就是消息的有效载荷。两种类型的消息都由几部分组成，一个开始行，0个或者更多首部字段（众所周知的````headers````），一个空行表示首部字段的结束，可能还有一个消息体。
+
+````xml
+generic-message	= start-line
+				  *(message-header CRLF)
+				  CRLF
+				  [ message-body ]
+start-line		= Request-Line | Status-Line
+````
+
+为了保证鲁棒性，服务端在希望出现````Request-Line````的地方应该忽略接收到的任何空白行。换句话说，如果服务端正在读取协议数据流以获取消息开始位置，但是却先收到了````CRLF````，则必须忽略这些````CRLF````。
+
+某些特殊的 HTTP/1.0 版本的客户端实现会产生额外的````CRLF````在一个````POST````请求之后。为了重申 BNF 明确禁止的行为，HTTP/1.1 客户端绝对不能在一个请求的前后附带任何多余的````CRLF````。
+
+## 4.2 消息头
+
+HTTP 首部字段，包括一般首部，请求首部，响应首部以及实体首部字段，遵循相同的在 RFC 822 中给出的通用格式。每个首部字段由名称和随后的冒号以及最后的字段值组成。字段名是大小写敏感的。字段名可以以任何数量的````LWS````开头，但是推荐使用单个的````SP````。首部字段可以被扩展到多行，只要每个额外的行都以至少一个````SP````或者````HT````开头。应用应该遵循普遍形式，也就是众所周知的，当产生 HTTP 数据结构时，因为可能存在一些实现不能接收普遍形式之外的任何东西。
+
+````xml
+message-header	= field-name ":" [ field-value ]
+field-name		= token
+field-value		= *( field-content | LWS )
+field-content	= <the OCTETs making up the field-value
+                  and consisting of either *TEXT or combinations
+                  of token, separatores, and quoted-string>
+````
+
