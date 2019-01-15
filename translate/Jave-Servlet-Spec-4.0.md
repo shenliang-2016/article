@@ -2762,7 +2762,54 @@ public @interface ServletSecurity{
 
 ````@HttpConstraint````
 
-此注解与````@ServletSecurity````注解共同使用，表示应用于所有 HTTP 协议方法的安全约束，因为相应的````@HttpMethodConstraint````没有与````@ServletSecurity````注解共同出现。
+此注解与````@ServletSecurity````注解共同使用，表示安全约束将被应用于所有那些````@HttpMethodConstraint````没有与````@ServletSecurity````注解共同出现 HTTP 协议方法。
+
+当一个返回所有默认值的````@HttpConstraint````注解与至少一个返回其他所有默认值的````@HttpMethodConstraint````注解组合出现的特殊情况下，该````@HttpConstraint````注解表示没有安全约束将被应用于任何其它安全约束将要应用于的 HTTP 协议方法。这个例外的目的是保证这种未特别说明的````@HttpConstraint````使用方式不会对将显式建立无包含访问机制的方法产生安全约束，这样它们就不会被别的安全约束覆盖掉。
+
+````java
+package javax.servlet.annotation
+@Documented
+@Retention(value=RUNTIME)
+  public @interface HttpConstraint {
+  ServletSecurity.EmptyRoleSemantic value();
+  java.lang.String[] rolesAllowed();
+  ServletSecurity.TransportGuarantee transportGuarantee();
+}
+````
+
+| 元素                         | 描述                                      | 默认值    |
+| -------------------------- | --------------------------------------- | ------ |
+| ````value````              | 仅当````rolesAllowed````返回一个空数组时应用的默认授权语义 | PERMIT |
+| ````rolesAllowed````       | 包含已授权角色的名称的数组                           | {}     |
+| ````transportGuarantee```` | 请求到达时所属连接必须满足的数据保护需求                    | NONE   |
+
+````@HttpMethodConstraint````
+
+此注解与````@ServletSecurity````注解共同使用，表示对特定 HTTP 协议消息的安全约束。
+
+````java
+package javax.servlet.annotation
+@Documented
+@Retention(value=RUNTIME)
+public @interface HttpMethodConstraint {
+  ServletSecurity.EmptyRoleSemantic value();
+  java.lang.String[] rolesAllowed();
+  ServletSecurity.TransportGurantee transportGurantee();
+}
+````
+
+| 元素                         | 描述                                      | 默认值    |
+| -------------------------- | --------------------------------------- | ------ |
+| ````value````              | HTTP 协议方法名称                             |        |
+| ````emptyRoleSemantic````  | 仅当````rolesAllowed````返回一个空数组时应用的默认授权语义 | PERMIT |
+| ````rolesAllowed````       | 包含已授权角色的名称的数组                           | {}     |
+| ````transportGuarantee```` | 请求到达时所属连接必须满足的数据保护需求                    | NONE   |
+
+````@ServletSecurtiy````注解可以被指定到（也就是说，针对性地用于）某个````Servlet````实现类，同时其值可以被子类继承，继承规则按照 ````@Inherited````元数据定义的规则进行。每个````Servlet````实现类中最多只能有一个````@ServletSecurity````注解实例，而且该注解绝对不能被指定到（也就是说，针对性用于）一个 Java 方法。
+
+当一个或者多个````@HttpMethodConstraint````注解在````@ServletSecurity````注解内定义时，每个````@HttpMethodConstraint````定义相应的````security-constraint````应用于由````@HttpMethodConstraint````注解标记的 HTTP 协议方法。除非，其````@HttpConstraint````返回所有默认值，同时它所包含的至少一个````@HttpMethodConstraint````返回其它的默认值，则````@ServletSecurity````定义的另一个````security-constraint````被用于所有那些相应的````@HttpMethodConstraint````没有被定义的 HTTP 协议方法。
+
+在可移植部署描述器文件中定义的````security-constraint````元素对该约束中出现的所有````url-pattern````都是权威的。
 
 
 
