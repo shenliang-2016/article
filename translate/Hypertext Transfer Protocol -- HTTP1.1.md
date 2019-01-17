@@ -931,3 +931,68 @@ message-body	= entity-body | <entity-body encoded as per Transfer-Encoding>
 3. 如果````Content-Length````首部字段存在，则它的数字值就同时表示实体长度和传输长度。该首部字段绝对不能被发送，如果其中两个长度不相同（如果````Transfer-Encoding````首部字段存在）。如果接收到的消息同时包含````Transfer-Encoding````和````Content-Length````首部字段，则后者必须被忽略。
 4. 如果消息使用媒体类型````multipart/byteranges````，而且没有另外指定传输长度，则这种自定界媒体类型会自行定义传输长度。除非发送方知道消息接收方可以解析它，否则这种媒体类型绝对不能使用。````Range````首部字段和多种字节范围指定器同时出现在来自 HTTP/1.1 版本的客户端的请求中暗示该客户端能够解析````multipart/byteranges````响应。````Range````首部字段可以被 HTTP/1.0 版本的代理服务器转发，尽管代理并不理解````multipart/byteranges````，这种情况下，服务端必须使用规则1、规则3或者规则5为消息定界。
 5. 当服务端关闭连接时。（关闭连接不能别用于表示请求体的结束，因为这样做服务端就没办法将响应发送回来了。）
+
+为了兼容 HTTP/1.0 应用，包含消息体的 HTTP/1.1 请求必须包含一个有效的````Content-Length````首部字段，除非服务端是明确的兼容 HTTP/1.1 。如果包含消息体的请求没有给定````Content-Length````，则如果服务端无法确定消息长度就应该返回 400 （错误请求）响应，或者如果服务端坚持希望接收到合法的````Content-Length````，那它可以返回 411（需要长度）响应。
+
+所有的 HTTP/1.1 应用都必须接受分片的传输编码，当消息长度无法事先确定时就可以将此机制使用于消息。
+
+消息绝对不能同时包含````Content-Length````首部字段和非同一性的传输编码。如果消息包含了非同一性传输编码，则````Content-Length````必须被忽略。
+
+当允许包含消息体的消息携带了````Content-Length````首部字段，其值必须精确等于消息体中的记号数量。HTTP/1.1 用户代理在接收并检测到不合法的消息长度时必须通知用户。
+
+## 4.5 通用首部字段
+
+有些使用于请求和响应消息的首部字段，并不应用于被传输的数据实体。这些首部字段仅仅适用于正在被传输的消息。
+
+````xml
+general-header = Cache-Control		; Section 14.9
+				| Connection		; Section 14.10
+				| Date				; Section 14.18
+				| Pragma			; Section 14.32
+				| Trailer			; Section 14.40
+				| Transfer-Encoding	; Section 14.41
+				| Upgrade			; Section 14.42
+				| Via				; Section 14.45
+				| Warning			; Section 14.46
+````
+
+随着协议版本的变化通用首部字段名称可以被可靠地扩展。然而，新的或者实验性的受字段可以被赋予通用首部字段语义，如果通信中的所有参与者都将其公认为通用首部字段。不认识的首部字段会被认为是实体首部字段。
+
+# 5 请求
+
+被由客户端发往服务端的请求消息包含，作为消息的第一行，将要作用于资源上的方法，资源的定位符以及所使用的协议版本。
+
+````xml
+Request		= Request-Line			; Section 5.1
+			 *(( general-header		; Section 4.5
+			| request-header		; Section 5.3
+			| entity-header ) CRLF)	; Section 7.1
+			CRLF
+			[ message-body ]		; Section 4.3
+````
+
+## 5.1 请求行
+
+````Request-Line````以一个方法记号开头，随后是````Request-URI````和协议版本，以````CRLF````结尾。这些元素以````SP````字符分隔。除非是结尾的````CRLF````，否则这里不允许出现任何````CR````或者````LF````字符。
+
+````xml
+Request-Line	= Method SP Request-URI SP HTTP-Version CRLF
+````
+
+### 5.1.1 方法
+
+````Method````记号表示在````Request-URI````指定的资源上执行的方法。该方法记号是大小写敏感的。
+
+````xml
+Method		= "OPTIONS"			; Section 9.2
+			| "GET"				; Section 9.3
+			| "HEAD"			; Section 9.4
+			| "POST"			; Section 9.5
+			| "PUT"				; Section 9.6
+			| "DELETE"			; Section 9.7
+			| "TRACE"			; Section 9.8
+			| "CONNECT"			; Section 9.9
+			| extension-method
+extension-method = token
+````
+
