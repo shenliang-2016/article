@@ -80,3 +80,250 @@
 
 ----
 
+### 内容列表
+
+- [介绍](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Introduction)
+- [术语](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Terminology)
+- [目录和文件](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Directories_and_Files)
+- CATALINA_HOME and CATALINA_BASE
+  1. [为什么使用 CATALINA_BASE](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Why_Use_CATALINA_BASE)
+  2. [CATALINA_BASE 的内容](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Contents_of_CATALINA_BASE)
+  3. [如何使用 CATALINA_BASE](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#How_to_Use_CATALINA_BASE)
+- [配置 Tomcat](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Configuring_Tomcat)
+- [何处寻求帮助](http://tomcat.apache.org/tomcat-8.5-doc/introduction.html#Where_to_Go_for_Help)
+
+### 介绍
+
+作为系统管理员和应用开发者，在开始工作之前有一些重要的信息需要了解。此文档提供了 Tomcat 容器背后的一些重要概念和术语的简要介绍。同时，也给出了求助地址。
+
+### 术语
+
+阅读此文档过程中，你将会遇到大量的术语，某些专用于 Tomcat ，另外一些由 [Servlet and JSP 规范](https://wiki.apache.org/tomcat/Specifications) 定义。
+
+* **context**－简而言之，一个 Context 就是一个 web 应用。
+
+如果各位发现需要添加到此章节中的术语，请告诉我们。
+
+### 目录和文件
+
+以下是 tomcat 的一些关键目录：
+
+* **/bin**－启动、关闭以及其它脚本。````*.sh````文件（对 Unix 系统）与````*.bat````文件（对 Windows 系统）的功能是相同的。因为 Win32 命令行工具缺少某些功能，此目录下还有一些附加文件。
+* **/conf**－配置文件和相关的 DTDs。此处最重要的文件是````server.xml````。该文件是容器的主配置文件。
+* **/logs**－默认的日志文件在这里。
+* **/webapps**－你的 web 应用放在这里。
+
+### CATALINA_HOME 和 CATALINA_BASE
+
+贯穿整个文档，多处出现下面两个参数的引用：
+
+* **CATALINA_HOME**：表示你的 Tomcat 安装的根目录。比如````/home/tomcat/apache-tomcat-9.0.10````或者````c:\Program Files\apache-tomcat-9.0.10````。
+* **CATALINA_BASE**：表示一个特定 Tomcat 实例的运行时的配置文件的根目录。如果你想要在一台物理机器上运行多个 Tomcat 实例，就需要使用````CATALINA_BASE````属性。
+
+如果你将这两个属性设置为不同的位置，````CATALINA_HOME````路径下包含静态资源，比如````.jar````文件，或者二进制文件。````CATALINA_BASE````路径包含配置文件，日志文件，部署的应用，以及其它运行时需要的文件。
+
+#### 为什么要使用````CATALINA_BASE````
+
+默认情况下，````CATALINA_HOME````和````CATALINA_BASE````指向相同的文件目录。当你需要在一台物理机器上运行多个 Tomcat 实例时就需要手动设定````CATALINA_BASE````属性。这样做可以有以下好处：
+
+* 方便管理升级新版本的 Tomcat 。因为所有共享同一个````CATALINA_HOME````的多个实例都共享同一集合的````.jar````文件和二进制文件，你可以很方便地将这些文件升级到新版本，这个变化马上就会传播到共用同一个````CATALINA_HOME````目录的所有 Tomcat 实例。
+* 避免相同的静态````.jar````文件的重复。
+* 分享某些设置的可能性，比如````setenv```` shell 或者 bat 脚本文件（取决于你的操作系统）。
+
+#### ````CATALINA_BASE```` 目录的内容
+
+在你开始使用````CATALINA_BASE````之前，首先考虑并创建````CATALINA_BASE````所使用的目录树。注意，如果你没有创建这些推荐目录，Tomcat 就会自动创建。如果这些必要的目录创建失败，比如由于文件夹权限问题，Tomcat 要么启动失败，要么功能不正常。
+
+考虑下列目录：
+
+* ````bin````目录和````setenv.sh````、````setenv.bat````以及````tomcat-juli.jar````文件。
+
+  推荐：否
+
+  查找顺序：首先检查````CATALINA_BASE````，然后是加载````CATALINA_HOME````。
+
+* ````lib````目录和需要被添加到````classpath````中的额外的资源。
+
+  推荐：是，如果你的应用依赖于扩展类库。
+
+  查找顺序：首先检查````CATALINA_BASE````，然后是加载````CATALINA_HOME````。
+
+* ````logs````目录，存放特定实例的日志文件。
+
+  推荐：是
+
+* ````webapps````目录，Tomcat 从该目录自动加载 web 应用。
+
+  推荐：是，如果你想要部署应用。
+
+  查找顺序：只用````CATALINA_BASE````
+
+* ````work````目录，包含部署的 web 应用的临时工作目录。
+
+  推荐：是
+
+* ````temp````目录，包含 JVM 使用的临时文件。
+
+  推荐：是
+
+我们推荐你不要修改````tomcat-juli.jar````文件。然而，如果你需要使用自己的日志实现，你就可以为特定的 Tomcat 实例替换位于````CATALINA_BASE````目录下的````tomcat-juli.jar````文件。
+
+我们同时推荐你将````CATALINA_HOME/conf````目录下的所有的配置文件复制到````CATALINA_BASE/conf/````目录。免得````CATALINA_BASE````目录下缺失某个配置文件，而````CATALINA_HOME````目录下也没有备份。这样就可能导致失败。
+
+最小化系统中，````CATALINA_BASE````必须包含：
+
+* ````conf/server.xml````
+* ````conf/web.xml````
+
+这些文件都包含在````conf````目录下。否则，Tomcat 将启动失败，或者功能不正常。
+
+更多的高级配置信息，可以参考 [RUNNING.txt ](https://tomcat.apache.org/tomcat-9.0-doc/RUNNING.txt) 文件。
+
+#### 如何使用````CATALINA_BASE````
+
+````CATALINA_BASE````属性是一个环境变量。你可以在执行 Tomcat 启动脚本之前设定改属性。比如：
+
+* Unix：````CATALINA_BASE=/tmp/tomcat_base1 bin/catalina.sh start````
+* Windows：````CATALINA_BASE=C:\tomcat_base1 bin/catalina.bat start````
+
+### 配置 Tomcat
+
+本节将帮助你熟悉配置容器过程中用到的基本信息。
+
+配置文件中的所有信息都在容器启动时读取，这就意味着配置文件的任何修改都需要重启容器才能生效。
+
+### 何处寻求帮助？
+
+尽管我们尽量保证此文档书写清晰而且易于理解，然而还是无法避免有所遗漏。下面列出一些网址和邮件列表可能会提供帮助。
+
+注意，某些问题和解决方案在 Tomcat 不同的主版本之间是不同的。当你在网上搜索解决方案时，某些文档并不一定是关于 Tomcat 8 的，可能仅仅是对更早版本有效。
+
+* 此文档－大多数文档将列出潜在的问题。确保通读相关文档将为你节省很多时间和精力。当然，在网络上搜索问题的答案永远是最方便的方式。
+* [Tomcat FAQ](https://wiki.apache.org/tomcat/FAQ)
+* [Tomcat WIKI](https://wiki.apache.org/tomcat/)
+* Tomcat FAQ at [jGuru](http://www.jguru.com/faq/home.jsp?topic=Tomcat)
+* Tomcat 邮件列表归档 - 大量Tomcat 邮件列表的站点归档。
+* TOMCAT-USER 邮件列表， [订阅地址](https://tomcat.apache.org/lists.html)。
+* TOMCAT-DEV 邮件列表， [订阅地址](https://tomcat.apache.org/lists.html). 这个列表保留了关于 Tomcat 自身开发的讨论。关于 Tomcat 配置，开发和部署应用过程中可能遇到的问题，其中的答案可能要比 TOMCAT-USER 邮件列表中的更有针对性。
+
+如果你认为文档中应该加入些什么内容，务必通过 Tomcat-DEV 邮件列表告诉我们。
+
+----
+
+## Tomcat 设置
+
+----
+
+### 内容列表
+
+- [介绍](http://tomcat.apache.org/tomcat-8.5-doc/setup.html#Introduction)
+- [Windows](http://tomcat.apache.org/tomcat-8.5-doc/setup.html#Windows)
+- [Unix daemon](http://tomcat.apache.org/tomcat-8.5-doc/setup.html#Unix_daemon)
+
+### 介绍
+
+存在几种方式设置 Tomcat 以运行在不同的操作系统平台上。关于此设置的主要文档被称为 [RUNNING.txt](http://tomcat.apache.org/tomcat-8.5-doc/RUNNING.txt)。我们鼓励你直接研究该文件，如果下面的描述没有回答你的某些问题。
+
+### Windows
+
+通过 Windows 安装器在 Windows 操作系统上安装 Tomcat 是非常简单的。该安装器与其它的安装向导非常相似，仅仅包含很少有趣的元素。
+
+* **安装为系统服务**：Tomcat 将被安装为一个 Windows 系统服务，无论选择的设置是什么。在组件设定页面上的选择框设定服务为````auto````启动模式，如此 Tomcat 就会在 Windows 系统启动时自动启动。为了优化安全性，该服务应该作为一个单独的用户运行，通过限制权限。
+
+* **Java 位置**：安装器将提供一个默认的 JRE 用于运行该服务。安装器使用注册表来确定 Java 7 或者更高版本的 JRE 的安装根目录，或者是包含 JRE 作为其一部分的完整 JDK 的安装根目录。当运行在 64 位操作系统上时，安装器将首先寻找 64 位的 JRE ，只有当 64 位 JRE 不存在时才会寻找 32 位 JRE 。并不强制使用安装器找到的默认 JRE 。任何安装的 Java 7 或者更高版本的 JRE 都是可以使用的。
+
+* **系统托盘按钮**：作为系统服务运行时，Tomcat 并不会作为按钮出现在系统托盘中。注意，如果在安装结束时选择直接运行 Tomcat ，则即使作为系统服务运行，系统托盘里还是会出现 Tomcat 按钮。
+
+* **默认**：安装器使用的默认设置可以通过````/C=<config file>````命令行参数覆盖。配置文件使用````name=value````名值对形式，每行一个名值对。可用的配置项名称如下：
+
+  * JavaHome
+  * TomcatPortShutdown
+  * TomcatPortHttp
+  * TomcatPortAjp
+  * TomcatMenuEntriesEnable
+  * TomcatShortcurAllUsers
+  * TomcatServiceDefaultName
+  * TomcatServiceName
+  * TomcatServiceFileName
+  * TomcatServiceManagerFileName
+  * TomcatAdminEnable
+  * TomcatAdminUsername
+  * TomcatAdminPassword
+  * TomcatAdminRoles
+
+  通过使用````/C=...````和````/s````以及````/D=````其实可以执行完整的配置 Apache Tomcat 无人安装。
+
+* 参考 [Windows Service HOW-TO](http://tomcat.apache.org/tomcat-8.5-doc/windows-service-howto.html) 获取有关管理作为 Windows 系统服务的 Tomcat 的更多信息。
+
+安装器将创建快捷方式用于启动和配置 Tomcat 。需要特别注意的是，只有当 Tomcat 处于运行状态时其管理应用才是可用的。
+
+### Unix 守护进程
+
+使用来自 commons-daemon 项目的 jsvc 工具，Tomcat 可以作为守护进程运行。jsvc 的源码压缩包已经被包含在 Tomcat 二进制文件中，因而是需要编译的。构建 jsvc 需要 C ANSI 编译器（比如 GCC），GNU Autoconf，以及一个 JDK。
+
+运行脚本之前，环境变量````JAVA_HOME````应该被设定为 JDK 的根目录。另外，当调用````./configure````脚本时，JDK 的路径可以通过参数````--with-java````指定，形如````./configure --with-java=/usr/java````。
+
+使用如下命令产生一个编译后的 jsvc 二进制文件，位于````$CATALINA_HOME/bin````文件夹下。此处假定使用了 GNU TAR，同时````CATALINA_HOME````环境变量指向 Tomcat 安装根目录。
+
+注意，在 FreeBSD 操作系统中，应该使用 GNU make (gmake) ，而不是本地的 BSD make。
+
+````shell
+cd $CATALINA_HOME/bin
+tar xvfz commons-daemon-native.tar.gz
+cd commons-daemon-1.1.x-native-src/unix
+./configure
+make
+cp jsvc ../..
+cd ../..
+````
+
+接下来 Tomcat 可以通过以下命令作为守护进程运行：
+
+````shell
+CATALINA_BASE=$CATALINA_HOME
+cd $CATALINA_HOME
+./bin/jsvc \
+    -classpath $CATALINA_HOME/bin/bootstrap.jar:$CATALINA_HOME/bin/tomcat-juli.jar \
+    -outfile $CATALINA_BASE/logs/catalina.out \
+    -errfile $CATALINA_BASE/logs/catalina.err \
+    -Dcatalina.home=$CATALINA_HOME \
+    -Dcatalina.base=$CATALINA_BASE \
+    -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager \
+    -Djava.util.logging.config.file=$CATALINA_BASE/conf/logging.properties \
+    org.apache.catalina.startup.Bootstrap
+````
+
+当运行在 Java 9 平台上时，你需要在启动 jsvc 时额外指定下列参数以避免在关闭时的警告：
+
+````shell
+...
+--add-opens=java.base/java.lang=ALL-UNNAMED \
+--add-opens=java.base/java.io=ALL-UNNAMED \
+--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED \
+...
+````
+
+你还需要指定````-jvm server````，如果 JVM 默认使用服务器 VM 而不是客户端 VM，这个问题在 OSX 上已经被发现过。
+
+jsvc 还有其它有用参数，比如````-user````参数可以在守护进程初始化完成之后将其切换到另一个用户。这样一来就可以实现，以非特权用户启动 Tomcat 之后还可以随时使用特权端口。注意，如果你使用此选项同时作为 root 用户启动 Tomcat，你将需要关闭````org.apache.catalina.security.SecurityListener````检查，该检查会阻止以 root 用户身份启动 Tomcat 。
+
+````jsvc --help````将返回完整的 jsvc 使用信息。特别地，````-debug````选项对调试 jsvc 运行问题非常有用。
+
+````$CATALINA_HOME/bin/daemon.sh````文件可以被用来作为模版，用来通过 jsvc 在系统启动时从````/etc/init.d````自动启动 Tomcat 。
+
+注意，为了以这种方式运行 Tomcat ，Commons-Daemon JAR 文件必须在你的运行时 classpath 下。Commons-Daemon JAR 文件位于 bootstrap.jar 的 manifest 文件的 Class-Path 入口，但是如果你仍然遇到关于Commons-Daemon 类的````ClassNotFoundException````或者````NoClassDefFoundError````，那就在启动 jsvc 时将Commons-Daemon JAR 文件添加到 -cp 参数中。
+
+----
+
+##第一个 webapp
+
+##Application Developer's Guide
+
+**Version 8.5.37, Dec 12 2018**
+
+----
+
+## 内容索引
+
+### 前言
+
