@@ -327,3 +327,30 @@ jsvc 还有其它有用参数，比如````-user````参数可以在守护进程�
 
 ### 前言
 
+此手册包含来自很多 Tomcat 项目开发者的共享。下面的作者贡献了主要部分：
+
+* Craig R. McClanahan ([craigmcc@apache.org](mailto:craigmcc@apache.org))
+
+### 内容索引
+
+本手册内容分为以下章节：
+
+* [**介绍**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/introduction.html) - 此手册涵盖的信息的简要介绍，同时还有其它信息源的链接或者引用。
+* [**安装**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/installation.html) - 涵盖获取和安装必须的软件组件以使用 Tomcat 进行 web 应用开发。
+* [**部署组织**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html) - 讨论由 Servlet API 规范定义的 web 应用的标准的文件目录结构，部署描述器文件，以及在你的开发环境中集成 Tomcat 的选项。
+* [**源代码组织**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/source.html) - 描述一种有用的方法来组织你的项目的源代码目录结构，同时介绍````build.xml````文件，Ant 根据该文件管理项目编译过程。
+* [**开发过程**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/processes.html) - 提供关于使用推荐的部署和源代码组织结构的典型的开发过程的简要描述。
+* [**例子应用**](http://tomcat.apache.org/tomcat-8.5-doc/appdev/sample/) - 一个非常简单，而功能健全的例子应用，使用此手册中介绍的概念构建。你可以通过该例子应用练习使用相关技术。
+
+## 介绍
+
+### 概览
+
+恭喜！你已经决定（或者被告知）学习如何利用 Servlets 和 JSP 页面构建 web 应用，同时选用了 Tomcat 服务器进行学习和开发。但是现在该干什么呢？
+
+此手册是关于使用 Tomcat 来配置一个开发环境、组织你的源代码以及构建和测试你的应用的基本步骤的入门级介绍。这里不讨论 web 应用开发架构或者推荐的代码实践，也不会提供有关执行相关开发工具的深入介绍。附加信息的来源引用包含在接下来的章节中。
+
+此手册中的讨论目标是使用文本编辑器和命令行工具进行应用开发和调试的开发者。因此，其中的推荐都非常通用，但是你应该可以很容易地将它们应用到 windows 或者 Unix 开发环境。如果你使用 IDE 工具，就需要分辨此处给出的建议是否适用于你的特定开发环境。
+
+### 链接
+
