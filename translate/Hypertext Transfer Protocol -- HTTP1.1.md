@@ -1043,3 +1043,220 @@ Host: www.w3.org
 
 不允许资源被通过请求的主机字段区分的初始服务器在通过一个 HTTP/1.1 请求定位资源时可以忽略请求的````Host````首部字段值。
 
+不允许资源被通过请求的主机字段（有时候是作为虚拟主机或者空泛的主机名称）区分的初始服务器必须基于下列规则来定位一个 HTTP/1.1请求所请求的资源：
+
+1. 如果````Request-URI````是一个````absoluteURI````，主机就是````Request-URI````的一部分。请求中的任何````Host````首部字段值都必须被忽略。
+2. 如果````Request-URI````不是一个````absoluteURI````，而请求包含一个````Host````首部字段，则由该字段名确定主机。
+3. 如果通过规则1或者2得到的主机并不是服务器上的合法主机，则必须返回400（Bad Request）错误页面。
+
+接收到缺少````Host````首部字段的 HTTP/1.0 请求的通信参与者可以尝试使用启发式方法（比如，检查 URI 路径尝试发现某些关于主机的特殊标识）以确定请求所需的额外资源。
+
+## 5.3 请求首部字段
+
+请求首部字段允许客户端传递有关请求的额外信息，或者有关客户端本身的额外信息，给服务端。这些首部字段作为请求修饰词，语义等同于程序语言方法调用中的参数。
+
+````xml
+request-header = Accept					; Section 14.1
+				| Accept-Charset		; Section 14.2
+				| Accept-Encoding		; Section 14.3
+				| Accept-Language		; Section 14.4
+				| Authorization			; Section 14.8
+				| Expect				; Section 14.20
+				| Form					; Section 14.22
+				| Host					; Section 14.23
+				| If-Match				; Section 14.24
+				| If-Modified-Since		; Section 14.25
+				| If-None-Match			; Section 14.26
+				| If-Range				; Section 14.27
+				| If-Unmodified-Since	; Section 14.28
+				| Max-Forwards			; Section 14.31
+				| Proxy-Authorization	; Section 14.34
+				| Range					; Section 14.35
+				| Referer				; Section 14.36
+				| TE					; Section 14.39
+				| User-Agent			; Section 14.43
+````
+
+请求首部字段随着协议版本升级会逐步可靠扩充。然而，新的或者实验性的首部字段可能被赋予请求首部字段语义，如果通信参与者都将其视为请求首部字段。无法识别的首部字段将被作为实体首部字段处理。
+
+# 6 响应
+
+接收并解读一个请求消息之后，服务器将回送包含一条 HTTP 响应消息的响应。
+
+````xml
+Response	= Status-Line				; Section 6.1
+			*(( general-header			; Section 4.5
+			| response-header			; Section 6.2
+			| entity-header ) CRLF)		; Section 7.1
+			CRLF
+			[ message-body ]			; Section 7.2
+````
+
+## 6.1 状态行
+
+````Response````消息的第一行是````Status-Line````，由协议版本号和紧随其后的数字状态码和对应的文字叙述组成，每个元素都由````SP````分隔。除了末尾的````CRLF````序列，这一行中不允许出现任何````CR````或者````LF````。
+
+````xml
+Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+````
+
+### 6.1.1 状态码和原因描述
+
+````Status-Code````元素是一个 3 位整形数字，表示试图理解并满足请求需要的结果编码。这些编码的完整定义在第 10 章中给出。````Reason-Phrase````是对应于````Status-Code````的一个简短文字描述。````Status-Code````是给机器读取的，而````Reason-Phrase````是给人类阅读的。不强制客户端检查或者显示````Reason-Phrase````。
+
+````Status-Code````的第一位数字定义了响应的类别。后面的两位数字并没有分门别类的角色。第一位数字有 5 种取值：
+
+* 1xx：信息。已接收到请求，持续处理中。
+* 2xx：成功。请求操作已经成功接收、理解并接受。
+* 3xx：重定向。为了完成该请求必须采取进一步的行动。
+* 4xx：客户端错误。请求包含无法满足的语法。
+* 5xx：服务端错误。服务端无法满足看起来合法的请求。
+
+HTTP/1.1 协议状态编码的数字值以及对应的文字描述列出如下。其中的原因描述仅仅是推荐而非强制，它们可以被应用系统本地等价的描述替代，只要不影响协议运行即可。
+
+````xml
+Status-Code	=
+	  "100"	; Section 10.1.1: Continue
+	| "101"	; Section 10.1.2: Switching Protocols
+	| "200"	; Section 10.2.1: OK
+	| "201"	; Section 10.2.2: Created
+	| "202"	; Section 10.2.3: Accepted
+	| "203"	; Section 10.2.4: Non-Authoritative Information
+	| "204"	; Section 10.2.5: No Content
+	| "205"	; Section 10.2.6: Reset Content
+	| "206"	; Section 10.2.7: Partial Content
+	| "300"	; Section 10.3.1: Multiple Choices
+	| "301"	; Section 10.3.2: Moved Permanently
+	| "302"	; Section 10.3.3: Found
+	| "303"	; Section 10.3.4: See Other
+	| "304"	; Section 10.3.5: Not Modified
+	| "305"	; Section 10.3.6: Use Proxy
+	| "307"	; Section 10.3.8: Temporary Redirect
+	| "400"	; Section 10.4.1: Bad Request
+	| "401"	; Section 10.4.2: Unauthorized
+	| "402"	; Section 10.4.3: Payment Required
+	| "403"	; Section 10.4.4: Forbidden
+	| "404"	; Section 10.4.5: Not Found
+	| "405"	; Section 10.4.6: Method Not Allowed
+	| "406"	; Section 10.4.7: Not Acceptable
+	| "407"	; Section 10.4.8: Proxy Authentication Required
+	| "408"	; Section 10.4.9: Request Time-out
+	| "409"	; Section 10.4.10: Conflict
+	| "410"	; Section 10.4.11: Gone
+	| "411"	; Section 10.4.12: Length Required
+	| "412"	; Section 10.4.13: Precondition Failed
+	| "413"	; Section 10.4.14: Request Entity Too Large
+	| "414"	; Section 10.4.15: Request-URI Too Large
+	| "415"	; Section 10.4.16: Unsupported Media Type
+	| "416"	; Section 10.4.17: Requested range not satisfiable
+	| "417"	; Section 10.4.18: Expectation Failed
+	| "500"	; Section 10.5.1: Internal Server Error
+	| "501"	; Section 10.5.2: Not Implemented
+	| "502"	; Section 10.5.3: Bad Gateway
+	| "503"	; Section 10.5.4: Service Unavailable
+	| "504"	; Section 10.5.5: Gateway Time-out
+	| "505"	; Section 10.5.6: HTTP Version not Supported
+	| extension-code
+extension-code = 3DIGIT
+Reason-Phrase  = *<TEXT, excluding CR, LF>
+````
+
+HTTP 状态编码是可扩展的。HTTP 客户端并不需要理解所有已经注册的状态编码，尽管这些状态编码的含义都是自描述性的。不过，所有的应用都必须理解所有状态编码的类别，也就是第一位数字的含义，对所有不认识的响应状态码都作为该类别的````x00````状态编码处理，同时不能识别状态码的响应绝对不能被缓存。比如，如果客户端收到了不认识的状态编码 431 的响应，它就可以安全地假定该请求发生了某些错误或者异常情况，然后如同接收到 400 状态编码那样处理该响应。这种情况下，用户代理应该向用户展示通过响应返回的数据实体，因为该数据实体很可能包含某些人类可读的信息来解释出现的异常状态。
+
+## 6.2 响应首部字段
+
+响应首部字段允许服务器发送关于响应的额外信息，这些信息不能放入````Status-Line````中。这些响应首部字段给出了有关服务端和对````Request-URI````指定的资源采取进一步访问操作的信息。
+
+````xml
+response-header = Accept-Ranges				; Section 14.5
+				| Age						; Section 14.6
+				| ETag						; Section 14.19
+				| Location					; Section 14.30
+				| Proxy-Authenticata		; Section 14.33
+				| Retry-After				; Section 14.37
+				| Server					; Section 14.38
+				| Vary						; Section 14.44
+				| WWW-Authenticat			; Section 14.47
+````
+
+响应首部字段名称会随着协议版本升级可靠扩展。然而，新的或者实验性的首部字段可以被赋予响应首部字段语义，如果通信参与者都能将它们识别为响应首部字段。不能识别的首部字段会被作为实体首部字段处理。
+
+# 7 实体
+
+````Request````和````Response````消息可以传输一个实体，如果没有来自请求方法或者响应状态码的其它限制。一个实体由实体首部字段和实体主体构成，不过某些响应仅仅包含实体首部字段。
+
+本节中，发送者和接收者都可能是指客户端或者服务端，具体角色取决于它是实体发送方还是接收方。
+
+## 7.1 实体首部字段
+
+实体首部字段定义了有关实体主体的元数据，如果实体主体不存在，则是关于请求指定资源的元数据。其中部分元数据是可选的，另外一些可能是被此规范其它部分强制要求的。
+
+````xml
+entity-header = Allow					; Section 14.7
+				| Content-Encoding		; Section 14.11
+				| Content-Language		; Section 14.12
+				| Content-Length		; Section 14.13
+				| Content-Location		; Section 14.14
+				| Content-MD5			; Section 14.15
+				| Content-Range			; Section 14.16
+				| Content-Type			; Section 14.17
+				| Expires				; Section 14.21
+				| Last-Modified			; Section 14.29
+				| extension-header
+extension-header = message-header
+````
+
+扩展首部机制允许额外的实体首部字段在不改变协议的情况下被定义，但是这些字段不能被假定为所有通信参与者都能识别。无法识别的首部字段应该被通信参与者忽略，而且必须被透明代理转发。
+
+## 7.2 实体主体
+
+通过 HTTP 请求或者响应发送的实体主体，如果存在的话，会以实体首部字段定义的格式和编码进行处理。
+
+````xml
+entity-body = *OCTET
+````
+
+一个实体主体只有当消息主体存在时才会出现在消息中，就像 4.3 章节中定义的那样。实体主体从消息主体中获取，还需要经过解码，根据为了保证消息安全传输而应用于其上的传输编码````Transfer-Encoding````。
+
+### 7.2.1 类型
+
+当一个实体主体被包含在消息中，其数据类型通过首部字段````Content-Type````和````Content-Encoding````确定。这两个首部字段定义了一个两层的有序编码模型：
+
+````xml
+entity-body := Content-Encoding( Content-Type( data ) )
+````
+
+````Content-Type````指定数据的媒体类型。````Content-Encoding````可以被用于表示应用于数据的任何附加内容编码，通常是为了数据压缩，作为被请求资源的属性。并没有默认编码的存在。
+
+任何包含实体主体的 HTTP/1.1 消息都应该包含````Content-Type````首部字段，用于定义主体数据类型。当且仅当媒体类型没有通过````Content-Type````首部字段指定，消息接收方可以尝试猜测其媒体类型，通过检查其内容或者用于定位资源的 URI 中的扩展名。如果无法猜到媒体类型，消息接收方应该将其作为````application/octet-stream````类型处理。
+
+### 7.2.2 实体长度
+
+消息的实体长度是应用任何传输编码之前的消息主体的长度。4.4 章节中定义了如何确定消息主体的传输长度和传输编码。
+
+# 8 连接
+
+## 8.1 持久化连接
+
+### 8.1.1 目的
+
+在持久化连接出现之前，人们需要建立独立的 TCP 连接来获取每个 URI ，HTTP 服务器的负载很重，同时页造成了网络的拥塞。内嵌图片以及其它相关数据的使用通常会需要客户端在很短时间间隔内向同一个服务器发出多个请求。关于此类性能问题的分析来自一个目前已经可用的原型实现。实现的体验和实际 HTTP/1.1 （RFC 2068）的定量分析得到了很好的结果。其中的区别和已经被清晰地解释，比如 T/TCP。
+
+持久化的 HTTP 连接具有大量好处：
+
+* 通过打开和关闭更少的 TCP 连接，路由器和主机（客户端、服务器、代理、网关、管道或者缓存）的 CPU 时间得以节省，同时主机上用于 TCP 协议控制块的内存得以节省。
+* HTTP 请求和响应在一个连接上可以被组装成管线的形式。管线允许客户端发送多个请求而不需要等待每个响应，允许一个 TCP 连接被更高效地使用，从而获得更低的时延。
+* 通过减少 TCP 连接开启导致的数据包，网络拥塞的情况得以缓解。同时，TCP 有充分的时间确定网络的拥塞状态，也有助于解除网络拥塞。
+* 连续的请求之间的时间间隔减少，因为不再有 TCP 连接建立和打开过程中的握手过程。
+* HTTP 进化的更加优雅，因为错误可以被报告出来而不一定需要关闭 TCP 连接。使用未来 HTTP 版本的客户端可能有更好的解决方案，不过如果是在同老版本的服务端通信，则接收到错误报告之后还是需要以老版本的语义进行重试。
+
+HTTP 实现应该实现持久化连接。
+
+### 8.1.2 综述
+
+HTTP/1.1 与早期 HTTP 版本最大的不同就是持久化连接成为了所有 HTTP 连接的默认行为。也就是说，除非特别说明，客户端应该假定服务端将维护持久化连接，甚至是在服务端返回错误响应之后。
+
+持久化连接提供了一种机制，通过该机制，客户端和服务端可以发送 TCP 连接关闭信号。该信号位于````Connection````首部字段中。一旦收到连接关闭信号，客户端就绝对不能再通过该连接发送任何请求。
+
+#### 8.1.2.1 协商
+
