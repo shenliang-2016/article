@@ -354,3 +354,49 @@ jsvc 还有其它有用参数，比如````-user````参数可以在守护进程�
 
 ### 链接
 
+下面的链接提供了访问对应在线资源的方式，包括文档和软件，对使用 Tomcat 进行应用开发非常有用。
+
+* <https://jcp.org/aboutJava/communityprocess/mrel/jsr245/index2.html> - *JavaServer Pages (JSP) Specification, Version 2.3*。描述由 JSP 技术标准实现提供的编程环境。与 Servlet API Specification 相结合，本文档描述了包含的一个可移植的 API 页面。关于脚本、标签扩展以及 JSP 页面打包等的特定信息也是非常有用的。规范中包含了相应的 Javadoc API 文档，并随着 Tomcat 一同下载。
+* <http://jcp.org/aboutJava/communityprocess/final/jsr340/index.html> - *Servlet API Specification, Version 3.1*。描述了所有声称遵循规范的所有 servlet 容器必须提供的编程环境。特别地，你将需要通过此文档理解 web 应用的目录结构和部署文件，将请求 URIs 映射到 servlet 的方法，容器管理的安全机制，以及应用部署描述器文件````web.xml````文件语法。规范中包含了相应的 Javadoc API 文档，并随着 Tomcat 一同下载。
+
+## 安装
+
+### 安装
+
+为了使用 Tomcat 开发 web 应用，你必须首先安装它以及它所依赖的软件。下面列出必要的步骤。
+
+#### JDK
+
+Tomcat 8.5 被设计为运行在 Java SE 7 平台上。
+
+多平台的兼容 JDK 可以从 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>  获得。
+
+#### Tomcat
+
+Tomcat 服务器的二进制包下载地址 <https://tomcat.apache.org/>。此手册假定你使用的是 Tomcat 8 的最新发布版本。下载和安装过程的详细介绍参考 [这里](http://tomcat.apache.org/tomcat-8.5-doc/setup.html)。
+
+在此手册剩余部分中，shell 脚本的例子假定你已经将 Tomcat 安装路径名设定为系统环境变量````CATALINA_HOME````。如果 Tomcat 已经被配置为多实例模式，每个实例都需要配置自己专门的````CATALINA_BASE````，当然这是可选的。
+
+#### Ant
+
+Ant 的二进制包下载地址 <https://ant.apache.org/>。此手册假定你使用的是 Ant 1.8 或者更高版本。这里的说明应该也是适用于其他版本的俄，不过并没有经过测试。
+
+下载并安装 Ant。然后将安装目录中的````bin````目录添加到你的````PATH````环境变量中，按照你所使用的操作系统平台的设置方法。完成这一步设置之后，你就可以直接执行````ant````shell 命令。
+
+#### CVS
+
+除了上面提到的必须工具，强烈推荐你下载和安装源码控制系统，比如 CVS，用来维护构成你的应用的源代码的历史版本。除了服务端软件，你还需要对应的客户端软件来完成代码的签出和提交。
+
+源码控制系统的详细介绍超出了本手册的范围，所以就不多说了……
+
+## 部署
+
+### 内容索引
+
+- [背景](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Background)
+- [标准文件目录结构](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Standard_Directory_Layout)
+- [共享类库文件](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Shared_Library_Files)
+- [部署描述器文件](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Web_Application_Deployment_Descriptor)
+- [Tomcat 上下文描述器](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Tomcat_Context_Descriptor)
+- [在 Tomcat 上部署](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Deployment_With_Tomcat)
+
