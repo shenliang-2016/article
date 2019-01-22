@@ -400,3 +400,14 @@ Ant 的二进制包下载地址 <https://ant.apache.org/>。此手册假定你�
 - [Tomcat 上下文描述器](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Tomcat_Context_Descriptor)
 - [在 Tomcat 上部署](http://tomcat.apache.org/tomcat-8.5-doc/appdev/deployment.html#Deployment_With_Tomcat)
 
+
+### 背景
+
+描述如何组织你的源代码目录结构之前，检查 web 应用的运行时组织结构是很有用的。在 Servlet API 规范 2.2 版本之前，服务器平台之间仅有很少的连贯性。然而，生成遵循 2.2 或者更高版本规范的服务器实现都必须接受标准格式的 web 应用归档包。后面我们会继续讨论。
+
+一个 web 应用被定义为基于标准布局的目录和文件的层级结构。这个层级结构可以以尚未打包的形式被访问，彼时每个目录和文件都独立存在于文件系统中。也可以以打包之后的形式被访问，也就是众所周知的  Web ARchive 文件或者 WAR 文件形式。前者在开发过程中更有用，后者在你发布应用用于安装时更有用。
+
+web 应用的顶层目录也就是你的应用的根目录。此处，你可以放置 HTML 文件和 JSP 页面来构成你的应用的用户界面。当系统管理员将你的应用部署到特定的服务器中时，他会配置一个````context path````给你的应用。因此，如果系统管理员将````/catalog````分配给你的应用作为````context path````，则 URI 指向````/catalog/index.html````的请求将从你的应用根目录中获取````index.html````文件。
+
+### 标准目录布局
+
