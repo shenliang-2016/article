@@ -411,3 +411,35 @@ web 应用的顶层目录也就是你的应用的根目录。此处，你可以�
 
 ### 标准目录布局
 
+为了方便创建标准格式的 web 应用归档文件，传统的做法是将你的应用中的可执行文件（也就是 Tomcat 执行你的应用时实际使用的文件）按照 WAR 格式文件本身的要求组织起来。也就是说，你可以将以下内容放在你的应用的根文件目录中：
+
+* ***.html, *.jsp, etc. ** - HTML 文件和 JSP 页面，连同其它必须对客户端浏览器可见的文件（比如 JavaScript, stylesheet 文件以及图片等）。在大型应用中，你可以将这些文件分门别类放入不同的子目录中。
+*  **/WEB-INF/web.xml** - 应用的部署描述器文件。这是一个 xml 文件，描述组成你的应用的 servlets 和其它组件，连同所有的初始化参数和你希望服务器可以向你保证的容器管理的安全约束。此文件将在后续章节中详细讨论。
+* **/WEB-INF/classes** - 此目录包含你的应用必需的所有 Java 类文件（以及相关资源），包含 servlet 和非 servlet 类，它们没有被加入 JAR 包中。如果你的类文件被组织进入 Java 包中，你就必须将其反映在````/WEB-INF/classes````目录下的目录结构中。比如，名为````com.mycompany.mypackage.MyServlet````的 Java 类需要被存储在名为````/WEB-INF/classes/com/mycompany/mypackage/MyServlet.class````的类文件中。
+* **/WEB-INF/lib/** - 此目录包含你的应用所需的 Java 类文件（以及相关资源）打包成的 JAR 文件。比如第三方类库或者 JDBC 驱动。
+
+当你将应用安装到 Tomcat（或者其它 2.2 或更高版本的 Servlet 容器） 中，````/WEB-INF/classes````目录下的类文件，连同````/WEB-INF/lib/````目录下的 JAR 包中所有的类文件，都会对应用中的其它类可见。因此，如果你将所有的必需类库都放到同一个地方，你就可以很简单地安应用，而不需要修改系统 classpath。
+
+这些信息很多都来自 Servlet API 规范 2.3 版本的第 9 章，可以参考以获取更多细节。
+
+### 共享类库文件
+
+跟大部分 servlet 容器一样，Tomcat 也支持安装类库 JAR 文件（或者未打包的类）的机制，同时使它们对所有安装的 web 应用可见（而不需要包含在 web 应用内部）。Tomcat 如何定位和共享这些类的细节描述放在 [Class Loader HOW-TO](http://tomcat.apache.org/tomcat-8.5-doc/class-loader-howto.html) 文档中。Tomcat 用来共享代码的通用目录是````$CATALINA_HOME/lib````。放在这里的 JAR 文件对 web 应用和 Tomcat 内部代码都是可见的。这里就很适合存放 web 应用和 Tomcat 都需要的 JDBC 驱动文件。
+
+一个标准的 Tomcat 安装包含大量的开箱即用的共享类库，包括：
+
+* Servlet 3.1 和 JSP 2.3 API，是编写 servlets 和 JavaServer Pages 的基础。
+
+### 部署描述器文件
+
+就像上面提到的，````/WEB-INF/web.xml````文件包含了应用的部署描述器。该文件扩展名表明，它是一个 xml 文件，定义了服务器需要知道的有关你的应用的所有信息（不包括````context path````，该属性由系统管理员在部署应用时分配）。
+
+部署描述器文件的完整语法和语义由 Servlet API 规范 2.3 版本的第 13 章定义。随着时间推移，出现了很多开发工具可以用于创建和编辑部署描述器文件。在此基础上，开发工具会提供一个初始的 [basic web.xml file](http://tomcat.apache.org/tomcat-8.5-doc/appdev/web.xml.txt) 包含了其中每个元素的注解和目的描述。
+
+注意：Servlet 规范包含了一个关于部署描述器文件的文档类型描述器（DTD），Tomcat 在处理你的应用中的````/WEB-INF/web.xml````文件时会强制执行这里定义的规则。特别地，你必须按照 DTD 定义的顺序将你的描述器元素放入部署描述器文件。
+
+### Tomcat 上下文描述器
+
+````/META-INF/context.xml````文件可以被用来定义 Tomcat 特定的配置选项，比如访问日志，数据源，会话管理配置等等。此文件必须包含一个上下文元素，它将被看作是 Host 元素的子元素，该 Host 元素对应于该 web 应用部署到其上的主机。[Tomcat configuration documentation](http://tomcat.apache.org/tomcat-8.5-doc/config/context.html) 包含了有关信息。
+
+### 在 Tomcat 中部署
