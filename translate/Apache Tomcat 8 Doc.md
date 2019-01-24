@@ -505,3 +505,52 @@ web 应用必须被部署到 Servlet 容器中才能执行，即使是在开发�
 
 ### 源代码控制
 
+就像前面提到的，推荐你将所有组成你的应用的源代码文件和相关资源文件都通过类似 CVS 的源代码控制系统管理起来。如果你这么做了，源代码层级结构中的每个目录和文件都应该被注册和保存，除了那些自动生成的文件。如果你将二进制格式的文件也放到了源码控制系统中，请确保明确标记出来。
+
+我们推荐你不要保存````build/````和````dist/````目录下的内容到源码控制系统中。通过创建在你的源代码顶层目录中````.cvsignore````文件可以告诉 CVS 忽略这些目录。该文件目录可以是：
+
+````xml
+build
+dist
+build.properties
+````
+
+这里包含````build.properties````文件的原因将在 [Processes](http://tomcat.apache.org/tomcat-8.5-doc/appdev/processes.html) 章节中解释。
+
+### BUILD.XML 配置文件
+
+我们将使用 **ant** 工具管理你的源代码的编译，同时创建部署层级结构。Ant 在构建文件控制下工作，该构建文件通常叫做````build.xml````，定义了构建过程的必要步骤。这个文件位于你的源代码顶级目录中，而且应该被你的源代码控制系统管理。
+
+类似于 Makefile，该````build.xml````文件提供了若干````target````来支持可选的开发行为，比如创建相关的文档，清除部署根目录以便于从源码构建项目，或者创建 web 应用归档文件以便于发布应用。
+
+----
+
+## 部署
+
+----
+
+### 内容列表
+
+- [介绍](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Introduction)
+- [安装](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Installation)
+- [上下文](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#A_word_on_Contexts)
+- [Tomcat 启动时部署](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Deployment_on_Tomcat_startup)
+- [Tomcat 服务器运行时部署](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Deploying_on_a_running_Tomcat_server)
+- [使用 Tomcat Manager 部署](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Deploying_using_the_Tomcat_Manager)
+- [使用 Client Deployer Package 部署](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Deploying_using_the_Client_Deployer_Package)
+
+### 介绍
+
+所谓部署，就是将 web 应用安装到 Tomcat 服务器中的过程。
+
+在 Tomcat 服务器上的应用部署可以通过很多种方法实现：
+
+* 静态部署：Tomcat 启动之前就把 web 应用设置好。
+* 动态部署：直接操作已经部署的应用（依赖自动部署特性），或者通过 Tomcat Manager web 应用远程操作应用。
+
+[Tomcat Manager](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html) 是一个可以用来通过页面方式或者编程方式部署和管理 web 应用的应用。
+
+有很多方法可以通过 Manager 应用执行部署。
+
+
+
