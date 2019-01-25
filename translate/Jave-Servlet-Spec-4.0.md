@@ -2056,9 +2056,71 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    b. servlets 被初始化，要么在请求处理时懒加载，或者在部署过程中饥饿加载。在后一种情况中，它们会按照它们的````local-on-startup````元素说明的顺序被初始化。
 
+   c. 监听器按照它们在````web.xml````文件中被声明的顺序被调用：
+
+   ​	i. ````javax.servlet.ServletContextListener````的实现类的````contextInitialized````方法按照它们被声明的顺序被调用，
+
+   ​	````contextDestroyed````方法按照声明顺序的逆序被调用。
+
+   ​	ii. ````javax.servlet.ServletRequestListener````的实现类的````requestInitialized````方法按照它们被声明的顺序被调用，
+
+   ​	````requestDestroyed````方法按照声明顺序的逆序被调用。
+
+   ​	iii. ````javax.servlet.http.HttpSessionListener````的实现类的````sessionCreated````方法按照它们被声明的顺序被调用，
+
+   ​	````sessionDestroyed````方法按照声明顺序的逆序被调用。
+
+   ​	iv. ````javax.servlet.ServletContextAttributeListener````、````javax.servlet.ServletRequestAttributeListener````以及						        ````javax.servlet.HttpSessionAttributeListener````的实现类的方法在相应的事件发出时被按照它们声明的顺序被调用。
+
+3. 如果 servlet 通过````web.xml````文件中的````enabled````元素标识为不可用，则该 servlet 对````url-pattern````元素来说就是不可用的。
+
+4. 当解析````web.xml````、````web-fragment.xml````以及注解过程中发生冲突时，````web.xml````文件对 web 应用中具有最高的优先级。
+
+5. 如果部署描述器文件中没有指定````metadata-complete````元素，或者被设定为````false````，则有效的应用元数据就是有注解和部署描述器文件综合而来。两者合并的规则如下：
+
+   a. web fragment 中的配置设定被作为参数用于指定主````web.xml````文件中的元素属性，就如同它们都是在同一个````web.xml````文件中那样。
+
+   b. web fragment 中的配置设定被添加到主````web.xml````中的顺序在上面 8.2.2 章节中指定。
+
+   c. 当主````web.xml````中的````metadata-complete````元素属性被设置为````true````时，部署时就会认为该文件中的元数据就是完整的，因而度注解的扫描和对 web fragment 的解析都不会发生。如果````absolute-ordering````和````ordering````元素存在，则会被忽略。当在某个 web fragment 中被设置为````true````之后，````metadata-complete````属性就只会被应用于某个特定 jar 文件中的注解扫描。
+
+   d. 除非````metadata-complete````被设定为````true````，web fragments 都将被合并进入主````web.xml````文件。合并操作发生在相应的 web fragment 中的注解被处理之后。
+
+   e. 使用 web fragment 扩展 ````web.xml````过程中下列情况被认为是出现了配置冲突：
+
+   ​	i. ````<param-name>````相同的多个````<init-param>````元素的````<param-value>```` 不同。
+
+   ​	ii. ````<extension>````相同的多个````<mime-mapping>````元素的````<mime-type>````不同。
+
+   f. 上述配置冲突可以通过以下方式解决：
+
+   ​	i. 主````web.xml````与 web fragment 之间的配置冲突的解决方案是规定````web.xml````中的配置具有更高优先级。
+
+   ​	ii. 两个 web fragment 之间的配置冲突，如果发生冲突的元素在主````web.xml````文件中不存在，将导致一个错误。相关错误信息必须被记录下来，同时应用的部署必须失败。
+
+   g. 上述冲突被解决之后，下列附加规则应该被应用：
+
+   ​	i. 可能被声明任意多次的元素可以通过````web-fragmensts````被添加到最终的````web.xml````中。比如，具有不同````<param-name>````的````<context-param>````元素会被添加。
+
+   ​	ii. 可能被声明任意多次的元素如果在````web.xml````中指定，则会覆盖````web-fragments````中指定的同名元素的值。
 
 
-   ### 8.2.4 类库共享/运行时可插拔性
+
+
+
+   ### 8.2.4 类库共享 / 运行时可插拔性
+
+除了支持片段和注解的使用，其它强制性需求中的一条是，我们应该不仅能够将绑定到````WEB-INF/lib````中的组件作为插件，还能够将框架共享的包作为插件，包括可以将类似 JAX-WS、JAX-RS 以及 JSF 等构建在容器之上的组件作为插件。````ServletContainerInitializer````允许向下面描述的那样处理这种使用场景。
+
+````ServletContainerInitializer````类通过 jar 服务 API 被找到。对每个应用来说，当应用启动时刻由容器创建一个````ServletContainerInitializer````实例。框架提供的````ServletContainerInitializer````实现必须被包含在````META-INF/services````目录下的 jar 文件中，文件名为````javax.servlet.ServletContainerInitializer````，作为 jar 服务 API，它指向````ServletContainerInitializer````的实现。
+
+除了````ServletContainerInitializer````，我们还有一个注解````HandlesTypes````。该注解用在````ServletContainerInitializer````实现类上表示对某种类型感兴趣，这种类型可能拥有某些在````HandlesTypes````注解的值中指定的注解，或者该类型的父类型继承或实现了那些类中的某一个。````HandlesTypes````注解的应用不依赖````metadata-complete````的设定。
+
+当检查一个应用中的类是否匹配````ServletContainerInitializer````实现类上的````HandlesTypes````注解指定的任一约束时，如果某些应用可选的 JAR 包缺失，容器可能会遭遇类加载问题。因为容器没有办法判定这些类型加载失败是否会导致应用无法正常工作，它就必须忽略这些类，同时提供配置选项以记录这些信息。
+
+如果````ServletContainerInitializer````实现类上并没有````@HandlesTypes````注解，或者没有任何匹配到该注解指定的````HandlesType````的类型，则它将为每个应用被调用一次，其中````Set````参数值为````null````。这将允许初始化器基于应用中的可用资源决定是否应该初始化一个 servlet 或者过滤器。
+
+````ServletContainerInitializer````实现类的````onStartup````方法将被调用，当应用启动而任何 servlet 监听器事件都尚未发出之前。
 
 
 
