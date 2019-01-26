@@ -2122,9 +2122,28 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
 ````ServletContainerInitializer````实现类的````onStartup````方法将被调用，当应用启动而任何 servlet 监听器事件都尚未发出之前。
 
+````ServletContainerInitializer````实现类的````onStartup````方法被调用时，传入的````Set````参数是继承或者实现了初始化器表现出对通过````@HandlesTypes````注解指定的类或者被那些类注解的类的关注。
 
+下面有个具体的例子说明这是如何运作的。
 
+现在介绍 JAX-WS web services 运行时。
 
+JAX-WS 运行时实现通常不会默认绑定到每个 war 包中。该实现可以绑定一个````ServletContainerInitializer````实现类，同时容器将通过 services API 搜索之。
+
+````java
+@HandlesTypes(WebService.class)
+JAXWSServletContainerInitializer implements ServletContainerInitializer {
+    public void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException {
+        //JAX-WS 特定代码放在这里，用于初始化运行时和配置映射等。
+        ServletRegistration reg = ctx.addServlet("JAXWSServlet", "com.sun.webservice.JAXWSServlet");
+        reg.addServletMappings("/foo");
+    }
+}
+````
+
+框架的 jar 文件也可以被绑定在````web-inf/lib````目录下的 war 包中。如果````ServletContainerInitializer````实现类被绑定进入````WEB-INF/lib````目录下应用的 jar 文件中，它的````onStartup````方法就只会在绑定到的应用的启动过程中被调用一次。另一种情况，如果````ServletContainerInitializer````实现类位于````WEB-INF/lib````目录之外的 JAR 文件中，但是仍然能够被运行时服务发现机制搜索到，则它的````onStartup````方法就会在每次应用启动时被调用。
+
+````ServletContainerInitializer````接口的实现类将被运行时服务发现机制或者容器特定的某种相同语义的类似机制发现。无论如何，来自 web fragment JAR 文件的````ServletContainerInitializer````服务如果从绝对顺序中排除则必须被忽略，同时这些服务被发现的顺序必须遵循应用的类加载委派模型。
 
    ## 8.3 JSP 容器可插拔性
 
