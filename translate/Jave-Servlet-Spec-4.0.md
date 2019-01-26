@@ -2058,19 +2058,13 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    c. 监听器按照它们在````web.xml````文件中被声明的顺序被调用：
 
-   ​	i. ````javax.servlet.ServletContextListener````的实现类的````contextInitialized````方法按照它们被声明的顺序被调用，
+   ​	i. ````javax.servlet.ServletContextListener````的实现类的````contextInitialized````方法按照它们被声明的顺序被调用，````contextDestroyed````方法按照声明顺序的逆序被调用。
 
-   ​	````contextDestroyed````方法按照声明顺序的逆序被调用。
+   ​	ii. ````javax.servlet.ServletRequestListener````的实现类的````requestInitialized````方法按照它们被声明的顺序被调用，````requestDestroyed````方法按照声明顺序的逆序被调用。
 
-   ​	ii. ````javax.servlet.ServletRequestListener````的实现类的````requestInitialized````方法按照它们被声明的顺序被调用，
+   ​	iii. ````javax.servlet.http.HttpSessionListener````的实现类的````sessionCreated````方法按照它们被声明的顺序被调用，````sessionDestroyed````方法按照声明顺序的逆序被调用。
 
-   ​	````requestDestroyed````方法按照声明顺序的逆序被调用。
-
-   ​	iii. ````javax.servlet.http.HttpSessionListener````的实现类的````sessionCreated````方法按照它们被声明的顺序被调用，
-
-   ​	````sessionDestroyed````方法按照声明顺序的逆序被调用。
-
-   ​	iv. ````javax.servlet.ServletContextAttributeListener````、````javax.servlet.ServletRequestAttributeListener````以及						        ````javax.servlet.HttpSessionAttributeListener````的实现类的方法在相应的事件发出时被按照它们声明的顺序被调用。
+   ​	iv.````javax.servlet.ServletContextAttributeListener````、````javax.servlet.ServletRequestAttributeListener````以及````javax.servlet.HttpSessionAttributeListener````的实现类的方法在相应的事件发出时被按照它们声明的顺序被调用。
 
 3. 如果 servlet 通过````web.xml````文件中的````enabled````元素标识为不可用，则该 servlet 对````url-pattern````元素来说就是不可用的。
 
@@ -2096,13 +2090,31 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    ​	i. 主````web.xml````与 web fragment 之间的配置冲突的解决方案是规定````web.xml````中的配置具有更高优先级。
 
-   ​	ii. 两个 web fragment 之间的配置冲突，如果发生冲突的元素在主````web.xml````文件中不存在，将导致一个错误。相关错误信息必须被记录下来，同时应用的部署必须失败。
+      ii. 两个 web fragment 之间的配置冲突，如果发生冲突的元素在主````web.xml````文件中不存在，将导致一个错误。相关错误信息必须被记录下来，同时应用的部署必须失败。
 
-   g. 上述冲突被解决之后，下列附加规则应该被应用：
+   g. 上述冲突被解决之后，下列附加规则应该被应用：​
 
-   ​	i. 可能被声明任意多次的元素可以通过````web-fragmensts````被添加到最终的````web.xml````中。比如，具有不同````<param-name>````的````<context-param>````元素会被添加。
+      i. 可能被声明任意多次的元素可以通过````web-fragmensts````被添加到最终的````web.xml````中。比如，具有不同````<param-name>````的````<context-param>````元素会被添加。
 
-   ​	ii. 可能被声明任意多次的元素如果在````web.xml````中指定，则会覆盖````web-fragments````中指定的同名元素的值。
+      ii. 可能被声明任意多次的元素如果在````web.xml````中指定，则会覆盖````web-fragments````中指定的同名元素的值。
+
+      iii. 如果一个最少可以不出现，最多可以出现一次的元素出现在 web fragment 中，但是并没有出现在主````web.xml````文件中。则该主````web.xml````就会从该 web fragment 中继承该设定。如果该元素同时出现在主````web.xml````文件和 web fragment 中，则主````web.xml````中的配置设定具有更高优先级。比如，如果两者都声明了同一个 servlet ，而且 web fragment 中的声明指定了````<load-on-startup>````元素，但是主````web.xml````中的声明并没有指定该元素，则该````<load-on-startup>````元素就会被用在合并之后的````web.xml````中。
+
+      iv. 如果一个最少可以不出现，最多可以出现一次的元素出现在两个 web fragments，而且指定了不同的属性值，但是又没有出现在主````web.xml````文件中，则被认为是一个错误。比如，如果两个 web fragments 声明了同一个 servlet，但是指定了不同的````<load-on-startup>````元素，同时该 servlet 也在主````web.xml````文件中被声明，但是并没有指定任何````<load-on-startup>````元素，则必须报告一个错误。
+
+      v. ````<welcome-file>````声明可添加。
+
+      vi. 具有相同````<servlet-name>````的````<servlet-mapping>````元素通过````web-fragments````被添加。主````web.xml````文件指定的````<servlet-mapping>````将会覆盖````web-fragments````中具有相同````<servlet-name>````的````<servlet-mapping>````元素值。
+
+      vii. 具有相同````<filter-name>````的````<filter-mapping>````元素通过````web-fragments````被添加。主````web.xml````文件指定的````<filter-mapping>````将会覆盖````web-fragments````中具有相同````<filter-name>````的````<filter-mapping>````元素值。
+
+      viii. 具有相同````<listener-class>````的多个````<listener>````元素会被认为是一个````<listener>````声明。
+
+      ix. 合并产生的````web.xml````被认为是````<distributable>````，仅当主````web.xml````和所有的 web fragments 都被标记为````<distributable>````。
+
+      x. web fragment 中的顶层````<icon>````以及它的子元素，````<display-name>````以及````<description>````元素都会被忽略。
+
+      xi. ````jsp-property-group````是可添加的。
 
 
 
