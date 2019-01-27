@@ -609,3 +609,23 @@ TCD 需要 Apache Ant 1.6.2+ 和 Java 安装。你的系统中应该定义了```
 * 当应用的根目录（docBase）被删除时卸载 web 应用。注意，在 Windows 系统下，假定````anti-locking````特性（参考上下文配置文档）是可用的，否则运行中的 web 应用的资源文件是不可能被删除的。
 
 注意，web 应用的重新加载也可以被配置在加载器中，这样所有的被加载的类的修改都会被追踪。
+
+### 使用 Tomcat Manager 部署
+
+Tomcat Manager 有 [自己的使用手册](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html)。
+
+### 使用客户端部署器包部署
+
+最后，web 应用还可以通过 Tomcat 客户端部署器实现。这个包可以用于 web 应用的验证、编译、压缩为 WAR 包，以及将应用部署到开发环境或者生产环境的 Tomcat 服务器中。需要注意的是，该特性使用了 Tomcat Manager 因此需要保证目标 Tomcat 服务器处于运行中。
+
+假定用户非常熟悉 Apache Ant 以使用 TCD。Apache Ant 是一个脚本化的构建工具。TCD 被预先跟使用的构建脚本打包在一起使用。只需要对 Apache Ant 的基本了解即可。
+
+TCD 包含 Ant 任务、用于部署之前的 JSP 编译的 jasper 页面编译器、以及 web 应用上下文描述器验证任务。该验证任务（````org.apache.catalina.ant.ValidatorTask````类）只允许一个参数：未打包的应用的根目录。
+
+TCD 以未打包的应用作为输入。通过部署器以编程方式部署的 web 应用可以包含一个上下文描述器，位于````/META-INF/context.xml````文件中。
+
+TCD 包含一个随时可用的 Ant 脚本，具有以下目标：
+
+* ````compile````(默认)：编译并验证 web 应用。可以用于单独安装的情形，而不需要一个运行中的 Tomcat 。被编译的应用将只运行在相应的 *Tomcat X.Y.Z* 发布版本上，当时并不保证能够运行在其它版本上，因为 Jasper 产生的代码依赖于它的运行时组件。还需要注意，此目标会同时自动编译位于应用的````WEB-INF/classes````目录下的所有 Java 源代码文件。
+* ​
+
