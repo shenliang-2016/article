@@ -550,7 +550,46 @@ build.properties
 
 [Tomcat Manager](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html) 是一个可以用来通过页面方式或者编程方式部署和管理 web 应用的应用。
 
-有很多方法可以通过 Manager 应用执行部署。
+有很多方法可以通过 Manager 应用执行部署。Apache Tomcat 为 Apache Ant 构建工具提供了相关任务。[Apache Tomcat Maven Plugin](https://tomcat.apache.org/maven-plugin.html) 项目提供了与 Apache Maven 的集成。同时还有叫做客户端部署器的工具，可以用来通过命令行提供额外的功能，比如编译和验证 web 应用，以及将 web 应用打包成 WAR 文件。
 
+### 安装
 
+对Tomcat 默认提供的开箱即用的 web 应用的静态安装方式没有任何强制性要求，也对通过 Tomcat Manager 部署功能也没有强制性要求，不过在 [Tomcat Manager manual](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html) 中对某些配置做了强制性要求。如果你想要使用 Tomcat Client Deployer （TCD）则无论如何都需要安装。
+
+TCD 并没有包含在 Tomcat 核心发布版本中，因此必须手动单独下载。下载地址通常标识为 *apache-tomcat-8.5.x-deployer*。
+
+TCD 需要 Apache Ant 1.6.2+ 和 Java 安装。你的系统中应该定义了````ANT_HOME````环境变量指向 Ant 安装根目录，````JAVA_HOME````环境变量指向 Java 安装目录。另外，你应确保 Ant 的````ant````命令和 Java 的````javac````命令都是可以从命令行执行的。
+
+1. 下载 TCD 发布包；
+2. 不需要将 TCD 解压到任何已经存在的 Tomcat 安装目录中，它可以解压到任意位置；
+3. 查阅使用手册 [Tomcat Client Deployer](http://tomcat.apache.org/tomcat-8.5-doc/deployer-howto.html#Deploying_using_the_Client_Deployer_Package)。
+
+### 上下文
+
+当我们讨论 web 应用的部署时，必须理解 *Context* 术语。Tomcat 将 web 应用称为````Context````。
+
+为了配置 Tomcat 中的 Context，一个 *Context Descriptor* 是必需的。上下文描述器就是一个简单的 XML 文件，其中包含 Tomcat 中有关上下文的配置，比如资源命名和会话管理配置。在 Tomcat 早期版本中，上下文描述去配置通常存储在 Tomcat 的主配置文件 *server.xml* 中（如今不推荐这种做法，不过仍然能用）。
+
+上下文描述器不仅帮助 Tomcat 了解如何配置上下文，而且可以为诸如 Tomcat Manager 和 TCD 之类经常使用上下文描述器的工具执行它们各自的功能提供支持。
+
+上下文描述器文件的位置：
+
+1. ````$CATALINA_BASE/conf/[enginename]/[hostname]/[webappname].xml````
+2. ````$CATALINA_BASE/webapps/[webappname]/META-INF/context.xml````
+
+如果没有为上下文提供相应的描述器文件，则 Tomcat 将为上下文配置默认值。
+
+### Tomcat 启动时部署
+
+如果你不想使用 Tomcat Manager，或者 TCD，那么你就需要将你的应用静态部署到 Tomcat，然后再启动 Tomcat 。通过这种方式部署的应用的位置叫做````appBase````，每个主机都有各自特定的````appBase````。你可以将未打包的应用文件复制到该目录，或者将打包后的 WAR 文件复制过去。
+
+位于主机（默认主机就是````localhost````）指定的特定````appBase````(默认的 appBase 是````$CATALINA_BASE/webapps````)目录下的 web 应用在 Tomcat 启动时将会被部署，如果主机的````deployOnStartup````属性是````true````。
+
+这种情况下，Tomcat 启动时会发生如下的部署序列：
+
+1. 所有上下文描述器将首先被部署；
+2. 没有被任何上下文描述器引用的未打包的应用将接下来被部署，如果在````appBase````目录下存在相关的 WAR 包文件而且它又比未打包的应用更加新鲜，则未打包的目录将会被删除并且应用将会从该 WAR 包文件被重新部署。
+3. WAR 包文件最后被部署。
+
+### 在运行中的 Tomcat 上部署
 
