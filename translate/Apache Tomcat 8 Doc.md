@@ -627,5 +627,92 @@ TCD 以未打包的应用作为输入。通过部署器以编程方式部署的 
 TCD 包含一个随时可用的 Ant 脚本，具有以下目标：
 
 * ````compile````(默认)：编译并验证 web 应用。可以用于单独安装的情形，而不需要一个运行中的 Tomcat 。被编译的应用将只运行在相应的 *Tomcat X.Y.Z* 发布版本上，当时并不保证能够运行在其它版本上，因为 Jasper 产生的代码依赖于它的运行时组件。还需要注意，此目标会同时自动编译位于应用的````WEB-INF/classes````目录下的所有 Java 源代码文件。
-* ​
+* ````deploy````：部署一个 web 应用（无论是否编译）到 Tomcat 服务器。
+* ````undeploy````：卸载一个 web 应用。
+* ````start````：启动 web 应用。
+* ````reload````：重新加载 web 应用。
+* ````stop````：停止 web 应用。
+
+为了配置部署参数，在 TCD 安装根目录中创建````deployer.properties````文件，其中每行包含一个下列名值对：
+
+* ````build````：将使用 build 文件夹，默认的，````${build}/webapp/${path}```` (````${build}````，默认指向````${basedir}/build````)。在````compile````目标执行结束之后，应用的 WAR 文件将会被放在````${build}/webapp/${path}.war````。
+* ````webapp````：包含未打包的即将被编译和验证的应用的文件的目录。默认文件夹为````myapp````。
+* ````path````：已经部署的 web 应用的上下文路径，默认为````/myapp````。
+* ````url````：运行中的 Tomcat 服务器的 Tomcat Manager web 应用的绝对路径，将会被用于部署和卸载应用。默认情况下，部署器将会试图访问````localhost````上运行的 Tomcat 实例，位于````http://localhost:8080/manager/text````。
+* ````username````：Tomcat Manager 用户名（用户应该拥有管理员脚本角色）。
+* ````password````：Tomcat Manager 密码。
+
+----
+
+## Manager App 手册
+
+----
+
+### 内容列表
+
+- [介绍](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Introduction)
+- [配置 Manager 应用访问](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Configuring_Manager_Application_Access)
+- [HTML 用户友好接口](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#HTML_User-friendly_Interface)
+- [已支持的 Manager 命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Supported_Manager_Commands)
+  1. [命令参数](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Common_Parameters)
+  2. [远程部署新的 Application Archive (WAR) ](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_A_New_Application_Archive_(WAR)_Remotely)
+  3. [从本地路径部署新的 Application](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_A_New_Application_from_a_Local_Path)
+     1. [部署一个之前部署过的 webapp](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_a_previously_deployed_webapp)
+     2. [通过 URL 部署目录或者 WAR](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_a_Directory_or_WAR_by_URL)
+     3. [从 Host appBase 部署目录或者 War](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_a_Directory_or_War_from_the_Host_appBase)
+     4. [使用上下文配置 ".xml" 文件进行部署](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_using_a_Context_configuration_%22.xml%22_file)
+     5. [部署注意事项](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deployment_Notes)
+     6. [部署响应](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Deploy_Response)
+  4. [当前已部署应用列表](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#List_Currently_Deployed_Applications)
+  5. [重新加载一个已存在的应用](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Reload_An_Existing_Application)
+  6. [操作系统和虚拟机参数列表](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#List_OS_and_JVM_Properties)
+  7. [可用的全局 JNDI 资源列表](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#List_Available_Global_JNDI_Resources)
+  8. [会话统计](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Session_Statistics)
+  9. [会话超时](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Expire_Sessions)
+  10. [启动一个已存在的应用](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Start_an_Existing_Application)
+  11. [停止一个已存在的应用](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Stop_an_Existing_Application)
+  12. [卸载一个已存在的应用](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Undeploy_an_Existing_Application)
+  13. [寻找内存泄漏](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Finding_memory_leaks)
+  14. [连接器 SSL/TLS 加密信息](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Connector_SSL/TLS_cipher_information)
+  15. [连接器 SSL/TLS 凭证链信息](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Connector_SSL/TLS_certificate_chain_information)
+  16. [连接器 SSL/TLS 信任凭证信息](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Connector_SSL/TLS_trusted_certificate_information)
+  17. [重新加载 TLS 配置](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Reload_TLS_configuration)
+  18. [线程内存镜像](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Thread_Dump)
+  19. [虚拟机信息](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#VM_Info)
+  20. [保存配置](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Save_Configuration)
+- [服务器状态](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Server_Status)
+- [使用 JMX Proxy Servlet](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Using_the_JMX_Proxy_Servlet)
+  1. [什么是 JMX Proxy Servlet](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#What_is_JMX_Proxy_Servlet)
+  2. [JMX 查询命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#JMX_Query_command)
+  3. [JMX Get 命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#JMX_Get_command)
+  4. [JMX Set 命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#JMX_Set_command)
+  5. [JMX Invoke 命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#JMX_Invoke_command)
+- [通过 Ant 执行 Manager 命令](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Executing_Manager_Commands_With_Ant)
+  1. [任务输出捕获](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Tasks_output_capture)
+
+### 介绍
+
+在很多生产环境中，在不停止或者重启整个容器的情况下部署新的 web 应用或者卸载已经存在的应用是很有用的。另外，你能够请求一个已经存在的应用重新加载它自己，哪怕你在 Tomcat 服务器配置文件中并没有声明该应用是````reloadable````的。
+
+为了支持这些能力，Tomcat 包含了一个 web 应用（默认安装在上下文路径````/manager````）来支持以下功能：
+
+* 从上传的 WAR 包文件内容中部署一个新的 web 应用。
+* 从服务器文件系统中部署一个新的 web 应用到指定上下文路径中。
+* 列出当前已经部署的 web 应用，以及连接到这些 web 应用的所有活动会话。
+* 重新加载已存在的 web 应用，以反映````/WEB-INF/classes````或者````/WEB-INF/lib````目录内容的变化。
+* 列出操作系统和 Java 虚拟机参数值。
+* 列出可用的全局 JNDI 资源，这些资源将被部署工具使用，以````<ResourceLink>````元素的形式预先准备在一个````<context>````部署描述中。
+* 启动一个停止的应用（使其重新可用）。
+* 停止一个已存在的应用（因此它会变为不可用），但是并不卸载它。
+* 卸载一个已部署的应用，同时删除它的文件系统中的根目录（除非它是从文件系统部署的）。
+
+默认的 Tomcat 安装包含该 Manager。将````manager.xml````上下文配置文件安装到````$CATALINA_BASE/conf/[enginename]/[hostname]````文件夹下就可以将一个 Manager 实例````Context````添加到新的主机中。下面是一个例子：
+
+````xml
+<Context privileged="true" antiResourceLocking="false"
+         docBase="${catalina.home}/webapps/manager">
+  <Valve className="org.apache.catalina.Valves.RemoteAddrValve"
+         allow="127\.0\.0\.1"/>
+</Context>
+````
 
