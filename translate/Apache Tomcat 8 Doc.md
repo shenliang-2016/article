@@ -716,3 +716,11 @@ TCD 包含一个随时可用的 Ant 脚本，具有以下目标：
 </Context>
 ````
 
+如果你的 Tomcat 被配置为支持多个虚拟主机（网站），你就需要为每个主机配置一个 Manager。
+
+下面是使用 Manager 的三种方法：
+
+* 作为一个自带用户界面的应用在浏览器中使用。举个例子，你可以在 URL 中用你的网站主机名````http://localhost:8080/manager/html````替换````localhost````。
+* 最小版本使用 HTTP 请求仅仅适用于被系统管理员设置的脚本使用。请求作为请求 URI 的一部分给出，响应是简单的文本形式，很容易转化和处理。更多详情参见 [Supported Manager Commands](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Supported_Manager_Commands)。
+* 一个方便的 Ant 构建工具（1.4版本及更高）的任务定义集合。更多信息参见 [Executing Manager Commands With Ant](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Executing_Manager_Commands_With_Ant)。
+
