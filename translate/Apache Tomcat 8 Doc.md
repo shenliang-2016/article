@@ -467,7 +467,7 @@ web 应用必须被部署到 Servlet 容器中才能执行，即使是在开发�
 
 ### 目录结构
 
-下面描述中使用变量名````$CATALINA_BASE````表示解析相对路径是使用的根目录。如果你尚未为多个 Tomcat 实例分别指定````CATALINA_BASE````目录，则````$CATALINA_BASE````就会被设定为````CATALINA_HOME````的值，也即是你的 Tomcat 的安装路径。
+下面描述中使用变量名````$CATALINA_BASE````表示解析相对路径时使用的根目录。如果你尚未为多个 Tomcat 实例分别指定````CATALINA_BASE````目录，则````$CATALINA_BASE````就会被设定为````CATALINA_HOME````的值，也即是你的 Tomcat 的安装路径。
 
 本手册的一个关键的推荐做法就是将你的源代码目录结构与可部署应用的目录结构独立开来。保持这种独立性有以下好处：
 
@@ -724,3 +724,19 @@ TCD 包含一个随时可用的 Ant 脚本，具有以下目标：
 * 最小版本使用 HTTP 请求仅仅适用于被系统管理员设置的脚本使用。请求作为请求 URI 的一部分给出，响应是简单的文本形式，很容易转化和处理。更多详情参见 [Supported Manager Commands](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Supported_Manager_Commands)。
 * 一个方便的 Ant 构建工具（1.4版本及更高）的任务定义集合。更多信息参见 [Executing Manager Commands With Ant](http://tomcat.apache.org/tomcat-8.5-doc/manager-howto.html#Executing_Manager_Commands_With_Ant)。
 
+### 配置 Manager 应用访问
+
+下面描述中使用变量名````$CATALINA_BASE````表示解析相对路径时使用的根目录。如果你尚未为多个 Tomcat 实例分别指定````CATALINA_BASE````目录，则````$CATALINA_BASE````就会被设定为````CATALINA_HOME````的值，也即是你的 Tomcat 的安装路径。
+
+以默认配置安装运行 Tomcat 并且允许互联网上的任何人执行你的服务器上的 Manager 应用显然是相当不安全的。因此，使用该应用的用户必须认证他们的身份，使用属于````manager-xxx````角色的用户名和密码。进一步地，默认的用户文件（````$CATALINA_BASE/conf/tomcat-users.xml````）中并不包含属于该角色的用户名。因此，默认状态下访问 Manager 应用是不可能的。
+
+你可以在 Manager 应用的````web.xml````文件中找到角色名称。可用的角色有：
+
+* ````manager-gui````－可以访问 HTML 接口
+* ````manager-status````－只可以访问````Server Status````页面
+* ````manager-script````－可以访问此文档中描述的工具友好的纯文本接口，以及````Server Status````页面
+* ````manager-jmx````－可以访问 JMX 代理接口和````Server Status````页面
+
+HTML 接口是防 CSRF (跨站请求伪装) 攻击的，但是文本接口和 JMX 接口不是。这就意味着被允许访问文本接口和 JMX 接口的用户在通过浏览器访问 Manager 应用的时候就必须当心。为了维持 CSRF 防护：
+
+* 
