@@ -2114,7 +2114,7 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
       x. web fragment 中的顶层````<icon>````以及它的子元素，````<display-name>````以及````<description>````元素都会被忽略。
 
-      xi. ````jsp-property-group````是可添加的。
+      xi. ````jsp-property-group````是可添加的。推荐，当将静态资源绑定到 jar 文件的````META-INF/resources````目录下时，````jsp-config````元素使用````url-pattern````作为扩展映射的对比。此外，web 片段的 JSP 资源应该在以片段名命名的子目录中，如果存在的话。这样可以防止 web 片段的````jsp-propety-group````影响到应用文件夹根目录中的 JSPs 或者在片段的````META-INF/resources````目录中的 JSPs 。
 
 
 
