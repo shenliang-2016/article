@@ -132,7 +132,7 @@ Spring 提供了几种````ApplicationContext````接口的实现。在独立安�
 
 下图展示了一个 Spring 工作原理的高层视图。你的应用中的类基于配置元数据被如此组合起来，在````ApplicationContext````被创建和初始化之后，你就拥有了一个配置完善而且可执行的系统或者应用。
 
-![img](file:///C:\Users\liang.shen\AppData\Roaming\Tencent\Users\61856119\QQ\WinTemp\RichOle\3G8L@JY2X2CXY2YPJ$1}{DX.png)
+![spring ioc container](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/spring/image-20190202210745626.png)
 
 #### 1.2.1 配置元数据
 
@@ -362,4 +362,18 @@ context.refresh();
 每个 bean 都有一个或者多个标识符，这些标识符必须是容器范围唯一的。通常一个 bean 只有一个标识符。然而，如果真的需要另外的标识符，则其它的都会被当作是别名。
 
 基于 XML 的配置元数据中，你使用````id````属性，````name````属性，或者同时使用两者来作为特定 bean 的标识符。````id````属性使得你可以指定一个特定的 id。方便起见，这些名称都是字母组成的，不过它们也可以包含特殊字符。如果你想为该 bean 添加其它别名，你可以通过````name````属性指定，多个别名通过逗号、分号或者空格分隔。作为历史记录，在 Spring 3.1 之前的版本中，````id````属性被定义为````xsd:ID````类型，因而限制了可用的字符。在 3.1 版本中，它被定义为````xsd:string````类型。注意，bean ````id````的唯一性仍然将由容器来保证，而不再通过 XML 解析器保证。
+
+你不一定要为 bean 提供一个````name````或者````id````，这并不是强制的。如果你没有显式提供````name````或者````id````，容器就会为 bean 产生一个唯一的名称。然而，如果你希望可以通过名字引用到 bean，通过使用````ref````元素或者 [Service Locator](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-servicelocator) 形式的搜索，你就必须提供一个名字。不提供名称的动机主要是使用 [inner beans](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-inner-beans) 和 [autowiring collaborators](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-autowire) 。
+
+**Bean 命名传统**
+
+Bean 命名的传统是遵循 Java 实例变量命名规范。也就是说，bean 的名字以小写字母开头，并且是驼峰写法。比如 accountManager，userDao 等等。
+
+规范命名将使得你的配置文件简单易懂，同时，如果你使用 Spring AOP，它将在你将所谓的增强应用到名称关联的 beans 集合时会有很大帮助。
+
+> 在 classpath 中扫描组件的同时，Spring 会为尚未命名的组件生成 bean 名称，遵循上面描述的规则，基本上地，采用简单类名，将首字母小写。然而，某些特殊情况下，当存在多个字符而且第一个字符和第二个字符都是大写时，这个原始形式就会被保留。此规则与````java.beans.Introspector.decapitalize````中定义的相同。
+
+##### 在 Bean 定义之外指定别名
+
+在 bean 定义中，你可以为 bean 提供一个或者多个名字，通过使用
 
