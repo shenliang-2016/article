@@ -232,3 +232,134 @@ ApplicationContext context = new ClassPathXmlApplicationContext("services.xml", 
 </beans>
 ````
 
+上面的例子中，服务层由````PetStoreServiceImpl````类以及两个数据访问对象，类型分别为````JpaAccountDao````和````JpaItemDao````（基于 JPA 对象-关系映射标准）组成。````property name````元素指的是 JavaBean 属性的名称，````ref````元素指的是另一个 bean 定义的名字。````id````元素和````ref````元素之间的联系表达了协作对象之间的依赖关系。更多有关配置对象依赖关系的信息参见 [Dependencies](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-dependencies)。
+
+##### 组成基于 XML 的配置元数据
+
+bean 定义可以横跨多个 XML 文件是很有用的。通常，每个单独的 XML 配置文件都表示你的架构中一个逻辑层次或者模块。
+
+你可以使用应用上下文构造器从所有这些 XML 片段中加载 bean 定义。该构造器持久多个````Resource````位置，就像上一节中描述的那样。另外，还使用一个或者多个````<import/>````元素从另外的文件中加载 bean 定义。下面是一个例子：
+
+````xml
+<beans>
+  <import resource="services.xml"/>
+  <import resource="resources/messageSource.xml"/>
+  <import resource="/resources/themeSource.xml"/>
+  
+  <bean id="bean1" class="..."/>
+  <bean id="bean2" class="..."/>
+</beans>
+````
+
+上面的例子中，外部的 bean 定义从三个文件中加载：````services.xml````、````messageSource.xml````和````themeSource.xml````。所有的位置路径都是相对于执行导入操作的定义文件，因此````services.xml````文件必须位于执行导入操作的定义文件的相同目录或者 classpath 位置下，而````messageSource.xml````和````themeSource.xml````文件必须位于执行导入操作的文件所在目录的````resources````子目录中。正如你所看到的，路径开头的斜杠可以被忽略。然而，由于给出的都是相对路径，更好的做法是完全不使用斜杠。被导入的文件内容，包含顶层的````<beans/>````元素，必须是合法的 XML bean 定义，基于 Spring 规范。
+
+> 有可能可行，然而并不推荐的做法是使用相对路径````../````来引用父目录中的文件。这样做可以创建对当前应用之外的文件的依赖。特别的，这种引用不推荐用在````classpath````URLs（比如````classpath:../services.xml````），此时运行时解析过程会选择最近的 classpath 根目录然后进入它的父目录查找。Classpath 配置的变化就会导致该选择发生变化从而进入错误的目录。
+>
+> 你永远可以使用全限定的资源位置，而不是相对路径。比如````file:C:/config/services.xml````或者````classpath:/config/services.xml````。不过，这样也就把你的应用的配置耦合到了某些特定的绝对位置。通常更好的做法是保持一定程度的相对性，比如通过````${...}````占位符，该占位符被运行时用来解析 JVM 系统属性。
+
+命名空间本身提供了导入命令特性。除了普通的 bean 定义，高级的配置特性可以通过在 Spring 提供的 XML 命名空间中选择。比如````context````和````util````命名空间。
+
+##### Groovy Bean 定义 DSL
+
+作为外部配置元数据的高级例子，还可以通过 Spring's Groovy Bean Definition DSL 进行 bean 定义，就像在 Grails 框架中那样。典型地，这种配置存在于````.groovy````文件中，结构如下面例子所示：
+
+````groovy
+beans {
+    dataSource(BasicDataSource) {
+        driverClassName = "org.hsqldb.jdbcDriver"
+        url = "jdbc:hsqldb:mem:grailsDB"
+        username = "sa"
+        password = ""
+        settings = [mynew:"setting"]
+    }
+    sessionFactory(SessionFactory) {
+        dataSource = dataSource
+    }
+    myService(MyService) {
+        nestedBean = { AnotherBean bean ->
+            dataSource = dataSource
+        }
+    }
+}
+````
+
+这种配置形式基本上等价于 XML bean 定义，甚至都支持 Spring 的 XML 配置命名空间。同时，它也允许通过````importBeans````命令导入 XML bean 定义文件。
+
+#### 1.2.3 使用容器
+
+````ApplicationContext````是一个接口，作为一个先进的工厂，具有保持不同 beans 和它们之间的依赖关系的注册数据的能力。通过使用````getBean(String name, Class<T> requiredType)````方法，你可以或族群你的 beans 的实例。
+
+````ApplicationContext````允许你读取和使用 bean 定义，如下面例子所示：
+
+````java
+// create and configure beans
+ApplicationContext context = new ClassPathXmlApplicationContext("services.xml", "daos.xml");
+
+// retrieve configured instance
+PetStoreService service = context.getBean("petStore", PetStoreService.class);
+
+// use configured instance
+List<String> userList = service.getUsernameList();
+````
+
+使用 Groovy 配置时，步骤看起来非常类似。区别在于不同的上下文实现类是 Groovy 敏感的（同样理解 XML bean 定义）。下面例子展示使用 Groovy 配置时的情形：
+
+````java
+ApplicationContext context = new GenericGroovyApplicationContext("services.groovy", "daos.groovy");
+````
+
+最灵活的变体时结合使用````GenericApplicationContext````和读取代理，比如````XmlBeanDefinitionReader````用于读取 XML 文件，如下面例子所示：
+
+````java 
+GenericApplicationContext context = new GenericApplicationContext();
+new XmlBeanDefinitionReader(context).loadBeanDefinitions("services.xml", "daos.xml");
+context.refresh();
+````
+
+你也可以使用````GroovyBeanDefinitionReader````来读取 Groovy 文件，如下所示：
+
+````java
+GenericApplicationContext context = new GenericApplicationContext();
+new GroovyBeanDefinitionReader(context).loadBeanDefinitions("services.groovy", "daos.groovy");
+context.refresh();
+````
+
+你可以混合使用这些读取代理到同一个````ApplicationContext````上，从各种不同的配置源读取 bean 定义。
+
+接下来你可以使用````getBean````方法获取 beans 实例。````ApplicationContext````接口也提供了少量几个获取 beans 的方法。但是，理论上，你的应用代码不能使用它们。事实上，你的应用代码中绝对不应该出现````getBean()````方法调用，因此也就不会对 Spring API 产生任何依赖。比如，Spring 与 web 框架的集成机制提供了依赖注入机制为各种 web 框架组件使用，比如 controllers 和 JSF-managed beans ，允许你通过元数据声明对某个特定 bean 的依赖（比如 autowiring 注解）。
+
+### 1.3 Bean 概述
+
+一个 Spring IoC 容器管理一个或者多个 beans 。这些 beans 基于你提供给容器的配置元数据（比如，以 XML 形式）创建。
+
+在容器自身内容，这些 beans 定义表现为````BeanDefinition````对象，其中包含下列元数据（当前还有其它信息）：
+
+* 一个包限定了类名：典型的，就是被定义的 bean 的具体实现类。
+* Bean 动作配置元素，表示 bean 在容器中的行为（作用域、生命周期回调等等）。
+* 该 bean 完成它的工作所需要的其它 beans 的引用。这些引用也被称为协作者或者依赖。
+* 其它在创建新的对象时需要的配置设定。比如，管理连接池的 bean 使用的连接池的大小限制或者连接数限制。
+
+这些元数据转换成每个 bean 定义的属性集合。下表描述了这些属性：
+
+| 属性                       | 解释                                       |
+| ------------------------ | ---------------------------------------- |
+| Class                    | [Instantiating Beans](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-class) |
+| Name                     | [Naming Beans](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-beanname) |
+| Scope                    | [Bean Scopes](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-scopes) |
+| Constructor arguments    | [Dependency Injection](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-collaborators) |
+| Properties               | [Dependency Injection](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-collaborators) |
+| Autowiring mode          | [Autowiring Collaborators](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-autowire) |
+| Lazy initialization mode | [Lazy-initialized Beans](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-lazy-init) |
+| Initialization method    | [Initialization Callbacks](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-initializingbean) |
+| Destruction method       | [Destruction Callbacks](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-disposablebean) |
+
+除了包含如何创建特定 bean 的信息的 bean 定义之外，````ApplicationContext````实现也允许在容器之外由用户创建的已经存在的对象注册。此特性的实现过程为：访问````ApplicationContext````的````getBeanFactory()````方法以获取````BeanFactory````的实现类````DefaultListableBeanFactory````。````DefaultListableBeanFactory````通过````registerSingleton(...)````和````registerBeanDefinition(...)````方法支持这种对象注册。然而，典型情况下应用通常仅仅使用通过 bean 定义元数据定义的 beans 工作。
+
+> Bean 元数据和手工提供的单例实例需要被尽早注册，为了保证容器可以正确理解它们并在自动装配和其它自省过程中使用。尽管某种程度上覆盖现有的元数据和单例实例是支持的，运行时新 beans 注册（与 beans 工厂的正常访问并发）却并没有被官方支持，可能会导致并发访问异常，bean 容器内状态不一致，或者两者兼有。
+
+#### 1.3.1 Beans 命名
+
+每个 bean 都有一个或者多个标识符，这些标识符必须是容器范围唯一的。通常一个 bean 只有一个标识符。然而，如果真的需要另外的标识符，则其它的都会被当作是别名。
+
+基于 XML 的配置元数据中，你使用````id````属性，````name````属性，或者同时使用两者来作为特定 bean 的标识符。````id````属性使得你可以指定一个特定的 id。方便起见，这些名称都是字母组成的，不过它们也可以包含特殊字符。如果你想为该 bean 添加其它别名，你可以通过````name````属性指定，多个别名通过逗号、分号或者空格分隔。作为历史记录，在 Spring 3.1 之前的版本中，````id````属性被定义为````xsd:ID````类型，因而限制了可用的字符。在 3.1 版本中，它被定义为````xsd:string````类型。注意，bean ````id````的唯一性仍然将由容器来保证，而不再通过 XML 解析器保证。
+
