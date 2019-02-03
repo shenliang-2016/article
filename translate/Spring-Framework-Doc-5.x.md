@@ -538,3 +538,147 @@ public class DefaultServiceLocator {
 
 **基于构造器的依赖注入**
 
+构造器依赖注入通过容器携带若干参数调用构造方法实现，每个参数都表示一个依赖。通过携带特定参数对````static````工厂方法的调用来构造 bean 与此基本等价，同时此讨论中将构造方法参数和````static````工厂方法参数类似对待。下面的例子展示了通过构造器进行依赖注入的做法：
+
+````java
+public class SimpleMovieLister {
+  // the SimpleMovieLister has a dependency on a MovieFinder
+  private MovieFinder movieFinder;
+  
+  // a constructor so that the Spring container can inject a MovieFinder
+  public SimpleMovieLister(MovieFinder movieFinder) {
+    this.movieFinder = movieFinder;
+  }
+  
+  // businesss logic that actually uses the injected MovieFinder is omitted...
+}
+````
+
+注意，这个类并没有任何特殊的。它只是一个普通的类，没有通过类或者注解引入任何对容器特定接口的依赖。
+
+**构造器参数解析**
+
+构造器参数解析基于使用的参数的类型进行匹配。如果 bean 定义中没有潜在的构造器参数混淆，则在 bean 实例化过程这些参数就会按照 bean 定义中的顺序被应用到构造器方法调用中。考虑下面这个类：
+
+````java
+package x.y;
+
+public class ThingOne {
+	public ThingOne(ThingTwo thingTwo, ThingThree thingThree){
+		//...
+	}
+}
+````
+
+假设其中的````ThingTwo````和````ThingThree````类型并没有继承关系，而且不存在潜在的混淆。则下面的配置将会工作得很好，而且你不需要通过````<constructor-arg/>````元素显式指定构造器参数下标或者类型。
+
+````xml
+<beans>
+  <bean id="beanOne" class="x.y.ThingOne">
+    <constructor-arg ref="beanTwo"/>
+    <constructor-arg ref="beanThree"/>
+  </bean>
+  
+  <bean id="beanTwo" class="x.y.ThingTwo"/>
+  
+  <bean id="beanThree" class="x.y.ThingThree"/>
+</beans>
+````
+
+当其它的 bean 被引用时，类型是明确的，因此可能匹配成功。当使用一个简单类型时，比如````<value>true</value>````，则 Spring 无法确定该值的类型，也就无法基于类型进行匹配。考虑下面的类：
+
+````java
+package examples;
+
+public class ExampleBean {
+  // Number of years to calculate the Ultimate Answer
+  private int years;
+  
+  // The Answer to Life, the Universe, and Everything
+  private String ultimateAnswer;
+  
+  public ExampleBean(int years, String ultimateAnswer) {
+    this.years = years;
+    this.ultimateAnswer = ultimateAnswer;
+  }
+}
+````
+
+*构造器参数类型匹配*
+
+在上述场景中，如果你使用````type````属性显式指定构造器参数类型，容器就可以为简单类型使用使用类型匹配。如下面例子所示：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean">
+  <constructor-arg type="int" value="7500000"/>
+  <constructor-arg type="java.lang.String" value="42"/>
+</bean>
+````
+
+*构造器参数下标*
+
+你可以通过````index````属性显式指定构造器参数的下标，如下面例子所示：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean">
+  <constructor-arg index="0" value="7500000"/>
+  <constructor-arg index="1" value="42"/>
+</bean>
+````
+
+除了解决多个简单类型值的参数解析混淆问题，指定参数下标还可以解决相同类型的参数混淆问题。
+
+> 参数下标从 0 开始。
+
+*构造器参数名称*
+
+你还可以使用构造器参数名称来消除值混淆，如下面例子展示的：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean">
+  <constructor-arg name="years" value="7500000"/>
+  <constructor-arg name="ultimateAnswer" value="42"/>
+</bean>
+````
+
+注意，为了使得此特性开箱即用，你的代码必须在调试标识打开的情况下编译，这样 Spring 才能从构造器中发现参数名称。如果你不能或者不想在打开调试标识的情况下编译代码，你就可以使用 JDK 注解 [@ConstructorProperties](https://download.oracle.com/javase/6/docs/api/java/beans/ConstructorProperties.html) 来显式指定你的构造器参数名称。如下面例子所示：
+
+````java
+package examples;
+
+public class ExampleBean {
+  // Fields omitted
+  
+  @ConstructorProperties({"years", "ultimateAnswer"})
+  public ExampleBean(int years, String ultimateAnswer) {
+    this.years = years;
+    this.ultimateAnswer = ultimateAnswer;
+  }
+}
+````
+
+**参数设定器依赖注入**
+
+这种依赖注入方式的实现是通过容器在调用一个无参构造器方法或者一个无参的````static````工厂方法实例化你的 bean 之后调用你的 bean 中的参数设定器方法实现。
+
+下面的例子展示了一个只能够单纯使用参数设定器注入方式的类。就是一个普通的 Java 类。它只是一个普通的类，没有通过类或者注解引入任何对容器特定接口的依赖。
+
+````java
+public class SimpleMovieLister {
+  // the SimpleMovieLister has a dependency on the MovieFinder
+  private MovieFinder movieFinder;
+  
+  // a setter method so that the Spring container can inject a MovieFinder
+  public void setMovieFinder(MovieFinder movieFinder) {
+    this.movieFinder = movieFinder;
+  }
+  
+  // business logic that actually users the injected MovieFinder is omitted...
+}
+````
+
+````ApplicationContext````支持构造器和参数设定器依赖注入，适用于它所管理的所有 beans。同时还支持一些依赖已经通过构造器注入方式进行注入之后再对其它依赖使用参数设定器注入。以````BeanDefinition````形式配置依赖，与````PropertyEditor````实例联合使用来将属性从一种格式转化成另一种格式。然而，大多数 Spring 用户并不直接使用这些类（编程方式配置），而是使用 XML 形式的 bean 配置和组件注解（也就是说，标注````@Component````、````@Controller````等等注解的类），或者在基于 Java 代码的````@Configuration````类中使用````@Bean````方法。这些源码接下来会内部转化为````BeanDefinition````实例并被用于加载整个 Spring IoC 容器实例。
+
+> **构造器注入还是参数设定器注入**
+>
+> 尽管你可以混合使用构造器注入和参数设定器注入，但是
