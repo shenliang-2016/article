@@ -691,3 +691,12 @@ public class SimpleMovieLister {
 
 **依赖解析过程**
 
+容器按照如下顺序执行依赖解析：
+
+* ````ApplicationContext````被创建和初始化，基于描述了所有 beans 的配置元数据。配置元数据可以通过 XML 、Java 代码或者注解的形式给出。
+* 对每个 bean 来说，它的依赖表现为属性、构造器参数或者静态工厂方法参数（如果你使用它来取代正常的构造方法）。当 bean 实际被创建时，这些依赖将被提供给它。
+* 每个属性或者构造器参数都是一个需要设定的值的实际定义，或者是容器中其它 bean 的引用。
+* 每个属性或者构造器参数，只要是一个值，都被从它们各自特定格式转化为属性或者构造器参数的实力类型。默认地，Spring 可以将字符串形式的值转化为任何内建类型，比如````int````、````long````、````String````、````boolean````等等。
+
+Spring 容器在它自身被创建时校验每个 bean 的配置。然而，bean 属性只是到 bean 实际被创建时才会被设置。单例模式并且默认被设置为预实例化的 beans 在容器创建时被创建。模式定义在 [Bean Scopes](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-scopes) 中。否则，bean 只有在它真正被请求到的时候才会被创建。一个 bean 的创建可能会导致一系列 beans 的创建，也就是该 bean 的依赖和它的依赖的依赖等等被创建和分配。注意，这些依赖解析过程中发生的不匹配稍后就可能发生，也就是说，在第一个受影响的 bean 创建时。
+
