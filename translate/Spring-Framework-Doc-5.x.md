@@ -794,3 +794,56 @@ public class ExampleBean {
 
 bean 定义中的构造器参数被作为````ExampleBean````的构造方法参数。
 
+现在考虑一下这个例子的变体，告诉 Spring 通过调用一个````static````工厂方法获取对象的实例：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean" factory-method="createInstance">
+  <constructor-arg ref="anotherExampleBean"/>
+  <constructor-arg ref="yetAnotherBean"/>
+  <constructor-arg value="1"/>
+</bean>
+
+<bean id="anotherExampleBean" class="examples.AnotherBean"/>
+<bean id="yetAnotherBean" class="examples.YetAnotherBean"/>
+````
+
+下面是相应的````ExampleBean````类：
+
+````java
+public class ExampleBean {
+  
+  // a private constructor
+  private ExampleBean(...) {
+    ...
+  }
+  
+  // a static factory method; the arguments to this method can be considered the dependencies of 
+  // the bean that is returned, regardless of how those arguments are actually used.
+  public static ExampleBean createInstance(AnotherBean anotherBean, YetAnotherBean yetAnotherBean, int i) {
+    ExampleBean eb = new ExampleBean (...);
+    // some other operations...
+    return eb;
+  }
+}
+````
+
+````static````工厂方法的参数通过````<constructor-arg/>````元素给出，需要与实际使用的构造方法参数完全一致。该工厂方法返回的类的类型不一定是包含该````static````工厂方法的类，虽然例子中是同一个类。一个实例工厂方法（非静态的）也可以通过类似方式使用，具体细节我们不在这里讨论。
+
+#### 1.4.2 依赖和配置细节
+
+如前一章节所述，你可以将代码中定义的值和指向其它容器管理的 beans (所谓的协作者) 的引用定义为 bean 属性和构造器参数。Spring 的基于 XML 的配置元数据支持子元素类型包含````<property/>````和````<constructor-arg/>````元素来实现此效果。
+
+**直接值（原始数据类型，字符串等等）**
+
+````<property/>````元素的````value````属性给出了一个属性或者构造器参数的人类可读的字符串表达形式。Spring 的 [conversion service](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#core-convert-ConversionService-API) 被用来将这些值由````String````类型转化成为属性或者参数的实际类型。下面例子展示了各种设定值的情况：
+
+````xml
+<bean id="myDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+  <!-- results in a setDriverClassName(String) call -->
+  <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+  <property name="url" value="jdbc:mysql://localhost:3306/mydb"/>
+  <property name="username" value="root"/>
+  <property name="password" value="masterkaoli"/>
+</bean>
+````
+
