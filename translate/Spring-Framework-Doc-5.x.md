@@ -712,3 +712,85 @@ Spring 容器在它自身被创建时校验每个 bean 的配置。然而，bean
 
 你可以简单地相信 Spring 会做正确的事。它再容器加载期间检测配置问题，比如引用不存在 beans 或者环形依赖等。Spring 尽可能晚地设定属性值和解析依赖，直到 bean 实际被创建时才执行操作。这就意味着目前已经加载的 Spring 容器有可能稍后出现异常，如果你请求的对象在创建过程中自身或者依赖出现问题。比如，bean 在属性缺失或者不可用时抛出异常。这种潜在的某些配置问题的推迟出现解释了为何````ApplicationContext````是通过默认的预实例化单例模式 bean 实现。在实际使用之前预先付出一些时间和内存空间来创建这些 beans，你将可以在````ApplicationContext````被创建时发现配置问题，而不是之后。你同样可以覆盖这种默认行为，实现单例 beans 的懒加载，而不是预实例化。
 
+如果不存在环形依赖，当一个或者多个协作 beans 被注入依赖它们的 bean 时，每个协作 bean 都是已经被完整配置好了的。也就是说，如果 bean A 依赖 bean B ，容器在调用 bean A 中的设定器方法之前会提前完成 bean B 的配置。换句话说，一个 bean 实例化之后（如果它不是预实例化单例模式的），它的依赖都已经被设定，相关的生命周期方法都被调用（比如 [configured init method](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-initializingbean) 或者 [InitializingBean callback method](https://docs.spring.io/spring/docs/5.1.4.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-initializingbean) ）。
+
+**依赖注入的例子**
+
+接下来的例子基于 XML 配置元数据进行属性设定器依赖注入。相关的 bean 定义如下：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean">
+  <!-- setter injection using the nested ref element -->
+  <property name="beanOne">
+    <ref bean="anotherExampleBean"/>
+  </property>
+  
+  <!-- setter injection using the neater ref attribute -->
+  <property name="beanTwo" ref="yetAnotherBean"/>
+  <property name="integerProperty" value="1"/>
+</bean> 
+
+<bean id="anotherExampleBean" class="examples.AnotherBean"/>
+<bean id="yetAnotherBean" class="examples.YetAnotherBean"/>
+````
+
+下面例子展示了相应的````ExampleBean````类：
+
+````java
+public class ExampleBean {
+  private AnotherBean beanOne;
+  private YetAnotherBean beanTwo;
+  private int i;
+  
+  public void setBeanOne(AnotherBean beanOne) {
+    this.beanOne = beanOne;
+  }
+  
+  public void setBeanTwo(YetAnotherBean beanTwo) {
+    this.beanTwo = beanTwo;
+  }
+  
+  public void setIntegerProperty(int i) {
+    this.i = i;
+  }
+}
+````
+
+上面的例子中，声明的属性设定器与 XML 文件中的属性相对应。
+
+下面的例子使用了构造器依赖注入：
+
+````xml
+<bean id="exampleBean" class="examples.ExampleBean">
+  <!-- constructor injection using the nested ref element -->
+  <constructor-arg>
+    <ref bean="anotherExampleBean"/>
+  </constructor-arg>
+  
+  <!-- constructor injection using the neater ref attribute -->
+  <constructor-arg ref="yetAnotherBean"/>
+  <constructor-arg type="int" value="1"/>
+</bean> 
+
+<bean id="anotherExampleBean" class="examples.AnotherBean"/>
+<bean id="yetAnotherBean" class="examples.YetAnotherBean"/>
+````
+
+下面是对应的````ExampleBean````类：
+
+````java
+public class ExampleBean {
+  private AnotherBean beanOne;
+  private YetAnotherBean beanTwo;
+  private int i;
+  
+  public ExampleBean(AnotherBean anotherBean, YetAnotherBean yetAnotherBean, int i) {
+    this.beanOne = anotherBean;
+    this.beanTwo = yetAnotherBean;
+    this.i = i;
+  }
+}
+````
+
+bean 定义中的构造器参数被作为````ExampleBean````的构造方法参数。
+
