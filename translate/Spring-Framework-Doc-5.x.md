@@ -847,3 +847,70 @@ public class ExampleBean {
 </bean>
 ````
 
+下面的例子使用了 [p-namespace](https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-p-namespace) 使得该 XML 文件更加简洁：
+
+````xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="myDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+        destroy-method="close"
+        p:driverClassName="com.mysql.jdbc.Driver"
+        p:url="jdbc:mysql://localhost:3306/mydb"
+        p:username="root"
+        p:password="masterkaoli"/>
+
+</beans>
+````
+
+虽然这个 XML 更加简洁，但是拼写错误却只能在运行期才能发现，除非你的 IDE 可以帮助你自动完成属性名称。我们强烈推荐此类 IDE。
+
+你也可以配置一个````java.util.Properties````实例，如下所示：
+
+````xml
+<bean id="mappings"
+    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+
+    <!-- typed as a java.util.Properties -->
+    <property name="properties">
+        <value>
+            jdbc.driver.className=com.mysql.jdbc.Driver
+            jdbc.url=jdbc:mysql://localhost:3306/mydb
+        </value>
+    </property>
+</bean>
+````
+
+Spring 容器将位于````<value/>````元素内部的文本转化进入````java.util.Properties````实例，通过使用 JavaBeans 的````PropertiesEditor````机制。这是一种不错的快捷方式，Spring 团队喜欢用这种内部````<value/>````元素替代````value````属性形式。
+
+**````idref````元素**
+
+此元素是一种防错的参数传递方式，将容器中的另外一个 bean 的````id````（一个字符串值，不是引用）传递给一个````<constructor-arg/>````元素或者````<property/>````元素。下面的例子展示了如何使用：
+
+````xml
+<bean id="theTargetBean" class="..."/>
+
+<bean id="theClientBean" class="...">
+    <property name="targetName">
+        <idref bean="theTargetBean"/>
+    </property>
+</bean>
+````
+
+上面的 bean 定义片段在运行时等价于下面这个：
+
+````xml
+<bean id="theTargetBean" class="..." />
+
+<bean id="client" class="...">
+    <property name="targetName" value="theTargetBean"/>
+</bean>
+````
+
+前一种形式更好，因为使用````idref````标签使得容器可以在部署过程中校验被引用的和命名的 bean 的实际存在性。后一种变体中，被传递给````client````bean 的````targetName````属性的值不会被校验。拼写错误只有当````client````bean 实际被实例化时才会被发现，这通常是致命的。如果该````client````bean 是一个  [prototype](https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-factory-scopes) bean ，则其中的拼写错误及其导致的异常结果可能在容器被部署之后很长时间才会被方法。
+
+> ````idref````元素的````local````属性在 4.0 beans XSD 中已经不再支持，因为它已经不再通过一个规则的````bean````引用提供值。当升级到 4.0 规范时请修改你已经存在的````idref local````引用为````idref bean````。
+
