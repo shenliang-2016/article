@@ -914,3 +914,15 @@ Spring 容器将位于````<value/>````元素内部的文本转化进入````java.
 
 > ````idref````元素的````local````属性在 4.0 beans XSD 中已经不再支持，因为它已经不再通过一个规则的````bean````引用提供值。当升级到 4.0 规范时请修改你已经存在的````idref local````引用为````idref bean````。
 
+共同之处（至少在 Spring 2.0 版本之前）在于，````<idref/>````元素在````ProxyFactoryBean````定义中的 [AOP interceptors](https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#aop-pfb-1) 配置中携带值。当你指定拦截器名称时使用````<idref/>````元素可以防止你将拦截器 ID 拼写错误。
+
+**其它 Beans 的引用**
+
+````ref````元素是````<constructor-arg/>````或者````<property/>````定义元素中不可改变的元素。这里你可以将 bean 的特性属性值设定为指向容器管理的另外一个 bean（协作者）的引用。被引用的 bean 就成为引用它的 bean 的依赖，它将会在该属性设置之前被初始化。如果该协作者是单例模式 bean，则它可能已经被容器初始化过了。所有的引用最终都是指向另外一个对象。作用域和校验取决于你通过````bean````、````local````或者````parent````属性指定的其它对象的 ID 或者名称。
+
+通过````<ref/>````标签的````bean````属性指定目标 bean 是最常用的形式，允许创建指向同一个容器或者父容器中的任何 bean 的引用，无论它是否在同一个 XML 文件中。````bean````属性的值可以等于目标 bean 的````id````属性，或者等于目标 bean 的````name````属性中的一个值。下面的例子展示了如何使用````ref````元素：
+
+````xml
+<ref bean="someBean"/>
+````
+
