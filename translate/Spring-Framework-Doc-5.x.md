@@ -926,3 +926,47 @@ Spring 容器将位于````<value/>````元素内部的文本转化进入````java.
 <ref bean="someBean"/>
 ````
 
+通过````parent````属性指定目标 bean 创建了一个位于当前容器的父容器中的 bean 的引用。````parent````属性可以等于目标 bean 的````id````属性，或者等于目标 bean 的````name````属性中的一个值。该目标 bean 必须位于当前容器的一个父容器中。你应该使用这种 bean 引用变体，当你拥有层级结构的容器，而你希望将一个父容器中的一个 bean 以一个代理包装起来，该代理与它的父 bean 具有相同的名字。下面两个例子展示了````parent````属性的使用：
+
+````xml
+<!-- in the parent context -->
+<bean id="accountService" class="com.something.SimpleAccountService">
+    <!-- insert dependencies as required as here -->
+</bean>
+````
+
+````xml
+<!-- in the child (descendant) context -->
+<bean id="accountService" <!-- bean name is the same as the parent bean -->
+	class="org.springframework.aop.framework.ProxyFactoryBean">
+	<property name="target">
+        <ref parent="accountService"/> <!-- notice how we refer to the parent bean -->
+	</property>
+	<!-- insert other configuration and dependencies as required here -->
+<bean/>
+````
+
+> ````ref````元素的````local````属性在 4.0 beans XSD 中已经不再支持，因为它已经不再通过一个规则的````bean````引用提供值。当升级到 4.0 规范时请修改你已经存在的````ref local````引用为````ref bean````。
+
+**内部 Beans**
+
+````<constructor-arg/>````或者````<property/>````元素中的````<bean/>````元素定义了一个内部 bean。如下例子所示：
+
+````xml
+<bean id="outer" class="...">
+    <!-- instead of using a reference to a target bean, simply define the target bean inline -->
+    <property name="target">
+        <bean class="com.example.Person"> <!-- this is the inner bean -->
+            <property name="name" value="Fiona Apple"/>
+            <property name="age" value="25"/>
+        </bean>
+    </property>
+</bean>
+````
+
+内部 bean 定义并不强制定义 ID 或者名称。如果指定，容器也不会将该值作为 id 使用。容器同样会忽略创建中的````scope````标识，因为内部 bean 永远是匿名的，而且永远是和外部类一起创建。不可能独立访问内部 bean，也不可能将它们注入出了包含它们的外部 bean 之外的协作 bean 中。
+
+特殊情况下，可能会接收到来自定制化作用域的，比如，包含在一个单例 bean 内容的请求范围作用域的内部 bean。该内部 bean 实例的创建和它包含的 bean 绑定，但是析构回调使得它分享请求作用域生命周期。这不是常见的场景。内部 beans 典型地简单分享它们包含的 bean 的作用域。
+
+**集合**
+
