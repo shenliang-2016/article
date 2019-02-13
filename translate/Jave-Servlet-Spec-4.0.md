@@ -518,7 +518,7 @@ Java EE 特性，比如 15.2.2 节中的 “ Web 应用环境 ” 和 15.3.1 节
 
 * public < T extends AsyncListener > createListener ( Class< T >  clazz ) 
 
-  实例化给定的 AsyncListener 。返回的 AsyncListener 实例在通过下面将要说到的 addListener  方法注册到 AsyncContext 之前可以被进一步盯着。作为参数的 AsyncListener 必须定义一个无参构造器用来实例化。此方法支持任何 AsyncListener 适用的注解。
+  实例化给定的 AsyncListener 。返回的 AsyncListener 实例在通过下面将要说到的 addListener  方法注册到 AsyncContext 之前可以被进一步定制。作为参数的 AsyncListener 必须定义一个无参构造器用来实例化。此方法支持任何 AsyncListener 适用的注解。
 
 * public void addListener ( AsyncListener ) 
 
