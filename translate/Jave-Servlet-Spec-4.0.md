@@ -2131,10 +2131,48 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    如果一个资源引用注解别用于一个字段，就等价于在````web.xml````中定义了一个````injection-target````元素。然而，如果部署描述器文件中没有定义````injection-target````元素，则片段中定义的该元素仍然将会被合并进入````web.xml````。
 
+   如果主````web.xml````中存在一个````injection-target````元素，同时也存在一个相同资源名称的资源引用注解，则它就会被认为是资源引用注解的重写。这种情况下，由于部署描述器中定义了````injection-target````，上面定义的规则将应用，同时覆盖资源引用注解的值。
+
+   j. 如果在两个片段中指定了同一个````data-source````元素，而主````web.xml````中没有，同时所有属性和子元素都完全相同，则该````data-source````元素将会被合并进入主````web.xml````中。这种情况下，如果两个片段中元素的属性或者子元素不是完全相同的，则会被认为是一种错误。该错误必须被报告，同时应用的部署必须失败。
+
+   下面的例子展示了各种不同情况的结果。
+
+   ````xml
+   <!-- web.xml 没有资源引用定义 -->
+   
+   <!-- web-fragment.xml -->
+   <resource-ref>
+       <resource-ref-name="foo">
+           ...
+       	<injection-target>
+           	<injection-target-class>
+                   com.example.Bar.class
+               </injection-target-class>
+               <injection-target-name>
+                   baz
+               </injection-target-name>
+       	</injection-target>
+       </resource-ref-name>
+   </resource-ref>
+   
+   <!-- 有效的原数据如下 -->
+   <resource-ref>
+       <resource-ref-name="foo">
+           ...
+       	<injection-target>
+           	<injection-target-class>
+                   com.example.Bar.class
+               </injection-target-class>
+               <injection-target-name>
+                   baz
+               </injection-target-name>
+       	</injection-target>
+       </resource-ref-name>
+   </resource-ref>
+   ````
 
 
-
-   ### 8.2.4 类库共享 / 运行时可插拔性
+### 8.2.4 类库共享 / 运行时可插拔性
 
 除了支持片段和注解的使用，其它强制性需求中的一条是，我们应该不仅能够将绑定到````WEB-INF/lib````中的组件作为插件，还能够将框架共享的包作为插件，包括可以将类似 JAX-WS、JAX-RS 以及 JSF 等构建在容器之上的组件作为插件。````ServletContainerInitializer````允许向下面描述的那样处理这种使用场景。
 
@@ -2918,7 +2956,17 @@ public @interface HttpMethodConstraint {
 
 在可移植部署描述器文件中定义的````security-constraint````元素对该约束中出现的所有````url-pattern````都是权威的。
 
+## 13.9 默认策略
 
+默认的，访问资源并不需要身份认证。身份认证
+
+## 13.10 登录和注销
+
+容器会在讲请求分发给 servlet 引擎之前建立请求调用者的身份标识。该调用者身份标识将在整个请求处理过程中保持不变，或者直到应用在请求上成功地调用了````authenticate````,````login````或者````logout````。对异步请求来说，调用者身份标识在初始分发时建立，保持不变直到请求彻底处理完成或者应用在请求上成功地调用了````authenticate````,````login````或者````logout````。
+
+在请求处理过程中登录进入一个应用，精确地意味着请求包含一个合法的非空调用者身份标识，该标识可以通过调用请求上的````getRemoteUser````或者````getUserPrincipal````来确定。这两个方法任何一个返回````null````值都表示调用者在请求处理过程中尚未登录进入应用。
+
+容器可以创建 HTTP Session 对象来跟踪登录状态。如果开发者在用户尚未认证时创建会话，然后容器认证该用户，则登录之后对开发者代码可见的会话对吸纳高必须就是在登录之前创建的那个，这样才能保证会话信息不丢失。
 
 ----
 
