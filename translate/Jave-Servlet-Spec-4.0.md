@@ -2042,9 +2042,10 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
      导致的顺序：C，B，D，A。
 
-     也可能是：C，D，B，A 或者 C，B，A，D。
+     也可能是：C，D，B，A 或者 C，B，A，D。    
 
-   ### 8.2.3 组装来自````web.xml````、````web-fragment.xml````和注解的部署描述符
+
+### 8.2.3 组装来自````web.xml````、````web-fragment.xml````和注解的部署描述符
 
 如果监听器、servlet 和过滤器被调用的顺序对一个应用是很重要的，则必须使用部署描述器文件。同时，如果有必要，上面定义的顺序元素可以被使用。就像上面描述的，当通过注解定义监听器、servlet 和过滤器时，它们被调用的顺序是不确定的。下面是一系列可用于组装应用最终的部署描述器文件的规则集合：
 
@@ -2116,6 +2117,19 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
       xi. ````jsp-property-group````是可添加的。推荐，当将静态资源绑定到 jar 文件的````META-INF/resources````目录下时，````jsp-config````元素使用````url-pattern````作为扩展映射的对比。此外，web 片段的 JSP 资源应该在以片段名命名的子目录中，如果存在的话。这样可以防止 web 片段的````jsp-propety-group````影响到应用文件夹根目录中的 JSPs 或者在片段的````META-INF/resources````目录中的 JSPs 。
 
+   h. 对所有的资源引用元素（````env-entry````，````ejb-ref````，````ejb-local-ref````，````service-ref````，````resource-ref````，````resource-env-ref````，````message-destination-ref````，````persistence-context-ref````以及````persistence-unit-ref````）应用下列规则：
+
+      i. 如果所有资源引用元素都位于一个 web 片段中，同时都不在主````web.xml````文件中，该主````web.xml````从该 web 片段中继承这些值。如果元素在两者中都存在，而且具有相同的值，则````web.xml````优先。web 片段中的任何子元素都不会被合并进入主````web.xml````中，除非指定了````injection-target````。比如，如果主````web.xml````和 web 片段都声明了一个````<resource-ref>````元素，其````<resource-ref-name>````相同，则主````web.xml````文件中的````<resource-ref>````元素将会被使用，但是其所有子元素都不会被合并进来，除非如下文描述的那样指定````<injection-target>````。
+
+     ii. 如果一个资源引用元素在两个片段中指定，而并没有出现在主````web.xml````中，同时所有的属性和子元素都是完全相同的，则该资源引用元素将会被合并进入主````web.xml````中。这种情况下，如果两个片段中的属性或者子元素不相同，则会被认为是一个错误。必须报告错误，同时应用部署必须失败。
+
+     iii. 来自片段的具有相同名称的````<injection-target>````元素的资源引用元素将会被合并进入主````web.xml````。
+
+   i. 除了上面说的````web-fragment.xml````的合并规则，当使用资源引用注解（````@Resource````,````@Resources````,````EJB````,````EJBs````,````@WebServiceRef````,````@WebServiceRefs````,````@PersistenceContext````,````@PersistenceContexts````,````@PersitenceUnit````,````PersistenceUnits````）时应用以下规则。
+
+   如果一个资源引用注解被应用于一个类，它等价于定义了一个资源，但是它并不等价于定义一个````injection-target````。这种情况下上述规则就会被应用于````injection-target````元素。
+
+   如果一个资源引用注解别用于一个字段，就等价于在````web.xml````中定义了一个````injection-target````元素。然而，如果部署描述器文件中没有定义````injection-target````元素，则片段中定义的该元素仍然将会被合并进入````web.xml````。
 
 
 
