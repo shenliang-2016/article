@@ -2306,19 +2306,19 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
    n. 任何没有出现在部署描述器文件中而是通过注解指定的元数据都将被用来增强部署描述器。
 
      i. ````web.xml````和````web-fragment.xml````中指定的配置优先级高于通过注解指定的配置。
-
+    
      ii. 对通过````@WebServlet````注解定义的 servlet 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-
+    
      iii. 通过注解定义的 servlets 和 filters 的初始化参数将被部署描述器中同名的初始化参数覆盖。注解和部署描述器中的初始化参数是相加关系。
-
+    
      iv. 部署描述器中为给定名称的 servlet 指定的````url-patterns````将会覆盖注解为该 servlet 指定的。
-
+    
      v. 对通过````@WebFilter````注解定义的 filter 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-
+    
      vi. 部署描述器中为给定名称的 filter 指定的````url-patterns````将会覆盖注解为该 filter 指定的。
-
+    
      vii. 部署描述器中为 filter 指定的分发类型将会覆盖通过注解指定的。
-
+    
      viii. 下面的例子展示了上面的部分规则。
 
    一个 Servlet 通过一个注解声明，然后被部署描述器中对应的````web.xml````一同打包。
@@ -3193,6 +3193,85 @@ public @interface HttpMethodConstraint {
 在可移植部署描述器文件中定义的````security-constraint````元素对该约束中出现的所有````url-pattern````都是权威的。
 
 当可移植部署描述器文件中的````security-constraint````包含的````url-pattern````完全符合映射到一个注解了````@ServletSecurity````的类的模式时，该注解必须保证不影响 Servlet 容器施加到该模式上的约束。
+
+当可移植部署描述器文件中定义了元素````metadata-complete=true````，则````@ServletSecurity````注解就不会应用到任何映射到部署描述器文件中添加了该注解的类的````url-patterns````上。
+
+````@ServletSecurity````注解不会应用于通过````ServletContext````接口的````addServlet(String, Servlet)````方法创建的````ServletRegistration````的````url-patterns````，除非````Servlet````是通过````ServletContext````接口的````createServlet````方法创建的。
+
+除了上面列出的例外情况，当一个 Servlet 类添加了````@ServletSecurity````注解，该注解定义的安全约束就会应用到所有映射到该 Servlet 映射到的类的所有````url-patterns````上。
+
+当一个类并没有被````@ServletSecurity````注解，则该类映射到的 servlet 的访问策略就基于可用的````security-constraint````元素建立，如果真的有的话，在对应的可移植部署描述器文件中，或者基于这些约束排除所有这些元素，如果存在的话，通过````ServletRegistration````接口的````setServletSecurity````方法为目标 servlet 以程序方式建立。
+
+#### 13.4.1.1 例子
+
+下面的例子展示了````@ServletSecurity````注解的使用：
+
+````java
+// 对所有 HTTP 方法，都没有约束
+@ServletSecurity
+public class Example1 extends HttpServlet {
+    
+}
+````
+
+````java
+// 对所有 HTTP 方法，没有身份认证约束、保密传输要求
+@ServletSecurity(@HttpConstraint(transportGuarantee = TransportGurantee.CONFIDENTIAL))
+public class Example2 extends HttpServlet {
+    
+}
+````
+
+````java
+// 所有 HTTP 方法，所有的访问都拒绝
+@ServletSecurity(@HttpConstraint(EmptyRoleSemantic.DENY))
+public class Example3 extends HttpServlet {
+    
+}
+````
+
+````java
+// 对所有的 HTTP 方法，身份认证约束要求属于角色 R1
+@ServletSecurity(@HttpConstraint(rolesAllowed = "R1"))
+public class Example4 extends HttpServlet {
+    
+}
+````
+
+````java
+// 对 GET 和 POST 方法，身份认证约束要求属于角色 R1，对于 POST 方法，需要保密传输。其它方法没有约束。
+@ServletSecurity(httpMethodConstraints = {
+    @HttpMethodConstraint(value = "GET", rolesAllowed = "R1"),
+    @HttpMethodConstraint(value = "POST", rolesAllowed = "R1",
+    transportGuarantee = TransportGurantee.CONFIDENTIAL)
+})
+public class Example5 extends HttpServlet {
+    
+}
+````
+
+````java
+// 对 GET 方法，没有约束，其它方法的身份认证约束要求属于角色 R1
+@ServletSecurity(value = @HttpConstraint(rolesAllowed = "R1"),
+                httpMethodConstraints = @HttpMethodConstraint("GET"))
+public class Example6 extends HttpServlet {
+    
+}
+````
+
+````java
+// 对 TRACE 方法，所有访问都拒绝，其它方法，身份认证约束需要属于角色 R1
+@ServletSecurity(value = @HttpConstraint(rolesAllowed = "R1"),
+                httpMethodConstraints = @HttpMethodConstraint(value="TRACE",
+                emptyRoleSemantic = EmptyRoleSemantic.DENY))
+public class Example7 extends HttpServlet {
+    
+}
+````
+
+#### 13.4.1.2 映射 @ServletSecurity 到安全约束
+
+
 
 
 
