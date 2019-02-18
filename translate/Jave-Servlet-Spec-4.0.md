@@ -2139,38 +2139,274 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
 
    ````xml
    <!-- web.xml 没有资源引用定义 -->
-   
+
    <!-- web-fragment.xml -->
    <resource-ref>
-       <resource-ref-name="foo">
-           ...
-       	<injection-target>
-           	<injection-target-class>
-                   com.example.Bar.class
-               </injection-target-class>
-               <injection-target-name>
-                   baz
-               </injection-target-name>
-       	</injection-target>
-       </resource-ref-name>
+       <resource-ref-name="foo"/>
+       ...
+       <injection-target>
+           <injection-target-class>
+               com.example.Bar.class
+           </injection-target-class>
+           <injection-target-name>
+               baz
+           </injection-target-name>
+       </injection-target>
    </resource-ref>
-   
+
    <!-- 有效的原数据如下 -->
    <resource-ref>
-       <resource-ref-name="foo">
-           ...
-       	<injection-target>
-           	<injection-target-class>
-                   com.example.Bar.class
-               </injection-target-class>
-               <injection-target-name>
-                   baz
-               </injection-target-name>
-       	</injection-target>
-       </resource-ref-name>
+       <resource-ref-name="foo"/>
+       ...
+       <injection-target>
+           <injection-target-class>
+               com.example.Bar.class
+           </injection-target-class>
+           <injection-target-name>
+               baz
+           </injection-target-name>
+       </injection-target>
    </resource-ref>
    ````
 
+
+   ````xml
+   <!-- web.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+   </resource-ref>
+
+   <!-- web-fragment.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target>
+       <injection-target-class>
+         com.example.Bar.class
+       </injection-target-class>
+       <injection-target-name>
+         baz
+       </injection-target-name>
+     </injection-target>
+   </resource-ref>
+
+   <!-- web-fragment.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target>
+       <injection-target-class>
+         com.example.Bar2.class
+       </injection-target-class>
+       <injection-target-name>
+         baz2
+       </injection-target-name>
+     </injection-target>
+   </resource-ref>
+
+   <!-- 生效的元数据 -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target>
+       <injection-target-class>
+         com.example.Bar.class
+       </injection-target-class>
+       <injection-target-name>
+         baz
+       </injection-target-name>
+     </injection-target>
+     <injection-target>
+       <injection-target-class>
+         com.example.Bar2.class
+       </injection-target-class>
+       <injection-target-name>
+         baz2
+       </injection-target-name>
+     </injection-target>
+   </resource-ref>
+   ````
+
+   ````xml
+   <!-- web.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     <injection-target>
+       <injection-target-class>
+         com.example.Bar3.class
+       </injection-target-class>
+       <injection-target-name>
+         baz3
+       </injection-target-name>
+     </injection-target>
+   </resource-ref>
+
+   <!-- web-fragment.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target>
+       <injction-target-class>
+         com.example.Bar.class
+       </injction-target-class>
+       <injection-target-name>
+         baz
+       </injection-target-name>
+     </injection-target>
+   </resource-ref>
+
+   <!-- web-fragment.xml -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target-class>
+       com.example.Bar2.class
+     </injection-target-class>
+     <injection-target-name>
+       baz2
+     </injection-target-name>
+   </resource-ref>
+
+   <!-- 生效的元数据 -->
+   <resource-ref>
+     <resource-ref-name="foo"/>
+     ...
+     <injection-target>
+       <injection-target-class>
+       	com.example.Bar3.class
+     	</injection-target-class>
+     	<injection-target-name>
+       	baz3
+     	</injection-target-name>
+     	<injection-target-class>
+       	com.example.Bar.class
+     	</injection-target-class>
+     	<injection-target-name>
+       	baz
+     	</injection-target-name>
+     	<injection-target-class>
+       	com.example.Bar2.class
+     	</injection-target-class>
+     	<injection-target-name>
+       	baz2
+     	</injection-target-name>
+     </injection-target>
+   </resource-ref>
+   ````
+
+   web 片段中的````<injection-target>````将会被合并进入主````web.xml````。
+
+   k. 如果主````web.xml````中没有指定任何````<post-construt>````元素，而 web 片段中指定了，则片段中的该元素就会被合并进入主````web.xml````。然而，只要在主````web.xml````中指定一个该元素，片段中的所有该元素就都不会被合并。````web.xml````的作者有责任确保````<post-construct>````列表的完整性。
+
+   l. 如果主````web.xml````中没有指定任何````<pre-destroy>````元素，而 web 片段中指定了，则片段中的该元素就会被合并进入主````web.xml````。然而，只要在主````web.xml````中指定一个该元素，片段中的所有该元素就都不会被合并。````web.xml````的作者有责任确保````<post-construct>````列表的完整性。
+
+   m. 处理完````web-fragment.xml````之后，来自该片段的注解将会被处理以形成有效元数据，然后才开始处理下一个片段。下面的规则被用于注解处理。
+
+   n. 任何没有出现在部署描述器文件中而是通过注解指定的元数据都将被用来增强部署描述器。
+
+     i. ````web.xml````和````web-fragment.xml````中指定的配置优先级高于通过注解指定的配置。
+
+     ii. 对通过````@WebServlet````注解定义的 servlet 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
+
+     iii. 通过注解定义的 servlets 和 filters 的初始化参数将被部署描述器中同名的初始化参数覆盖。注解和部署描述器中的初始化参数是相加关系。
+
+     iv. 部署描述器中为给定名称的 servlet 指定的````url-patterns````将会覆盖注解为该 servlet 指定的。
+
+     v. 对通过````@WebFilter````注解定义的 filter 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
+
+     vi. 部署描述器中为给定名称的 filter 指定的````url-patterns````将会覆盖注解为该 filter 指定的。
+
+     vii. 部署描述器中为 filter 指定的分发类型将会覆盖通过注解指定的。
+
+     viii. 下面的例子展示了上面的部分规则。
+
+   一个 Servlet 通过一个注解声明，然后被部署描述器中对应的````web.xml````一同打包。
+
+   ````java
+   @WebServlet(urlPatterns="/MyPattern", initParams={@WebInitParam(name="ccc", value="333")})
+   public class com.example.Foo extentds HttpServlet{
+     ...
+   }
+   ````
+
+   ````xml
+   <!-- web.xml -->
+   <servlet>
+    	<servlet-class>com.example.Foo</servlet-class>
+    	<servlet-name>Foo</servlet-name>
+    	<init-param>
+    		<param-name>aaa</param-name>
+    		<param-value>111</param-value>
+    	</init-param>
+   </servlet>
+   <servlet>
+    	<servlet-class>com.example.Foo</servlet-class>
+    	<servlet-name>Fum</servlet-name>
+    	<init-param>
+    		<param-name>bbb</param-name>
+    		<param-value>222</param-value>
+    	</init-param>
+   </servlet>
+   <servlet-mapping>
+    	<servlet-name>Foo</servlet-name>
+    	<url-pattern>/foo/*</url-pattern>
+   </servlet-mapping>
+   <servlet-mapping>
+    	<servlet-name>Fum</servlet-name>
+    	<url-pattern>/fum/*</url-pattern>
+   </servlet-mapping>
+   ````
+
+   由于通过注解声明的 servlet 跟````web.xml````中声明的不同名，则该注解相当于指定了一个新的 servlet，与````web.xml````中声明的并列。等价于：
+
+   ````xml
+   <servlet>
+    	<servlet-class>com.example.Foo</servlet-class>
+    	<servlet-name>com.example.Foo</servlet-name>
+    	<init-param>
+    		<param-name>ccc</param-name>
+    		<param-value>333</param-name>
+   </servlet>
+   ````
+
+   如果上面的````web.xml````文件修改为：
+
+   ````xml
+   <servlet>
+   	<servlet-class>com.example.Foo</servlet-class>
+   	<servlet-name>com.example.Foo</servlet-name>
+   	<init-param>
+   		<param-name>aaa</param-name>
+         	<param-value>111</param-value>
+   	</init-param>
+   </servlet>
+   <servlet-mapping>
+   	<servlet-name>com.example.Foo</servlet-name>
+   	<url-pattern>/foo/*</url-pattern>
+   </servlet-mapping>
+   ````
+
+   则最终生效的部署描述器等价于：
+
+   ````xml
+   <servlet>
+   	<servlet-class>com.example.Foo</servlet-class>
+   	<servlet-name>com.example.Foo</servlet-name>
+   	<init-param>
+   		<param-name>aaa</param-name>
+   		<param-value>111</param-value>
+   	</init-param>
+   	<init-param>
+   		<param-name>ccc</param-name>
+   		<param-value>333</param-value>
+   	</init-param>
+   </servlet>
+   <servlet-mapping>
+   	<servlet-name>com.example.Foo</servlet-name>
+   	<url-pattern>/foo/*</url-pattern>
+   </servlet-mapping>
+   ````
 
 ### 8.2.4 类库共享 / 运行时可插拔性
 
