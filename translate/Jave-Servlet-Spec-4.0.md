@@ -3192,9 +3192,13 @@ public @interface HttpMethodConstraint {
 
 在可移植部署描述器文件中定义的````security-constraint````元素对该约束中出现的所有````url-pattern````都是权威的。
 
+当可移植部署描述器文件中的````security-constraint````包含的````url-pattern````完全符合映射到一个注解了````@ServletSecurity````的类的模式时，该注解必须保证不影响 Servlet 容器施加到该模式上的约束。
+
+
+
 ## 13.9 默认策略
 
-默认的，访问资源并不需要身份认证。身份认证
+默认的，访问资源并不需要身份认证。身份认证只有当包含最匹配请求 URI  的````url-pattern````的安全约束联合施加一个````auth-constraint````（命名角色）到请求的 HTTP 方法上之时才是需要的。类似的，受保护的传输通常也不是必需的，除非应用于请求的安全约束联合施加一个````user-data-constraint````(伴随一个受保护的````transport-guarantee````)于请求的 HTTP 方法之上。
 
 ## 13.10 登录和注销
 
