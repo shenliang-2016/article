@@ -2306,19 +2306,19 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
    n. 任何没有出现在部署描述器文件中而是通过注解指定的元数据都将被用来增强部署描述器。
 
      i. ````web.xml````和````web-fragment.xml````中指定的配置优先级高于通过注解指定的配置。
-    
+
      ii. 对通过````@WebServlet````注解定义的 servlet 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-    
+
      iii. 通过注解定义的 servlets 和 filters 的初始化参数将被部署描述器中同名的初始化参数覆盖。注解和部署描述器中的初始化参数是相加关系。
-    
+
      iv. 部署描述器中为给定名称的 servlet 指定的````url-patterns````将会覆盖注解为该 servlet 指定的。
-    
+
      v. 对通过````@WebFilter````注解定义的 filter 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-    
+
      vi. 部署描述器中为给定名称的 filter 指定的````url-patterns````将会覆盖注解为该 filter 指定的。
-    
+
      vii. 部署描述器中为 filter 指定的分发类型将会覆盖通过注解指定的。
-    
+
      viii. 下面的例子展示了上面的部分规则。
 
    一个 Servlet 通过一个注解声明，然后被部署描述器中对应的````web.xml````一同打包。
@@ -3271,7 +3271,11 @@ public class Example7 extends HttpServlet {
 
 #### 13.4.1.2 映射 @ServletSecurity 到安全约束
 
+本节描述将````@ServletSecurity````注解映射到与它等价的````security-constraint````元素表示的过程。它被作为基础设施增强提供，使用容器现有的````security-constraint````增强机制。Servlet 容器提供的对````@ServletSecurity````注解的增强，必须于容器提供的等价，作用于本章节定义的````security-constraint````元素。
 
+````@ServletSecurity````注解被用于定义一个方法无关的````@HttpConstraint````连同 0 个或者多个````@HttpMethodConstraint````列表。如果没有定义 HTTP 方法约束，则该方法无关的约束就会被应用于所有 HTTP 方法。
+
+当没有包含````@HttpMethodConstraint````元素时，一个````@ServletSecurity````注解对应于一个单独的````security-constraint````元素，该元素包含的````web-resource-collection````不包含````http-method````元素，将会作用于所有 HTTP 方法。
 
 
 
