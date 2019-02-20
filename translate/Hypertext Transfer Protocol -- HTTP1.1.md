@@ -1915,3 +1915,62 @@ HTTP 缓存的最佳效果就是完全避免向初始服务器发出请求。避
 
 为了确认一个缓存的数据实体是否新鲜，缓存需要知道它的年龄是否达到了它的新鲜的生存时间。我们将在下一节中讨论如何计算新鲜生存时间，本节描述如何计算响应或者缓存数据实体的年龄。
 
+在这里讨论中，我们使用术语````now````表示执行年龄计算的主机上的时钟的当前值。使用 HTTP 的主机，特别是运行着服务端程序和缓存的主机，应该使用 NTP 或者其他类似的协议来将它们的时钟与准确的世界时钟同步。
+
+HTTP/1.1 需求初始服务器如果可能为每个响应发送一个````Date````首部字段，给出响应的产生时间。我们使用术语````date_value````来表示````Date````首部字段的值，该字段值的形式适合算术运算。
+
+当从缓存获取响应时，HTTP/1.1 使用````Age````响应首部字段传输响应消息的大致年龄。该````Age````字段值是缓存估计的从响应产生或者由初始服务器再验证至今的时间。
+
+本质上，````Age````字段值是响应在达到初始服务器的路径上的所有缓存中的驻留时间的总和，加上它在网络路径中传输的时间。
+
+我们使用````age_value````字段来表示````Age````首部字段的值，形式适合算术运算。
+
+响应的年龄可以通过两种完全独立的方法计算：
+
+1. ````now - data_value````，如果本地时钟与初始服务器同步良好。如果结果是负值，则结果被替换为 0 。
+2. ````age_value````，如果响应路径上的所有缓存都实现了 HTTP/1.1 协议。
+
+有了这两种相互独立的方法，我们可以结合使用来计算响应年龄：
+
+````
+corrected_received_age = max(now - date_value, age_value)
+````
+
+由于我们基本上网络上基本同步的时钟，因此可以得到一个可靠的年龄计算结果。
+
+由于网络传输延迟，服务器产生响应到该响应被下一跳缓存或者客户端收到，可能会经过一段较大的时间间隔。如果不进行修正，这种延迟将会导致不合理的超短的年龄。
+
+由于导致返回````Age````值的请求必须在````Age````值产生之前初始化完成，我们可以通过记录请求初始化的时间点来修正网络传输延迟。然后，当一个````Age````值被接收到时，它就必须被解读为相对于请求初始化时间点的，而不是相对于响应被接收到的时间点。这种算法倾向于保守，无论有多少网络延迟。因此，我们计算：
+
+````
+corrected_initial_age = corrected_received_age + (now - request_time)
+````
+
+其中的````request_time````是导致该响应的请求的发送时间（基于本地时钟）。
+
+总结年龄计算算法，当一个缓存接收到一个响应：
+
+````
+/*
+* age_value
+* 	is the value of Age: header received by the cache weith this response.
+* date_value
+*	is the value of the origin server's Date: header
+* request_time
+*	is the (local) time when the cache made the request that resulted in this cached response
+* response_time
+*	is the (local) time when the cache received the response
+* now
+*	is the current (local) time
+
+apparent_age = max(0, response_time - date_value);
+corrected_received_age = max(apparent_age, age_value);
+response_delay = response_time - request_time;
+corrected_initial_age = corrected_received_age + response_delay;
+resident_time = now - response_tiem;
+current_age = corrected_initial_age + resident_time;
+````
+
+其中一个缓存实体的````current_age````是该实体最近一次由初始服务器校验以来的时间加上````corrected_initial_age````。当一个响应从缓存实体产生，该缓存必须在响应中包含一个单独的````Age````首部字段，其值等于该缓存实体的````current_age````。
+
+响应首部字段````Age````的出现意味着该响应不是一手数据。不过，反之并不成立。因为除了不存在这个首部字段，还需要请求路径上的所有缓存都是兼容 HTTP/1.1 的，才能说明该响应是一手数据。因为早期版本的 HTTP 缓存并没有实现````Age````首部字段。
