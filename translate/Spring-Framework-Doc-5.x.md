@@ -1014,3 +1014,75 @@ bean | ref | idref | list | set | map | props | value | null
 
 **集合合并**
 
+Spring 容器同样支持合并集合。应用开发者能够定义一个父````<list/>````，````<map/>````，````<set/>````或者````<props/>````元素同时包含子````<list/>````，````<map/>````，````<set/>````或者````<props/>````元素继承并覆盖父集合中的值。也就是说，子集合的值就是父子集合合并之后的值。
+
+本章节讨论父子 bean 合并机制。如果对父子 bean 不熟悉的读者请先了解 [relevant section](https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/core.html#beans-child-bean-definitions)。
+
+下面的例子展现了集合合并：
+
+````xml
+<beans>
+    <bean id="parent" abstract="true" class="example.ComplexObject">
+        <property name="adminEmails">
+            <props>
+                <prop key="administrator">administrator@example.com</prop>
+                <prop key="support">support@example.com</prop>
+            </props>
+        </property>
+    </bean>
+    <bean id="child" parent="parent">
+        <property name="adminEmails">
+            <!-- the merge is specified on the child collection definition -->
+            <props merge="true">
+                <prop key="sales">sales@example.com</prop>
+                <prop key="support">support@example.co.uk</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
+````
+
+注意，子 bean 定义中````adminEmails````属性的````<props/>````元素的````merge=true````属性的使用。当子 bean 被容器解析并初始化时，结果实例中````adminEmails````属性集合包含父子 bean 中同名属性集合合并之后的结果。如下所示：
+
+````xml
+administrator=administrator@example.com
+sales=sales@example.com
+support=support@example.co.uk
+````
+
+应用于````<list/>````，````<map/>````和````<set/>````集合类型的合并行为是类似的。对于这种情形下的````<list/>````元素，语义类似于````List````集合类型。如果是有序列表，则父 bean 中的列表元素排在子 bean 中列表元素之前。在````Map````，````Set````和````Properties````集合类型的情形，元素没有顺序。因此，没有顺序语义作用于容器内部使用的集合类型的实现。
+
+**集合合并的局限性**
+
+你不能合并不同的集合类型，比如一个````Map````和一个````List````。如果你试图这么做，就会得到一个````Exception````抛出。子 bean 定义中必须指定````merge````属性。在父 bean 中指定该属性没有任何作用。
+
+**强类型集合**
+
+Java 5 引入范型之后，你可以使用强类型集合。也就是说，你可以声明一个````Collection````类型，它只能包含````String````类型的元素。如果你使用 Spring 依赖注入将一个强类型````Collection````注入进入一个 bean，就可以享受到 Spring 类型转换支持的优势，这样一来强类型集合的元素就会在被加入集合之前被自动转换为适合的类型。下面的类子说明了这个特性：
+
+````java
+public class SomeClass {
+    private Map<String, Float> accounts;
+    
+    public void setAccounts(Map<String, Float> accounts) {
+        this.accounts = accounts;
+    }
+}
+````
+
+````xml
+<beans>
+    <bean id="something" class="x.y.SomeClass">
+        <property name="accounts">
+            <map>
+                <entry key="one" value="9.99"/>
+                <entry key="two" value="2.75"/>
+                <entry key="six" value="3.99"/>
+            </map>
+        </property>
+    </bean>
+</beans>
+````
+
+当````something```` bean 的````accounts````属性准备好注入时，反射机制就可以获取强类型````Map<String, Float>````的范型信息。因此，Spring 的类型转换基础设施认出变量值元素应该是````Float````类型，然后字符串值````9.99````，````2.75````和````3.99````就会被转换为实际的````Float````类型。
+
