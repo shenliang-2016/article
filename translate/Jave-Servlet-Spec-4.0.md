@@ -3298,6 +3298,37 @@ public class Example7 extends HttpServlet {
 
 当一个或者多个````@HttpMethodConstraint````元素被指定，则方法无关约束对应于一个单独````security-constraint````包含一个````web-resource-collection````，对每个在````@HttpMethodConstraint````元素中命名的 HTTP 方法，它都包含在````@HttpMethodConstraint````元素中。如果方法无关约束返回所有的默认值而至少有一个````@HttpMethodConstraint````不这样做时，包含````http-method-omission````元素的````security-constraint````绝不能被创建。每个````@HttpMethodConstraint````对应于另外的````security-constraint````包含一个````web-resource-collection````包含一个````http-method````元素命名对应的 HTTP 方法。
 
+下面的例子展示了包含一个````@HttpMethodConstraint````的````@ServletSecurity````注解映射到两个安全约束元素的过程。由相应的 servlet 定义的````url-pattern````元素将会被包含在两个约束的````web-resource-collection````中，同时，其中包含的````auth-constraint````和````user-data-constraint````元素的存在与否和值都取决于相应的````@HttpConstraint````和````@HttpMethodConstraint````注解的映射。
+
+包含````@HttpMethodConstraint````的````@ServletSecurity````注解的映射：
+
+````java
+@ServletSecurity(value=@HttpConstraint(rolesAllowed = "Role1"),
+                httpMethodConstraints = @HttpMethodConstraint(value = "TRACE",
+                emptyRoleSemantic = EmptyRoleSemantic.DENY))
+````
+
+````xml
+<security-constraint>
+    <web-resource-collection>
+        <url-pattern>...</url-pattern>
+        <http-method-omission>TRACE</http-method-omission>
+    </web-resource-collection>
+    <auth-constraint>
+        <role-name>Role1</role-name>
+    </auth-constraint>
+</security-constraint>
+<security-constraint>
+    <web-resource-collection>
+        <url-pattern>...</url-pattern>
+        <http-method>TRACE</http-method>
+    </web-resource-collection>
+    <auth-constraint/>
+</security-constraint>
+````
+
+#### 13.4.1.3 ````@HttpConstraint````和````@HttpMethodConstraint````映射到 XML
+
 
 
 ## 13.9 默认策略
