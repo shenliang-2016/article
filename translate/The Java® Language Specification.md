@@ -568,4 +568,18 @@
 
 “我们相信 Java 编程语言是一种成熟的、应用广泛的语言。不过，我们希望它可以在将来不断演进。同时，我们希望可以管理这些演进，以保证它们与现有的应用完全兼容。”
 
- Java SE 8 是 Java 语言历史上最大的一次单次演进。
+ Java SE 8 是 Java 语言历史上最大的一次单次演进。通过添加相对较少的新特性－ Lambda 表达式、方法引用和函数式接口－相结合，提供了融合面向对象和函数式编程的新的编程模型。在 Brian Goetz 领导下，这种融合模型已经以推荐的最佳实践－不变性、无状态、组合性－的方式实现，同时还保留了传统 Java 的感觉－可读性、简单性和普遍性。
+
+关键的是，Java SE 平台的类库与 Java 语言本身同步发展。这就意味着使用 Lambda 表达式和方法引用来表示行为－比如，一种应用于列表中每个元素的操作符－是更高性能和更具生产性的“开箱即用”的。与此类似，Java 虚拟机也是与 Java 语言本身共同演进，以保证默认方法在编译器和运行时都可以一致性地支持类库的演进，同时考虑到单独编译的限制。
+
+自从 20 世纪 90 年代以来，为 Java 语言添加一等功能的举措从未停止。2007 年前后 BGGA 和 CICE 的提案为此话题加入了新的关键内容。而 2009 OpenJDK 中 Lambda 项目的创建吸引了前所未有的关注度。Java SE 7 在 JVM 中增加方法处理，打开了一扇通向新的实现技术的大门，同时还能保持“一次编写，到处运行”。最后，语言这个方面的变化由 JSR 335: Lambda Expressions for the Java Programming Language，其专家组由如下专家组成：Joshua Bloch, Kevin Bourrillion, Andrey Breslav, Remi Forax, Dan Heidinga, Doug Lea, Bob Lee, David Lloyd, Sam Pullara, Srikanth Sankaran 和 Vladimir Zakharov。
+
+典型的编程语言设计都会涉及到对语言的使用者彻底隐藏语言内部的复杂性。（这种复杂性经常被比喻为冰山一角，90%都是用户不可见的）在 JSR 335 中，最大的复杂性隐藏在显式类型的 lambda 表达式和重载解析机制的交互过程中。在与此类似的很多其它部分中，Oracle 的 Dan Smith 作出了卓越的贡献，定义了所有预期行为。他的工作出现在本规范的各个部分，包括关于类型推断的全新章节。
+
+Java SE 8 的另一个举措是增强了注解的作用，注解是 Java 语言中应用最广泛的特性之一。首先，Java 语法已经被扩展来允许在许多语言结构中用注解修饰类型，这也形成了诸如 Checker Framework 等静态分析工具的基本原理。该特性由 JSR 308: Annotations on Java Types 指定，该文件由 Michael Ernst 领导的专家组制定，该专家组由我自己、Doug Lea和 Srikanth Sankaran 组成。本规范涉及到的变化范围甚广，Michael Ernst 和 Werner Dietl 的多年来的不懈工作得到了热烈的认可。其次，注解可以在语言结构上重复，这就为关于领域相关模型的注解类型配置的 APIs 提供了很大便利。Michael Keith 和 Bill Shannon 在 Java EE 平台中发起并领导了此特性。
+
+来自 Oracle 的 Java Platform Group 的很多同事为本规范提供了很多有价值的支持：Leonid Arbouzov, Mandy Chung, Joe Darcy, Robert Field, Joel Borggren-Franck, Sonali Goel, Jon Gibbons, Jeannette Hung, Stuart Marks, Eric McCorkle, Matherey Nunez, Mark Reinhold, Vicente Romero, John Rose, Georges Saab, Steve Sides, Bernard Traversat 和 Michel Trudeau。
+
+可能最应该感谢的是将此规范变成真实软件的编译器工程师。Oracle 的 Maurizio Cimadamore 从 lambda 表达式设计的早期开始直到实现都在英勇地进行````javac````开发工作。Eclipse 对 Java SE 8 新特性的支持的贡献者有：Jayaprakash Arthanareeswaran, Shankha Banerjee, Anirban Chakraborty, Andrew Clement, Stephan Herrmann, Markus Keller, Jesper Moller, Manoj Palat, Srikanth Sankaran 和 Olivier Thomann。IntelliJ 对 Java SE 8 新特性的支持的贡献者有：Anna Kozlova, Alexey Kudravtsev 和 Roman Shevchenko。他们值得整个 Java 社区的感谢。
+
+Java SE 8 是 Java 语言的一次复兴。尽管很多人一直在寻找所谓的下一代编程语言，我们仍然相信使用 Java 编程会比以往更加高效和令人兴奋。我们希望 Java 可以继续很好地为你服务。
