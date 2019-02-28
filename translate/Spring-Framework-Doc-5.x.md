@@ -1102,3 +1102,41 @@ Spring 将属性的空参数当作空````Strings````。下面的基于 XML 的�
 exampleBean.setEmail("");
 ````
 
+````<null/>````元素持有````null````值。下面的例子展示了这种情况：
+
+````xml
+<bean class="ExampleBean">
+    <property name="email">
+        <null/>
+    </property>
+</bean>
+````
+
+等价于：
+
+````java
+exampleBean.setEmail(null);
+````
+
+**使用 p-namespace 的 XML 捷径**
+
+p-namespace 使得你可以使用````bean````元素的属性（替代内部的````<property/>````元素）来描述你的协作 beans 的属性值，或者同时使用两者。
+
+Spring 支持基于命名空间扩展的配置格式，基于 XML 规格定义。本章中讨论的````beans````配置格式定义在 XML 规格文档中。然而，p-namespace 并没有在 XSD 文件中定义，只是存在于 Spring 核心中。
+
+下面的例子展示了两个 XML 片段，前一个是标准格式的 XML，后一个是使用了 p-namespace 形式。两者等价：
+
+````xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean name="classic" class="com.example.ExampleBean">
+        <property name="email" value="someone@somewhere.com"/>
+    </bean>
+    <bean name="p-namespce" class="com.example.ExampleBean"
+          p:email="someone@somewhere.com"/>
+</beans>
+````
+
