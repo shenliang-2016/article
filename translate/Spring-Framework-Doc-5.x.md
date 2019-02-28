@@ -1086,3 +1086,19 @@ public class SomeClass {
 
 当````something```` bean 的````accounts````属性准备好注入时，反射机制就可以获取强类型````Map<String, Float>````的范型信息。因此，Spring 的类型转换基础设施认出变量值元素应该是````Float````类型，然后字符串值````9.99````，````2.75````和````3.99````就会被转换为实际的````Float````类型。
 
+**Null 和空字符串值**
+
+Spring 将属性的空参数当作空````Strings````。下面的基于 XML 的配置元数据片段为````email````属性设置空````String```值。
+
+````xml
+<bean class="ExampleBean">
+  <property name="email" value=""/>
+</bean>
+````
+
+这个例子等价于下面的 Java 代码：
+
+````java
+exampleBean.setEmail("");
+````
+
