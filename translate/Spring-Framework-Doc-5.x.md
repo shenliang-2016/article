@@ -1140,3 +1140,27 @@ Spring 支持基于命名空间扩展的配置格式，基于 XML 规格定义�
 </beans>
 ````
 
+该例子展示了一个 bean 定义中的在 p-namespace 中的名为````email````的属性。这告诉 Spring 来包含一个属性声明。如前所述， p-namespce 不是一个规范定义，因此你可以设置参数名称为属性名称。
+
+下面的例子包含另外两个 bean 定义，两个定义都包含其它 bean 的引用：
+
+````xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean name="john-classic" class="com.example.Person">
+        <property name="name" value="John Doe"/>
+        <property name="spouse" ref="jane"/>
+    </bean>
+    <bean name="john-modern"
+          class="com.example.Person"
+          p:name="John Doe"
+          p:spouse-ref="jane"/>
+    <bean name="jane" class="com.example.Person">
+        <property name="name" value="John Doe"/>
+    </bean>
+</beans>
+````
+
