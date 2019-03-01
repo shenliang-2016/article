@@ -1164,3 +1164,48 @@ Spring 支持基于命名空间扩展的配置格式，基于 XML 规格定义�
 </beans>
 ````
 
+这个例子不仅包含一个 p-namespace 的属性值，还使用了一种特殊格式来声明属性引用。第一个 bean 定义使用````<property name="spouse" ref="jane"/>````来创建从 bean ````john````到 bean ````jane````的引用，第二个 bean 定义使用````p:spouse-ref="jane"````作为一个属性来做到相同的事情。这种情况下，````spouse````是属性名，````-ref````部分表示这不是一个直接的数值而是一个其它 bean 的引用。
+
+> p-namespace 并不像标准的 XML 格式那么灵活。比如，声明引用属性的格式会与名称以````Ref````结尾的属性发生冲突，但是标准的 XML 格式就没有这种问题。推荐在开发团队中约定一种方式使用。
+
+**使用 c-namespace 的 XML 捷径**
+
+类似于上面一节介绍的 p-namespace ，这里的 c-namespace ，由 Spring 3.1 引入，允许为构造器参数配置內联属性而不需要包含````constructor-arg````元素。
+
+下面的例子展示了使用 c-namespace 实现基于构造器的依赖注入：
+
+````xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:c="http://www.springframework.org/schema/c"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="beanTwo" class="x.y.ThingTwo"/>
+    <bean id="beanThree" class="x.y.ThingThree"/>
+
+    <!-- traditional declaration with optional argument names -->
+    <bean id="beanOne" class="x.y.ThingOne">
+        <constructor-arg name="thingTwo" ref="beanTwo"/>
+        <constructor-arg name="thingThree" ref="beanThree"/>
+        <constructor-arg name="email" value="something@somewhere.com"/>
+    </bean>
+
+    <!-- c-namespace declaration with argument names -->
+    <bean id="beanOne" class="x.y.ThingOne" c:thingTwo-ref="beanTwo"
+        c:thingThree-ref="beanThree" c:email="something@somewhere.com"/>
+
+</beans>
+````
+
+````c:````命名空间使用与````p:````命名空间相同的约定（用````-ref````表示 bean 引用）来通过名称设定构造器参数。类似的，它需要在 XML 文件中声明，尽管它并没有在 XSD 规范中定义（它只存在于 Spring 核心中）。
+
+比较罕见的情况下，构造器的参数名不可用（通常是字节码编译时没有附带调试信息），你可以退化使用参数索引，如下：
+
+````xml
+<!-- c-namespace index declaration -->
+<bean id="beanOne" class="x.y.ThingOne" c:_0-ref="beanTwo" c:_1-ref="beanThree"
+    c:_2="something@somewhere.com"/>
+````
+
+> 由于
