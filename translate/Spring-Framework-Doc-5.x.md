@@ -1208,4 +1208,42 @@ Spring 支持基于命名空间扩展的配置格式，基于 XML 规格定义�
     c:_2="something@somewhere.com"/>
 ````
 
-> 由于 XML 语法的要求，参数索引记号必须以下划线开头，同时 XML 属性名也不能以数字开头。
+> 由于 XML 语法的要求，参数索引记号必须以下划线开头，同时 XML 属性名也不能以数字开头（即使某些 IDE 允许）。相应的下标记号同时也适用于````<constructor-arg>````元素，但是并不常用，因为字面的声明顺序通常就是足够的。
+
+在实践中，构造器解析机制在匹配参数时是相当有效的，因此除非你真的需要，我们推荐在你的配置文件中全部使用名称记号。
+
+**复合属性名称**
+
+你可以使用符合或者嵌套属性名称来设置 bean 属性，只要路径上的所有组件期望最终的属性名称不是````null````。参考下面的 bean 定义：
+
+````xml
+<bean id="something" class="things.ThingOne">
+    <property name="fred.bob.sammy" value="123"/>
+</bean>
+````
+
+````something````bean 拥有一个````fred````属性，该属性包含一个````bob````属性，它又包含一个````sammy````属性，而最终的````sammy````属性值为设定为````123````。为了保证这个配置生效，````something````的````fred````属性，以及````fred````的````bob````属性都必须不为````null````，在 bean 被构造之后。否者，将抛出一个````NullPointException````。
+
+#### 1.4.3 使用````depends-on````
+
+如果一个 bean 是其它 bean 的依赖，通常意味着该 bean 被设置为其它 bean 的属性。典型的做法是在基于 XML 的配置元数据中使用````<ref/>````元素实现。然而，有时候 beans 之间的依赖关系并不直接。例如类中需要被触发的静态初始化器，诸如数据库驱动注册等。````depends-on````属性能够显式强制一个或者多个 beans 在使用它的所有 bean 被初始化之前被初始化。下面的例子展示了````depends-on````属性如何表达对单独一个 bean 的依赖：
+
+````xml
+<bean id="beanOne" class="ExampleBean" depends-on="manager"/>
+<bean id="manager" class="ManagerBean"/>
+````
+
+为了表达对多个 beans 的依赖，可以为````depends-on````属性设置一个 bean 名称的列表（逗号、空格和分号都是合法的分隔符）：
+
+````xml
+<bean id="beanOne" class="ExampleBean" depends-on="manager,accountDao">
+    <property name="manager" ref="manager"/>
+</bean>
+<bean id="manager" class="ManagerBean"/>
+<bean id="accountDao" class="x.y.jdbc.JdbcAccountDao"/>
+````
+
+> ````depends-on````属性能够指定初始化阶段的依赖，以及单例 beans 的相应的析构阶段的依赖。定义与给定 bean 的````depends-on````关系的依赖 bean 会被首先销毁，先于给定 bean 的销毁。因此，````depends-on````也可以同时控制关闭顺序。
+
+#### 1.4.4 懒初始化 Beans
+
