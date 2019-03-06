@@ -2306,19 +2306,19 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
    n. 任何没有出现在部署描述器文件中而是通过注解指定的元数据都将被用来增强部署描述器。
 
      i. ````web.xml````和````web-fragment.xml````中指定的配置优先级高于通过注解指定的配置。
-
+    
      ii. 对通过````@WebServlet````注解定义的 servlet 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-
+    
      iii. 通过注解定义的 servlets 和 filters 的初始化参数将被部署描述器中同名的初始化参数覆盖。注解和部署描述器中的初始化参数是相加关系。
-
+    
      iv. 部署描述器中为给定名称的 servlet 指定的````url-patterns````将会覆盖注解为该 servlet 指定的。
-
+    
      v. 对通过````@WebFilter````注解定义的 filter 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-
+    
      vi. 部署描述器中为给定名称的 filter 指定的````url-patterns````将会覆盖注解为该 filter 指定的。
-
+    
      vii. 部署描述器中为 filter 指定的分发类型将会覆盖通过注解指定的。
-
+    
      viii. 下面的例子展示了上面的部分规则。
 
    一个 Servlet 通过一个注解声明，然后被部署描述器中对应的````web.xml````一同打包。
@@ -3451,6 +3451,72 @@ Serlvet 容器应该提供公共接口用于集成和配置附加的 HTTP 消息
 ### 13.8.1 组合约束
 
 为了将约束组合起来，一个 HTTP 方法被称为是在一个````web-resource-collection````中发生，当在该集合中没有命名任何 HTTP 方法，或者该集合特定的 HTTP 方法名称在一个包含的````http-method````元素中，或者该集合包含一个或者多个````http-method-omission````元素，其中没有一个命名了 HTTP 方法。
+
+当一个 url-pattern 和 HTTP 方法对发生在组合中（比如，在````web-resource-collection````内部），在多个安全约束中，约束（施加在 pattern 和方法上的）通过组合各个单独的约束来定义。当出现相同的 pattern 和方法时，约束组合的规则如下：
+
+命名角色或者通过名称“\*”暗示的角色授权约束的组合应该实现以各个单独约束的角色名称的并集作为最终的许可角色。一个命名角色"\*"的授权约束应该与命名或者暗示角色的授权约束相组合，以许可任何已认证的用户，而不考虑角色。不包含授权约束的安全约束应该与命名或者暗示角色的授权约束组合，以许可未认证访问。特殊情况，没有命名角色的授权约束应该与任何其它约束组合，用来覆盖它们的影响和导致的访问阻碍。
+
+应用于普通````url-pattern````和````http-method````的````user-data-constraints````的组合应该得到各个单独的约束许可的连接类型的并集作为可接受连接类型。不包含````user-data-constraint````的安全约束应该与其它````user-data-constraint````组合来使得未受保护的连接类型成为可接受的连接类型。
+
+### 13.8.2 例子
+
+下面的例子展示了约束组合的情形以及它们组合之后实现的可应用约束。假定部署描述器文件中包含下列安全约束：
+
+````xml
+<security-constraint>
+    <web-resource-collection>
+        <web-resource-name>precluded methods</web-resource-name>
+        <url-pattern>/*</url-pattern>
+        <url-pattern>/acme/wholesale/*</url-pattern>
+        <url-pattern>/acme/retail/*</url-pattern>
+     	<http-method-omission>GET</http-method-omission>
+     	<http-method-omission>POST</http-method-omission>
+    </web-resource-collection>
+    
+    <auth-constraint/>
+    
+</security-constraint>
+
+<security-constraint>
+	<web-resource-collection>
+		<web-resource-name>wholesale</web-resource-name>
+     	<url-pattern>/acme/wholesale/*</url-pattern>
+     	<http-method>GET</http-method>
+     	<http-method>PUT</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+     	<role-name>SALESCLERK</role-name>
+    </auth-constraint>
+</security-constraint>
+
+<security-constraint>
+	<web-resource-collection>
+     	<web-resource-name>wholesale 2</web-resource-name>
+     	<url-pattern>/acme/wholesale/*</url-pattern>
+     	<http-method>GET</http-method>
+     	<http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+     	<role-name>CONTRACTOR</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+     	<transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+</security-constraint>
+
+<security-constraint>
+	<web-resource-collection>
+     	<web-resource-name>retail</web-resource-name>
+     	<url-pattern>/acme/retail/*</url-pattern>
+     	<http-method>GET</http-method>
+     	<http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+     	<role-name>CONTRACTOR</role-name>
+     	<role-name>HOMEOWNER</role-name>
+    </auth-constraint>
+</security-constraint>
+````
 
 
 
