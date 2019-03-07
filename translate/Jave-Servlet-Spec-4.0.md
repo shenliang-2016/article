@@ -2306,19 +2306,19 @@ Web 片段是 web 应用的逻辑分片，通过这种方式，应用于应用�
    n. 任何没有出现在部署描述器文件中而是通过注解指定的元数据都将被用来增强部署描述器。
 
      i. ````web.xml````和````web-fragment.xml````中指定的配置优先级高于通过注解指定的配置。
-    
+
      ii. 对通过````@WebServlet````注解定义的 servlet 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-    
+
      iii. 通过注解定义的 servlets 和 filters 的初始化参数将被部署描述器中同名的初始化参数覆盖。注解和部署描述器中的初始化参数是相加关系。
-    
+
      iv. 部署描述器中为给定名称的 servlet 指定的````url-patterns````将会覆盖注解为该 servlet 指定的。
-    
+
      v. 对通过````@WebFilter````注解定义的 filter 来说，为了覆盖部署描述器指定的值，部署描述器中的 servlet 名称必须与注解定义的完全一样。
-    
+
      vi. 部署描述器中为给定名称的 filter 指定的````url-patterns````将会覆盖注解为该 filter 指定的。
-    
+
      vii. 部署描述器中为 filter 指定的分发类型将会覆盖通过注解指定的。
-    
+
      viii. 下面的例子展示了上面的部分规则。
 
    一个 Servlet 通过一个注解声明，然后被部署描述器中对应的````web.xml````一同打包。
@@ -3518,7 +3518,37 @@ Serlvet 容器应该提供公共接口用于集成和配置附加的 HTTP 消息
 </security-constraint>
 ````
 
+这个假想的部署描述器翻译之后得到的约束定义如下表所示：
 
+| url-pattern       | http-method                  | permitted roles       | supported connection types |
+| ----------------- | ---------------------------- | --------------------- | -------------------------- |
+| /*                | all methods except GET, POST | 访问阻止                  | 无限制                        |
+| /acme/wholesale/* | all methods except GET, POST | 访问阻止                  | 无限制                        |
+| /acme/wholesale/* | GET                          | CONTRACTOR SALESCLERK | 无限制                        |
+| /acme/wholesale/* | POST                         | CONTRACTOR            | CONFIDENTIAL               |
+| /acme/retail/*    | all methods except GET, POST | 访问阻止                  | 无限制                        |
+| /acme/retail/*    | GET                          | CONTRACTOR HOMEOWNER  | 无限制                        |
+| /acme/retail/*    | POST                         | CONTRACTOR HOMEOWNER  | 无限制                        |
+
+### 13.8.3 请求处理
+
+当 Servlet 容器接收到请求时，它应该使用“URL 路径的使用”中描述的算法来选择请求 URI 最佳匹配的 url-pattern 上定义的约束（如果存在的话）。如果没有选择到约束，容器就应该接受该请求。否则，容器应该确定请求的 HTTP 方法在选定的模式上是受限制的。如果不是，则该请求应该被接受。否则，该请求必须满足 url-pattern 上应用于该 HTTP 方法的约束。可以被接受并可以被分发给相关 servlet 的请求必须满足以下规则：
+
+1. 接收到请求的连接的特性必须满足约束定义的它所支持的连接类型中的至少一个。如果不满足这条规则，容器应该拒绝该请求并将其转发到 HTTPS 端口。
+2. 请求的身份认证特性必须满足约束定义的任何认证和角色要求。如果此规则不满足，访问就会被阻止（被没有命名角色的身份认证约束阻止），该请求应该作为 forbidden 被拒绝，同时，一个 403（SC_FORBIDDEN）状态码响应应该被返回给用户。如果访问被限制为许可角色，而请求尚未经过身份认证，则该请求应该作为未授权而被拒绝，同时返回 401（SC_UNAUTHORIZED）状态码响应应该被返回以触发后续的身份认证。如果访问被限制为许可角色，而其身份认证标识并不是这些许可角色的成员，该请求就应该作为 forbidden 而被拒绝，同时 403（SC_FORBIDDEN）状态码响应应该被返回给用户。
+
+### 13.8.4 未覆盖的 HTTP 协议方法
+
+````security-constraint````模式提供了列举出（包含遗漏的）在````security-constraint````中定义的保护需要被应用到的 HTTP 协议方法。当 HTTP 方法被列举在一个````security-constraint````内部，该约束定义的保护机制就只会应用于该列表中的方法。我们所说的 HTTP 方法不是由所谓“未覆盖” HTTP 方法列表定义的。未覆盖的 HTTP 方法在所有请求 URL 上都是不受保护的，对那些 URL 来说，````url-pattern````和````security-constraint````是最佳匹配。
+
+当 HTTP 方法没有在````security-constraint````中被列出，则由该约束定义的保护机制就会施加到所有 HTTP（扩展）方法上。这种情况下，作为````security-constraint````最佳匹配的````url-pattern````上的所有请求 URL 都没有未覆盖的 HTTP 方法。
+
+
+
+The examples that follow depict the three ways in which HTTP protocol methods 
+may be left uncovered. The determination of whether methods are uncovered is 
+made after all the constraints that apply to a url-pattern have been combined as 
+described in Section 13.8.1, “Combining Constraints” on page 13-147
 
 ## 13.9 默认策略
 
