@@ -3543,12 +3543,57 @@ Serlvet 容器应该提供公共接口用于集成和配置附加的 HTTP 消息
 
 当 HTTP 方法没有在````security-constraint````中被列出，则由该约束定义的保护机制就会施加到所有 HTTP（扩展）方法上。这种情况下，作为````security-constraint````最佳匹配的````url-pattern````上的所有请求 URL 都没有未覆盖的 HTTP 方法。
 
+下面的例子展示了 HTTP 协议被作为未覆盖的三种方式。方法是否为非覆盖的方法的决定是在所有应用于该````url-pattern````的约束都按照 13.8.1 章节中描述的规则组合完成之后才做出的。
+
+1. 一个````security-constraint````在````http-method````元素中命名一个或者多个 HTTP 方法。所有其它 HTTP 方法就都是未覆盖的。
+
+   ````xml
+   <security-constraint>
+   	<web-resource-collection>
+    		<web-resource-name>wholesale</web-resource-name>
+    		<url-pattern>/acme/wholesale/*</url-pattern>
+    		<http-method>GET</http-method>
+   	</web-resource-collection>
+   	<auth-constraint>
+    		<role-name>SALESCLERK</role-name>
+   	</auth-constraint>
+   </security-constraint>
+   ````
+
+   除了````GET````之外所有的 HTTP 方法都是未覆盖的。
+
+2. 一个````security-constraint````在````http-method-omission````元素中命名一个或者多个 HTTP 方法。则所有命名的 HTTP 方法就都是未覆盖的。
+
+   ````xml
+   <security-constraint>
+   	<web-resource-collection>
+    		<web-resource-name>wholesale</web-resource-name>
+    		<url-pattern>/acme/wholesale/*</url-pattern>
+    		<http-method-omission>GET</http-method-omission>
+   	</web-resource-collection>
+   	<auth-constraint/>
+   </security-constraint>
+   ````
+
+   ````GET````方法是未覆盖的。所有其它方法都被排除的````auth-constraint````覆盖。
+
+3. 包含````@HttpConstraint````的````@ServletSecurity````注解返回所有默认值，同时它包含至少一个````@HttpMethodConstraint````返回所有默认值之外的值。所有不在````@HttpMethodConstraint````中命名的 HTTP 方法都被该注解标识为未覆盖的。类似于第一种情况，等效于使用````ServletRegistration````接口的````setServletSecurity````方法，将产生类似的结果。
+
+   ````java
+   @ServletSecurity((httpMethodConstraints = {
+    @HttpMethodConstraint(value = "GET", rolesAllowed = "R1"),
+    @HttpMethodConstraint(value = "POST", rolesAllowed = "R1",
+    transportGuarantee = TransportGuarantee.CONFIDENTIAL)
+    })
+   public class Example5 extends HttpServlet {
+   }
+   ````
+
+   除了````GET````、````POST````之外所有的 HTTP 方法都是未覆盖的。
+
+#### 13.8.4.1 安全约束配置规则
 
 
-The examples that follow depict the three ways in which HTTP protocol methods 
-may be left uncovered. The determination of whether methods are uncovered is 
-made after all the constraints that apply to a url-pattern have been combined as 
-described in Section 13.8.1, “Combining Constraints” on page 13-147
 
 ## 13.9 默认策略
 
