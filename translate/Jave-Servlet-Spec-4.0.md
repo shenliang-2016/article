@@ -3329,7 +3329,87 @@ public class Example7 extends HttpServlet {
 
 #### 13.4.1.3 ````@HttpConstraint````和````@HttpMethodConstraint````映射到 XML
 
+本节描述将````@HttpConstraint````和````@HttpMethodConstraint````注解值（定义来使用在````@ServletSecurity````中）映射到对应的````auth-constraint````和````user-data-constraint````表示形式。这些注解共享了一个通用模型来表达等价的````auth-constraint````和````user-data-constraint````元素在可移植的部署描述器文件中使用。该模型由以下三个元素组成：
 
+* ````emptyRoleSemantic````
+
+  授权语义，要么是````PERMIT````要么是````DENY````，当没有角色被````rolesAllowed````命名时应用。此元素的默认值是````PERMIT````，同时，````DENY````不被支持与非空的````rolesAllowed````列表的组合。
+
+* ````rolesAllowed````
+
+  包含已授权角色名称的列表。当该列表为空，意味着依赖````emptyRoleSemantic````的值。在被允许的角色列表中包含的角色名"\*"没有特殊含义。当特殊角色名称"\*\*"出现在````rolesAllowed````中，表示用户身份认证独立于角色。此元素的默认值是一个空列表。
+
+* ````transportGuarantee````
+
+  数据保护需求，要么是````NONE````要么是````CONFIDENTIAL````，请求到达时所在连接必须满足的条件。此元素等价于包含对应值的````transport-guarantee````的````user-data-constraint````。此元素的默认值是````NONE````。
+
+下面的例子展示了上面描述的````@HttpConstraint````模型与 web.xml 文件中的````auth-constraint````和````user-data-constraint````元素之间的对应关系。
+
+````xml
+emptyRoleSemantic=PERMIT, rolesAllowed={}, transportGuarantee=NONE
+<!-- 等价于 -->
+no constraints
+````
+
+````xml
+emptyRoleSemantic=PERMIT, rolesAllowed={}, transportGuarantee=CONFIDENTIAL
+<!-- 等价于 -->
+<user-data-constraint>
+    <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+</user-data-constraint>
+````
+
+````xml
+emptyRoleSemantic=PERMIT, rolesAllowed={Role1}, transportGuarantee=NONE
+<!-- 等价于 -->
+<auth-constraint>
+    <security-role-name>Role1</security-role-name>
+</auth-constraint>
+````
+
+````xml
+emptyRoleSemantic=PERMIT, rolesAllowed={Role1}, transportGuarantee=CONFIDENTIAL
+<!-- 等价于 -->
+<auth-constraint>
+    <security-role-name>Role1</security-role-name>
+</auth-constraint>
+<user-data-constraint>
+    <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+</user-data-constraint>
+````
+
+````xml
+emptyRoleSemantic=DENY, rolesAllowed={}, transportGuarantee=NONE
+<!-- 等价于 -->
+<auth-constraint/>
+````
+
+````xml
+emptyRoleSemantic=DENY, rolesAllowed={}, transportGuarantee=CONFIDENTIAL
+<!-- 等价于 -->
+<auth-constraint/>
+<user-data-constraint>
+    <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+</user-data-constraint>
+````
+
+### 13.4.2 ServletRegistration.Dynamic 的 setServletSecurity
+
+````setServletSecurity````方法可以被用在````ServletContextListener````中，来定义将应用到由````ServletRegistration````定义的映射上的安全约束。
+
+````java
+Collection<String> setServletSecurity(ServletSecurityElement arg);
+````
+
+````javax.servlet.ServletSecurityElement````参数类似于在````@ServletSecurity````注解的````ServletSecurity````接口的构造器和模型中。这样一来，定义在 13.4.1.2 章节中的映射，类似应用于从包含````HttpConstraintElement````和````HttpMethodConstraintElement````值的````ServletSecurityElement````到等价的````security-constraint````表示形式的映射。
+
+````setServletSecurity````方法返回（可能为空）可移植的部署描述器文件中的````security-constraint````元素的确切目标的URL 模式（因此不受调用的影响）。
+
+此方法抛出````IllegalStateException````，如果从其中获取````ServletRegistration````的````ServletContext````已经被初始化。
+
+当可移植部署描述器文件中的````security-constraint````包含的````url-pattern````是````ServletRegistration````映射到的模式的精确匹配，对````ServletRegistration````上的````setServletSecurity````方法的调用必须不影响容器强加到该模式上的约束。
+
+除了上面列出的例外同时包括当 Servlet 类被注解为````@ServletSecurity````，当````ServletRegistration````上的````setServletSecurity````方法被调用时，它将建立应用于该注册的````url-pattern````上的安全约束。
 
 ## 13.5 角色
 
