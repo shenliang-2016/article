@@ -3593,6 +3593,12 @@ Serlvet 容器应该提供公共接口用于集成和配置附加的 HTTP 消息
 
 #### 13.8.4.1 安全约束配置规则
 
+目标：确保受约束的 URL 模式上的所有的 HTTP 方法都受到希望的安全保护（也就是说，被安全约束覆盖）。
+
+1. 不在约束中命名 HTTP 方法：这种情况下，为 URL 模式定义的安全保护将施加到所有 HTTP 方法上。
+2. 如果你不能遵循规则1，添加````<deny-uncovered-http-method>````同时声明（使用````<http-method>````元素，或者别的等价的注解）受约束的 URL 模式上将要允许的所有 HTTP 方法（收到安全保护）。
+3. 如果你不能遵循规则2，则在每个受约束的 URL 模式上声明约束来覆盖所有 HTTP 方法。使用````<http-method-omission>````元素或者````HttpMethodConstraint````注解来表示除了由````<http-method>````或者````HttpMethodConstraint````命名的之外的所有 HTTP 方法。使用注解时，使用````HttpConstraint````注解定义将要施加到所有其它 HTTP 方法上的安全语义，同时配置````EmptyRoleSemantic=DENY````来确保所有其它 HTTP 方法都被拒绝。
+
 
 
 ## 13.9 默认策略
