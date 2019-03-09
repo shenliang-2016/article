@@ -4275,3 +4275,195 @@ public class CalculatorServlet {
 
 ### 15.5.3 @EJB 注解
 
+企业级 JavaBeans 3.2（EJB）组件可以使用````@EJB````注解从 web 组件引用。````@EJB````注解提供了与部署描述器文件中的````ejb-ref````或者````ejb-local-ref````元素等价的功能。添加了````@EJB````注解的字段被注入相应的 EJB 组件的引用。
+
+例如：
+
+````java
+@EJB
+private ShoppingCart myCart;
+````
+
+这个例子中 EJB 组件````myCart````的引用被作为私有字段````myCart````的值被注入，这种注入在声明该注入的类变成可用状态之前完成。
+
+````@EJB````注解的更多细节请参考 EJB 3.2 规范（JSR 345）的 11.5.1 章节。
+
+### 15.5.4 @EJBs 注解
+
+此注解允许多个````@EJB````注解声明在同一个资源上。
+
+例子：
+
+````java
+@EJBs({@EJB(Calculator), @EJB(ShoppingCart)})
+public class ShoppingCartServlet {
+    //...
+}
+````
+
+上面的例子中 EJB 组件````ShoppingCart````和````Calculator````对````ShoppingCartServlet````成为可用的。该````ShoppingCartServlet````必须仍然通过 JNDI 查找引用，不过 EJBs 不需要在````web.xml````文件中声明。
+
+### 15.5.5 @Resource 注解
+
+此注解用来声明一个资源的引用，比如数据源，Java 消息服务（JMS）目的地，或者环境入口等。此注解等价于在部署描述器文件中声明````resource-ref````、````message-destination-ref````、````env-ref````或者````resource-env-ref````元素。
+
+此注解放在类、方法或者字段上。容器负责此注解声明的资源的引用同时将其映射到适当的 JNDI 资源。参考 Java EE 规范文档的第 5 章以获取更多细节。
+
+例子：
+
+````java
+@Resource
+private javax.sql.DataSource catalogDS;
+
+public getProductsByCategory() {
+    // get a connection and execute the query
+    Connection conn = catalogDS.getConnection();
+    //...
+}
+````
+
+这个例子中，一个 servlet、过滤器或者监听器声明一个类型为````javax.sql.DataSource````的字段````catalogDS````，由此这个数据源的引用被容器在该组件对应用可用之前注入进来。该数据源的 JNDI 映射由字段名````catalogDS````和类型````javax.sql.DataSource````得出。此外，该````catalogDS````资源不再需要在部署描述器文件中定义。
+
+此注解的语义的更多细节在 Java 平台规范（JSR 250）中 2.3 章节普通注解部分介绍，同时在 Java EE 7 规范 5.2.5 章节中介绍。
+
+### 15.5.6 @PersistenceContext 注解
+
+此注解为引用的持久化单元指定容器管理的实体管理器。
+
+例子：
+
+````java
+@PersistenceContext (type=EXTENDED)
+EntityManager em;
+````
+
+更多细节参考 Java Persistence API v2.1（JSR 338）10.5.1 章节。
+
+### 15.5.7 @PersistenceContexts 注解
+
+此注解允许多个````@PersistenceContext````注解被声明在一个资源上。更多细节参考 Java Persistence API v2.1（JSR 338）10.5.1 章节。
+
+### 15.5.8 @PersistenceUnit 注解
+
+此注解为 servlet 中声明的 Enterprise Java Bean 组件提供了对实体管理器工厂的引用。实体管理器工厂绑定到单独的 persistence.xml 配置文件，如 EJB 3.2 规范（JSR 345）的第 11.10 节中所述。
+
+例子：
+
+````java 
+@PersistenceUnit
+EntityManagerFactory emf;
+````
+
+更多细节参考 Java Persistence API v2.1（JSR 338）10.5.2 章节。
+
+### 15.5.8 @PersistenceUnits 注解
+
+此注解允许多个````@PersistenceUnit````注解声明在同一个资源上。更多细节参考 Java Persistence API v2.1（JSR 338）10.5.2 章节。
+
+### 15.5.10 @PostConstruct 注解
+
+此注解是在不接受任何参数的方法上声明的，并且不得抛出任何已检查的异常。返回值必须为````void````。必须在完成资源注入之后并且在调用组件上的任何生命周期方法之前调用该方法。
+
+例子：
+
+````java
+@PostConstruct
+public void postConstruct() {
+    //...
+}
+````
+
+所有支持依赖注入的类都必须支持````@PostConstruct````注解，并且即使该类没有请求注入任何资源也会调用它。如果该方法抛出未经检查的异常，则该类必须不能投入使用，并且不能调用该实例上的任何方法。
+
+有关更多详细信息，请参阅 Java EE 规范第 2.5 节和 Java Platform 规范的公共注解部分 2.5 章节。
+
+### 15.5.11 @PreDestroy 注解
+
+此注解用在容器管理的组件的方法上。该方法在组件被容器移除之前被调用。
+
+例子：
+
+````java
+@PreDestroy
+public void cleanup() {
+    // clean up any open resources
+}
+````
+
+使用````@PreDestroy````注解的方法必须返回````void````，并且不得抛出已检查的异常。该方法可以是公共的，受保护的，包私有的或私有的。该方法不能是静态的，但它可能是````final````的。
+
+有关更多详细信息，请参阅 JSR 250 第 2.6 节。
+
+### 15.5.12 @Resources 注解
+
+````@Resources````注解充当多个````@Resource````注解的容器，因为 Java MetaData 规范不允许在同一注解目标上使用相同名称的多个注解。
+
+例子：
+
+````java
+@Resources ({
+    @Resource(name="myDB" type=javax.sql.DataSource),
+    @Resource(name="myMQ" type=javax.jms.ConnectionFactory)
+})
+public class CalculatorServlet {
+    //...
+}
+````
+
+在上面的示例中，JMS 连接工厂和数据源通过````@Resources````注解提供给````CalculatorServlet````。
+
+此注解的语义在 Java Platform 规范（JSR 250）第2.4节的通用注解中进一步详细说明。
+
+### 15.5.13 @RunAs 注解
+
+此注解等同于部署描述符中的````run-as````元素。 此注解只能在实现````javax.servlet.Servlet````接口或其子类的类中定义。
+
+例子：
+
+````java
+@RunAs("Admin")
+public class CalculatorServlet {
+    @EJB private ShoppingCart myCart;
+    
+    public void doGet(HttpServletRequest req, HttpServletResponse res) {
+        //...
+        myCart.getTotal();
+        //...
+    }
+}
+````
+
+等价于````web.xml````文件中以下部分：
+
+````xml
+<servlet>
+    <servlet-name>CalculatorServlet</servlet-name>
+    <run-as>Admin</run-as>
+</servlet>
+````
+
+上面的示例显示了在调用````myCart.getTotal( )````方法时，servlet 如何使用````@RunAs````注解将安全标识“Admin”传递到 EJB 组件。有关传递标识的更多详细信息，请参见第 15.3.1 节“EJB 调用中的安全标识的传递”。
+
+有关更多详细信息，请参阅 Java Platform 规范的公共注解部分 2.7 章节。
+
+### 15.5.14 @WebServiceRef 注解
+
+````@WebServiceRef````注解以与部署描述符中的````resource-ref````元素相同的方式提供对 Web 组件中的 Web 服务的引用。
+
+例子：
+
+````java
+@WebServiceRef private MyService service;
+````
+
+例子中 web service “MyService” 的引用将被注入声明此注解的类。
+
+此注解的行为和更多细节参考 JAX-WS 规范（JSR 224）第 7 章。
+
+### 15.5.15 @WebServiceRefs 注解
+
+此注解允许在单个资源上声明多个````@WebServiceRef````注解。 JAX-WS 规范（JSR 224）第7节进一步详细说明了此注解的行为。
+
+### 15.5.16 针对 Java EE 需求的上下文和依赖注入
+
+在支持 Java EE 上下文和依赖注入（CDI）并且启用了 CDI 的产品中，实现必须支持使用 CDI 托管 bean。 Servlet，过滤器，监听器和 HttpUpgradeHandler 必须支持 CDI 注入和拦截器的使用，如 Java EE 7 平台规范的章节 EE.5.24 “支持依赖注入”中所述。
