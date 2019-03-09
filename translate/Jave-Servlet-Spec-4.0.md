@@ -4211,5 +4211,67 @@ JSR-109 https://jcp.org/en/jsr/detail?id=109 定义了 Web service 接口和相�
 
 作为符合 Java EE 技术的实现的一部分的容器和工具需要根据 XML 模式验证部署描述符的结构正确性。建议进行验证，但不适用于不属于 Java EE 技术兼容实现的 Web 容器和工具。
 
-## 15.5 注解和资源注射
+## 15.5 注解和资源注入
+
+Java 元数据规范（JSR-175）是 J2SE 5.0 及更高版本的一部分，它提供了一种在 Java 代码中指定配置数据的方法。 Java 代码中的元数据也称为注解。在 Java EE 中，注解用于在 Java 代码中声明对外部资源和配置数据的依赖性，而无需在配置文件中定义该数据。
+
+本节描述符合 Java EE 技术的 Servlet 容器中注解和资源注入的行为。本节扩展了标题为“资源，命名和注入”的 Java EE 规范第 5 节。
+
+必须在以下容器托管类上支持注解，这些类实现以下接口并在 Web 应用部署描述符中声明，或者使用第 8.1 节“注解和可插入性”中定义的注解或以编程方式添加。
+
+支持注解和资源注入的组件和接口：
+
+| 组件类型  | 类实现以下接口                                               |
+| --------- | ------------------------------------------------------------ |
+| Servlets  | javax.servlet.Servlet                                        |
+| Filters   | javax.servlet.Filter                                         |
+| Listeners | javax.servlet.ServletContextListener<br />javax.servlet.ServletContextAttributeListener<br />javax.servlet.ServletRequestListener<br />javax.servlet.ServletRequestAttributeListener<br />javax.servlet.http.HttpSessionListener<br />javax.servlet.http.HttpSessionAttributeListener<br />javax.servlet.http.HttpSessionIdListener<br />javax.servlet.AsyncListener |
+| Handlers  | javax.servlet.http.HttpUpgradeHandler                        |
+
+并不强制 web 容器为不在上表中的类中的注解执行资源注入。
+
+必须在调用任何生命周期方法和使组件实例可用于应用程序之前注入引用。
+
+在 web 应用中，使用资源注入的类只有在位于````WEB-INF/classes````目录下时它们的注解才会被处理，或者它们被打包在 jar 文件的````WEB-INF/lib````目录下。容器可以选择处理在应用的 classpath 中其它位置的类中的资源注入注解。
+
+### 15.5.1 metadata-complete 处理
+
+web 应用的部署描述器文件的````web-app````元素包含一个````metadata-complete````属性。````metadata-complete````属性定义了````web.xml````部署描述器是否是完整的，或者部署过程中是否应该考虑所使用原数据的其它来源。原数据可以来自````web.xml````文件、````web-fragment.xml````文件、目录````WEB-INF/classes````下类文件中的注解以及````WEB-INF/lib````目录下的 jar 文件中类上的注解。如果````metadata-complete````设置为````true````，则部署工具只会检查````web.xml````文件，而必须忽略诸如````@WebServlet````、````@WebFilter````和````@WebListener````等出现在应用中类文件中的注解，同时必须忽略被打包进入````WEB-INF/lib````目录下的 jar 文件的````web-fragment.xml````部署描述器文件。如果````metadata-complete````属性没有出现或者被设置为````false````，部署工具就必须检查类文件和````web-fragment.xml````文件来获取元数据，如前所述。
+
+````web-fragment.xml````文件在````web-fragment````元素上包含````metadata-complete````属性。该属性定义该````web-fragment.xml````部署描述器文件对给定的分片是否是完备的，或者是否应该在有关的 jar 文件中扫描注解。如果````metadata-complete````被设定为````true````，部署工具就只需要检查该````web-fragment.xml````文件，而必须忽略诸如````@WebServlet````、````@WebFilter````和````@WebListener````等出现在片段中类文件中的注解。如果````metadata-complete````属性不存在或者呗设置为````false````，部署工具就必须检查类文件以获取元数据。
+
+以下是符合 Java EE 技术的 Web 容器所需的注解。
+
+### 15.5.2 @DeclareRoles
+
+此注解用来定义包含应用的安全模型的安全角色。此注解在类上指定，并用于定义可以在带注解的类的方法内测试的角色（即，通过调用````isUserInRole````）。无需使用````@DeclareRoles````注解显式声明因在````@RolesAllowed````中使用而被隐式声明的角色。````@DeclareRoles````注解只能被用在实现了````javax.servlet.Servlet````接口的类或者它们的子类中。
+
+下面的例子展示了此注解的使用方法：
+
+````@DeclareRoles````注解的例子：
+
+````java
+@DeclareRoles("BusinessAdmin")
+public class CalculatorServlet {
+    //...
+}
+````
+
+等价于````web.xml````中以下内容：
+
+````xml
+<web-app>
+    <security-role>
+        <role-name>BusinessAdmin</role-name>
+    </security-role>
+</web-app>
+````
+
+此批注不用于将应用程序角色重新链接到其他角色。当需要这种链接时，可以通过在关联的部署描述符中定义适当的````security-role-ref````来完成。
+
+当````isUserInRole````方法调用来自被注解的类，将测试与类调用相关联的调用者标识的角色成员身份，该角色名称与````isCallerInRole````的参数相同。如果已为参数````role-name````定义了````security-role-ref````，则会在映射到````role-name````的角色过程中测试调用方的成员资格。
+
+有关````@DeclareRoles````注解的更多详细信息，请参阅 Java 平台规范（JSR 250）第2.12节中通用注解的描述。
+
+### 15.5.3 @EJB 注解
 
