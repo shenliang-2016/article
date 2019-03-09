@@ -4081,3 +4081,135 @@ Servlet 容器可以提供一个配置选项来选择是否允许或者拒绝未
 
 分布式 servlet 容器作为 Java EE 实现的一部分，必须支持必要的机制来保证可以在不同 JVM 之间迁移其它 Java EE 对象。
 
+## 15.2 Web 应用
+
+### 15.2.1 Web 应用类加载器
+
+作为 Java EE 产品一部分的 Servlet 容器不应该允许应用覆盖 Java SE 或者 Java EE 平台类，比如那些````java.*````和````javax.*````命名空间中的类，那些在 Java SE 或者 Java EE 不允许被修改的内容。
+
+### 15.2.2 Web 应用环境
+
+ Java EE 定义一个命名环境来允许应用很容易地访问资源和外部信息，而不需要关于外部信息的命名或者组织的显式信息。
+
+因为 servlets 是一种 Java EE 技术的集成组件类型，部署描述器文件中已经提供了规则来给出信息来允许 servlet 获取资源和企业级 beans 应用。包含这些信息的部署描述元素有：
+
+* ````env-entry````
+* ````ejb-ref````
+* ````ejb-local-ref````
+* ````resource-ref````
+* ````resource-env-ref````
+* ````service-ref````
+* ````message-destination-ref````
+* ````persistence-context-ref````
+* ````persistence-unit-ref````
+
+开发者使用这些元素类描述某些对象，比如 web 应用需要被注册在运行时 web 容器的 JNDI 命名空间内的那些对象。
+
+Java EE 环境的需求是关于配置 Java EE 规范第 5 章中描述的环境。
+
+作为 Java EE 兼容性技术实现的一部分的 servlet 容器必须支持这种语法。参考 Java EE 规范以获取更多信息。这种类型的 servlet 容器必须支持查找这些对象以及对这些对象的调用，当在一个由 servlet 容器管理的线程上执行时。这种类型的 servlet 容器应该支持这种行为，当在由开发者创建的线程上执行时，但是目前这还不是强制需求。这些要求将会被加入下个版本的规范中。开发者需要谨慎依赖这种应用创建线程的能力，因为它们是不可移植的。
+
+### 15.2.3 Web 模块上下文根 URL 的 JNDI 名称
+
+Java EE 平台规范定义了一个标准的全局 JNDI 命名空间和一系列的相关命名空间映射到各种不同作用域的 Java EE 应用。这些命名空间可以被应用可移植地获取组件和资源的引用。本章节定义 JNDI 名称，通过它，web 应用的根 url 被强制需要被注册。
+
+web 应用的上下文根目录预定义的````java.net.URL````资源的名称遵循以下语法：
+
+````xml
+<!-- 全局命名空间中 -->
+java:global[/<app-name>]/<module-name>!ROOT
+<!-- 应用特定命名空间中 -->
+java:app/<module-name>!ROOT
+````
+
+参考 8.1.1 （组件创建）章节和 8.1.2（应用装配）获取确定应用名称和模块名称的规则。
+
+只有当应用打包成为````.ear````文件时````<app-name>````才是有用的。
+
+````java:app````前缀允许 Java EE 应用中执行的组件访问应用特定的命名空间。````java:app````名称允许企业级应用内部的模块引用同一个企业级应用中的其它模块的上下文根路径。````<module-name>````是````java:app```` url 的一个必需语法部分。
+
+上述 URL 可以被用在下列应用中：
+
+如果一个 web 应用被独立部署，其````module-name````是````myWebApp````。则该 URL 能够被注入其它 web 模块：
+
+````
+@Resource(lookup="java:global/myWebApp!ROOT")
+URL myWebApp;
+````
+
+当打包成名为````myApp````的````.ear````文件后，可以被如下使用：
+
+````
+@Resource(lookup="java:global/myApp/myWebApp!ROOT")
+URL myWebAPP;
+````
+
+## 15.3 安全
+
+本节描述附加的安全需求，当 web 容器呗包含进入一个产品，该产品同时还包含 EJB，JACC 和／或者 JASPIC。接下来的章节列出了这些需求。
+
+### 15.3.1 EJB 调用中安全标识的传递
+
+安全标识，或者准则，在对企业级 bean 的调用中必须被提供。从 web 应用发起的对企业级 bean 的调用的默认模式中，web 用户的安全标识会被传递给 EJB 容器。
+
+其它场景下，web 容器被要求允许不为 web 容器或者 EJB 容器所知的 web 用户发起调用：
+
+* Web 容器被要求支持未经过容器身份认证的客户端访问 web 资源。这是 Internet 上通常的 web 资源的访问模式。
+* 应用代码可以被作为基于调用者标识的信号和定制数据的唯一的处理器。
+
+这些场景下，web 应用的部署描述器可以指定一个````run-as````元素。当为一个 Servlet 指定一个````run-as````角色，Servlet 容器必须传递一个准则映射到该角色，并作为从 Servlet 到 EJB 的所有调用中的安全标识，包含来自 Servlet 的````init````和````destroy````方法的调用。该安全角色名称必须是为该 web 应用定义的安全角色名中的一个。
+
+因为 web 容器作为 Java EE 平台的一部分运行，````run-as````元素的使用必须支持同一个 Java EE 应用中的 EJB 组件的调用，还要支持部署在其它 Java EE 应用中的 EJB 组件的调用。
+
+### 15.3.2 容器授权需求
+
+在 Java EE 产品中，或者包含 Java 认证 SPI 支持的产品中，所有的 Servlet 容器必须实现 JASPIC 规范中的 Servlet 容器规范。JASPIC 规范下载地址：https://www.jcp.org/en/jsr/detail?id=196
+
+## 15.4 部署
+
+本节描述包含对 JSP 和／或 Web Services 支持的Java EE 技术兼容容器和产品的部署描述器、打包和部署描述器处理需求。
+
+### 15.4.1 部署描述器元素
+
+存在于 web 应用部署描述器中的下列附加元素满足支持 JSP 技术或者作为 Java EE 应用服务器一部分的 web 容器的需求。对那些只希望支持 servlet 规范的容器，这些都不是强制性要求：
+
+* ````jsp-config````
+* 声明资源引用的语法（````env-entry````，````ejb-ref````，````ejb-local-ref````，````resource-ref````，````resource-env-ref````）
+* 指定消息目的地的语法（````message-destination````，````message-destination-ref````
+* Web service 的引用（````service-ref````）
+* 持久化上下文引用（````persistence-context-ref````）
+* 持久化单元引用（````persistence-unit-ref````）
+
+这些元素的语法目前都在 JSP 规范 2.2 版本和 Java EE 规范中定义。
+
+### 15.4.2 JAX-WS 组件的打包和部署
+
+Web容器可以选择支持运行的组件，这些组件是为了实现 JAX-RPC 和/或 JAX-WS 规范所定义的Web服务端点而编写的。嵌入到 Java EE 兼容实现中的 Web 容器必须支持 JAX-RPC 和 JAX-WS web service 组件。本节描述了包含在同时支持 JAX-RPC 和 JAX-WS 的产品中的 Web 容器的打包和部署模型。
+
+JSR-109 https://jcp.org/en/jsr/detail?id=109 定义了 Web service 接口和相关的 WSDL 描述以及相关的类的打包模型。它为支持 JAX-WS 和 JAX-RPC 的 Web 容器定义了一种机制，以便链接到实现此 Web 服务的组件。JAX-WS 或 JAX-RPC Web service 实现组件使用由 JAX-WS 和/或 JAX-RPC 规范定义的 API，该规范定义了与启用 JAX-WS 和/或 JAX-RPC 的Web 容器的契约。它被打包到 WAR 文件中。Web service 开发者使用普通的````<servlet>````声明进行这种组件的声明。
+
+启用 JAX-WS 和 JAX-RPC 的 Web 容器必须支持开发人员使用 Web 部署描述符为端点实现组件定义以下信息，使用与使用 servlet 元素的 HTTP Servlet 组件相同的语法。用于指定端点信息的子元素以下列方式指定：
+
+* ````servlet-name````元素定义一个逻辑名称，可以被用于在 WAR 包中其它 web 组件中定位此端点描述。
+* ````servlet-class````元素提供该端点实现的 Java 类的全限定名。
+* ````description````元素可以被用于描述该组件，同时可以被显示在工具中。
+* ````load-on-startup````元素指定相对于容器中其它 web 组件的初始化顺序。
+* ````security-role-ref````元素可以被用于测试已认证的用户是否属于一个逻辑安全角色。
+* ````run-as````元素可以被用于覆盖被该组件传递给被调用的 EJB 的标识。
+
+任何开发者为 Web 组件定义的 servlet 初始化参数都可以被容器忽略。另外，支持 JAX-WS 和 JAX-RPC 的 web 组件继承了传统的 web 组件机制来定义下列信息：
+
+* 使用 servlet 映射技术将组件映射到 web 容器的 URL 命名空间。
+* web 组件的授权约束使用安全约束。
+* 使用过滤器映射技术实现 servlet 过滤器使用来提供底层的字节流支持用来操作 JAX-WS 和／或 JAX-RPC 消息。
+* 与组件相关的所有 HTTP 会话的超时特性。
+* 指向存储在 JNDI 命名空间中的 Java EE 对象的链接。
+
+所有以上需求都可以通过使用可插拔机制来满足，该机制在 8.2 章节中定义。
+
+### 15.4.3 部署描述器处理规则
+
+作为符合 Java EE 技术的实现的一部分的容器和工具需要根据 XML 模式验证部署描述符的结构正确性。建议进行验证，但不适用于不属于 Java EE 技术兼容实现的 Web 容器和工具。
+
+## 15.5 注解和资源注射
+
