@@ -1306,3 +1306,9 @@ Spring 容器能够自动装配相互协作的 bean 之间的关系。你可以�
 * 通过使用基于注解的配置实现更细粒度的控制，细节在 [基于注解的容器配置](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-annotation-config)中描述。
 
 
+**从自动装配中排除 Bean**
+
+在每个 bean 基础上，你可以从自动装配中排除单个的 bean。在 Spring 的 XML 格式中，设定该````<bean/>````元素的````autowire-candidate````属性为````false````。容器将把该 bean 设定为自动装配基础设施（包括注解形式的配置，比如````@Autowired````）不可用状态。
+
+> ````autowire-candidate````属性被设计为仅仅影响基于类型的自动装配。它不影响通过名称的显式引用，即使指定的 bean 没有被标记为自动装配候选者，显式引用仍然会生效。因此，只要名称是匹配的，通过名称进行的自动装配无论如何都会执行。
+
