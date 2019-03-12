@@ -1312,3 +1312,52 @@ Spring 容器能够自动装配相互协作的 bean 之间的关系。你可以�
 
 > ````autowire-candidate````属性被设计为仅仅影响基于类型的自动装配。它不影响通过名称的显式引用，即使指定的 bean 没有被标记为自动装配候选者，显式引用仍然会生效。因此，只要名称是匹配的，通过名称进行的自动装配无论如何都会执行。
 
+你也可以使用基于 bean 名称模式匹配的方式对自动装配候选者进行限制。顶级的````<bean/>````元素在它的````default-autowire-candidates````属性中接受一个或者多个模式。比如，为了限制自动装配候选者的状态为 bean 名称以````Repository````结尾，就设定值为````*Repository````。为了提供多个模式，将它们定义在一个用逗号分隔的列表中。bean 定义的````autowire-candidate````属性的字面值````true````或者````false````永远具有优先权。对这些 beans，模式匹配规则不生效。
+
+这些技术对那些你永远不希望被自动装配机制注入其它 beans 中的 beans 是有用的。不过这并不意味着被排除的 bean 自身不能被配置成为使用自动装配的。相反，只是说它自己不会被自动装配机制作为其它 beans 的装配候选者。
+
+#### 1.4.6 方法注入
+
+在大多数应用场景中，容器中的大部分 beans 都是单例模式的。当一个单例模式的 bean 需要与其它单例模式的 bean 协作，或者一个非单例模式的 bean 需要与其它非单例模式的 bean 协作时，典型的做法是将其中一个 bean 定义为其它 bean 的属性。当 bean 的生命周期不同时可能会有问题。假设单例模式的 bean A 需要使用非单例模式 bean B，可能在 A 中的每个方法的调用中都会用到。容器创建单例模式的 bean A 仅一次，因此只有一次机会设置属性。当需要时容器不可能将每个新的 bean B 实例连同 bean A 提供出来。
+
+一种解决方案是放弃某些控制反转。你可以通过实现````ApplicationContextAware````接口来讲 bean A 标记为容器上下文敏感的，同时，通过使得每次 bean A 需要它时向容器调用````getBean("B")````获取（一个典型的新的）bean B 的实例。下面的例子展示了这种方法：
+
+````java
+// a class that uses a stateful Command-style class to perform some processing
+package fiona.apple;
+
+// Spring-API imports
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+
+public class CommandManager implements ApplicationContextAware {
+    
+    private ApplicationContext applicationContext;
+    
+    public Object process(Map commandState) {
+        // grab a new instance of the appropriate Command
+        Command command = createCommand();
+        // set the state on the (hopefully brand new) Command instance
+        command.setState(commandState);
+        return command.execute();
+    }
+    
+    protected Command createCommand() {
+        // notice the Spring API dependency
+        return this.applicationContext.getBean("command", Command.class);
+    }
+    
+    public void setApplicationContext(
+        ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+}
+````
+
+上面这种做法其实是不可取的，因为业务代码是框架敏感、而且与框架耦合在一起。方法注入，Spring IoC 容器的一个高级特性，允许你很干净地处理这种情况。
+
+> 你可以在[这篇博客](https://spring.io/blog/2004/08/06/method-injection/)中看到方法注入的更多动机。
+
+**查找方法注入**
+
