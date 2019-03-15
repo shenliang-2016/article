@@ -2419,3 +2419,30 @@ Accept-Charset: iso-8859-5, unicode-1-1;q=0.8
 
 ## 14.3 Accept-Encoding
 
+````Accept-Encoding````请求首部字段类似于````Accept````，但是限制可接受的响应内容编码。
+
+````
+Accept-Encoding	= "Accept-Encoding" ":"
+					1#( codings [ ";" "q" "=" qvalue ] )
+codings			= ( content-coding | "*" )
+````
+
+该字段的使用例子：
+
+````
+Accept-Encoding: compress, gzip
+Accept-Encoding:
+Accept-Encoding: *
+Accept-Encoding: compress;q=0.5, gzip;q=1.0
+Accept-Encoding: gzip;q=1.0, identity; q=0.5, *;q=0
+````
+
+服务器检查按照下面规则，根据````Accept-Encoding````首部字段确定内容编码是否可接受：
+
+1. 如果内容编码是````Accept-Encoding````首部字段中列出的内容编码之一，则它是可接受的。除非它还伴随着 qvalue 为 0。（3.9章中的定义，质量比率值为0表示不可接受。）
+2. ````Accept-Encoding````首部字段中特定的"*"记号匹配该首部字段中未显式列出的任何可用的内容编码。
+3. 如果多种内容编码可接受，则最希望接受的是具有最高非零质量比率值的内容编码。
+4. ````identity````内容编码永远是可接受的，除非由于````Accept-Encoding````首部字段包含````identity;q=0````而特别拒绝，或者因为该字段包含````*;q=0````而又没有显式包含````identity````内容编码。如果````Accept-Encoding````字段值为空，则只有````identity````内容编码是可接受的。
+
+如果一个````Accept-Encoding````字段出现在一个请求中，同时如果服务器无法发送该字段定义的可接受的响应，则服务器应该发送一个 406 （Not Acceptable）状态码的错误响应。
+
