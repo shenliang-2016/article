@@ -2562,3 +2562,29 @@ HTTP 访问身份认证在“HTTP 认证：基本的和摘要的访问认证”�
 
 缓存指令必须被嗲了或者网关服务器应用透传，无论它们对这些应用有没有意义，因为这些指令可能会应用到请求响应链路上的所有通信参与者。不可能为特定的缓存指定专门的缓存控制指令。
 
+````
+Cache-Control		= "Cache-Control" ":" 1#cache-directive
+cache-directive		= cache-request-directive
+	| cache-response-directive
+cache-request-directive	=
+	  "no-cache"										; Section 14.9.1
+	| "no-store"										; Section 14.9.2
+	| "max-age" "=" delta-seconds						; Section 14.9.3, 14.9.4
+	| "min-fresh" "=" delta-seconds 					; Section 14.9.3
+ 	| "no-transform" 									; Section 14.9.5
+ 	| "only-if-cached" 									; Section 14.9.4
+ 	| cache-extension 									; Section 14.9.6
+ cache-response-directive =
+ 	  "public" 											; Section 14.9.1
+	| "private" [ "=" <"> 1#field-name <"> ]			; Section 14.9.1
+ 	| "no-cache" [ "=" <"> 1#field-name <"> ]			; Section 14.9.1
+ 	| "no-store" 										; Section 14.9.2
+ 	| "no-transform" 									; Section 14.9.5
+ 	| "must-revalidate" 								; Section 14.9.4
+ 	| "proxy-revalidate" 								; Section 14.9.4
+ 	| "max-age" "=" delta-seconds 						; Section 14.9.3
+ 	| "s-maxage" "=" delta-seconds 						; Section 14.9.3
+ 	| cache-extension 									; Section 14.9.6
+ cache-extension = token [ "=" ( token | quoted-string ) ]
+````
+
