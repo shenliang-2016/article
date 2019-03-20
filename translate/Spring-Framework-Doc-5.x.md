@@ -1509,3 +1509,26 @@ Str
 
 ### 1.5 Bean 作用域
 
+当你创建一个 bean 定义，你创建了一个创建由 bean 定义定义的类的实际实例的配方。bean 定义是一种配方，这个认识很重要，因为这就意味着基于一个类型，你可以从一个配方创建出许多对象实例。
+
+你不仅可以控制将要被插入由特定 bean 定义创建的对象中的各种依赖和配置值，还可以控制由特定 bean 定义创建出来的对象的作用域。这种方式很强大，而且很灵活，因为你可以选择通过配置文件来控制你创建的对象的作用域，而不需要在 Java 类层面来实现这种控制。Beans 能够被定义以用于部署在不同的作用域中。Spring 框架支持 6 种作用域，其中 4 种只有当你使用 web-aware 的````ApplicationContext````时才是可用的。你也可以创建 [a custom scope.](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-custom)。
+
+下表描述了支持的作用域：
+
+| 作用域                                      | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| [singleton](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-singleton) | （默认的）为每个 Spring IoC 容器，一个 bean 定义只会创建一个对象实例 |
+| [prototype](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-prototype) | 一个 bean 定义可以创建任意数量的对象实例                  |
+| [request](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-request) | 一个 bean 定义的作用域局限在一个 HTTP 请求范围内。也就是说，每个 HTTP 请求都用户它自己的 bean 实例，由单个的 bean 定义创建出来。仅仅在 web-aware 的 Spring ````ApplicationContext````的上下文中可用。 |
+| [session](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-session) | 一个 bean 定义的作用域局限在一个 HTTP 会话范围内。仅仅在 web-aware 的 Spring ````ApplicationContext````的上下文中可用。 |
+| [application](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-application) | 一个 bean 定义的作用域局限在一个````ServletContext````范围内。仅仅在 web-aware 的 Spring ````ApplicationContext````的上下文中可用。 |
+| [websocket](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#websocket-stomp-websocket-scope) | 一个 bean 定义的作用域局限在一个````WebSocket````范围内。仅仅在 web-aware 的 Spring ````ApplicationContext````的上下文中可用。 |
+
+> 在 Spring 3.0 中，线程范围的作用域是可用的，不过并没有作为默认作用域，参考[`SimpleThreadScope`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/context/support/SimpleThreadScope.html)。在 Spring 4.2 中，事务范围的作用域同样可用，参考 [`SimpleTransactionScope`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/transaction/support/SimpleTransactionScope.html)。关于创建以及注册这些或者其它客户化作用域的细节可参考 [Using a Custom Scope](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-custom-using)。
+
+#### 1.5.1 单例作用域
+
+单例 bean 只有一个共享的实例被管理，所有对该 beans 的请求，携带 ID 或者 IDs 匹配到该 bean 定义，将导致唯一的这个特定的 bean 实例被 Spring 容器返回。
+
+换句话说，当你定义一个 bean 定义，同时它的作用域是单例的，Spring IoC 容器仅仅创建唯一的由该 bean 定义所定义的对象的实例。这个唯一的实例被存储在这个单例 bean 的缓存中，所有后续的对该 bean 的请求和引用都将返回这个缓存的对象。下面的图展示了单例作用域的原理：
+
