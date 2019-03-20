@@ -1532,7 +1532,7 @@ Str
 
 换句话说，当你定义一个 bean 定义，同时它的作用域是单例的，Spring IoC 容器仅仅创建唯一的由该 bean 定义所定义的对象的实例。这个唯一的实例被存储在这个单例 bean 的缓存中，所有后续的对该 bean 的请求和引用都将返回这个缓存的对象。下面的图展示了单例作用域的原理：
 
-![The Singleton Scope](D:\work\article\translate\assets\spring\image-20190320155028.png)
+![The Singleton Scope](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/spring/image-20190320155028.png)
 
 Spring 中的单例 bean 的概念与 GoF 设计模式中定义的单例模式的概念是不同的。GoF 中的单例模式是硬编码对象的作用域，保证每个类加载器值创建唯一的一个特定类型的实例。Spring 中的单例的做好的解释是每个容器和每个 bean 。这就意味着，如果你在一个 Spring 容器中定义一个特定类型的 bean，该容器将只会创建唯一的一个该 bean 定义的类型的对象实例。单例作用域是 Spring 中默认的作用域。为了定义一个单例 bean 在 XML 中，你可以如下面的例子这样定义：
 
@@ -1549,5 +1549,5 @@ bean 部署的非单例的原型作用域将会导致每次请求都会有一个
 
 下图展示了 Spring 的原型作用域：
 
-![The Prototype Scope](D:\work\article\translate\assets\spring\image-20190320160829.png)
+![The Prototype Scope](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/spring/image-20190320160829.png)
 
