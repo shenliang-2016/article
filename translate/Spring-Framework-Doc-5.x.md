@@ -1551,3 +1551,21 @@ bean 部署的非单例的原型作用域将会导致每次请求都会有一个
 
 ![The Prototype Scope](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/spring/image-20190320160829.png)
 
+(数据访问对象(DAO)通常不会被配置为原型，因为一个典型的 DAO 并不持有任何会话状态。我们可以方便地重用单例图示)
+
+下面的例子在 XML 中定义了一个原型 bean ：
+
+````xml
+<bean id="accountService" class="com.something.DefaultAccountService" scope="prototype"/>
+````
+
+相比于其它作用域，Spring 并不管理原型 bean 的完整生命周期。容器实例化、配置并且组装原型对象然后将其交与客户端，而没有任何对原型实例的进一步记录。因此，尽管初始化生命周期回调方法被在所有对象上调用，而无关乎作用域，在原型场景下，配置的析构生命周期回调不会被调用。客户端代码必须清理原型作用域的对象，并释放这些原型 bean 持有的昂贵资源。为了获取 Spring 容器以释放原型作用域 beans 持有的资源，尝试使用客户化的 [bean post-processor](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp), 它持有需要被清理的 beans 的引用。
+
+从某个层面来看，对原型 beans 来说，Spring 容器的角色基本上就是作为 Java 中的````new````操作符的替身。这个时间点之后的所有生命周期管理都必须由客户端管理。（有关 Spring 容器中的 bean 的生命周期管理的更多细节参见 [Lifecycle Callbacks](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle)）
+
+#### 1.5.3 具有原型 Bean 依赖的单例 Beans
+
+当你使用依赖原型 beans 的单例 beans 时，注意依赖解析是发生在实例化阶段。因此，如果你将一个原型 bean 依赖注入一个单例 bean 中，一个新的原型 bean 被实例化然后被依赖注入进入该单例 bean 。该原型实例就是仅仅提供给该单例 bean 的实例。
+
+不过，假设你希望在运行时该单例 bean 反复获取一个新的原型 bean 的实例。你就不能将一个原型 bean 依赖注入你的单例 bean ，因为该注入只会发生一次，当 Spring 容器实例化给单例 bean 并解析和注入它的依赖。如果你需要在运行时得到原型 bean 的新的实例多次，参考  [Method Injection](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-method-injection)。
+
