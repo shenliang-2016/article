@@ -1361,3 +1361,151 @@ public class CommandManager implements ApplicationContextAware {
 
 **查找方法注入**
 
+查找方法注入是容器的一种能力，可以覆盖容器管理的 beans 中的方法并返回容器中其它命名的 bean 的查找结果。这种查找通常涉及到一个原型 bean，就像在前一节中描述的场景下。Spring 框架实现此方法注入通过使用产生自 CGLIB 库的字节码，来动态产生覆盖该方法的一个子类。
+
+> * 为了这种动态子类型能够工作，被 Spring 容器生成子类的类不能是````final````的，同时被覆盖的方法也不能是````final````的。
+> * 对包含抽象方法的类进行单元测试将需要你写一个该类的子类并提供一个该抽象方法的实现“桩”。
+> * 具体方法对组件扫描也是必须的，不过要求具体类被加载。
+> * 更关键的限制是，查找方法不能与工厂方法共同工作，特别是配置类中的````@Bean````标注的方法。因为，这种情况下容器不负责创建实例，因而就不能在运行时凭空创建子类。
+
+在前面的代码片段中````CommandManager````类出现的情况下，Spring 容器动态覆盖````createCommand()````方法的实现。````CommandManager````类没有任何 Spring 依赖，就像下面这个改写的例子：
+
+````java
+package fiona.apple
+
+// no more Spring importes!
+
+public abstract class CommandManager{
+	public Object process(Object commandState){
+		// grab a new instance of the appropriate Command interface
+		Command command = createCommand();
+		// set the state on the (hopefully brand new) Command instance
+		command.setState(commandState);
+		return command.execute();
+	}
+	
+	// okay... but where is the implementation of this method?
+	protected abstract Command createCommand();
+}
+````
+
+在包含该需要被注入的方法的客户端类（例子中是````CommandManager````）中，需要注入的方法需要如下形式的方法签名：
+
+````
+<public | protected> [abstract] <return-type> theMethodName(no-arguments);
+````
+
+如果方法是````abstract````的，则动态生成的子类实现该方法。否则，动态生成的子类覆盖定义在初始类中的具体方法。考虑下面的例子：
+
+````xml
+<!-- a stateful bean deployed as a prototype (non-singleton) -->
+<bean id="myCommand" class="fiona.apple.AsyncCommand" scope="prototype">
+    <!-- inject dependencies here as required -->
+</bean>
+
+<!-- commandProcessor uses statefulCommandHelper -->
+<bean id="commandManager" class="fiona.apple.CommandManager">
+    <lookup-method name="createCommand" bean="myCommand"/>
+</bean>
+````
+
+名为````commandManager````的 bean 调用它自己的````createCommand()````方法，每当它需要一个新的````myCommand```` bean 实例。你必须谨慎部署该````myCommand```` bean 作为一个原型，如果确实是需要的。如果它是单例模式的 bean，则每次调用该方法都会返回同一个````myCommand```` bean。
+
+另外，在基于注解的组件模型中，你可以通过````@Lookup````注解声明查找方法，如下例子所示：
+
+````java 
+public abstract class CommandManager {
+
+    public Object process(Object commandState) {
+        Command command = createCommand();
+        command.setState(commandState);
+        return command.execute();
+    }
+
+    @Lookup("myCommand")
+    protected abstract Command createCommand();
+}
+````
+
+或者，更符合语言习惯的，你可以依赖查找方法声明的返回类型来解析目标 bean ，如下例子所示：
+
+````java
+public abstract class CommandManager {
+
+    public Object process(Object commandState) {
+        MyCommand command = createCommand();
+        command.setState(commandState);
+        return command.execute();
+    }
+
+    @Lookup
+    protected abstract MyCommand createCommand();
+}
+````
+
+注意：你应该声明这种注解的查找方法的同时提供具体的桩实现，以使得它们兼容于 Spring 容器的组件默认扫描规则，该规则默认会忽略抽象类。这个限制并不会作用于显式注册或者显式引入的 bean 类。
+
+>另一种访问不同作用域的目标 bean 的方法是````ObjectFactory````/````Provider````注入点。参考 [Scoped Beans as Dependencies](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-other-injection).
+>
+>你会发现````ServiceLoatorFactoryBean````（在````org.springframework.beans.factory.config````包下）非常有用。
+
+**任意方法替换**
+
+相对于查找方法注入，任意方法替换是另外一种稍微弱一些的方法注入方法。这是一种可以用另外的方法实现替换容器管理的 bean 中的任意方法的能力。如果你不需要这个功能特性，就可以安全地跳过这一节。
+
+在基于 XML 的配置元数据中，你可以使用````replaced-method````元素来替换已部署的 bean 中一个存在的方法实现。考虑下面的类，其中的````computeValue````方法是我们想要覆盖的：
+
+````java
+public class MyValueCalculator {
+
+    public String computeValue(String input) {
+        // some real code...
+    }
+
+    // some other methods...
+}
+````
+
+实现了````org.springframework.beans.factory.support.MethodReplacer````接口的类提供新的方法定义，如下例所示：
+
+````java
+/**
+ * meant to be used to override the existing computeValue(String)
+ * implementation in MyValueCalculator
+ */
+public class ReplacementComputeValue implements MethodReplacer {
+
+    public Object reimplement(Object o, Method m, Object[] args) throws Throwable {
+        // get the input value, work with it, and return a computed result
+        String input = (String) args[0];
+        ...
+        return ...;
+    }
+}
+````
+
+部署初始类以及指定方法覆盖的 bean 定义文件类似于下面的例子：
+
+````xml
+<bean id="myValueCalculator" class="x.y.z.MyValueCalculator">
+    <!-- arbitrary method replacement -->
+    <replaced-method name="computeValue" replacer="replacementComputeValue">
+        <arg-type>String</arg-type>
+    </replaced-method>
+</bean>
+
+<bean id="replacementComputeValue" class="a.b.c.ReplacementComputeValue"/>
+````
+
+你可以在````<replaced-method>````元素中使用若干````<arg-type>````元素来表示将被覆盖的方法的方法签名。参数的签名只有当方法被重载同时类中存在多个变体时才是必要的。方便起见，参数的类型字符串可以是对应类型全限定名的子字符串。比如，下列字符串都可以匹配到````java.lang.String````：
+
+````
+java.lang.String
+String
+Str
+````
+
+由于参数个数通常已经足够用来区分每个可能的方法选择，这种类型字符串的缩写可以节省大量的键入。
+
+### 1.5 Bean 作用域
+
