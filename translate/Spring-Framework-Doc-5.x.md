@@ -1569,3 +1569,88 @@ bean 部署的非单例的原型作用域将会导致每次请求都会有一个
 
 不过，假设你希望在运行时该单例 bean 反复获取一个新的原型 bean 的实例。你就不能将一个原型 bean 依赖注入你的单例 bean ，因为该注入只会发生一次，当 Spring 容器实例化给单例 bean 并解析和注入它的依赖。如果你需要在运行时得到原型 bean 的新的实例多次，参考  [Method Injection](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-method-injection)。
 
+#### 1.5.4 请求，会话，应用，以及 WebSocket 作用域
+
+````request````，````session````，````application````，以及````WebSocket````作用域只是当你使用 web-aware 的 Spring ````ApplicationContext````实现（比如````XmlWebApplicationContext````）时才是可用的。如果你在标准的 Spring IoC 容器中使用这些作用域，比如````ClassPathXmlApplicationContext````，一个抱怨未知的 bean 作用域的````IllegalStateException````异常将会被抛出。
+
+**初始 Web 配置**
+
+为了支持 beans 的````request````，````session````，````application````，以及````WebSocket````级别的作用域（web-scoped beans），在定义你的 beans 之前少量的初始配置是必需的。（这些初始设置对标准作用域````singleton````和````prototype````不是必需的）
+
+如何实现这种初始配置取决于你的特定 Servlet 环境。
+
+如果你在 Spring Web MVC 环境下访问有作用域的 beans ，实际上，在一个由 Spring ````DispatcherServlet````处理的请求中，不需要任何特殊的设置。````DispatcherServlet````已经暴露了所有相关的状态。
+
+如果你使用的是 Servlet 2.5 web 容器，请求是在 Spring ````DispatcherServlet````之外处理（比如，当使用 JSF 或者 Struts 时），你需要注册````org.springframework.web.context.request.RequestContextListener````和````ServletRequestListener````。对 Servlet 3.0+ 版本的容器，这些可以使用````WebApplicationInitializer````接口通过编程方式实现。或者，对老版本的容器，在你的应用的部署描述器文件````web.xml````中添加如下声明：
+
+````xml
+<web-app>
+  ...
+  <listener>
+    <listener-class>
+      org.springframework.web.context.request.RequestContextListner
+    </listener-class>
+  </listener>
+  ...
+</web-app>
+````
+
+或者，如果你的监听器配置有问题，考虑使用 Spring 的````RequestConextFilter````。过滤器映射取决于周边的 web 应用配置，因此你必须对它进行相应修改。下面的例子展示了该部署描述器文件的过滤器声明部分：
+
+````xml
+<web-app>
+  ...
+  <filter>
+    <filter-name>requestContextFilter</filter-name>
+    <filter-class>org.springframework.web.filter.RequestContextFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>requestContextFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  ...
+</web-app>
+````
+
+````DispactherServlet````，````RequestContextListener````以及````RequestContextFilter````做的事情完全相同，即将 HTTP 请求对象绑定到为该请求服务的````Thread````。这就使得请求作用域和会话作用域的 beans 在调用链的下游还是可用的。
+
+**请求作用域**
+
+考虑下面的 XML 配置中的 bean 定义：
+
+````xml
+<bean id="loginAction" class="com.something.LoginAction" scope="request"/>
+````
+
+Spring 容器通过使用````loginAction````  bean 定义为每个 HTTP 请求创建````LoginAction```` bean 的新的实例。也就是说，````loginAction```` bean 的作用域是 HTTP 请求级别。你可以任意修改创建出来的实例的内部状态，因为由同一个 bean 定义创建出来的的其它实例并不会看到这些状态变化。它们都专属于单独的请求。当该请求处理完成，对应的请求作用域的 bean 实例就会被清理。
+
+当使用注解驱动的组件或者 Java 配置时，````@RequestScope````注解可以被用于标注组件为````request````作用域。下面例子展示了这种用法：
+
+````java
+@RequestScope
+@Component
+public class LoginAction {
+  // ...
+}
+````
+
+**会话作用域**
+
+考虑下面的 XML 配置中的 bean 定义：
+
+````xml
+<bean id="userPreferences" class="com.something.UserPreferences" scope="session"/>
+````
+
+Spring 容器通过使用````userPreferences````  bean 定义为每个 HTTP 会话的生命周期创建一个新的````UserPreferences````实例。换句话说，````userPreferences```` bean 的作用域就是 HTTP ````Session````级别。如同请求作用域的 beans ，你也可以任意修改这些 beans 的内部状态，而其它使用从同一个````userPreferences```` bean 定义创建的实例的 HTTP ````Session````实例无法看到这种状态变化，因为它们都特定地属于每个 HTTP ````Session````。当 HTTP ````Session```` 被彻底废弃之后，作用域是该 HTTP ````Session```` 的 bean 实例也会被废弃。
+
+当使用注解驱动的组件或者 Java 配置时，````@SessionScope````注解可以被用于标注组件为````session````作用域。下面例子展示了这种用法：
+
+````java
+@SessionScope
+@Component
+public class UserPreferences {
+  // ...
+}
+````
+
