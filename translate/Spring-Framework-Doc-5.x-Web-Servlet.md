@@ -83,7 +83,7 @@ public class MyWebApplicationInitializer implements WebApplicationInitializer {
 
 根````WebApplicationContext````典型地包含基础设施 beans，比如数据存取类和业务服务类等需要在多个````Servlet````实例之间共享的 beans。这些 beans 可以在 Servlet 各自的子````WebApplicationContext````中有效地继承和覆盖，这些````WebApplicationContext````中通常包含属于给定````Servlet````的 beans 。下面的图展示了上述关系：
 
-![image-20190321204627481](/work/article/translate/assets/spring/image-20190321204627481.png)
+![Context 层级结构](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/spring/image-20190321204627481.png)
 
 下面的例子配置了一个````WebApplicationContext````层级结构：
 
