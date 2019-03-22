@@ -142,10 +142,7 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
 
 > 如果一个应用中上下文层级结构不是必需的，则应用可以只配置````root````上下文，同时将````contextConfigLocation```` Servlet 参数置空。
 
-<<<<<<< 74ca7d9af9b51ebed2ccd1f29c13210462afd66f
-### 1.1.2 指定 Bean 类型
-=======
-### 1.1.2 特殊 Bean 类型
+### 1.1.2 特殊类型的 Bean 
 
 ````DispatcherServlet````委托特殊的 beans 处理请求和渲染适当的响应。这里的"特殊"意思是实现了框架契约的 Spring 管理的````Object````实例。它们通常包含内建契约，不过你可以客户化他们的属性，扩展或者替换它们。
 
