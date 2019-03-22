@@ -286,3 +286,28 @@ Spring ````DispatcherServlet````也支持返回````last-modification-date````，
 
 ### 1.1.6 拦截
 
+所有的````HandlerMapping````实现都支持处理器拦截器，当你希望对某些请求执行特定功能逻辑时，拦截器就是非常有用的。比如，检查请求主体的身份。拦截器必需实现来自````org.springframework.web.servlet````包的````HandlerInterceptor````接口，该接口包含三个方法，提供了足够的灵活性进行各种预处理和后处理。
+
+* ````preHandle(..)````：在实际的请求处理器之前执行。
+* ````postHandle(..)````：在实际的请求处理器之后执行。
+* ````afterCompletion(..)````：请求处理完全结束之后执行。
+
+````preHandle(..)````方法返回一个布尔值。你可以使用该方法打断或者继续请求处理执行链的执行过程。当该方法返回````true````，处理器执行链继续。否则，````DispatcherServlet````会假定该拦截器自己负责处理请求（同时，比如，渲染相应的视图）而不再继续执行执行链上的其它拦截器和实际的请求处理器。
+
+参考 [Interceptors](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-interceptors) 获取关于拦截器配置的更多信息。你也可以直接使用````HandlerMapping````实现上的````setters````来注册它们。
+
+注意，````postHandle````不适合与````@ResponseBody````和````ResponseEntity````共同使用，因为此时响应会在````HandlerAdapter````中被写入和提交，并且都在````postHandle````之前执行。也就是说，此时已经太晚了，因而不可能再对响应做任何修改，比如添加额外的首部字段等。这种场景下，你可以实现````ResponseBodyAdvice````并要么将它声明为 [Controller Advice](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-controller-advice) bean 或者直接将它配置到````RequestMappingHandlerAdapter````上。
+
+### 1.1.7 异常
+
+如果在请求映射过程中发生异常，或者请求处理器（比如````@Controller````）抛出异常，````DispatcherServlet````会委托一个````HandlerExceptionResolver```` beans 链来解析异常并提供替代的处理逻辑，通常会返回一个错误响应。
+
+下面的表列出了可用的````HandlerExceptionResolver````实现：
+
+| HandlerExceptionResolver                 | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| SimpleMappingExceptionResolver           | 异常类名称和错误视图名称之间的映射。对浏览器应用渲染错误页面非常有用。      |
+| [`DefaultHandlerExceptionResolver`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/web/servlet/mvc/support/DefaultHandlerExceptionResolver.html) | 解析由 Spring MVC 抛出的异常并将它们映射到 HTTP 状态码。参考可替代它的````ResponseEntityExceptionHandler````和  [REST API exceptions](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-rest-exceptions)。 |
+| ResponseStatusExceptionResolver          | 解析由````@ResponseStatus````注解的异常并基于注解指定的值将其映射到 HTTP 状态码。 |
+| ExceptionHandlerExceptionResolver        | 通过调用````@Controller````或者````@ControllerAdvice````注解的类中注解了````@ExceptionHandler````的方法解析异常。参考  [@ExceptionHandler methods](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-exceptionhandler)。 |
+
