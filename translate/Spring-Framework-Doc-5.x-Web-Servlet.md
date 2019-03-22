@@ -151,10 +151,10 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
 
 下面的表列出了````DispatcherServlet````探测到的特殊的 beans ：
 
-| Bean 类型                                                    | 解释                                                         |
-| :----------------------------------------------------------- | ------------------------------------------------------------ |
-| HandlerMapping                                               | 将一个请求映射到一个处理器以及一系列的拦截器，进行前处理和后处理。映射基于某些约束，其中细节取决于````HandlerMapping````实现。<br />最主要的两个````HandlerMapping````实现是````RequestMappingHandlerMapping````（支持````@RequestMapping````注解的方法）和````SimpleUrlHandlerMapping````（保持请求处理器上显式注册的 URI 路径模式） |
-| HandlerAdapter                                               | 帮助````DispatcherServlet````调用映射到请求的处理器，无论该处理器实际上是如何被调用的。比如，调用一个注解了的控制器需要解析注解。````HandlerAdapter````的主要目的就是让````DispatcherServlet```` 从这些细节中解脱出来。 |
+| Bean 类型                                  | 解释                                       |
+| :--------------------------------------- | ---------------------------------------- |
+| HandlerMapping                           | 将一个请求映射到一个处理器以及一系列的拦截器，进行前处理和后处理。映射基于某些约束，其中细节取决于````HandlerMapping````实现。<br />最主要的两个````HandlerMapping````实现是````RequestMappingHandlerMapping````（支持````@RequestMapping````注解的方法）和````SimpleUrlHandlerMapping````（保持请求处理器上显式注册的 URI 路径模式） |
+| HandlerAdapter                           | 帮助````DispatcherServlet````调用映射到请求的处理器，无论该处理器实际上是如何被调用的。比如，调用一个注解了的控制器需要解析注解。````HandlerAdapter````的主要目的就是让````DispatcherServlet```` 从这些细节中解脱出来。 |
 | [`HandlerExceptionResolver`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers) | 解析处理异常的策略，可能将它们映射到处理器、到 HTML 错误视图或者其它目标。参考 [Exceptions](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers)。 |
 | [`ViewResolver`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-viewresolver) | 解析从处理器返回的基于字符串的逻辑视图名称为一个实际的视图，该视图可以用于渲染响应。参考 [View Resolution](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-viewresolver) 和 [View Technologies](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-view)。 |
 | [`LocaleResolver`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver), [LocaleContextResolver](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-timezone) | 解析客户端使用的````Locale````，科恩感表示它们的时区，目的是可以提供国际化的视图。参考 [Locale](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver)。 |
@@ -163,4 +163,100 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
 | [`FlashMapManager`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) | 存储和获取“输入”和“输出”````FlashMap````，可以被用于从一个请求向另外一个请求传递属性，通常跨越转发。参考 [Flash Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes)。 |
 
 ### 1.1.3 Web MVC Config
+
+应用可以声明在  [Special Bean Types](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-servlet-special-bean-types) 中列出处理请求所必须的基础设施 beans 。````DispatcherServlet````检查````WebApplicationContext````为每个特殊 bean。如果不存在匹配的 bean 类型，就会降级到 [`DispatcherServlet.properties`](https://github.com/spring-projects/spring-framework/blob/master/spring-webmvc/src/main/resources/org/springframework/web/servlet/DispatcherServlet.properties) 中列出的默认类型。
+
+大多数情况下，[MVC Config](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config) 都是最好的开始点。它以 XML 或者 Java 代码形式声明了必需的 beans，并提供了可用于对其进行定制的回调方法。
+
+> Spring Boot 依赖 MVC Java 配置来配置 Spring MVC 并提供许多附加的方便选项。
+
+### 1.1.4 Servlet Config
+
+在 Servlet 3.0+ 环境中，你可以选择通过编程方式配置 Servlet 容器，或者结合使用部署描述器文件````web.xml````。下面的例子注册了一个````DispatcherServlet````：
+
+````java
+import org.springframework.web.WebApplicationInitializer
+
+public class MyWebApplicationInitializer implements WebApplicationInitializer {
+
+	@Override
+    public void onStartup(ServletContext container) {
+    	XmlWebApplicationContext appContext = new XmlWebApplicationContext();
+    	appContext.setConfigLocation("/WEB-INF/spring/dispatcher-config.xml");
+    	
+    	ServletRegistration.Dynamic registration = container.addServlet("dispatcher". new DispatcherServlet(appContext));
+    	registration.setLoadOnStartup(1);
+    	registration.addMapping("/");
+    }
+}
+````
+
+````WebApplicationInitializer````是 Spring MVC 提供的接口，用以确保你的实现被检测到，同时自动被用来初始化任何 Servlet 3 容器。````WebApplicationInitializer````的一个抽象基类实现名为````AbstractDispatcherServlet````使得注册````DispatcherServlet````并通过覆盖方法来指定 servlet 映射和````DispatcherServlet````配置的位置等变得更加方便。
+
+推荐应用使用基于 Java 的 Spring 配置，如下面例子所示：
+
+````java
+public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+  
+  @Override
+  protected Class<?>[] getRootConfigClasses() {
+    return null;
+  }
+  
+  @Override
+  protected Class<?>[] getServletConfigClasses() {
+    return new Class<?>[] { MyWebConfig.class };
+  }
+  
+  @Override
+  protected String[] getServletMappings() {
+    return new String[] { "/" };
+  }
+}
+````
+
+如果你使用基于 XML  的 Spring 配置，你应该直接从````AbstractDispatcherServletInitializer````继承，如下面例子所示：
+
+````java
+public class MyWebAppInitializer extends AbstractDispatcherServletInitializer {
+  
+  @Overrid
+  protected WebApplicationContext createRootApplicationContetx() {
+    return null;
+  }
+  
+  @Override
+  protected WebApplicationContext createServletApplicationContext() {
+    XmlWebApplicationContext cxt = new XmlWebApplicationContext();
+    cxt.setConfigLocation("/WEB-INF/spring/dispatcher-config.xml");
+    return cxt;
+  }
+  
+  @Override
+  protected String[] getServletMappings() {
+    return new String[] { "/" };
+  }
+}
+````
+
+````AbstractDispatcherServletInitializer````也提供了一种方便的方法来添加````Filter````实例，同时这些实例会被自动映射到````DispatcherServlet````，如下面例子所示：
+
+````java
+public class MyWebAppInitializer extends AbstractDispatcherServletInitializer {
+  // ...
+  
+  @Override
+  protected Filter[] getServletFilters() {
+    return new Filter[] {
+      new HiddenHttpMethodFilter(), new CharacterEncodingFilter()
+    };
+  }
+}
+````
+
+每个过滤器都有一个基于其具体类型的默认名称，同时会被自动映射到````DispatcherServlet````。
+
+````AbstractDispatcherServletInitializer````的 protected 方法````isAsyncSupported````提供了一个单一的位置来使得异步支持在````DispatcherServlet````以及所有映射到其上的过滤器上都是可用的。默认情况下，这个标志被设置为````true````。
+
+最后，如果你需要进一步的定制化````DispatcherServlet````本身，你可以覆盖````createDispatcherServlet````方法。
 
