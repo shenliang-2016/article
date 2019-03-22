@@ -260,3 +260,29 @@ public class MyWebAppInitializer extends AbstractDispatcherServletInitializer {
 
 最后，如果你需要进一步的定制化````DispatcherServlet````本身，你可以覆盖````createDispatcherServlet````方法。
 
+### 1.1.5 处理
+
+````DispatcherServlet````处理请求的步骤如下：
+
+* ````WebApplicationContext````被搜索到并绑定到请求中作为一个属性以便于处理该请求的控制器和其它元素使用。它默认被绑定在````DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE````键下。
+* 区域解析器被绑定到请求以使得处理该请求的元素可以解析并使用区域信息，比如渲染视图、准备数据等等。如果你不需要区域解析，你就不需要区域解析器。
+* 主题解析器被绑定到请求以使得视图解析器可以确定应该使用何种主题。如果你没有使用主题，可以忽略它。
+* 如果你制定了一个多部分文件解析器，请求就会作为多部分请求被检查。如果确实发现了多个部分，请求就会被包装进入````MultipartHttpServletRequest````并由其它元素继续处理。更多细节参考  [Multipart Resolver](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart) 。
+* 查找一个合适的处理器。如果找到了，有关该处理器的执行链（预处理器、后处理器以及控制器等）会按照顺序执行以准备数据模型或者渲染。另外，对于注解的控制器，响应会被渲染（由````HandlerAdapter````）来取代返回一个视图。
+* 如果一个模型被返回，视图就会被渲染。如果没有模型被返回（可能由于预处理器或者后处理器拦截了请求，可能是基于安全原因），就没有视图会被渲染，因为请求实际上被没有被满足。
+
+````WebApplicationContext````中声明的````HandlerExceptionResolver```` beans 被用来解析请求处理过程中抛出的异常。那些异常解析器允许客户化逻辑以定位异常。更多细节参见  [Exceptions](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers) 。
+
+Spring ````DispatcherServlet````也支持返回````last-modification-date````，就像由 Servlet API 指定的那样。为特定请求确定最后修改时间的过程相当直接：````DispatcherServlet````寻找一个合适的处理器映射并测试是否它实现了````LastModified````接口。如果是，````LastModified````接口的````long getLastModified(request)````方法的返回值将被返回给客户端。
+
+你可以定制单个的````DispatcherServlet````实例，通过在````web.xml````文件中 Servlet 声明中添加 Servlet 初始化参数（````init-param````元素）。下表列出了支持的参数：
+
+| 参数                             | 解释                                       |
+| ------------------------------ | ---------------------------------------- |
+| contextClass                   | 实现了````ConfigurableWebApplicationContext````的类，将被 Servlet 实例化并本地配置。默认地，````XmlWebApplicationContext````会被使用。 |
+| contextConfigLocation          | 被传递给 context 实例（由````contextClass````指定）用以表示 contexts 在哪里可以找到的字符串。该字符串可能由多个字符串组成（逗号或者分号分隔）以支持多 contexts。在多个 contexts 位置在 beans 中被定义两次的情况下，最后定义的位置具有优先权。 |
+| namespace                      | ````WebApplicationContext````的命名空间，默认为````[servlet-name]-servlet````。 |
+| throwExceptionIfNoHandlerFound | 当无法找到对应于请求的处理器时是否应该抛出````NoHandlerFoundException````。该异常随后会被````HandlerExceptionResolver````捕获（比如，通过使用````@ExceptionHandler````控制器方法）并处理。<br />默认地，该属性设置为````false````。这种情况下````DispatcherServlet````会返回 404（NOT_FOUND）状态码响应，而不会抛出异常。<br />注意：如果同时也配置了   [default servlet handling](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-default-servlet-handler)，无法解析的请求就永远会被转发给默认的 servlet，因此永远不会出现 404 。 |
+
+### 1.1.6 拦截
+
