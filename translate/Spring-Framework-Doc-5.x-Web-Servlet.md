@@ -308,3 +308,58 @@ Spring ````DispatcherServlet````也支持返回````last-modification-date````，
 | ResponseStatusExceptionResolver          | 解析由````@ResponseStatus````注解的异常并基于注解指定的值将其映射到 HTTP 状态码。 |
 | ExceptionHandlerExceptionResolver        | 通过调用````@Controller````或者````@ControllerAdvice````注解的类中注解了````@ExceptionHandler````的方法解析异常。参考  [@ExceptionHandler methods](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-exceptionhandler)。 |
 
+**解析器链**
+
+你可以通过在你的 Spring 配置文件中声明多个````HandlerExceptionResolver```` beans 并按需设定它们的````order````属性，以形成一个异常解析链。顺序属性值越高，对应的异常解析器的位置越靠后。
+
+````HandlerExceptionResolver````的内部契约指定了它能够返回：
+
+* 一个指向错误视图的````ModelAndView````。
+* 如果异常在该解析器中处理，则返回一个空````ModelAndView````。
+* 如果异常仍然是未解析的，则返回````null````，以便于后续的解析器尝试处理，同时，如果最终异常仍未解析，就允许将它抛出给 Servlet 容器。
+
+[MVC Config](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config) 自动声明内建的解析器用来处理默认的 Spring MVC 异常、````@ResponseStatus````注解的异常以及支持````@ExceptionHandler````方法。你能够定制该列表或者替换它。
+
+**容器错误页面**
+
+如果异常被所有````HandlerExceptionResolver````处理之后仍然未被解析，只能原样传输，或者，如果响应状态码呗设置为错误状态码（4xx，5xx），Servlet 容器能够渲染一个默认的错误页面为 HTML。为了定制化容器的默认错误页面，你能够在````web.xml````文件中声明一个错误页面映射。如下面例子所示：
+
+````xml
+<error-page>
+    <location>/error</location>
+</error-page>
+````
+
+给定上面的例子，当一个异常抛出活着响应是错误状态，Servlet 容器就会在容器中进行一个````ERROR````分发到配置的 URL （比如，````/error````）。接下来由````DispatcherServlet````处理，可能将它映射到一个````@Controller````，该控制器可以被实现为返回一个错误视图名和模型，或者渲染一个 JSON 响应。如下面例子所示：
+
+````java
+@RestController
+public class ErrorController {
+    @RequestMapping(path = "/error")
+    public Map<String, Object> handle(HttpServletRequest request) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("status", request.getAttribute("javax.servlet.error.status_code"));
+        map.put("reason", request.getAttribute("javax.servlet.error.message"));
+        return map;
+    }
+}
+````
+
+> Servlet API 没有提供在 Java 中创建错误页面映射的方法。不过，你仍然可以同时使用````WebApplicationInitializer````和一个最小化的````web.xml````。
+
+### 1.1.8 视图解析
+
+Spring MVC 定义了````ViewResolver````和````View````接口来使得你在浏览器中渲染模型而不会把你绑定到特定的视图技术。````ViewResolver````提供了视图名称和实际视图之间的映射。````View````负责在将数据移交给具体的视图技术之前解决数据准备问题。
+
+下面的表列出了有关````ViewResolver````层级结构的更多细节：
+
+| 视图解析器                  | 描述                                                         |
+| --------------------------- | ------------------------------------------------------------ |
+| AbstractCachingViewResolver | ````AbstractCachingViewResolver````的子类缓存它们解析的视图实例。缓存可以改善某些视图技术的性能。你可以通过设置````cache````属性为````false````来关闭缓存。进一步地，如果你必须在运行时刷新某个视图（比如，当一个 FreeMarker 模板发生变化时），你可以使用````removeFromCache(String viewName, Locale loc)````方法。 |
+| XmlViewResolver             | ````ViewResolver````的实现，接收 XML 形式的配置文件，该文件与 Spring 的 XML bean 工厂遵循同样的 DTD。默认的配置文件是````/WEB-INF/views.xml````。 |
+|                             |                                                              |
+|                             |                                                              |
+|                             |                                                              |
+|                             |                                                              |
+|                             |                                                              |
+
