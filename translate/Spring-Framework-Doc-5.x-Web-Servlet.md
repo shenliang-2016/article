@@ -353,13 +353,13 @@ Spring MVC 定义了````ViewResolver````和````View````接口来使得你在浏�
 
 下面的表列出了有关````ViewResolver````层级结构的更多细节：
 
-| 视图解析器                  | 描述                                                         |
-| --------------------------- | ------------------------------------------------------------ |
-| AbstractCachingViewResolver | ````AbstractCachingViewResolver````的子类缓存它们解析的视图实例。缓存可以改善某些视图技术的性能。你可以通过设置````cache````属性为````false````来关闭缓存。进一步地，如果你必须在运行时刷新某个视图（比如，当一个 FreeMarker 模板发生变化时），你可以使用````removeFromCache(String viewName, Locale loc)````方法。 |
-| XmlViewResolver             | ````ViewResolver````的实现，接收 XML 形式的配置文件，该文件与 Spring 的 XML bean 工厂遵循同样的 DTD。默认的配置文件是````/WEB-INF/views.xml````。 |
-|                             |                                                              |
-|                             |                                                              |
-|                             |                                                              |
-|                             |                                                              |
-|                             |                                                              |
+| 视图解析器                     | 描述                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| AbstractCachingViewResolver    | ````AbstractCachingViewResolver````的子类缓存它们解析的视图实例。缓存可以改善某些视图技术的性能。你可以通过设置````cache````属性为````false````来关闭缓存。进一步地，如果你必须在运行时刷新某个视图（比如，当一个 FreeMarker 模板发生变化时），你可以使用````removeFromCache(String viewName, Locale loc)````方法。 |
+| XmlViewResolver                | ````ViewResolver````的实现，接收 XML 形式的配置文件，该文件与 Spring 的 XML bean 工厂遵循同样的 DTD。默认的配置文件是````/WEB-INF/views.xml````。 |
+| ResourceBundleViewResolver     | 使用由资源集基础名称指定的````ResourceBundle````中的 bean 定义的````ViewResolver````实现。对每个应该被解析的视图，它使用````[viewname].(class)````属性的值作为视图类型，````[viewname].url````属性值作为视图的 URL。你可以在 [View Technologies](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-view) 章节中找到例子。 |
+| UrlBasedViewResolver           | ````ViewResolver````接口的简单实现，影响直接将逻辑视图名称到 URLs ，而不需要显式定义映射关系。这是合适的，如果你的逻辑视图名称直接匹配到你的视图资源名称，而不需要明确的映射关系指定。 |
+| InternalResourceViewResolver   | ````UrlBasedViewResolver````的实用子类，支持````InternalResourceView````（实际上是 Servlets 和 JSPs）及其子类，比如````JstlView````和````TileView````。你可以为所有通过该解析器生成的视图指定视图类型，通过使用````setViewClass(..)````。参考文档 [`UrlBasedViewResolver`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/web/reactive/result/view/UrlBasedViewResolver.html) 获取更多细节。 |
+| FreeMarkerViewResolver         | ````UrlBasedViewResolver````的实用子类，支持````FreeMarkerView````及其定制化子类。 |
+| ContentNegotiatingViewResolver | ````ViewResolver````接口的实现，解析基于请求文件名或者````Accept````首部字段的视图。参考 [Content Negotiation](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multiple-representations)。 |
 
