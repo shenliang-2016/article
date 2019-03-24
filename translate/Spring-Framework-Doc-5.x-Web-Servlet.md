@@ -363,3 +363,13 @@ Spring MVC 定义了````ViewResolver````和````View````接口来使得你在浏�
 | FreeMarkerViewResolver         | ````UrlBasedViewResolver````的实用子类，支持````FreeMarkerView````及其定制化子类。 |
 | ContentNegotiatingViewResolver | ````ViewResolver````接口的实现，解析基于请求文件名或者````Accept````首部字段的视图。参考 [Content Negotiation](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multiple-representations)。 |
 
+**处理**
+
+你可以通过在你的 Spring 配置文件中声明多个视图解析器 beans 并按需设定它们的````order````属性，以形成一个视图解析链。顺序属性值越高，对应的视图解析器的位置越靠后。
+
+````ViewResolver````的内部契约指定它可以返回````null````来表示请求的视图没有找到。然而，在 JSPs 和````InternalResourceViewResolver````的情况下，确定请求的 JSP 是否存在的唯一方法是通过````RequestDispatcher````执行一次请求分发。因此，你必须永远把一个````InternalResourceViewResolver````放在视图解析器链的最后位置上。
+
+配置视图解析与在 Spring 配置文件中添加````ViewResolver```` beans 一样简单。[MVC Config](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config) 提供了专用的配置 API 用于 [View Resolvers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-view-resolvers) 以及添加轻逻辑的  [View Controllers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-view-controller)，它们对没有控制器逻辑的 HTML 模版的渲染是有用的。
+
+**重定向**
+
