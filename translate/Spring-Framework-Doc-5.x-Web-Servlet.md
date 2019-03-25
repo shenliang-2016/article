@@ -439,3 +439,35 @@ Spring 架构的绝大部分都支持国际化，Spring web MVC 也是一样。`
 
 **Session Resolver**
 
+````SessionLocaleResolver````允许你从当前用户请求相关的会话中获取````Locale````和````TimeZone````信息。与````CookieLocaleResolver````不同，这种策略选择设定在 Servlet 容器的````HttpSession````中的语言环境信息存储。因此，那些设定只是对每个会话临时可用，因此，当会话关闭后这些设定就将丢失。
+
+注意：这跟外部会话管理机制并没有直接关系，比如 Spring Session 项目。此````SessionLocaleResolver````评估和修改与当前````HttpServletRequest````相关的````HttpSession````属性。
+
+**Locale Interceptor**
+
+你可以通过在````HandlerMapping````定义中添加````LocaleChangeInterceptor````来改变语言环境设置。它将探测请求中的一个参数并根据它改变请求的语言环境设置，通过调用请求分发器的应用上下文中的````LocaleResolver````上的````setLocale````方法。下面的例子展示了请求所有的````*.view````资源的请求包含一个名为````siteLanguage````的参数来改变语言环境。也就是说，比如，一个请求的 URL 为 [http://www.sf.net/home.view?siteLanguage=nl](https://www.sf.net/home.view?siteLanguage=nl)，将站点语言改为 Dutch。下面的例子展示如何拦截此语言环境设置：
+
+````xml
+<bean id="localeChangeInterceptor"
+        class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+    <property name="paramName" value="siteLanguage"/>
+</bean>
+
+<bean id="localeResolver"
+        class="org.springframework.web.servlet.i18n.CookieLocaleResolver"/>
+
+<bean id="urlMapping"
+        class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="interceptors">
+        <list>
+            <ref bean="localeChangeInterceptor"/>
+        </list>
+    </property>
+    <property name="mappings">
+        <value>/**/*.view=someController</value>
+    </property>
+</bean>
+````
+
+### 1.1.10 主题
+
