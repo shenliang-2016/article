@@ -353,8 +353,8 @@ Spring MVC 定义了````ViewResolver````和````View````接口来使得你在浏�
 
 下面的表列出了有关````ViewResolver````层级结构的更多细节：
 
-| 视图解析器                     | 描述                                                         |
-| ------------------------------ | ------------------------------------------------------------ |
+| 视图解析器                          | 描述                                       |
+| ------------------------------ | ---------------------------------------- |
 | AbstractCachingViewResolver    | ````AbstractCachingViewResolver````的子类缓存它们解析的视图实例。缓存可以改善某些视图技术的性能。你可以通过设置````cache````属性为````false````来关闭缓存。进一步地，如果你必须在运行时刷新某个视图（比如，当一个 FreeMarker 模板发生变化时），你可以使用````removeFromCache(String viewName, Locale loc)````方法。 |
 | XmlViewResolver                | ````ViewResolver````的实现，接收 XML 形式的配置文件，该文件与 Spring 的 XML bean 工厂遵循同样的 DTD。默认的配置文件是````/WEB-INF/views.xml````。 |
 | ResourceBundleViewResolver     | 使用由资源集基础名称指定的````ResourceBundle````中的 bean 定义的````ViewResolver````实现。对每个应该被解析的视图，它使用````[viewname].(class)````属性的值作为视图类型，````[viewname].url````属性值作为视图的 URL。你可以在 [View Technologies](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-view) 章节中找到例子。 |
@@ -372,4 +372,70 @@ Spring MVC 定义了````ViewResolver````和````View````接口来使得你在浏�
 配置视图解析与在 Spring 配置文件中添加````ViewResolver```` beans 一样简单。[MVC Config](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config) 提供了专用的配置 API 用于 [View Resolvers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-view-resolvers) 以及添加轻逻辑的  [View Controllers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-view-controller)，它们对没有控制器逻辑的 HTML 模版的渲染是有用的。
 
 **重定向**
+
+视图名称中特殊的````redirect:````前缀使得你执行一次重定向。````UrlBasedViewResolver````以及它的子类将其作为需要一次重定向的指令。视图名称的剩余部分就是重定向 URL。
+
+纯粹的效果就如同控制器已经返回了一个````RedirectView````，不过现在该控制器本身能够根据逻辑视图名称执行重定向。逻辑视图名称（比如````redirect:/myapp/some/resource````）相对于当前 Servlet 上下文路径进行重定向，而形如````redirect:http://myhost.com/some/arbitrary/path````将按照绝对 URL 进行重定向。
+
+注意：如果一个控制器方法被````@ResponseStatus````标注，则该注解值就会优先于````RedirectView````对响应状态码的设置。
+
+**转发**
+
+你也可以在视图名称中使用特殊的````forward````前缀，它最终由````UrlBasedViewResolver````及其子类解析。这会创建一个````InternalResourceView````，它会执行一个````RequestDispatcher.forward()````。因此，这个前缀对````InternalResourceViewResolver````和````InternalResourceView````（为 JSPs）是没用的，但是如果你使用别的视图技术的同时还想强制 Servlet/JSP 引擎执行一次待处理资源的转发，此时这个前缀就是有用的。注意，此时你仍然可以使用视图解析链。
+
+**内容协商**
+
+````ContentNegotiatingViewResolver````自身并不解析视图，它会将视图解析任务委托给其它视图解析器，并且选择视图来组装客户端请求的表示形式。该表示形式可以基于````Accept````首部字段值确定，或者基于查询参数确定（比如````"/path?format=pdf"````）。
+
+````ContentNegotiatingViewResolver````选择合适的````View````来处理请求，通过比较请求的媒体类型和````View````以及与之相关的每个````ViewResolver````所支持的媒体类型（也被称为````Content-Type````）。列表中首个拥有与请求匹配的````Content-type````的````View````将返回该表示形式给客户端。如果视图处理器链并没有给出可用的视图，````DefaultViews````列表中指定的视图就会被考察。后者适合用于产生单例模式的````Views````，该视图可以为当前资源渲染合适的表示形式，而不关心逻辑视图名称。`````Accept```` 首部字段可以包含通配符（比如````text/*````），这种情况下````Content-Type````值是````text/xml````的````View````就是兼容的匹配。
+
+参考 [MVC Config](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config) 下的 [View Resolvers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-view-resolvers) 获取更多配置细节。
+
+### 1.1.9 语言环境
+
+Spring 架构的绝大部分都支持国际化，Spring web MVC 也是一样。````DispatcherServlet````允许你基于客户端的语言环境首部字段自动解析消息。该动作由````LocaleResolver````对象完成。
+
+当一个请求到来，````DispatcherServlet````查找一个语言环境解析器，如果找到一个，尝试使用它设置语言环境。通过使用````RequestContext.getLocale()````方法，你永远能够获取由语言环境解析器解析出来的语言环境信息。
+
+除了自动语言环境解析，你也可以添加一个拦截器到处理器映射中来改变特定环境（比如基于请求中的参数）下的语言环境设置。
+
+语言环境解析器和拦截器都定义在````org.springframework.web.servlet.i18n````包下，同时被通过普通的方式配置到你的应用上下文中。Spring 中包含以下可选的语言环境解析器：
+
+* [Time Zone](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-timezone)
+* [Header Resolver](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver-acceptheader)
+* [Cookie Resolver](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver-cookie)
+* [Session Resolver](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver-session)
+* [Locale Interceptor](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-localeresolver-interceptor)
+
+**TimeZone**
+
+除了获取客户端的语言环境，知道它所在的时区通常也是非常有用的。````LocaleContextResolver````接口提供了一个````LocaleResolver````的扩展，允许解析器提供一个内容丰富的````LocaleContext````，其中可以包含时区信息。
+
+当可用时，用户的````TimeZone````信息可以通过使用````RequestContext.getTimeZone()````方法获取。时区信息会自动被由````ConversionService````注册的任何 Date/Time ````Converter````和````Formatter````对象使用。
+
+**Header Resolver**
+
+语言环境解析器检查客户端（比如浏览器）发送的请求中的````accept-language````首部字段。通常，这个首部字段包含客户端操作系统的语言环境信息。注意，此解析器不支持时区信息。
+
+**Cookie Resolver**
+
+此语言环境解析器检查可能存在于客户端的````Cookie````来确认是否指定了````Locale````或者````TimeZone````。如果指定了，它使用这些指定信息。通过使用此语言环境解析器属性，你能够指定 cookie 的名称和最大年龄。下面的例子定义了一个````CookieLocaleResolver````：
+
+````xml
+<bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver">
+  <property name="cookieName" value="clientLanguage"/>
+  <!-- in seconds. If set to -1, the cookie is not persisted (deleted when brower shuts down) -->
+  <property name="cookieMaxAge" value="100000"/>
+</bean>
+````
+
+下表描述了````CookieLocaleResolver````的属性：
+
+| 属性           | 默认值                | 描述                                       |
+| ------------ | ------------------ | ---------------------------------------- |
+| cookieName   | classname + LOCALE | cookie 的名称                               |
+| cookieMaxAge | Servlet 容器的默认值     | cookie 在客户端持久化的最长时间。如果是 -1，则 cookie 将不持久化，在浏览器关闭后就不再可用。 |
+| cookiePath   | /                  | 限制 cookie 对你站点的某些部分的可见性。当指定该属性时，cookie 就只对该路径以及其下的路径可见。 |
+
+**Session Resolver**
 
