@@ -471,3 +471,138 @@ Spring 架构的绝大部分都支持国际化，Spring web MVC 也是一样。`
 
 ### 1.1.10 主题
 
+你可以应用 Spring Web MVC 主题为你的应用设定一种全局的观感，由此提升用户体验。主题是一系列的静态资源的集合，典型的是样式表和图片，都可以影响应用的视觉风格。
+
+**定义主题**
+
+为了在你的应用中使用主题，你必须准备````org.springframework.ui.context.ThemeSouce````接口的一个实现。````WebApplicationContext````接口扩展了````ThemeSource````并且将它的职责代理给专用的实现。默认地，代理是一个````org.springframework.ui.context.support.ResourceBundleThemeSource````实现，该实现从 classpath 的根目录加载属性文件。为了使用客户化的````ThemeSource````实现或者为了配置````ResourceBundleThemeSource````的基本名前缀，你能够使用预留的名称在应用的上下文中注册 bean ````themeSource````。应用上下文将会根据该名称自动探测 bean 并使用它。
+
+当你使用````ResourceBundleThemeSource````时，一个主题就定义在一个简单的属性文件中。该属性文件列出了构成注意的资源，如下例所示：
+
+````
+styleSheet=/themes/cool/style.css
+background=/themes/cool/img/coolBg.jpg
+````
+
+属性键值对中的键是视图代码中代表主题元素的名称。对 JSP 来说，你典型地可以使用````spring:theme````客户化标签做到这一点，非常类似于````spring:mesage````标签。下面的 JSP 片段使用上面例子中定义的主题来客户化观感：
+
+````jsp
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<html>
+    <head>
+        <link rel="stylesheet" href="<spring:theme code='styleSheet'/>" type="text/css"/>
+    </head>
+    <body style="background=<spring:theme code='background'/>">
+        ...
+    </body>
+</html>
+````
+
+默认地，````ResourceBundleThemeSource````使用空的基本名称前缀。由此，属性文件将会从 classpath 的根目录被加载。因此，你可以将````cool.properties````主题定义在 classpath 根目录下的路径中（比如在````WEB-INF/classes````中）。````ResourceBundleThemeSource````使用标准的 Java 资源集加载机制，允许主题的完整国际化。比如，我们可以拥有一个````/WEB-INF/classes/cool_nl.properties````表示一个上面带有 Dutch  文字的特殊的背景图片。
+
+**解析主题**
+
+定义了主题之后，如上节中所述，你需要决定使用哪个主题。````DispatcherServlet````查找名为````themeResolver````的 bean 以确定要使用哪个````ThemeResolver````实现。主题解析器的工作方式与````LocaleResolver````类似。它探测主题用于特定的请求，同时也能改变请求的主题。下表描述了 Spring 提供的主题解析器：
+
+| 类                   | 描述                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| FixedThemeResolver   | 选择一个固定的主题，使用````defaultThemeName````属性设置。   |
+| SessionThemeResolver | 主题呗维护在用户的 HTTP 会话中。它需要为每个会话只设置一次，而不需要在会话之间持久化。 |
+| CookieThemeResolver  | 选择的主题被存储在客户端上的 cookie 中。                     |
+
+Spring 也提供了一个````ThemeChangeInterceptor````允许每个请求的主题都发生变化，只需要使用一个简单的请求参数。
+
+### 1.1.11 Multipart Resolver
+
+````org.springframework.web.multipart````包下的````MultipartResolver````是一种策略，用来分析包含文件上传的多部分的请求。这里有一个基于 [Commons FileUpload](https://jakarta.apache.org/commons/fileupload) 的实现和另一个基于 Servlet 3.0 多部分请求分析的实现。
+
+为了开启多部分请求处理，你需要在你的````DispatcherServlet```` Spring 配置中声明一个名为````multipartResolver````的````MultipartResolver```` bean 。````DispatcherServlet````探测到它并将它应用于到来的请求。当一个 content-type 为````multipart/form-data````的 POST 请求被接收到，解析器分析其内容并包装当前````HttpServletRequest````为````MultipartHttpServletRequest````来提供访问到已经解析的部分，额外将他们作为请求参数暴露出来。
+
+**Apache Commons ````FileUpload````**
+
+为了使用 Apache Commons  ````FileUpload````，你可以配置一个名为````multipartResolver````的````CommonsMultipartResolver````的 bean。你同时还需要````commons-fileupload````作为一个 classpath 上的依赖。
+
+**Servlet 3.0**
+
+Servlet 3.0 多部分分析需要通过 Servlet 容器配置来开启。为了做到这个：
+
+* 在 Java 中，在 Servlet 注册上设置一个````MultipartConfigElement````。
+* 在````web.xml````文件中，为 servlet 声明添加````<multipart-config>````小节。
+
+下面的例子展示了如何在 Servlet 注册上设置一个````MultipartConfigElement````：
+
+````java
+public class AppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    // ...
+
+    @Override
+    protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+
+        // Optionally also set maxFileSize, maxRequestSize, fileSizeThreshold
+        registration.setMultipartConfig(new MultipartConfigElement("/tmp"));
+    }
+
+}
+````
+
+一旦 Servlet 3.0 配置就位，你可以以名称````multipartResolver````添加一个````StandardServletMultipartResolver````类型的 bean 。
+
+### 1.1.12 日志
+
+DEBUG 级别的日志在 Spring 中被设计为紧凑的、最小的以及人类友好的。它聚焦于高价值的信息，这些信息在调试特定问题时屡次发挥重要作用。
+
+TRACE 级别的日志通常遵循与 DEBUG 级别的日志相同的原则（比如，同样不应该成为消防水管），不过也可以被用于调试各种问题。另外，一些日志信息可能在 TRACE 和 DEBUG 中展示不同的详细程度。
+
+好的日志来自于使用经验。如果你发现任何不符合既定目标的东西，请告诉我们。
+
+**敏感信息**
+
+DEBUG 和 TRACE 日志可能会记录敏感信息。这就是为什么请求参数和首部字段都默认经过伪装，想要在日志中记录它们就必须通过````DispatcherServlet````上的````enableLoggingRequestDetails````属性显式开启。
+
+ 下面的例子展示了使用 Java 配置来做到这一点：
+
+````java
+public class MyInitializer
+        extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return ... ;
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return ... ;
+    }
+
+    @Override
+    protected String[] getServletMappings() {
+        return ... ;
+    }
+
+    @Override
+    protected void customizeRegistration(Dynamic registration) {
+        registration.setInitParameter("enableLoggingRequestDetails", "true");
+    }
+
+}
+````
+
+## 1.2 过滤器
+
+````spring-web````模块提供了一些有用的过滤器：
+
+* [Form Data](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#filters-http-put)
+* [Forwarded Headers](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#filters-forwarded-headers)
+* [Shallow ETag](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#filters-shallow-etag)
+* [CORS](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#filters-cors)
+
+### 1.2.1 表单数据
+
+浏览器能够提交表单数据仅仅通过 HTTP GET 或者 HTTP POST 请求，但是非浏览器客户端还可以使用 HTTP PUT，PATCH 和 DELETE。Servlet API 需要````ServletRequest.getParameter*()````方法来支持通过 HTTP POST 方法访问表单字段。
+
+````spring-web````模块提供了````FormContentFilter````来拦截内容类型为````application/x-www-form-urlencoded````的 HTTP PUT，PATCH 和 DELETE 请求，从请求体中读取数据，包装````ServletRequest````以使得表单数据通过````ServletRequest.getParameter*()````方法族是可访问的。
+
+### 1.2.2 被转发的首部
+
