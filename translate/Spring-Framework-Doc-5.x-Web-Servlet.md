@@ -630,3 +630,60 @@ Spring MVC 提供了基于控制器注解配置的细粒度的 CORS 支持。然
 
 ## 1.3 注解的控制器
 
+Spring MVC 提供了基于注解的编程模型，````@Controller````和````@RestController````组件使用注解来表示请求映射、请求输入、异常处理等等。注解的控制器拥有灵活的方法签名，同时既没有继承基类也没有实现特定的接口。下面的例子展示了注解定义的控制器：
+
+````java
+@Controller
+public class HelloController {
+  
+  @GetMapping("/hello")
+  public String handle(Model model) {
+    model.addAttribute("message", "Hello World!");
+    return "index";
+  }
+}
+````
+
+上面例子中的方法接受````Model````类型参数，返回表示视图名称的````String````，不过接下来我们会介绍更多其它选项。
+
+>  [spring.io](https://spring.io/guides) 上的指南和文档都使用了本章节描述的基于注解的编程模型。
+
+###1.3.1 声明
+
+你可以在 Servlet ````WebApplicationContext````中使用标准的 Spring bean 定义来定义控制器 bean 。````@Controller````固定格式允许自动探测，配合 Spring 对 classpath 下的````@Component````类的自动探测和自动注册 bean 定义。它也是注解的类的固定行为格式，表示它作为一个 web 组件的角色。
+
+为了开启这种````@Controller```` beans 的自动探测，你可以在你的 Java 配置类中添加组件扫描，如下所示：
+
+````java
+@Configuration
+@ComponentScan("org.example.web")
+public class WebConfig {
+  // ...
+}
+````
+
+等价的 XML 形式的配置文件内容：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="org.example.web"/>
+
+    <!-- ... -->
+
+</beans>
+````
+
+````@RestController````是一个 [组合注解](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-meta-annotations) ，它本身被元注解````@Controller````和````@ResponseBody````修饰，表示控制器中每个犯法都继承类型级别的````@ResponseBody````注解，因此，会将视图解析和由 HTML 摸板渲染的视图直接写入响应体。
+
+**AOP 代理**
+
