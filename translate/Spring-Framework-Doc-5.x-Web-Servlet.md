@@ -754,3 +754,22 @@ public class OwnerController {
 }
 ````
 
+URI 变量自动被转化为相应的类型，或者````TypeMismatchException````就会发生。简单类型（````int````，````long````，````Date````等等）默认被支持，同时你还可以注册对任何其它数据类型的支持。参考  [Type Conversion](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-typeconversion) 和 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder) 。
+
+你能够显式命名 URI 变量（比如，````@PathVariable("customId")````），不过你可以不管其中的细节，如果名称相同并且你的代码被携带调试信息进行编译，或者使用 Java 8 上的带````-parameters````编译器标识的编译器编译。
+
+语法````{varName:regex}````声明一个 URI 变量，使用具有````{varName:regex}````语法的正则表达式。比如，给定 URL ````"/spring-web-3.0.5.jar"````，后面跟着的方法提炼名称、版本和文件扩展名：
+
+````:3rd_place_medal:
+@GetMapping("/{name:[a-z-]+}-{version:\\d\\.\\d\\.\\d}{ext:\\.[a-z]+}")
+public void handle(@PathVariable String version, @PathVariable String ext) {
+    // ...
+}
+````
+
+URI 路径模式也可以内置````${...}````占位符，将通过使用````PropertyPlaceHolderConfigurer````在启动时解析，获取位置、系统、环境以及其它属性源。你可以使用这种机制，比如基于一些外部配置将基 URL 参数化。
+
+> Spring MVC 使用````PathMatcher````契约和来自````spring-core````的````AntPathMatcher````实现来进行 URI 路径匹配。
+
+**模式比较**
+
