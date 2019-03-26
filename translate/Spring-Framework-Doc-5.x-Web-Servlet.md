@@ -687,3 +687,70 @@ public class WebConfig {
 
 **AOP 代理**
 
+某些场景下，你可能需要在运行时用一个 AOP 代理修饰控制器。一个例子是你选择直接用````@Transcational````注解修饰控制器。这种情况下，特别对于控制器，我们推荐使用基于类的代理。这是典型控制器的默认选择。然而，如果控制器必须实现一个接口，而该接口并不是 Spring Context 回调（比如````InitializingBean````，````*Aware````，或者其它），你可能需要显式配置基于类的代理。比如，对````<tx:annotation-driven>````，你可以修改为````<tx:annotation-driven proxy-target-class="true">````。
+
+### 1.3.2 请求映射
+
+你可以使用````@RequestMapping````注解来将请求映射到控制器方法。它包含各种属性由 URL，HTTP 方法，请求参数，首部字段以及媒体类型等来匹配。你可以使用它在类层面表示共享的映射或者在方法层面增强限制到一个特定的服务端点映射。
+
+还有 HTTP 特定的````@RequestMapping````的快捷变体：
+
+* ````@GetMapping````
+* ````@PostMapping````
+* ````@PutMapping````
+* ````@DeleteMapping````
+* ````@PatchMapping````
+
+快捷方式是作为 [Custom Annotations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-composed) 被提供的，因为大多数的控制器方法应该通过使用````@RequestMapping````被映射到一个特定的 HTTP 方法，该注解默认地匹配到所有的 HTTP 方法。同时，````@RequestMapping````仍然需要在类层面表示共享映射。
+
+下面的例子拥有类型和方法层面的映射：
+
+````:3rd_place_medal:
+@RestController
+@RequestMapping("/persons")
+class PersonController {
+    
+    @GetMapping("/{id}")
+    public Person getPerson(@PathVariable Long id) {
+        // ...
+    }
+    
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public void add(@RequestBody Person person) {
+        // ...
+    }
+}
+````
+
+**URI 模式**
+
+你可以使用下列全局模式和通配符来映射请求：
+
+* ````?```` 匹配一个字符
+* ````*```` 匹配路径片段中的 0 个或者更多字符
+* ````**```` 匹配 0 个或者多个路径片段
+
+你也可以声明 URI 变量同时使用````@PathVariable````访问它们的值，如下面例子所示：
+
+````:3rd_place_medal:
+@GetMapping("/owners/{ownerId}/pet/{petId}")
+public Pet findPet(@PathVariable Long ownerId, @PathVariable Long petId) {
+    // ...
+}
+````
+
+你可以声明 URI 变量在类层面和方法层面，如下例所示：
+
+````:3rd_place_medal:
+@Controller
+@RequestMapping("/owners/{ownerId}")
+public class OwnerController {
+
+    @GetMapping("/pets/{petId}")
+    public Pet findPet(@PathVariable Long ownerId, @PathVariable Long petId) {
+        // ...
+    }
+}
+````
+
