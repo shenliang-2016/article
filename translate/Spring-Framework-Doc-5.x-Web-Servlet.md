@@ -504,11 +504,11 @@ background=/themes/cool/img/coolBg.jpg
 
 定义了主题之后，如上节中所述，你需要决定使用哪个主题。````DispatcherServlet````查找名为````themeResolver````的 bean 以确定要使用哪个````ThemeResolver````实现。主题解析器的工作方式与````LocaleResolver````类似。它探测主题用于特定的请求，同时也能改变请求的主题。下表描述了 Spring 提供的主题解析器：
 
-| 类                   | 描述                                                         |
-| -------------------- | ------------------------------------------------------------ |
-| FixedThemeResolver   | 选择一个固定的主题，使用````defaultThemeName````属性设置。   |
+| 类                    | 描述                                       |
+| -------------------- | ---------------------------------------- |
+| FixedThemeResolver   | 选择一个固定的主题，使用````defaultThemeName````属性设置。 |
 | SessionThemeResolver | 主题呗维护在用户的 HTTP 会话中。它需要为每个会话只设置一次，而不需要在会话之间持久化。 |
-| CookieThemeResolver  | 选择的主题被存储在客户端上的 cookie 中。                     |
+| CookieThemeResolver  | 选择的主题被存储在客户端上的 cookie 中。                 |
 
 Spring 也提供了一个````ThemeChangeInterceptor````允许每个请求的主题都发生变化，只需要使用一个简单的请求参数。
 
@@ -605,4 +605,28 @@ public class MyInitializer
 ````spring-web````模块提供了````FormContentFilter````来拦截内容类型为````application/x-www-form-urlencoded````的 HTTP PUT，PATCH 和 DELETE 请求，从请求体中读取数据，包装````ServletRequest````以使得表单数据通过````ServletRequest.getParameter*()````方法族是可访问的。
 
 ### 1.2.2 被转发的首部
+
+当请求穿过代理服务器（比如负载均衡服务器）后 host、port 甚至是 scheme 都可能会发生变化，这就提出了一个创建一个客户端视角的指向正确的 host、port 以及 scheme 的链接的挑战。
+
+[RFC 7239](https://tools.ietf.org/html/rfc7239) 定义了````Forwarded```` HTTP 首部字段，代理服务器可以使用该字段来提供有关初始请求的信息。同时还有其它不标准的首部字段，包括````X-Forwarded-Host````，````X-Forwarded-Port````，````X-Forwarded-Proto````，````X-Forwarded-Ssl````以及````X-Forwarded-Prefix````等。
+
+ ````ForwardedHeaderFilter````是一个修改请求的 host、port 以及 scheme 的 Servlet 过滤器，基于````Forwarded````首部字段，然后删除那些首部字段。
+
+关于转发首部的安全考虑，因为应用无法获知这些首部已经被代理添加，有意的，或者是被有问题的客户端错误添加。这就是为什么一个存在于可信集中的代理服务器应该配置为删除到来的请求中的所有不被信任的````Forwarded````首部字段。你也可以在````ForwardedHeaderFilter````中配置````removeOnly=true````，这种情况下，它将会删除但是并不使用这些首部字段。
+
+### 1.2.3 Shallow ETag
+
+````ShallowEtagHeaderFilter````过滤器创建一个“浅” ETag ，通过缓存被写入响应的内容并计算它的 MD5 哈希值。客户端下次发送时，它会重做此动作，但是也会比较计算出的值和````If-None-Match````请求首部字段，如果两者相等，则返回 304（NOT_MODIFIED）状态码响应。
+
+这种策略节省了网络带宽，但是并没有节省 CPU，因为必须为每个请求计算完整的响应的 MD5 哈希值。其它控制器层面的策略，如前所述，可以避免这种计算。参考 [HTTP Caching](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-caching) 。
+
+这种过滤器包含一个````writeWeakETag````参数，该参数配置过滤器写一个弱 ETags，类似于````W/"02a2d595e6ed9a0b24f027f2b63b134d6"````（定义在  [RFC 7232 Section 2.3](https://tools.ietf.org/html/rfc7232#section-2.3) 中）。
+
+### 1.2.4 CORS
+
+Spring MVC 提供了基于控制器注解配置的细粒度的 CORS 支持。然而，当与 Spring Security 配合使用时，我们建议依赖内建的````CorsFilter````，该过滤器必须排在 Spring Security 过滤器链的头部。
+
+参考 [CORS](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-cors) 和 [CORS Filter](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-cors-filter) 获取更多细节。
+
+## 1.3 注解的控制器
 
