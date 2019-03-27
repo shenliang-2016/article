@@ -783,3 +783,16 @@ URI 路径模式也可以内置````${...}````占位符，将通过使用````Prop
 
 **后缀匹配**
 
+默认地，Spring MVC 执行````.*````后缀模式匹配，因而映射到````/person````的控制器同时也显式映射到````/person.*````。文件扩展名然后被用来解读请求内容类型用来构造响应（也就是说，替代````Accept````首部字段），比如，````person.pdf````，````/person.xml````等等。
+
+以这种方式使用文件扩展名是必要的，当浏览器曾发送````Accept````首部字段而很难被解读时。目前，这已经不再必要，同时使用````Accept````首部字段应该是更好的选择。
+
+随着时间推移，文件扩展名的很多使用方式已经被证明是有问题的。当与 URI 变量、路径参数以及 URI 编码共同使用时会导致模棱两可的情况。关于基于 URL 的授权和安全问题的推断将会变的更加困难。
+
+为了彻底禁止文件扩展名的使用，你必须配置一下两个属性：
+
+* ````useSuffixPatternMatching(false)````，参考 [PathMatchConfigurer](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-path-matching)
+* ````favorPathExtension(false)````，参考 [ContentNegotiationConfigurer](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-content-negotiation)
+
+基于 URL 的内容协商仍然是有用的（比如，当在浏览器中键入一个 URL）。为了开启这一特性，我们推荐使用基于查询参数的策略来避免大多数使用文件扩展名带来的问题。或者，如果你必须使用文件扩展名，请考虑通过 [ContentNegotiationConfigurer](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-content-negotiation) 的`mediaTypes`属性将它们限制为显式注册的扩展名列表 。
+
