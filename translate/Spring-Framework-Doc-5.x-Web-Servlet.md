@@ -796,3 +796,34 @@ URI 路径模式也可以内置````${...}````占位符，将通过使用````Prop
 
 基于 URL 的内容协商仍然是有用的（比如，当在浏览器中键入一个 URL）。为了开启这一特性，我们推荐使用基于查询参数的策略来避免大多数使用文件扩展名带来的问题。或者，如果你必须使用文件扩展名，请考虑通过 [ContentNegotiationConfigurer](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-content-negotiation) 的`mediaTypes`属性将它们限制为显式注册的扩展名列表 。
 
+**后缀匹配和反射文件下载 RFD**
+
+反射文件下载攻击类似于 XSS 攻击，都是基于请求输入（比如，一个查询参数和一个 URI 变量）被反射在响应中。不过，替代将 JavaScript 插入 HTML 中，RFD 攻击依赖浏览器切换到执行一个下载，同时将响应作为一个可执行的脚本，当随后被双击时。
+
+在 Spring MVC 中，````@ResponseBody````和````ResponseEntity````方法都处于风险中，因为它们可以渲染不同类型的内容，而客户端能够通过 URL 路径扩展来请求。关闭后缀模式匹配并使用路径扩展来进行内容协商降低了风险，但是并不足够防止 RFD 攻击。
+
+为了防范 RFD 攻击，在渲染响应体之前，Spring MVC 添加一个````Content-Disposition:inline;filename=f.txt````首部字段来建议一个固定的和安全的下载文件。只有当 URL 路径包含一个文件扩展名，该扩展名既不在白名单中，又没有显式注册为内容协商时这一点才能完成。然而，它有个潜在的副作用，当 URLs 被直接键入浏览器中时。
+
+许多通用的路径扩展默认都是在白名单中的。拥有定制化````HttpMessageConverter````实现的应用能够为内容协商显式注册文件扩展，以避免为那些扩展名添加一个````Content-Disposition````首部字段。
+
+参考 [CVE-2015-5211](https://pivotal.io/security/cve-2015-5211) 获取更多有关 RFD 的附加推荐做法。
+
+**可消费媒体类型**
+
+你可以基于````Content-Type````请求首部字段来加强请求映射限制，如下面例子所示：
+
+````java
+@PostMapping(path = "/pets", consumes = "application/json")
+public void addPet(@RequestBody Pet pet) {
+    // ...
+}
+````
+
+````consumes````属性也支持反向表达式，比如````!text/plain````表示````text/plain````之外的所有内容类型。
+
+你可以在类层面声明一个共享````consumes````属性。不像大多数其他请求映射属性，当被使用在类层面时，方法层面的````consumes````属性会覆盖而不是扩展类层面的声明。
+
+> ````MediaType````提供了常用媒体类型常量，比如````APPLICATION_JSON_VALUE````和````APPLICATION_XML_VALUE````。
+
+**可生产的媒体类型**
+
