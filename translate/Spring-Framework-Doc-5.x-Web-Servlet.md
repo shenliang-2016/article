@@ -773,3 +773,13 @@ URI 路径模式也可以内置````${...}````占位符，将通过使用````Prop
 
 **模式比较**
 
+当多个模式都匹配到一个 URL，它们必须被比较以发现其中的最佳匹配。这种比较通过使用````AntPathMatcher.getPatternComparator(String path)````来实现，它会寻找更加精准的模式。
+
+一个模式相对不够精准，如果它拥有更低的 URI 变量数（每个变量算1），单个通配符（每个通配符算1）以及双通配符（每个双通配符算2）。给定相等的分数，更长的模式将被选中。给定相等的分数和长度，具有的 URI 变量数超过通配符的模式将被选中。
+
+默认映射模式````/**````不参与评分，它永远都是排在最后的。同时，前缀模式（比如````/public/**````）被认为相比其它不包含双通配符的模式精准度更低。
+
+完整的细节，参考 ````AntPathMatcher````中的````AntPatternComparator````，同时注意你可以订制其中的````PathMatcher````实现。参考配置章节中的  [Path Matching](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-path-matching) 。
+
+**后缀匹配**
+
