@@ -819,11 +819,35 @@ public void addPet(@RequestBody Pet pet) {
 }
 ````
 
-````consumes````属性也支持反向表达式，比如````!text/plain````表示````text/plain````之外的所有内容类型。
+使用一个````consumes````属性通过内容类型来缩窄请求映射范围。
+
+consumes````属性也支持反向表达式，比如````!text/plain````表示````text/plain````之外的所有内容类型。
 
 你可以在类层面声明一个共享````consumes````属性。不像大多数其他请求映射属性，当被使用在类层面时，方法层面的````consumes````属性会覆盖而不是扩展类层面的声明。
 
 > ````MediaType````提供了常用媒体类型常量，比如````APPLICATION_JSON_VALUE````和````APPLICATION_XML_VALUE````。
 
 **可生产的媒体类型**
+
+你可以基于````Accept````请求首部字段以及控制器方法产生的内容类型列表来缩窄请求映射范围，如下面例子所示：
+
+````java
+@GetMapping(path = "/pets/{petId}", produces = "application/json;charset=UTF-8")
+@ResponseBody
+public Pet getPet(@PathVariable String petId) {
+    // ...
+}
+````
+
+使用一个````produces````属性通过内容类型来缩窄请求映射范围。
+
+媒体类型可以指定字符集。支持反向表达式－比如，````!text/plain````表示除了````text/plain````之外的所有内容类型。
+
+> 对 JSON 内容类型来说，UTF-8 字符集应该被指定，即使 [RFC7159](https://tools.ietf.org/html/rfc7159#section-11) 明确指出“没有味此内容类型注册定义字符集参数”，因为一些浏览器需要它来正确解读 UTF-8 特殊字符。
+
+你可以在类层面声明一个共享````produces````属性。不像其他大多数请求映射属性，当被使用在类层面时，方法层面的````produces````属性会覆盖而不会扩展类层面的声明。
+
+> ````MediaType````提供了常用的媒体类型常量，比如````APPLICATION_JSON_UTF-8_CALUE````和````APPLICATION_XML_VALUE```` 。
+
+**参数，首部字段**
 
