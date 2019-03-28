@@ -851,3 +851,27 @@ public Pet getPet(@PathVariable String petId) {
 
 **参数，首部字段**
 
+你可以基于请求参数条件缩窄请求映射范围。你可以检测存在请求参数````myParam````的情况以及不存在请求参数````!myParam````的情况，或则检测特殊的参数值````myParam=myValue````的情况。下面例子展示了如何检测一个特定的参数值：
+
+````java
+@GetMapping(path = "/pets/{petId}", params = "myParam=myValue")
+public void findPet(@PathVariable String petId) {
+    // ...
+}
+````
+
+检测参数````myParam````是否等于````myValue````。
+
+你也可以使用请求首部字段条件，如下面例子所示：
+
+````java
+@GetMapping(path = "/pets", headers = "myHeader=myValue")
+public void findPet(@PathVariable String petId) {
+    // ...
+}
+````
+
+检测````myHeader````是否等于````myValue````。
+
+> 你能够将````Content-Type````和````Accept````首部字段与首部字段进行匹配，不过最好使用 [consumes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-consumes) 和 [produces](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-produces) 来代替。
+
