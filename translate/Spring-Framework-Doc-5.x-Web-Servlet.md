@@ -875,3 +875,87 @@ public void findPet(@PathVariable String petId) {
 
 > 你能够将````Content-Type````和````Accept````首部字段与首部字段进行匹配，不过最好使用 [consumes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-consumes) 和 [produces](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-produces) 来代替。
 
+**HTTP HEAD, OPTIONS**
+
+````@GetMapping````（以及````@RequestMapping(method=HttpMethod.GET)````）支持 HTTP HEAD 的透明请求映射。控制器方法不需要改变。一个响应包装其，应用于````javax.servlet.http.HttpServlet````，确保````Content-Length````首部字段被设置为被写的字节数（并不实际写入响应）。
+
+````GetMapping````（以及````@RequestMapping(method=HttpMethod.GET````)）被显式映射到而且支持 HTTP HEAD 。一个 HTTP HEAD 请求被等同于 HTTP GET 请求处理，除了写入响应体，字节数会被计算，````Content-Length````首部字段会被设置。
+
+默认地，HTTP OPTIONS 被处理，通过设定````Allow````响应首部字段为匹配到 URL 模式的````@RequestMapping````方法中列出的 HTTP 方法。
+
+对一个没有声明 HTTP 方法的````@RequestMapping````，````Allow````首部字段被设定为````GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS```` 。控制器方法应用始终声明支持的 HTTP 方法（比如，通过使用 HTTP 特定变体：````@GetMapping````，````@PostMapping````，等等）。
+
+你可以将````@RequestMapping````方法映射到 HTTP HEAD 和 HTTP OPTIONS，不过，通常情况下这不是必须的。
+
+**定制注解**
+
+Spring MVC 支持对请求映射使用 [组合注解](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-meta-annotations) 。那些注解本身是被````@RequestMapping````进行了元注解标注的，同时结合重声明一个子集（或者全部）的````@RequestMapping````属性，为了一个更窄的更精准的目的。
+
+````@GetMapping````，````@PostMapping````，````@PutMapping````，````@DeleteMapping````以及````@PatchMapping````是组合注解的例子。它们被提供的动机，很明显，大部分的控制器方法 应该被映射到特定的 HTTP 方法，而不是使用通过使用````@RequestMapping````匹配到所有的 HTTP 方法。如果你需要一个组合注解的例子，参考如何声明它们。
+
+Spring MVC 也支持定制请求映射属性和定制化请求匹配逻辑。这是一种高级选项，需要子类````RequestMappingHandlerMapping````同时覆盖````getCustomMethodCondition````方法，当你能够检查定制属性并返回你自己的````RequestCondition````。
+
+**明确的注册**
+
+你可以编程方式注册处理方法，你可以用来动态注册或者用于其它高级场景，比如不同 URLs 下同一个处理器的不同实例。下面的例子注册了一个处理器方法：
+
+````java
+@Configuration
+public class MyConfig {
+    @Autowired
+    public void setHandlerMapping(RequestMappingHandlerMapping mapping, UserHandler handler) throws NoSuchMethodException {										//(1)
+        RequestMappingInfo info = RequestMappingInfo.paths("/user/{id}").methods(RequestMethod.GET).build();  //(2)
+        Method method = UserHandler.class.getMethod("getUser", Long.class);	//(3)
+        mapping.registerMapping(info, handler, method);						//(4)
+    }
+}
+````
+
+(1) 注入目标处理器和处理器映射到控制器。
+
+(2) 准备请求映射元数据。
+
+(3) 获取处理方法。
+
+(4) 添加注册。
+
+### 1.3.3 处理器方法
+
+````@RequestMapping````处理器方法拥有一个灵活的签名，能够从支持的控制器方法参数和返回值范围中选择。
+
+**方法参数**
+
+下面的表描述了支持的控制器方法参数。任何参数都爱不支持反应式类型。
+
+JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数被支持，这些注解拥有一个````required````属性（比如，````@RequestParam````，````@RequestHeader````等等）并等价于````required=false````。
+
+| 控制器方法参数                                               | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ````WebRequest````，````NativeWebRequest````                 | 一般的对亲故参数和请求和会话属性的访问，不直接使用 Servlet API 。 |
+| ````javax.servlet.ServletRequest````<br />````javax.servlet.ServletResponse```` | 选择任何特定的请求或者响应类型－比如，ServletRequest，HttpServletRequest，或者 Spring 的````MultipartRequest````，````MultipartHttpServletRequest````。 |
+| ````javax.servlet.http.HttpSession````                       | 强制会话存在。由此，这个参数永远不会为````null````。注意，会话的访问不是线程安全的。设置````RequestMappingHandlerAdapter````实例的````synchronizeOnSession````标识为````true````，如果允许多个请求并发访问一个会话。 |
+| ````javax.servlet.http.PushBuilder````                       | Servlet 4.0 的推送构建器 API 用于编程方式 HTTP/2 资源推送。注意，每个 Servlet 规范，注入的 PushBuilder 实例可以为 ````null````，如果客户端不支持 HTTP/2 新特性。 |
+| ````java.security.Principal````                              | 当前已认证用户－可能一个特定 Principal 实现类，如果知道。    |
+| ````HttpMethod````                                           | 请求的 HTTP 方法。                                           |
+| ````java.util.Locale````                                     | 当前请求语言环境，由最精准的可用````LocaleResolver````（实际上就是配置的````LocaleResolver````或者````LocaleContextResolver````）决定。 |
+| ````java.util.TimeZone```` +<br />````java.time.ZoneId````   | 当前请求相关的时区，由 LocaleContextResolver 确定。          |
+| ````java.io.InputStream````<br />````java.io.Reader````      | 用于访问通过 Serlvet API 暴露的未加工的请求体。              |
+| ````java.io.OutputSteam````<br />````java.io.Writer````      | 用于访问通过 Serlvet API 暴露的未加工的响应体。              |
+| ````@PathVariable````                                        | 用于访问 URI 模版变量，参考 [URI patterns](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-uri-templates) 。 |
+| ````@MatrixVariable````                                      | 用于访问 URI 路径片段中的名值对，参考 [Matrix Variables](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-matrix-variables) 。 |
+| ````@RequestParam````                                        | 用于访问 Servlet 请求参数，包含多部分文件。参数值被转换为声明的方法参数类型。参考````@RequestParam````以及 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。<br />注意，为简单参数值使用````@RequestParam````是可选的。参考本表末尾的“其它参数”。 |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+
