@@ -943,19 +943,21 @@ JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数
 | ````java.io.OutputSteam````<br />````java.io.Writer````      | 用于访问通过 Serlvet API 暴露的未加工的响应体。              |
 | ````@PathVariable````                                        | 用于访问 URI 模版变量，参考 [URI patterns](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-uri-templates) 。 |
 | ````@MatrixVariable````                                      | 用于访问 URI 路径片段中的名值对，参考 [Matrix Variables](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-matrix-variables) 。 |
-| ````@RequestParam````                                        | 用于访问 Servlet 请求参数，包含多部分文件。参数值被转换为声明的方法参数类型。参考````@RequestParam````以及 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。<br />注意，为简单参数值使用````@RequestParam````是可选的。参考本表末尾的“其它参数”。 |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
-|                                                              |                                                              |
+| ````@RequestParam````                                        | 用于访问 Servlet 请求参数，包含多部分文件。参数值被转换为声明的方法参数类型。参考[`@RequestParam`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestparam) 以及 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。<br />注意，为简单参数值使用````@RequestParam````是可选的。参考本表末尾的“其它参数”。 |
+| ````@RequestHeader````                                       | 用于访问请求首部字段。首部字段值呗转化为声明的方法参数类型。参考 [`@RequestHeader`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestheader) 。 |
+| ````@CookieValue````                                         | 用于访问 cookies。Cookies 值被转化为声明的方法参数类型。参考 [`@CookieValue`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-cookievalue) 。 |
+| ````@RequestBody````                                         | 用来访问 HTTP 请求体。请求体内容通过使用````HttpMessageConverter````实现被转化为声明的方法参数类型。参考 [`@RequestBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestbody) 。 |
+| ````HttpEntity<B>````                                        | 用于访问请求首部字段和请求体。请求体通过````HttpMessageConverter````转化。参考 [HttpEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-httpentity) 。 |
+| ````@RequestPart````                                         | 用于访问````multipart/form-data````请求中的一个部分数据，通过````HttpMessageConverter````转化该部分数据体。参考 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。 |
+| ````java.util.Map````<br />````org.springframework.ui.Model````<br />````org.springframework.ui.ModelMap```` | 用于访问数据模型，该模型 HTML 控制器使用，并作为视图渲染的一部分被暴露给视图模版。 |
+| ````RedirectAttributes````                                   | 用于重定向场景的特定属性（也就是说，会被添加到查询字符串中），同时清理将被临时存储的属性直到请求重定向完成。参考 [Redirect Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-redirecting-passing-data) 和 [Flash Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) 。 |
+| ````ModelAttribute````                                       | 用于访问模型中已经存在的属性，连同数据绑定和应用的验证。参考 [`@ModelAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-method-args) 以及 [Model](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-methods) 和 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder) 。<br />注意，````@ModelAttribute````的使用是可选的（比如要设置它的属性），参考本表末尾的“其它参数”。 |
+| ````Errors````<br />````BindingResult````                    | 用于访问来自对一个命令对象（也就是一个````@ModelAttribute````参数）进行的验证和数据绑定的错误，或者来自````@RequestBody````或者````@RequestPart````参数验证的错误。验证方法参数之后你必须立即声明一个````Errors````或者````BidingResult````参数。 |
+| ````SessionStatus````＋ 类层面的 ````@SessionAttributes````  | 为了标识表单处理完成，该状态将触发通过类层面的````@SessionAttributes````注解声明的会话属性的清理。参考 [`@SessionAttributes`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattributes) 获取更多细节。 |
+| ````UriComponentsBuilder````                                 | 准备一个相对于当前请求的主机、端口、协议、上下文路径以及 servlet 映射字面部分的 URL 。参考 [URI Links](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-uri-building) 。 |
+| ````@SessionAttribute````                                    | 用于访问任何会话属性，不同于作为类层面的````@SessionAttributes````声明的结果的存储在会话中的模型属性。参考 [`@SessionAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattribute) 获取更多细节。 |
+| ````@RequestAttribute````                                    | 用于访问请求属性。参考 [`@RequestAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestattrib) 。 |
+| 其它参数                                                     | 任何本表中没有匹配到的简单类型参数（由 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定），被作为````@RequestParam````解析。否则，将被作为````@ModelAttribute````解析。 |
+
+**返回值**
 
