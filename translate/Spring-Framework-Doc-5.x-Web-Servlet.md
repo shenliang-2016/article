@@ -961,3 +961,24 @@ JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数
 
 **返回值**
 
+下表描述了支持的控制器方法返回值。所有响应值都支持反应式类型。
+
+| 控制器方法返回值                                             | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ````@ResponseBody````                                        | 返回值通过````HttpMessageConverter````实现转化并写入响应。参考 [`@ResponseBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responsebody) 。 |
+| ````HttpEntity<B>````，````ResponseEntity<B>````             | 指定完整响应（包括 HTTP 首部字段和主体）的返回值通过````HttpMesssageConverter````实现转化并写入响应。参考 [ResponseEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responseentity) 。 |
+| ````HttpHeaders````                                          | 为了返回一个响应，包含首部字段，但是没有主体。               |
+| ````String````                                               | 一个视图名称将被````ViewResolver````实现解析被与明确的模型共同使用－通过命令对象和````@ModelAttribute````方法确定。控制器方法也能够通过编程方式通过声明一个````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
+| ````View````                                                 | 一个````View````实例结合明确的数据模型进行渲染－通过命令对象和````@ModelAttribute````方法来确定。处理器方法与能够以编程方式通过声明````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
+| ````java.util.Map````<br />````org.springframework.ui.Model```` | 将被添加进入明确模型的属性，连同通过````RequestToViewNameTranslator````显式确定的视图名称。 |
+| ````@ModelAttribute````                                      | 一个将被添加进入模型的属性，连同通过````RequestToViewNameTranslator````显式确定的视图名称。<br />注意，````@ModelAttribute````是可选的。参考表末尾的“其它返回值”。 |
+| ````ModelAndView````对象                                     | 将要使用的视图和模型属性，以及可选的，响应状态。             |
+| ````void````                                                 | 具有````void````返回值（或者````null````返回值）的方法被认为拥有完整的处理之后的响应，如果它也拥有一个````ServletResponse````，一个````OutputStream````参数，或者一个````@ResponseStatus````注解。如果控制器进行一个确定的````ETag````或者````lastModified````时间戳检查时也会是这样。<br />如果上述情况都没有出现，````void````返回值也可以表示没有响应体为 REST 控制器返回，或者为 HTML 控制器选择了默认的视图名称。 |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+|                                                              |                                                              |
+
