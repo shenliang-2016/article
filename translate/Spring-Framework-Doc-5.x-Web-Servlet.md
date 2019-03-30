@@ -984,3 +984,25 @@ JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数
 
 **类型转换**
 
+一些被注解标记的控制器方法参数表示基于````String````的请求输入（比如````@RequestParam````，````@RequestHeader````，````@PathVariable````，````@MatrixVariable````以及````@CookieValue````）会需要类型转换，如果参数被声明为````String````之外的其他类型。
+
+这种情况下，类型转换基于配置的转换器自动执行。默认地，简单类型（````int````，````long````，````Date````等等）都支持。你可以定制类型转换过程，通过````WebDataBinder````（参考 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder)）或者通过使用````FormattingConversionService````注册````Formatters````。参考  [Spring Field Formatting](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#format) 。
+
+**矩阵变量**
+
+[RFC 3986](https://tools.ietf.org/html/rfc3986#section-3.3) 讨论了路径片段中的名值对。在 Spring MVC 中，我们称之为矩阵变量，这个名称基于蒂姆伯纳斯李的 [一篇旧文](https://www.w3.org/DesignIssues/MatrixURIs.html)，不过我们也可以把它们称之为 URI 路径参数。
+
+矩阵变量可以出现在任何路径片段中，每个变量由分号分隔，一个变量的多个值由逗号分隔（比如````/cars;color=red,green;year=2012````）。多个变量值也可以通过相同的变量名指定（比如````color=red;color=green;color=blue````）。
+
+如果一个 URL 被期望包含矩阵变量，则用于控制器方法的请求映射久必须使用 URI 变量累掩盖那些变量的内容，同时确保请求能够成功匹配，无论其中矩阵变量的顺序或者存在与否。下面例子使用了矩阵变量：
+
+````java
+// GET /pets/42;q=11;r=22
+
+@GetMapping("/pets/{petId}")
+public void findPet(@PathVariable String petId, @MatrixVarialbe int q) {
+    // petId == 42
+    // q == 11
+}
+````
+
