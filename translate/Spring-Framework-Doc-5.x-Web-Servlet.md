@@ -1075,3 +1075,92 @@ public class EditPetForm {
 
 使用````@RequestParam````绑定````petId````。
 
+默认地，使用此注解的方法参数都是必需的，不过你可以指定这些方法参数为可选的，通过设定````@RequestParam````注解的````required````标志为````false````，或者使用````java.util.Optional````包装器声明该参数。
+
+类型转换在目标方法参数类型不是````String````时会自动执行。参考  [Type Conversion](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-typeconversion) 。
+
+声明参数类型为一个数组或者列表允许为相同的参数名称解析多个参数值。
+
+当一个````@RequestParam````注解呗声明为````Map<String, String>````或者````MultiValueMap<String, String>````时，注解中没有制定参数名称，则该 map 就为每个给定的参数名称保存相应的参数值。
+
+注意，````@RequestParam````的使用是可选的（比如，设定它的属性）。默认地，任何简单类型的参数（由  [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定）以及任何没有被其他参数解析器解析的参数，都会被如同它们被````@RequestParam````注解修饰了那样对待。
+
+**````@RequestHeader````**
+
+你可以使用````@RequestHeader````注解来绑定请求首部到控制器中的方法参数。
+
+考虑下面的请求，包含首部：
+
+````
+Host                    localhost:8080
+Accept                  text/html,application/xhtml+xml,application/xml;q=0.9
+Accept-Language         fr,en-gb;q=0.7,en;q=0.3
+Accept-Encoding         gzip,deflate
+Accept-Charset          ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive              300
+````
+
+下面的例子展示了如何获取````Accept-Encoding````和````Keep-Alive````首部字段值：
+
+````java
+@GetMapping("/demo")
+public void handle(
+        @RequestHeader("Accept-Encoding") String encoding, 
+        @RequestHeader("Keep-Alive") long keepAlive) { 
+    //...
+}
+````
+
+如果目标方法参数类型不是````String````，类型转换就会自动进行。参考 [Type Conversion](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-typeconversion) 。
+
+当````@RequestHeader````注解用在````Map<String, String>````，````MultiValueMap<String, String>````，或者````HttpHeaders````参数上时，该 map 就包含所有的首部字段值。
+
+> 内建支持可以将逗号分隔的字符串转化为字符串数组或者集合，或者其他类型转换系统知道的类型。比如，一个注解为````@RequestHeader("Accept")````的方法参数可以是````String````类型，也可以是````String[]````，或者````List<String>````。
+
+**````@CookieValue````**
+
+你可以使用````@CookieValue````注解绑定 HTTP cookie 值到控制器方法参数。
+
+考虑携带如下 cookie 的请求：
+
+````
+JSESSIONID=415A4AC178C59DACE0B2C9CA727CDD84
+````
+
+下面例子展示了如何获取该 cookie 值：
+
+````java
+@GetMapping("/demo")
+public void handle(@CookieValue("JSESSIONID") String cookie) { 
+    //...
+}
+````
+
+如果目标方法参数类型不是````String````，类型转换就会自动进行。参考 [Type Conversion](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-typeconversion) 。
+
+**````@ModelAttribute````**
+
+你可以在方法参数上使用````@ModelAttribute````注解来访问模型属性或者当该属性不存在时将其实例化。模型属性同时还覆盖了来自 HTTP Servlet 请求参数中名称匹配到字段名称的参数值。这就是所谓的数据绑定，它使得你不需要为每个查询参数和表单字段处理解析和类型转换。下面例子展示了如何使用：
+
+````java
+@PostMapping("/owners/{ownerId}/pets/{petId}/edit")
+public String processSubmit(@ModelAttribute Pet pet) { } 
+````
+
+例子中````Pet````实例解析过程如下：
+
+* 来自模型，如果已经通过 [Model](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-methods) 添加。
+* 来自 HTTP 会话，使用````@SessionAttributes````。
+* 来自 URI 路径变量，那些变量呗传递通过````Converter````。
+* 来自默认构造器方法调用。
+* 来自“主要构造器”方法调用，携带匹配到 Servlet 请求参数的方法参数。参数名称通过````@ConstructorProperties```` JavaBeans 确定，或者通过运行时在字节码文件中保持的参数名称。
+
+尽管使用 [Model](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-methods) 来根据属性产生模型的用法非常普遍，另外一种方法依赖于````Converter<String, T>````与 URI 路径变量结合使用的传统做法。下面的例子中，模型属性名````account````匹配到 URI 路径变量````ccount````，则````Account````被加载通过由一个注册的````Converter<String, Account>````传递的````String````类型的 account 数字：
+
+````java
+@PutMapping("/accounts/{account}")
+public String save(@ModelAttribute("account") Account account) {
+    // ...
+}
+````
+
