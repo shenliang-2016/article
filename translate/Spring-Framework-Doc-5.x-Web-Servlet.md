@@ -1006,3 +1006,72 @@ public void findPet(@PathVariable String petId, @MatrixVarialbe int q) {
 }
 ````
 
+考虑到所有路径片段都可能包含矩阵变量，你可能需要确定矩阵变量希望作为哪个路径变量。下面的例子展示了如何做到这一点：
+
+````java
+// GET /owners/42;q=11/pets/21;q=22
+
+@GetMapping("/owners/{ownerId}/pets/{petId}")
+public void findPet(
+    @MatrixVariable(name="q", pathVar="ownerId") int q1,
+    @MatrixVariable(name="q", pathVar="petId") int q2) {
+    
+    // q1 == 11
+    // q2 == 22
+}
+````
+
+矩阵变量可以被定为为可选的，同时指定一个默认值，如下面例子所示：
+
+````java
+// GET /pets/42
+
+@GetMapping("/pets/{petId}")
+public void findPet(@MatrixVariable(required=false, defaultValue="1") int q) {
+
+    // q == 1
+}
+````
+
+为了获取所有矩阵变量，你可以使用````MultiValueMap````，如下面例子所示：
+
+````java
+// GET /owners/42;q=11;r=12/pets/21;q=22;s=23
+
+@GetMapping("/owners/{ownerId}/pets/{petId}")
+public void findPet(
+        @MatrixVariable MultiValueMap<String, String> matrixVars,
+        @MatrixVariable(pathVar="petId") MultiValueMap<String, String> petMatrixVars) {
+
+    // matrixVars: ["q" : [11,22], "r" : 12, "s" : 23]
+    // petMatrixVars: ["q" : 22, "s" : 23]
+}
+````
+
+注意，你需要开启矩阵变量使用。在 MVC Java 配置类中，你需要通过  [Path Matching](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-config-path-matching) 设置````UrlPathHelper````中的属性````removeSemicolonContent=false````。在 MVC XML 命名空间中，你可以配置````<mvc:annotation-drivenenable-matrix-varialbe="true"/>````。
+
+**````@RequestParam````**
+
+你可以使用````@RequestParam````注解来绑定 Servlet 请求参数（也就是说，查询参数或者表单数据）到控制器方法参数。下面例子展示了如何做：
+
+````java
+@Controller
+@RequestMapping("/pets")
+public class EditPetForm {
+
+    // ...
+
+    @GetMapping
+    public String setupForm(@RequestParam("petId") int petId, Model model) { 
+        Pet pet = this.clinic.loadPet(petId);
+        model.addAttribute("pet", pet);
+        return "petForm";
+    }
+
+    // ...
+
+}
+````
+
+使用````@RequestParam````绑定````petId````。
+
