@@ -1164,3 +1164,102 @@ public String save(@ModelAttribute("account") Account account) {
 }
 ````
 
+当模型属性实例呗获取之后，数据绑定就会执行。````WebDataBinder````类匹配 Servlet 请求参数名（查询参数和表单字段）到目标````Object````的字段名。匹配的字段在类型转换执行之后生成，如果有必要。更多有关数据绑定（以及校验）的细节参考 [Validation](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#validation) 。更多有关定制化数据绑定的细节，参考 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder) 。
+
+数据绑定可能会出错。默认地，一个````BindException````会产生。不过，为了在控制器方法中检查这种错误，你可以添加一个````BindingResult````参数，就在````@ModelAttribute````旁边，如下面例子所示：
+
+````java
+@PostMapping("/owners/{ownerId}/pets/{petId}/edit")
+public String processSubmit(@ModelAttribute("pet") Pet pet, BindingResult result) {
+    if (result.hasErrors()) {
+        return "petForm";
+    }
+    // ...
+}
+````
+
+某些情况下，你可能希望不进行数据绑定而访问模型属性。此时，你可以注射````Model````进入控制器并直接访问它，或者，设定````@ModelAttribute(binding=false)````，如下面例子所示：
+
+````java
+@ModelAttribute
+public AccountForm setUpForm() {
+    return new AccountForm();
+}
+
+@ModelAttribute
+public Account findAccount(@PathVariable String accountId) {
+    return accountRepository.findOne(accountId);
+}
+
+@PostMapping("update")
+public String update(@Valid AccountForm form, BindingResult result, @ModelAttribute(binding=false) Account account) {
+    // ...
+}
+````
+
+我们可以在数据绑定之后自动执行验证，通过添加````javax.validation.Valid````注解或者 Spring 的````@Validated````注解（ [Bean Validation](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#validation-beanvalidation) 和 [Spring validation](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#validation)）。下面例子所示：
+
+````java
+@PostMapping("/owners/{ownerId}/pets/{petId}/edit")
+public String processSubmit(@Valid @ModelAttribute("pet") Pet pet, BindingResult result) {
+    if(result.hasErrors()) {
+        return "petForm";
+    }
+    // ...
+}
+````
+
+注意，````@ModelAttribute````使用是可选的（比如，设定它的属性）。默认地，任何非简单值类型（由 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定）并没有被任何其他参数解析器解析的参数都被等同于它被````@ModelAttribute````注解修饰处理。
+
+**````@SessionAttributes````**
+
+此注解用来在请求之间将模型属性存储在 HTTP Servlet 会话中。它是一个类型层面的注解，声明了一个特定控制器所使用的会话属性。这些典型的模型属性名称列表或者模型属性类型应该被透明存储在会话中，供后续请求访问。
+
+下面的例子使用了````@SessionAttributes````注解：
+
+````java
+@Controller
+@SessionAttributes("pet")
+public class EditPetForm {
+    // ...
+}
+````
+
+第一个请求中，当名为````pet````的模型属性被添加到模型中，它就会被自动提交并存储到 HTTP Servlet 会话中。它就会维持在那里，直到别的控制器方法使用````SessionStatus````方法参数来清理存储，如下面例子所示：
+
+````java
+@Controller
+@SessionAttributes("pet") 
+public class EditPetForm {
+
+    // ...
+
+    @PostMapping("/pets/{id}")
+    public String handle(Pet pet, BindingResult errors, SessionStatus status) {
+        if (errors.hasErrors) {
+            // ...
+        }
+            status.setComplete(); 
+            // ...
+        }
+    }
+}
+````
+
+**````@SessionAttribute````**
+
+如果你需要访问业已存在的会话属性，那些属性被全局管理（也就是说，在控制器范围之外－比如，由过滤器管理），可能存在也可能不存在，你可以在方法参数上使用````@SessionAttribute````注解，如下面例子所示：
+
+````java
+@RequestMapping("/")
+public String handle(@SessionAttribute User user) {
+    // ...
+}
+````
+
+需要添加或者删除会话属性的使用案例中，考虑注射````org.springframework.web.context.request.WebRequest````或者````javax.servlet.http.HttpSession````进入控制器方法。
+
+作为控制器工作流一部分，为了临时将模型属性存储在会话中考虑使用````@SessionAttributes````，如 [`@SessionAttributes`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattributes) 中所描述的。
+
+**````@RequestAttribute````**
+
