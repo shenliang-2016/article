@@ -1263,3 +1263,16 @@ public String handle(@SessionAttribute User user) {
 
 **````@RequestAttribute````**
 
+类似于````@SessionAttribute````，你可以使用````@RequestAttribute````注解来访问业已存在的早先创建出来的请求属性（比如，由 Servlet ````Filter```` 或者 ````HandlerInterceptor````创建）：
+
+````java
+@GetMapping("/")
+public String handler(@RequestAttribute Client client) {
+    // ...
+}
+````
+
+**Redirect Attributes**
+
+默认地，所有模型属性都被认为将被在重定向 URL 中作为 URI 模版变量而被暴露出来。剩余的属性，那些基本类型、基本类型的集合或者数组都会自动附加为查询参数。
+
