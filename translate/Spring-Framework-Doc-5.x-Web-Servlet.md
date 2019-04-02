@@ -1394,7 +1394,7 @@ public String handle(@RequestPart("meta-data") MetaData metadata,
 }
 ````
 
-你可以结合使用````@RequestPart````和````javax.validation.Valid````或者使用 Spring 的````@Validated````注解，两种方式都将导致标准的 Bean 验证被执行。默认地，验证错误导致````MethodArgumentNotValidException````，然后产生 400（BAD_REQUEST）响应。或者，你可以在控制器内部局部处理验证错误，通过一个````Errors````或者````BindingResult````参数，如下例所示：
+你可以结合使用````@RequestPart````和````javax.validation.Valid````或者使用 Spring 的````@Validated````注解，两种方式都将导致标准的 Bean 验证被执行。默认地，验证错误导致````MethodArgumentNotValidException````，然后变成 400（BAD_REQUEST）响应。或者，你可以在控制器内部局部处理验证错误，通过一个````Errors````或者````BindingResult````参数，如下例所示：
 
 ````java
 @PostMapping("/")
@@ -1405,4 +1405,47 @@ public String handle(@Valid @RequestPart("meta-data") MetaData metadata,
 ````
 
 **````@RequestBody````**
+
+你可以使用````@RequestBody````注解来读取请求体并通过一个````HttpMessageConverter````将其反序列化为````Object````。下面的例子说明了如何使用：
+
+```java
+@PostMapping("/accounts")
+public void handle(@RequestBody Account account) {
+    // ...
+}
+```
+
+你可以使用  [MVC Config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config)  中的 [Message Converters](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-message-converters) 选项来配置或者定制消息转化。
+
+你可以结合使用````@RequestBody````和````javax.validation.Valid````或者 Spring 的````@Validated````注解，两种方式都会导致标准 Bean 验证执行。默认地，验证错误会导致````MethodArgumentNotValidException````，它会变成一个 400（BAD_REQUEST）状态码响应。或者，你可以在控制器内部局部处理验证错误，通过一个````Errors````或者````BindingResult````参数，如下例所示：
+
+````java
+@PostMapping("/accounts")
+public void handle(@Valid @RequestBody Account account, BindingResult result) {
+    // ...
+}
+````
+
+**HttpEntity**
+
+````HttpEntity````或多或少等同于使用 [`@RequestBody`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-requestbody) ，不过它是基于暴露请求首部字段和请求体的容器对象。如下面例子所示：
+
+````java
+@PostMapping("/accounts")
+public void handle(HttpEntity<Account> entity) {
+    // ...
+}
+````
+
+**````@ResponseBody````**
+
+你可以将````@ResponseBody````注解使用在拥有返回值，并且返回值将被 [HttpMessageConverter](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/integration.html#rest-message-conversion) 序列化为响应体的方法上。如下面例子所示：
+
+````java
+@GetMapping("/accounts/{id}")
+@ResponseBody
+public Account handle() {
+    // ...
+}
+````
 
