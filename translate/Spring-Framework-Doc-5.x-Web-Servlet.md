@@ -1276,3 +1276,37 @@ public String handler(@RequestAttribute Client client) {
 
 默认地，所有模型属性都被认为将被在重定向 URL 中作为 URI 模版变量而被暴露出来。剩余的属性，那些基本类型、基本类型的集合或者数组都会自动附加为查询参数。
 
+基本类型的参数附加称为查询参数可以是期望中的结果，如果模型实例专门为重定向准备。不过，在被注解的控制器中，模型能够包含额外的为了渲染目的而添加的属性（例如，下拉字段值）。为了避免这些字段出现在 URL 中的可能性，````@RequestMapping````注解修饰的方法可以声明一个````RedirectAttributes````类型的参数，用来指定扩展属性对````RedirectView````可用。如果该方法执行了重定向，则````RedirectAttributes````的内容就会被使用。否则，使用模型内容。
+
+````RequestMappingHandlerAdapter````提供了一个标志，名为````ignoreDefaultModelOnRedirect````，你可以使用它表示默认````Model````的内容应该永远不被使用，如果控制器方法执行重定向。替代方案，控制器方法应该声明一个````RedirectAttributes````类型的属性，或者，如果不能这么做，就不应该向````RedirectView````传递任何属性。XML 命名空间和 MVC Java 配置都保持此标志值为````false````，以保持向后兼容。不过，对新版本的应用，我们推荐将其设置为````true````。
+
+注意，来自当前请求的 URI 模版变量会自动成为可用的，当展开一个重定向 URL，而你也不需要使用````Model````或者````RedirectAttributes````显式添加它们。下面的例子展示了如何定义重定向：
+
+````java
+@PostMapping("/files/{path}")
+public String upload(...) {
+    // ...
+    return "redirect:file/{path}";
+}
+````
+
+另外一种传递数据到重定向目标的方法是通过使用````flash````属性。不像其他重定向属性，````flash````属性被保存在 HTTP 会话中（因此，不会出现在 URL 中）。参考  [Flash Attributes](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) 获取更多细节。
+
+**Flash 属性**
+
+Flash 属性提供了一种在一个请求中保存供别的请求使用的属性的方法。这在重定向场景下最常见－比如，所谓的````Post-Redirect-Get````模式。临时保存的 Flash 属性在重定向发生之前对请求是可用的，当重定向发生之后就会被立即删除。
+
+Spring MVC 包含两种主要的抽象来支持 flash 属性。````FlashMap````被用来持有 flash 属性，而````FlashMapManager````则被用来保存、查询以及管理````FlashMap````实例。
+
+Flash 属性支持永远是开启状态，而不需要显式开启。不过，如果不用，它就永远不会导致 HTTP 会话的创建。在每个请求上，存在一个输入````FlashMap````包含从前一个请求（如果存在）传递过来的属性，还有一个输出````FlashMap````用来保存供下一个请求使用的属性。两个````FlashMap````实例可以在 Spring MVC 中的任何地方通过````RequestContextUtils````的静态方法访问。
+
+注解的控制器通常不需要直接与````FlashMap````配合工作。替代方案时，````@RequestMapping````方法可以接受一个````RedirectAttributes````类型的参数，并使用它为重定向场景添加````flash````属性。通过````RedirectAttributes````添加的 Flash 属性被自动传递到输出````FlashMap````。类似的，重定向之后，来自输入````FlashMap````的属性被自动添加到控制器为目标 URL 服务的````Model````中。
+
+> 匹配请求到 flash 属性
+>
+> flash 属性的概念存在于很多其他 web 框架中，已经被证明有时候会导致并发问题。这是因为，按照定义，flash 属性被存储直到下一个请求。然而，确切的"下一个"请求可能并不是通信对方认为的，而是另外的一个异步请求（例如，资源池化请求），这种情况下 flash 属性就会被过早删除。
+>
+> 为了减低上述情况的可能性，````RedirectView````自动以目标重定向 URL 的路径和查询参数标记````FlashMap````实例。然后，默认的````FlashMapManager````匹配那些信息到新到来的请求，当它搜索输入````FlashMap````时。
+>
+> 这样并不能彻底避免并发问题的可能性，只是通过重定向 URL 中可用信息显著降低问题出现的几率。因此，我们推荐你主要在重定向场景下使用 flash 属性。
+
