@@ -1310,3 +1310,99 @@ Flash 属性支持永远是开启状态，而不需要显式开启。不过，�
 >
 > 这样并不能彻底避免并发问题的可能性，只是通过重定向 URL 中可用信息显著降低问题出现的几率。因此，我们推荐你主要在重定向场景下使用 flash 属性。
 
+**Multipart**
+
+当````MultipartResolver````已经 [enabled](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-multipart) ，POST 请求的````multipart/form-data````格式的内容被转化并可作为规则的请求参数访问。下面的例子访问一个规则的表单字段和一个上传的文件：
+
+````java
+@Controller
+public class FileUploadController {
+    
+    @PostMapping("/form")
+    public String handleFormUpload(@RequestParam("name") String name, @RequestParam("file") MultipartFile file) {
+        if(!file.isEmpty()) {
+            byte[] bytes = file.getBytes();
+            // store the bytes somewhere
+            return "redirect:uploadSuccess";
+        }
+        return "redirect:uploadFailure";
+    }
+}
+````
+
+声明参数类型为````List<MultipartFile>````允许用同一个参数名称包含多个文件。
+
+当````@RequestParam````注解被声明为````Map<String, MultipartFile>````或者````MultiValueMap<String, MultipartFile>````，而注解中没有指定参数名称，则其中的 map 就会基于对应于每个给定参数名称的 multipart 文件产生。
+
+> 配合 Servlet 3.0 multipart 转化机制，你也可以声明````javax.servlet.http.Part````来替代 Spring 的````MultipartFile````，作为一个方法参数或者集合值类型。
+
+你也可以使用 multipart 内容作为部分数据绑定到一个 [command object](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-method-args) 。比如，上面例子中的表单字段和文件可能是一个表单对象上的字段，如下面例子所示：
+
+````java
+class MyForm {
+    
+    private String name;
+    
+    private MultipartFile file;
+    
+    // ...
+}
+
+@Controller
+public class FileUploadController {
+    
+    @PostMapping("/form")
+    public String handleFormUpload(MyForm form, BindingResult errors) {
+        if(!form.getFile().isEmpty()) {
+            byte[] bytes = form.getFile().getBytes();
+            // store the bytes somewhere
+            return "redirect:uploadSuccess";
+        }
+        return "redirect:uploadFailure";
+    }
+}
+````
+
+Multipart 请求还可以由非浏览器客户端发出，典型地是在 RESTful 服务场景中。下面的例子展示了 JSON 文件：
+
+````
+POST /someUrl
+Content-Type: multipart/mixed
+
+--edt7Tfrdusa7r3lNQc79vXuhIIMlatb7PQg7Vp
+Content-Disposition: form-data; name="meta-data"
+Content-Type: application/json; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+{
+    "name": "value"
+}
+--edt7Tfrdusa7r3lNQc79vXuhIIMlatb7PQg7Vp
+Content-Disposition: form-data; name="file-data"; filename="file.properties"
+Content-Type: text/xml
+Content-Transfer-Encoding: 8bit
+... File Data ...
+````
+
+你可以使用````@RequestParam````访问 meta-data 部分，作为一个````String````，但是你可能希望它被从 JSON 反序列化（类似于````@RequestBody````）。使用````@RequestPart````注解来访问一个 multipart ，在它经过 [HttpMessageConverter](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/integration.html#rest-message-conversion) 转化之后：
+
+````java
+@PostMapping("/")
+public String handle(@RequestPart("meta-data") MetaData metadata,
+        @RequestPart("file-data") MultipartFile file) {
+    // ...
+}
+````
+
+你可以结合使用````@RequestPart````和````javax.validation.Valid````或者使用 Spring 的````@Validated````注解，两种方式都将导致标准的 Bean 验证被执行。默认地，验证错误导致````MethodArgumentNotValidException````，然后产生 400（BAD_REQUEST）响应。或者，你可以在控制器内部局部处理验证错误，通过一个````Errors````或者````BindingResult````参数，如下例所示：
+
+````java
+@PostMapping("/")
+public String handle(@Valid @RequestPart("meta-data") MetaData metadata,
+        BindingResult result) {
+    // ...
+}
+````
+
+**````@RequestBody````**
+
