@@ -1538,3 +1538,47 @@ public class UserController extends AbstractController {
 
 ### 1.3.4 Model
 
+你可以使用````@ModelAttribute````注解。
+
+* 用在````@RequestMapping````中的一个 [method argument](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-method-args) 上来在模型中创建或者访问一个````Object````，同时通过````WebDataBinder````将其绑定到请求。
+* 作为一个方法层面的注解用在````@Controller````或者````@ControllerAdvice````类中，以在所有````@RequestMapping````方法被调用之前帮助初始化模型。
+* 用在````@RequestMapping````方法上来将其返回值标记为一个模型属性。
+
+本章节讨论````@ModelAttribute````方法－先前列表中的第二个元素。控制器可以拥有任何数量的````@ModelAttribute````方法。所有此类方法都在同一个控制器中的````@RequestMapping````方法之前呗调用。通过````@ControllerAdvice````注解，一个````@ModelAttribute````方法也可以在控制器之间共享。参考 [Controller Advice](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-controller-advice) 获取更多细节。
+
+````@ModelAttribute````方法拥有灵活的方法签名。作为````@RequestMapping````方法，它们支持许多相同的参数，除了````@ModelAttribute````本身或者与请求体有关的任何东西。
+
+下面的例子展示了一个````@ModelAttribute````方法：
+
+````java
+@ModelAttribute
+public void populateModel(@RequestParam String number, Model model) {
+    model.addAttribute(accountRepository.findAccount(number));
+    // add more ...
+}
+````
+
+下面的例子仅仅添加一个属性：
+
+````java
+@ModelAttribute
+public Account addAccount(@RequestParam String number) {
+    return accountRepository.findAccount(number);
+}
+````
+
+> 如果没有显式指定名称，就会基于````Object````类型选择默认名称，如 javadoc [`Conventions`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/core/Conventions.html) 中所述。你可以始终分配一个显式名称通过使用重载方法````addAttribute````方法，或者通过````@ModelAttribute````注解上的````name````属性（用于返回值）。
+
+你也可以将````@ModelAttribute````作为方法层面的注解，用在````@ResponseMapping````方法上，此时该方法的返回值被解读为模型属性。通常不是强制的，因为这是 HTML 控制器的默认行为，除非返回值是一个````String````而可能会被解读为视图名称。````@ModelAttribute````也可以定制模型属性名称，如下面例子所示：
+
+````java
+@GetMapping("/accounts/{id}")
+@ModelAttribute("myAccount")
+public Account handle() {
+    // ...
+    return account;
+}
+````
+
+### 1.3.6 ````DataBinder````
+
