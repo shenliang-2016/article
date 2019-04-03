@@ -1582,3 +1582,45 @@ public Account handle() {
 
 ### 1.3.6 ````DataBinder````
 
+````@Controller````或者````@ControllerAdvice````类可以拥有````@InitBinder````方法来初始化````WebDataBinder````实例，然后就可以：
+
+* 将请求参数（表单或者查询数据）绑定到模型对象。
+* 转化基于字符串的请求值（比如请求参数、路径变量、首部字段、cookies 等等）到控制器方法参数的目标类型。
+* 格式化模型对象值为````String````值当渲染 HTML 表单时。
+
+````@InitBinder````方法可以注册控制器特定的````java.bean.PropertyEditor````或者 Spring 的````Converter````和````Formatter````组件。此外，你可以使用 [MVC config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-conversion) 来注册````Converter````和````Formatter````类型在一个全局共享的````FormattingConversionService````中。
+
+````@InitBinder````方法支持````@RequestMapping````方法拥有多个相同参数，除了````@ModelAttribute````（命令对象）参数。典型地，它们与一个````WebDataBinder````参数以及一个````void````返回值共同声明。如下面例子所示：
+
+````java
+@Controller
+public class FormController {
+
+    @InitBinder 
+    public void initBinder(WebDataBinder binder) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setLenient(false);
+        binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, false));
+    }
+
+    // ...
+}
+````
+
+另外，当你使用一个基于````Formatter````的设置，通过一个共享的````FormattingConversionService````，你可以复用相同的方法并注册控制器特定的````Formatter````实现，如下面例子所示：
+
+````java
+@Controller
+public class FormController {
+
+    @InitBinder 
+    protected void initBinder(WebDataBinder binder) {
+        binder.addCustomFormatter(new DateFormatter("yyyy-MM-dd"));
+    }
+
+    // ...
+}
+````
+
+### 1.3.6 异常
+
