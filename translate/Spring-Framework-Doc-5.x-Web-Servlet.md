@@ -1449,3 +1449,92 @@ public Account handle() {
 }
 ````
 
+````@ResponseBody````也支持用在类层面，此时它就会被控制器中所有方法继承。````@RestController````注解的效果就是元注解````@Controller````和````@ResponseBody````的组合。
+
+你可以在````@ResponseBody````中使用响应式类型。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [Reactive Types](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-reactive-types) 获取更多细节。
+
+你可以使用  [MVC Config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config)  中的 [Message Converters](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-message-converters) 选项来配置或者定制消息转化。
+
+你可以结合使用````@ResponseBody````方法和 JSON 序列化视图。参考[Jackson JSON](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-jackson) 。
+
+**ResponseEntity**
+
+````ResponseEntity````类似于 [`@ResponseBody`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-responsebody) ，不过携带状态和首部字段。例如：
+
+````java
+@GetMapping("/something")
+public ResponseEntity<String> handle() {
+    String body = ... ;
+    String etag = ... ;
+    return ResponseEntity.ok().eTag(etag).build(body);
+}
+````
+
+Spring MVC 支持使用单个响应式类型的值来异步产生````ResponseEntity````，也支持使用单个字段多个值点响应式类型来产生响应体。
+
+**Jackson JSON**
+
+Spring 提供了对 Jackson JSON 类库的支持。
+
+**JSON Views**
+
+Spring MVC 提供了内建的 [Jackson’s Serialization Views](https://wiki.fasterxml.com/JacksonJsonViews) 支持，它允许仅渲染一个````Object````内部的部分或者所有字段。为了将其用于````@ResponseBody````或者````ResponseEntity````控制器方法，你可以使用 Jackson 的````@JsonView````注解来激活一个序列化视图类。如下面例子所示：
+
+````java
+@RestController
+public class UserController {
+    
+    @GetMapping("/user")
+    @JsonView(User.WithoutPasswordView.class)
+    public User getUser() {
+        return new User("eric","7!jd#h23");
+    }
+}
+
+public class User {
+    
+    public interface WithoutPasswordView {};
+    public interface WithPasswordView extends WithoutPasswordView {};
+    
+    private String username;
+    private String password;
+    
+    public User() {
+    }
+    
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+    
+    @JsonView(WithoutPasswordView.class)
+    public String getUsername() {
+        return this.username;
+    }
+    
+    @JsonView(WithPasswordView.class)
+    public String getPassword() {
+        return this.password;
+    }
+}
+````
+
+> ````@JsonView````允许一个视图类数组，不过你可以只为每个控制器方法指定一个。如果你需要激活多个视图，你可以使用组合接口。
+
+对依赖视图解析的控制器，你可以为模型添加序列化视图类，如下面例子所示：
+
+````java
+@Controller
+public class UserController extends AbstractController {
+    
+    @GetMapping("/user")
+    public String getUser(Model model) {
+        model.addAttribute("user", new User("eric", "7!jd#h23"));
+        model.addAttribute(JsonView.class.getName(), User.WithoutPasswordView.class);
+        return "userView";
+    }
+}
+````
+
+### 1.3.4 Model
+
