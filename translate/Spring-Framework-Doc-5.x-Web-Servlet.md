@@ -1580,7 +1580,7 @@ public Account handle() {
 }
 ````
 
-### 1.3.6 ````DataBinder````
+### 1.3.5 ````DataBinder````
 
 ````@Controller````或者````@ControllerAdvice````类可以拥有````@InitBinder````方法来初始化````WebDataBinder````实例，然后就可以：
 
@@ -1623,4 +1623,49 @@ public class FormController {
 ````
 
 ### 1.3.6 异常
+@Controller和@ControllerAdvice类可以拥有@ExceptionHandler方法来处理来自控制器方法的异常。如下面例子所示：
+
+
+@Controller
+public class SimpleController {
+  
+  // ...
+  
+  @ExceptionHandler
+  public ResponseEntity<String> handle(IOException ex) {
+    // ...
+  }
+}
+该异常可以匹配到一个顶层异常而被传播（也就是说，直接抛出一个IOException）或者就是异常的直接原因被放在顶层包装器异常内部（比如，一个IOException内容包装了一个IllegalStateException）。
+
+为了匹配异常类型，大家更倾向于将目标异常声明为一个方法参数，如前面例子所示。当匹配到多个异常处理方法，匹配到的根异常通常具有比匹配到的原因异常更高的优先级。更特殊的，ExceptionDepthComparator被用于对异常进行排序，基于它们相对于抛出的异常类型的深度。
+
+另外，此注解声明可以窄化匹配的异常类型，如下面例子所示：
+
+
+@ExceptionHandler({FileSystemException.class, RemoteException.class})
+public ResponseEntity<String> handle(IOException ex) {
+  // ...
+}
+你甚至可以以非常泛化的参数签名使用一个特定异常类型列表，如下面例子所示：
+
+
+@ExceptionHandler({FileSystemException.class, RemoteException.class})
+public ResponseEntity<String> handle(Exception ex) {
+    // ...
+}
+根异常和原因异常在异常匹配过程中的区别可能会出乎大家的意料。
+
+在前面展示的 IOException 变体中，通常使用实际的 FileSystemException 或者 RemoteException 实例作为参数来调用该方法，因为它们两者都是从 IOException 继承而来。不过，如果任何此类匹配异常被包装在包装器异常中传播，而该包装器异常就是 IOException ，则传入异常实例就是该包装器异常。
+
+在 handle(Exception) 变体中的行为甚至会更加简单。这将永远会在包装场景下以包装器异常作为参数来调用，此时，实际的匹配异常通过 ex.getCause() 发现。传入异常就是实际的 FileSystemException 或者 RemoteException 实例，仅当这些异常被作为顶级异常抛出。
+我们通常推荐使用尽可能精确的参数签名，以减少潜在的从根异常到原因异常类型的匹配错误。可以考虑将一个匹配多种类型的方法拆分成为多个 @ExceptionHandler 方法，每个方法通过参数签名匹配单一一种特定的异常类型。
+
+在一个多-@ControllerAdvice 配置中，我们建议你在@ControllerAdvice中的声明你的首要根异常映射，并基于相应的顺序进行优先级排序。尽管根异常匹配优先于原因异常匹配，但是这是i当一个给定控制器或者@ControllerAdvice类中的方法之间定义的。这就意味着在一个更高优先级的@ControllerAdvice bean 上的一个原因异常匹配要优先于所有在低优先级的@ControllerAdvice bean 上的异常匹配（比如根异常匹配）。
+
+最后，一个@ExceptionHandler方法实现可以选择退出一个给定异常实例的处理过程，比如以初始形式重新将其抛出。这在某些场景下非常有用，比如你仅仅对根层级的异常匹配或者特定上下文（无法静态确定范围）中的异常匹配感兴趣的时候。一个重新抛出的异常将继续在剩余的异常处理链中传播，就像从来就没有被@ExceptionHandler方法处理过一样。
+
+对@ExceptionHandler方法的支持在 Spring MVC 中建立在DispatcherServlet层面，HandlerExceptionResolver 机制。
+
+
 
