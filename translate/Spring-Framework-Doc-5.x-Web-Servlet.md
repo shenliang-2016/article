@@ -931,7 +931,7 @@ JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数
 
 | 控制器方法参数                                  | 描述                                       |
 | ---------------------------------------- | ---------------------------------------- |
-| ````WebRequest````，````NativeWebRequest```` | 一般的对亲故参数和请求和会话属性的访问，不直接使用 Servlet API 。  |
+| ````WebRequest````，````NativeWebRequest```` | 一般的对请求参数和请求和会话属性的访问，不直接使用 Servlet API 。  |
 | ````javax.servlet.ServletRequest````<br />````javax.servlet.ServletResponse```` | 选择任何特定的请求或者响应类型－比如，ServletRequest，HttpServletRequest，或者 Spring 的````MultipartRequest````，````MultipartHttpServletRequest````。 |
 | ````javax.servlet.http.HttpSession````   | 强制会话存在。由此，这个参数永远不会为````null````。注意，会话的访问不是线程安全的。设置````RequestMappingHandlerAdapter````实例的````synchronizeOnSession````标识为````true````，如果允许多个请求并发访问一个会话。 |
 | ````javax.servlet.http.PushBuilder````   | Servlet 4.0 的推送构建器 API 用于编程方式 HTTP/2 资源推送。注意，每个 Servlet 规范，注入的 PushBuilder 实例可以为 ````null````，如果客户端不支持 HTTP/2 新特性。 |
