@@ -929,58 +929,58 @@ public class MyConfig {
 
 JDK 8 中与注解相结合的````java.util.Optional````作为一个方法参数被支持，这些注解拥有一个````required````属性（比如，````@RequestParam````，````@RequestHeader````等等）并等价于````required=false````。
 
-| 控制器方法参数                                               | 描述                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ````WebRequest````，````NativeWebRequest````                 | 一般的对亲故参数和请求和会话属性的访问，不直接使用 Servlet API 。 |
+| 控制器方法参数                                  | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| ````WebRequest````，````NativeWebRequest```` | 一般的对亲故参数和请求和会话属性的访问，不直接使用 Servlet API 。  |
 | ````javax.servlet.ServletRequest````<br />````javax.servlet.ServletResponse```` | 选择任何特定的请求或者响应类型－比如，ServletRequest，HttpServletRequest，或者 Spring 的````MultipartRequest````，````MultipartHttpServletRequest````。 |
-| ````javax.servlet.http.HttpSession````                       | 强制会话存在。由此，这个参数永远不会为````null````。注意，会话的访问不是线程安全的。设置````RequestMappingHandlerAdapter````实例的````synchronizeOnSession````标识为````true````，如果允许多个请求并发访问一个会话。 |
-| ````javax.servlet.http.PushBuilder````                       | Servlet 4.0 的推送构建器 API 用于编程方式 HTTP/2 资源推送。注意，每个 Servlet 规范，注入的 PushBuilder 实例可以为 ````null````，如果客户端不支持 HTTP/2 新特性。 |
-| ````java.security.Principal````                              | 当前已认证用户－可能一个特定 Principal 实现类，如果知道。    |
-| ````HttpMethod````                                           | 请求的 HTTP 方法。                                           |
-| ````java.util.Locale````                                     | 当前请求语言环境，由最精准的可用````LocaleResolver````（实际上就是配置的````LocaleResolver````或者````LocaleContextResolver````）决定。 |
-| ````java.util.TimeZone```` +<br />````java.time.ZoneId````   | 当前请求相关的时区，由 LocaleContextResolver 确定。          |
-| ````java.io.InputStream````<br />````java.io.Reader````      | 用于访问通过 Serlvet API 暴露的未加工的请求体。              |
-| ````java.io.OutputSteam````<br />````java.io.Writer````      | 用于访问通过 Serlvet API 暴露的未加工的响应体。              |
-| ````@PathVariable````                                        | 用于访问 URI 模版变量，参考 [URI patterns](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-uri-templates) 。 |
-| ````@MatrixVariable````                                      | 用于访问 URI 路径片段中的名值对，参考 [Matrix Variables](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-matrix-variables) 。 |
-| ````@RequestParam````                                        | 用于访问 Servlet 请求参数，包含多部分文件。参数值被转换为声明的方法参数类型。参考[`@RequestParam`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestparam) 以及 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。<br />注意，为简单参数值使用````@RequestParam````是可选的。参考本表末尾的“其它参数”。 |
-| ````@RequestHeader````                                       | 用于访问请求首部字段。首部字段值呗转化为声明的方法参数类型。参考 [`@RequestHeader`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestheader) 。 |
-| ````@CookieValue````                                         | 用于访问 cookies。Cookies 值被转化为声明的方法参数类型。参考 [`@CookieValue`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-cookievalue) 。 |
-| ````@RequestBody````                                         | 用来访问 HTTP 请求体。请求体内容通过使用````HttpMessageConverter````实现被转化为声明的方法参数类型。参考 [`@RequestBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestbody) 。 |
-| ````HttpEntity<B>````                                        | 用于访问请求首部字段和请求体。请求体通过````HttpMessageConverter````转化。参考 [HttpEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-httpentity) 。 |
-| ````@RequestPart````                                         | 用于访问````multipart/form-data````请求中的一个部分数据，通过````HttpMessageConverter````转化该部分数据体。参考 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。 |
+| ````javax.servlet.http.HttpSession````   | 强制会话存在。由此，这个参数永远不会为````null````。注意，会话的访问不是线程安全的。设置````RequestMappingHandlerAdapter````实例的````synchronizeOnSession````标识为````true````，如果允许多个请求并发访问一个会话。 |
+| ````javax.servlet.http.PushBuilder````   | Servlet 4.0 的推送构建器 API 用于编程方式 HTTP/2 资源推送。注意，每个 Servlet 规范，注入的 PushBuilder 实例可以为 ````null````，如果客户端不支持 HTTP/2 新特性。 |
+| ````java.security.Principal````          | 当前已认证用户－可能一个特定 Principal 实现类，如果知道。       |
+| ````HttpMethod````                       | 请求的 HTTP 方法。                             |
+| ````java.util.Locale````                 | 当前请求语言环境，由最精准的可用````LocaleResolver````（实际上就是配置的````LocaleResolver````或者````LocaleContextResolver````）决定。 |
+| ````java.util.TimeZone```` +<br />````java.time.ZoneId```` | 当前请求相关的时区，由 LocaleContextResolver 确定。    |
+| ````java.io.InputStream````<br />````java.io.Reader```` | 用于访问通过 Serlvet API 暴露的未加工的请求体。           |
+| ````java.io.OutputSteam````<br />````java.io.Writer```` | 用于访问通过 Serlvet API 暴露的未加工的响应体。           |
+| ````@PathVariable````                    | 用于访问 URI 模版变量，参考 [URI patterns](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-uri-templates) 。 |
+| ````@MatrixVariable````                  | 用于访问 URI 路径片段中的名值对，参考 [Matrix Variables](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-matrix-variables) 。 |
+| ````@RequestParam````                    | 用于访问 Servlet 请求参数，包含多部分文件。参数值被转换为声明的方法参数类型。参考[`@RequestParam`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestparam) 以及 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。<br />注意，为简单参数值使用````@RequestParam````是可选的。参考本表末尾的“其它参数”。 |
+| ````@RequestHeader````                   | 用于访问请求首部字段。首部字段值呗转化为声明的方法参数类型。参考 [`@RequestHeader`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestheader) 。 |
+| ````@CookieValue````                     | 用于访问 cookies。Cookies 值被转化为声明的方法参数类型。参考 [`@CookieValue`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-cookievalue) 。 |
+| ````@RequestBody````                     | 用来访问 HTTP 请求体。请求体内容通过使用````HttpMessageConverter````实现被转化为声明的方法参数类型。参考 [`@RequestBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestbody) 。 |
+| ````HttpEntity<B>````                    | 用于访问请求首部字段和请求体。请求体通过````HttpMessageConverter````转化。参考 [HttpEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-httpentity) 。 |
+| ````@RequestPart````                     | 用于访问````multipart/form-data````请求中的一个部分数据，通过````HttpMessageConverter````转化该部分数据体。参考 [Multipart](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-multipart-forms) 。 |
 | ````java.util.Map````<br />````org.springframework.ui.Model````<br />````org.springframework.ui.ModelMap```` | 用于访问数据模型，该模型 HTML 控制器使用，并作为视图渲染的一部分被暴露给视图模版。 |
-| ````RedirectAttributes````                                   | 用于重定向场景的特定属性（也就是说，会被添加到查询字符串中），同时清理将被临时存储的属性直到请求重定向完成。参考 [Redirect Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-redirecting-passing-data) 和 [Flash Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) 。 |
-| ````ModelAttribute````                                       | 用于访问模型中已经存在的属性，连同数据绑定和应用的验证。参考 [`@ModelAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-method-args) 以及 [Model](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-methods) 和 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder) 。<br />注意，````@ModelAttribute````的使用是可选的（比如要设置它的属性），参考本表末尾的“其它参数”。 |
-| ````Errors````<br />````BindingResult````                    | 用于访问来自对一个命令对象（也就是一个````@ModelAttribute````参数）进行的验证和数据绑定的错误，或者来自````@RequestBody````或者````@RequestPart````参数验证的错误。验证方法参数之后你必须立即声明一个````Errors````或者````BidingResult````参数。 |
-| ````SessionStatus````＋ 类层面的 ````@SessionAttributes````  | 为了标识表单处理完成，该状态将触发通过类层面的````@SessionAttributes````注解声明的会话属性的清理。参考 [`@SessionAttributes`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattributes) 获取更多细节。 |
-| ````UriComponentsBuilder````                                 | 准备一个相对于当前请求的主机、端口、协议、上下文路径以及 servlet 映射字面部分的 URL 。参考 [URI Links](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-uri-building) 。 |
-| ````@SessionAttribute````                                    | 用于访问任何会话属性，不同于作为类层面的````@SessionAttributes````声明的结果的存储在会话中的模型属性。参考 [`@SessionAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattribute) 获取更多细节。 |
-| ````@RequestAttribute````                                    | 用于访问请求属性。参考 [`@RequestAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestattrib) 。 |
-| 其它参数                                                     | 任何本表中没有匹配到的简单类型参数（由 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定），被作为````@RequestParam````解析。否则，将被作为````@ModelAttribute````解析。 |
+| ````RedirectAttributes````               | 用于重定向场景的特定属性（也就是说，会被添加到查询字符串中），同时清理将被临时存储的属性直到请求重定向完成。参考 [Redirect Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-redirecting-passing-data) 和 [Flash Attributes](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) 。 |
+| ````ModelAttribute````                   | 用于访问模型中已经存在的属性，连同数据绑定和应用的验证。参考 [`@ModelAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-method-args) 以及 [Model](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-modelattrib-methods) 和 [`DataBinder`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-initbinder) 。<br />注意，````@ModelAttribute````的使用是可选的（比如要设置它的属性），参考本表末尾的“其它参数”。 |
+| ````Errors````<br />````BindingResult```` | 用于访问来自对一个命令对象（也就是一个````@ModelAttribute````参数）进行的验证和数据绑定的错误，或者来自````@RequestBody````或者````@RequestPart````参数验证的错误。验证方法参数之后你必须立即声明一个````Errors````或者````BidingResult````参数。 |
+| ````SessionStatus````＋ 类层面的 ````@SessionAttributes```` | 为了标识表单处理完成，该状态将触发通过类层面的````@SessionAttributes````注解声明的会话属性的清理。参考 [`@SessionAttributes`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattributes) 获取更多细节。 |
+| ````UriComponentsBuilder````             | 准备一个相对于当前请求的主机、端口、协议、上下文路径以及 servlet 映射字面部分的 URL 。参考 [URI Links](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-uri-building) 。 |
+| ````@SessionAttribute````                | 用于访问任何会话属性，不同于作为类层面的````@SessionAttributes````声明的结果的存储在会话中的模型属性。参考 [`@SessionAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattribute) 获取更多细节。 |
+| ````@RequestAttribute````                | 用于访问请求属性。参考 [`@RequestAttribute`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestattrib) 。 |
+| 其它参数                                     | 任何本表中没有匹配到的简单类型参数（由 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定），被作为````@RequestParam````解析。否则，将被作为````@ModelAttribute````解析。 |
 
 **返回值**
 
 下表描述了支持的控制器方法返回值。所有响应值都支持反应式类型。
 
-| 控制器方法返回值                                             | 描述                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ````@ResponseBody````                                        | 返回值通过````HttpMessageConverter````实现转化并写入响应。参考 [`@ResponseBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responsebody) 。 |
-| ````HttpEntity<B>````，````ResponseEntity<B>````             | 指定完整响应（包括 HTTP 首部字段和主体）的返回值通过````HttpMesssageConverter````实现转化并写入响应。参考 [ResponseEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responseentity) 。 |
-| ````HttpHeaders````                                          | 为了返回一个响应，包含首部字段，但是没有主体。               |
-| ````String````                                               | 一个视图名称将被````ViewResolver````实现解析被与明确的模型共同使用－通过命令对象和````@ModelAttribute````方法确定。控制器方法也能够通过编程方式通过声明一个````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
-| ````View````                                                 | 一个````View````实例结合明确的数据模型进行渲染－通过命令对象和````@ModelAttribute````方法来确定。处理器方法与能够以编程方式通过声明````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
+| 控制器方法返回值                                 | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| ````@ResponseBody````                    | 返回值通过````HttpMessageConverter````实现转化并写入响应。参考 [`@ResponseBody`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responsebody) 。 |
+| ````HttpEntity<B>````，````ResponseEntity<B>```` | 指定完整响应（包括 HTTP 首部字段和主体）的返回值通过````HttpMesssageConverter````实现转化并写入响应。参考 [ResponseEntity](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-responseentity) 。 |
+| ````HttpHeaders````                      | 为了返回一个响应，包含首部字段，但是没有主体。                  |
+| ````String````                           | 一个视图名称将被````ViewResolver````实现解析被与明确的模型共同使用－通过命令对象和````@ModelAttribute````方法确定。控制器方法也能够通过编程方式通过声明一个````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
+| ````View````                             | 一个````View````实例结合明确的数据模型进行渲染－通过命令对象和````@ModelAttribute````方法来确定。处理器方法与能够以编程方式通过声明````Model````参数来丰富模型。参考 [Explicit Registrations](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-registration) 。 |
 | ````java.util.Map````<br />````org.springframework.ui.Model```` | 将被添加进入明确模型的属性，连同通过````RequestToViewNameTranslator````显式确定的视图名称。 |
-| ````@ModelAttribute````                                      | 一个将被添加进入模型的属性，连同通过````RequestToViewNameTranslator````显式确定的视图名称。<br />注意，````@ModelAttribute````是可选的。参考表末尾的“其它返回值”。 |
-| ````ModelAndView````对象                                     | 将要使用的视图和模型属性，以及可选的，响应状态。             |
-| ````void````                                                 | 具有````void````返回值（或者````null````返回值）的方法被认为拥有完整的处理之后的响应，如果它也拥有一个````ServletResponse````，一个````OutputStream````参数，或者一个````@ResponseStatus````注解。如果控制器进行一个确定的````ETag````或者````lastModified````时间戳检查时也会是这样。<br />如果上述情况都没有出现，````void````返回值也可以表示没有响应体为 REST 控制器返回，或者为 HTML 控制器选择了默认的视图名称。 |
-| ````DeferredResult<V>````                                    | 从任何线程中异步产生前面提到的任何返回值－比如，作为一些事件或者回调的结果。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [`DeferredResult`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-deferredresult) 。 |
-| ````Callable<V>````                                          | 从任何 Spring MVC 管理的线程中异步产生任何上面提到的返回值。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [`Callable `](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-callable) 。 |
+| ````@ModelAttribute````                  | 一个将被添加进入模型的属性，连同通过````RequestToViewNameTranslator````显式确定的视图名称。<br />注意，````@ModelAttribute````是可选的。参考表末尾的“其它返回值”。 |
+| ````ModelAndView````对象                   | 将要使用的视图和模型属性，以及可选的，响应状态。                 |
+| ````void````                             | 具有````void````返回值（或者````null````返回值）的方法被认为拥有完整的处理之后的响应，如果它也拥有一个````ServletResponse````，一个````OutputStream````参数，或者一个````@ResponseStatus````注解。如果控制器进行一个确定的````ETag````或者````lastModified````时间戳检查时也会是这样。<br />如果上述情况都没有出现，````void````返回值也可以表示没有响应体为 REST 控制器返回，或者为 HTML 控制器选择了默认的视图名称。 |
+| ````DeferredResult<V>````                | 从任何线程中异步产生前面提到的任何返回值－比如，作为一些事件或者回调的结果。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [`DeferredResult`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-deferredresult) 。 |
+| ````Callable<V>````                      | 从任何 Spring MVC 管理的线程中异步产生任何上面提到的返回值。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [`Callable `](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-callable) 。 |
 | ````ListenableFutrue<V>````<br />````java.util.concurrent.CompletionStatege<V>````<br />````java.util.concurrent.CompletableFuture<V>```` | ````DeferredResult````的替代品，为了方便（比如，当一个基础服务返回它们其中之一时）。 |
-| ````ResponseBodyEmitter````<br />````SseEmitter````          | 通过````HttpMessageConverter````实现异步发出一个将要被写入响应中的对象流。同时支持作为````ResponseEntity````的主体。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [HTTP Streaming](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) 。 |
-| ````StreamingResponseBody````                                | 异步写入响应````OutputStream````。同时支持作为````ResponseEntity````的主体。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [HTTP Streaming](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) 。 |
+| ````ResponseBodyEmitter````<br />````SseEmitter```` | 通过````HttpMessageConverter````实现异步发出一个将要被写入响应中的对象流。同时支持作为````ResponseEntity````的主体。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [HTTP Streaming](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) 。 |
+| ````StreamingResponseBody````            | 异步写入响应````OutputStream````。同时支持作为````ResponseEntity````的主体。参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [HTTP Streaming](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) 。 |
 | 反应式类型－反应器，RxJava，或者通过````ReactiveAdapterRegistry````得到的其它东西。 | ````DeferredResult````的替代品，将多个值流（比如````Flux````，````Observable````）收集称为一个````List````。<br />流式场景下（比如````text/event-stream````，````application/json+stream````），````SseEmitter````和````ResponseBodyEmitter````被使用，这些地方````ServletOutputStream````阻塞式 I/O 执行在 Spring MVC 管理的线程上并导致了每次写入完成的压力。<br />参考 [Asynchronous Requests](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async) 和 [Reactive Types](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc-ann-async-reactive-types) 。 |
-| 其它返回值                                                   | 任何没有匹配到此表中提到的返回值的返回值，如果是````String````或者````void````就会被作为视图名称（默认视图名称选择通过````RequestToViewNameTranslator````执行），提供它不是一个简单类型，通过 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 决定。简单类型的返回值就不会被解析。 |
+| 其它返回值                                    | 任何没有匹配到此表中提到的返回值的返回值，如果是````String````或者````void````就会被作为视图名称（默认视图名称选择通过````RequestToViewNameTranslator````执行），提供它不是一个简单类型，通过 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 决定。简单类型的返回值就不会被解析。 |
 
 **类型转换**
 
@@ -1623,7 +1623,7 @@ public class FormController {
 ````
 
 ### 1.3.6 异常
-````@Controller````和`````@ControllerAdvice````类可以拥有````@ExceptionHandler````方法来处理来自控制器方法的异常。如下面例子所示：
+````@Controller````和````@ControllerAdvice````类可以拥有````@ExceptionHandler````方法来处理来自控制器方法的异常。如下面例子所示：
 
 ````java
 @Controller
