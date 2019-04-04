@@ -1670,5 +1670,24 @@ public ResponseEntity<String> handle(Exception ex) {
 
 对````@ExceptionHandler````方法的支持在 Spring MVC 中建立在````DispatcherServlet````层面，````HandlerExceptionResolver```` 机制。
 
+**方法参数**
 
+````@ExceptionHandler````方法支持下列参数：
+
+| 方法参数                                     | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| 异常类型                                     | 为了访问产生的异常。                               |
+| ````HandlerMethod````                    | 为了访问产生异常的控制器方法。                          |
+| ````WebRequest````，````NativeWebRequest```` | 泛型访问请求参数和请求和会话属性，而不需要截止使用 Servlet API。   |
+| ````javax.servlet.ServletRequest````，<br />````javax.servlet.ServletResponse```` | 选择任何特定请求或者响应类型（比如，````ServletRequest````或者````HttpServletRequest````或者 Spring 的````MultipartRequest````或者````MultipartHttpServletRequest````）。 |
+| ````javax.servlet.http.HttpSession````   |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
+|                                          |                                          |
 
