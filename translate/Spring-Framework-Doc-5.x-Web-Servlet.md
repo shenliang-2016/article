@@ -1674,20 +1674,38 @@ public ResponseEntity<String> handle(Exception ex) {
 
 ````@ExceptionHandler````方法支持下列参数：
 
-| 方法参数                                     | 描述                                       |
-| ---------------------------------------- | ---------------------------------------- |
-| 异常类型                                     | 为了访问产生的异常。                               |
-| ````HandlerMethod````                    | 为了访问产生异常的控制器方法。                          |
-| ````WebRequest````，````NativeWebRequest```` | 泛型访问请求参数和请求和会话属性，而不需要截止使用 Servlet API。   |
+| 方法参数                                                     | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 异常类型                                                     | 为了访问产生的异常。                                         |
+| ````HandlerMethod````                                        | 为了访问产生异常的控制器方法。                               |
+| ````WebRequest````，````NativeWebRequest````                 | 泛型访问请求参数和请求和会话属性，而不需要截止使用 Servlet API。 |
 | ````javax.servlet.ServletRequest````，<br />````javax.servlet.ServletResponse```` | 选择任何特定请求或者响应类型（比如，````ServletRequest````或者````HttpServletRequest````或者 Spring 的````MultipartRequest````或者````MultipartHttpServletRequest````）。 |
-| ````javax.servlet.http.HttpSession````   |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
-|                                          |                                          |
+| ````javax.servlet.http.HttpSession````                       | 强制会话的存在。进而，这样的一个参数永远不为````null```` 。<br />注意，会话的访问不是线程安全的。考虑将````RequestMappingHandlerAdapter````实例的````synchronizeOnSession````标志设置为````true````，如果多个请求被允许并发访问同一个会话。 |
+| ````java.security.Principal````                              | 当前认证过的用户－可能一个特定的````Principal````实现类，如果可知。 |
+| ````HttpMethod````                                           | 请求的 HTTP 方法。                                           |
+| ````java.util.Locale````                                     | 当前请求的语言环境，由可用的最精确的````LocaleResolver````决定－实际上，就是配置的````LocaleResolver````或者````LocaleContextResolver````。 |
+| ````java.util.TimeZone````<br />````java.time.ZoneId````     | 当前请求关联的时区，由````LocaleContextResolver````决定。    |
+| ````java.io.OutputStream````<br />````java.io.Writer````     | 用来访问原始响应体，就像通过 Servlet API 暴露出来的那样。    |
+| ````java.util.Map````<br />````org.springframework.ui.Model````<br />````org.springframework.ui.ModelMap```` | 用来访问一个错误响应的模型，永远为空。                       |
+| ````RedirectAttribute````                                    | 用于重定向场景的特殊属性－（不会被附加到查询字符串中）同时 flash 属性被临时存储直到请求重定向完成。参考 [Redirect Attributes](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-redirecting-passing-data) 和 [Flash Attributes](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-flash-attributes) 。 |
+| ````@SessionAttribute````                                    | 用来访问任何会话属性，相比之下模型属性存储在会话中，作为一个类层面的````@SessionAttributes````声明的结果。参考 [`@SessionAttribute`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-sessionattribute) 获取更多细节。 |
+| ````@RequestAttribute````                                    | 用来访问请求属性。更多细节参见 [`@RequestAttribute`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-requestattrib) 。 |
+
+**返回值**
+
+````@ExceptionHandler````方法支持如下返回值：
+
+| 返回值                                                       | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ````@ResponseBody````                                        | 返回值通过````HttpMessageConverter````实例被转化并写入响应。参考 [`@ResponseBody`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-responsebody) 。 |
+| ````HttpEntiry<B>````，<br />````ResponseEntity<B>````       | 返回值制定完整响应（包括 HTTP 首部字段和响应体）被通过````HttpMessageConverter````实例转化并写入响应。参考 [ResponseEntity](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-responseentity) 。 |
+| ````String````                                               | 视图名称被````ViewResolver````实现解析并被连同显式模型使用，模型通过命令对象和````@ModelAttribute````方法确定。处理方法也能够编程式丰富数据模型，通过声明一个````Model````参数。 |
+| ````View````                                                 | 一个````View````实例，用来连同显式模型共同渲染，模型通过命令对象和````@ModelAttribute````方法确定。处理方法也能够编程式丰富数据模型，通过声明一个````Model````参数。 |
+| ````java.util.Map````<br />````org.springframework.ui.Model```` | 将要被添加到显式模型中的属性，模型对应的视图名称通过````RequestToViewNameTranslator````显式确定。 |
+| ````@ModelAttribute````                                      | 将要被添加到显式模型中的属性，模型对应的视图名称通过````RequestToViewNameTranslator````显式确定。<br />注意，````@ModelAttribute````是可选的。参考此表末尾的“其他返回值”。 |
+| ````ModelAndView````对象                                     | 要使用的视图和模型属性，以及可选的响应状态。                 |
+| ````void````                                                 | 具有````void````返回值（或者````null````返回值）的方法被认为拥有完整的处理之后的响应，如果它也拥有一个````ServletResponse````，一个````OutputStream````参数，或者一个````@ResponseStatus````注解。如果控制器进行一个确定的````ETag````或者````lastModified````时间戳检查时也会是这样。<br />如果上述情况都没有出现，````void````返回值也可以表示没有响应体为 REST 控制器返回，或者为 HTML 控制器选择了默认的视图名称。 |
+| 所有其他返回值                                               | 如果返回值没有匹配到上述所有的类型同时又不是简单类型（由 [BeanUtils#isSimpleProperty](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/beans/BeanUtils.html#isSimpleProperty-java.lang.Class-) 确定），默认地，它就被作为模型属性而被添加到模型中。如果它是简单类型，则不会被解析。 |
+
+**REST API 异常**
 
