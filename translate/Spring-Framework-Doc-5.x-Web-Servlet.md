@@ -1789,3 +1789,81 @@ URI uri = UriComponentsBuilder
 
 [`UriComponentsBuilder`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#web-uricomponents) 实现了````UriBuilder````。您可以使用````UriBuilderFactory````创建一个````UriBuilder````。 ````UriBuilderFactory````和````UriBuilder````一起提供了一种可插拔的机制，可以根据共享配置（例如基本URL，编码首选项和其他详细信息）从URI模板构建URI。
 
+你可以通过````UriBuilderFactory````配置````RestTemplate````和````WebClient````以定制化 URI 的准备过程。````DefautUriBuilderFactory````是````UriBuilderFactory````的一个默认实现，内部使用了````UriComponentsBuilder````并将共享配置选项暴露出来。
+
+下面的例子展示了如何配置一个````RestTemplate````：
+
+````java
+// import org.springframework.web.util.DefaultUriBuilderFactory.EncodingMode
+
+String baseUrl = "https://example.rog";
+DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(baseUrl);
+factory.setEncodingMode(EncodingMode.TEMPLATE_AND_VARIABLES);
+
+RestTemplate restTemplate = new RestTemplate();
+restTemplate.setUriTemplateHandler(factory);
+````
+
+下面的例子配置一个````WebClient````：
+
+````java
+// import org.springframework.web.util.DefaultUriBuilderFactory.EncodingMode;
+
+String baseUrl = "https://example.org";
+DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(baseUrl);
+factory.setEncodingMode(EncodingMode.TEMPLATE_AND_VARIABLES);
+
+WebClient client = WebClient.builder().uriBuilderFactory(factory).build();
+````
+
+此外，你也可以直接使用````DefaultUriBuilderFactory````。类似于使用````UriComponentsBuilder````，不过，并不是静态工厂方法，而是持有配置和首选项的实际实例。如下面例子所示：
+
+````java
+String baseUrl = "https://example.com";
+DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory(baseUrl);
+
+URI uri = uriBuilderFactory.uriString("/hotels/{hotel}")
+        .queryParam("q", "{q}")
+        .build("Westin", "123");
+````
+
+### 1.4.3 URI Encoding
+
+````UriComponentsBuilder````在两个层面暴露编码选项：
+
+* [UriComponentsBuilder#encode()](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/util/UriComponentsBuilder.html#encode--) ：首先对 URI 模版进行预编码然后在扩展时对 URI 变量进行严格的编码。
+* [UriComponents#encode()](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/util/UriComponents.html#encode--) ：在 URI 变量被扩展之后对 URI 组件进行编码。
+
+两种方式都会把非 ASCII 码和非法字符替换为转义字符。不过，第一种方式也会替换出现在 URI 变量中具有保留含义的字符。
+
+> 考虑分号";"，它在请求路径中是合法的，但是却具有保留含义。第一种方式会将 URI 变量中的";"替换为"%3B"，而在 URI 模版中的分号则不会被替换。作为对比，第二种方式永远不会替换分号，因为它在路径中是合法字符。
+
+大多数情况下，第一种方式更可能给出人们期望的结果，因为它将 URI 变量作为被完整编码的不透明数据，而第二种方式只有当 URI 变量里确实包含保留字符时才有用。
+
+下面的例子采用了第一种方式：
+
+````java
+URI uri = UriComponentsBuilder.fromPath("/hotel list/{city}")
+            .queryParam("q", "{q}")
+            .encode()
+            .buildAndExpand("New York", "foo+bar")
+            .toUri();
+
+    // Result is "/hotel%20list/New%20York?q=foo%2Bbar"
+````
+
+可以简化为：
+
+````java
+URI uri = UriComponentsBuilder.fromPath("/hotel list/{city}")
+            .queryParam("q", "{q}")
+            .build("New York", "foo+bar")
+````
+
+使用完整的 URI 模版，最终简化为：
+
+````java
+URI uri = UriComponentsBuilder.fromPath("/hotel list/{city}?q={q}")
+            .build("New York", "foo+bar")
+````
+
