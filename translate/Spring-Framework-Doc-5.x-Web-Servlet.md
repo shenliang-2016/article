@@ -1741,3 +1741,49 @@ public class ExampleAdvice3 {}
 
 ## 1.4 URI Links
 
+本节介绍 Spring Framework 中可用于处理URI的各种选项。
+
+### 1.4.1 UriComponents
+
+````UriComponentsBuilder````帮助大家从 URI 模版和变量来构建 URI，如下面例子所示：
+
+````java
+UriComponents uriComponents = UriComponentsBuilder
+		.fromUriString("https://example.com/hotels/{hotel}")	// 带有URI模版的静态工厂方法
+		.queryParam("q", "{q}")	// 添加或者替换URI组件
+		.encode()	// 拥有URI模版和URI变量的请求的编码
+		.build();	// 构建一个UriComponents
+		
+URI uri = uriComponents.expand("Westin", "123").toUri();	// 展开变量并获取URI
+````
+
+上面的例子可以通过````buildAndExpand````缩减精简为一个链条，如下面例子所示：
+
+````java
+URI uri = UriComponentsBuilder
+        .fromUriString("https://example.com/hotels/{hotel}")
+        .queryParam("q", "{q}")
+        .encode()
+        .buildAndExpand("Westin", "123")
+        .toUri();
+````
+
+再次精简：
+
+````java
+URI uri = UriComponentsBuilder
+        .fromUriString("https://example.com/hotels/{hotel}")
+        .queryParam("q", "{q}")
+        .build("Westin", "123");
+````
+
+完全使用 URI 模版，可以最终精简为下面的形式：
+
+````java
+URI uri = UriComponentsBuilder
+        .fromUriString("https://example.com/hotels/{hotel}?q={q}")
+        .build("Westin", "123");
+````
+
+### 1.4.2 UriBuilder
+
