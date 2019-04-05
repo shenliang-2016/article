@@ -1709,3 +1709,35 @@ public ResponseEntity<String> handle(Exception ex) {
 
 **REST API 异常**
 
+在响应体中包含错误细节是对 REST 服务的一个很普通的要求。Spring 框架并不会自动这么做，因为响应体中的错误细节的表示形式是应用特定的。不过，````@RestController````可以使用````@ExceptionHandler````方法和````ResponseEntity````返回值来设置响应状态码和响应体。这些方法也可以被声明在````@ControllerAdvice````类中以便全局使用它们。
+
+实现了全局异常处理并将错误信息放到响应体中的应用应该考虑扩展````ResponseEntityExceptionHandler````，它提供了 Spring MVC 产生并提供了关联到定制化的响应体的钩子方法的异常。为了使用该特性，创建````ResponseEntityExceptionHandler````的一个子类，为它添加注解````@ControllerAdvice````，重写必要的方法，并将其声明为一个 Spring bean。
+
+### 1.3.7 Controller Advice
+
+典型的````@ExceptionHandler````，````@InitBinder````，以及````@ModelAttribute````方法都应用在声明它们的````@Controller````类（或者类继承体系）中。如果你想要全局（跨越控制器）应用这些方法，你可以在以````@ControllerAdvice````或者````@RestControllerAdvice````标注的类中声明它们。
+
+````@ControllerAdvice````被````@Component````标记，该注解意味着这种类可以通过 [component scanning](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#beans-java-instantiating-container-scan) 被注册为 Spring beans 。````@RestControllerAdvice````也是一个元注解，同时被````@ControllerAdvice````和````@ResponseBody````标记，它们的基础意思是````@ExceptionHandler````方法通过消息转换（相对于视图解析或者模版渲染）被渲染为响应体。
+
+在启动时，为````@RequestMapping````和````@ExceptionHandler````方法服务的基础设施类探测````@ControllerAdvice````类型的 Spring beans 然后在运行时应用它们的方法。全局的````@ExceptionHandler````方法（来自一个````@ControllerAdvice````）在局部的相应方法（来自````@Controller````）之后才被应用。作为对比，全局的````@ModelAttribute````和````@InitBinder````方法在局部的相应方法之前被应用。
+
+默认地，````@ControllerAdvice````方法应用于每个请求（也就是说，所有控制器），不过你可以窄化其应用范围为一部分控制器，通过使用注解属性，如下面例子所示：
+
+````java
+// Target all Controllers annotated with @RestController
+@ControllerAdvice(annotations = RestController.class)
+public class ExampleAdvice1 {}
+
+// Target add Controllers within specific packages
+@ControllerAdvice("org.example.controllers")
+public class ExampleAdvice2 {}
+
+// Target all Controllers assignable to specific classes
+@ControllerAdvice(assignableType = {ControllerInterface.class, AbstractController.class})
+public class ExampleAdvice3 {}
+````
+
+上面例子中的选择器在运行时被解析，如果滥用可能会对性能产生负面影响。参考 [`@ControllerAdvice`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/bind/annotation/ControllerAdvice.html) 文档获取更多细节。
+
+## 1.4 URI Links
+
