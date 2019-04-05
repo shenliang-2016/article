@@ -1787,3 +1787,5 @@ URI uri = UriComponentsBuilder
 
 ### 1.4.2 UriBuilder
 
+[`UriComponentsBuilder`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#web-uricomponents) 实现了````UriBuilder````。您可以使用````UriBuilderFactory````创建一个````UriBuilder````。 ````UriBuilderFactory````和````UriBuilder````一起提供了一种可插拔的机制，可以根据共享配置（例如基本URL，编码首选项和其他详细信息）从URI模板构建URI。
+
