@@ -1867,3 +1867,42 @@ URI uri = UriComponentsBuilder.fromPath("/hotel list/{city}?q={q}")
             .build("New York", "foo+bar")
 ````
 
+````WebClient````和````RestTemplate```` 通过````UriBuilderFactory````策略内部扩展并编码 URI 模版。两者都可以被配置为一个客户化策略，如下面例子所示：
+
+````java
+String baseUrl = "https://example.com";
+DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory(baseUrl);
+factory.setEncodingMode(EncodingMode.TEMPLATE_AND_VALUES);
+
+// Customize the RestTemplate..
+RestTemplate restTemplate = new RestTemplate();
+restTemplate.setUriTemplateHandler(factory);
+
+// Customize the WebClient..
+WebClient client = WebClient.builder().uriBuilderFactory(factory).build();
+````
+
+````DefaultUriBuilderFactory````实现内部使用````UriComponentsBuilder````来扩展并编码 URI 模版。作为一个工厂，它提供配置编码方法的唯一场所，基于下列编码模式之一：
+
+* ````TEMPLATE_AND_VALUES````：使用````UriComponentsBuilder#encode()````，对应于先前列表中的第一个选项，来预编码 URI 模版并在扩展时严格编码 URI 变量。
+* ````VALUES_ONLY````：不编码 URI 模版，而是通过使用````UriUtils#encodeUriVariables````在将它们扩展进入模版之前严格编码 URI 变量。
+* ````URI_COMPONENTS````：使用````UriComponents#encode()````，对应于先前列表中的第二个选项，在 URI 变量被扩展之后编码 URI 组件值。
+* ````NONE````：不应用任何编码。
+
+````RestTemplate````被设定为````EncodingMode.URI_COMPONENTS````，由于历史原因以及保持向后兼容的考虑。````WebClient````依赖于````DefaultUriBuilderFactory````中的默认值，它们在 Spring 5.0.x 版本中是````EncodingMode.URI_COMPONENTS````，而在 Spring 5.1 版本中变成了````EncodingMode.TEMPLATE_AND_VALUES````。
+
+### 1.4.4 相对 Servlet 请求
+
+你能够使用````ServletUriComponentsBuilder````来创建相对于当前请求的 URIs，如下面例子所示：
+
+````java
+HttpServletRequest request = ...
+
+// Re-uses host, scheme, port, path and query string...
+
+ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromRequest(request)
+        .replaceQueryParam("accountId", "{id}").build()
+        .expand("123")
+        .encode();
+````
+
