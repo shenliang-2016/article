@@ -1951,3 +1951,32 @@ UriComponents uriComponents = MvcUriComponentsBuilder
 URI uri = uriComponents.encode().toUri();
 ````
 
+在前面的例子中，我们提供了实际的方法参数值（例子中，长整型值：````21````）被用来作为一个路径变量并被插入 URL 。进一步地，我们提供值 ````42```` 来填充所有剩余的 URI 变量，比如````hotel````变量，该变量从类型层面的请求映射继承而来。如果该方法拥有更多参数，我们可以提供````null````值给那些 URL 不需要的参数。通常，只有````@PathVariable````和````@RequestParam````参数与 URL 构建相关。
+
+还存在其它使用````MvcUriComponentsBuilder````的方法。例如，您可以使用类似于通过代理进行模拟测试的技术，以避免按名称引用控制器方法，如下面例子所示（例子假定静态导入````MvcUriComponentsBuilder.on````）：
+
+````java
+UriComponents uriComponents = MvcUriComponentsBuilder
+	.fromMethodCall(on(BookingController.class).getBooking(21)).buildAndExpand(42);
+
+URI uri = uriComponents.encode().toUri();
+````
+
+> 控制器方法签名在它们被设计时受到限制，当它们假定被用来使用````fromMethodCall````进行链接创建。除了需要一个合适的参数签名，对返回值类型还（名义上，为链接创建器调用产生一个运行时代理）存在一个技术局限，因而返回值类型绝对不能是````final````的。特别地，作为视图名称的普通的````String````返回值类型在这里不会使用。你应该使用````ModelAndView````或者甚至是直白的````Object````（连同一个````String````返回值）来代替。
+
+先前的例子使用了````MvcUriComponentsBuilder````中的静态方法。内部地，它们依赖````ServletUriComponentsBuilder```` 由协议、主机、端口、上下文路径以及当前请求的 servlet 路径来准备一个基本 URL 。大多数情况下这种机制可以很好地工作。不过，有时候它并不足够。比如，你可能处于请求的上下文之外（如准备链接的批处理过程），或者可能你需要插入一个路径前缀（注入一个语言环境前缀，该前缀被从请求路径中删除，而需要被重新插入链接中）。
+
+这种情况下，你可以使用静态的````fromXxx````重载方法，该方法接受一个````UriComponentsBuilder````来使用一个基本 URL。另外，你可以基于基本 URL 创建一个````MvcUriComponentsBuilder````实例然后使用基于实例的````withXxx````方法。比如，下面的例子使用````withMethodCall````：
+
+````java
+UriComponentsBuilder base = ServletUriComponentsBuilder.fromCurrentContextPath().path("/en");
+MvcUriComponentsBuilder builder = MvcUriComponentsBuilder.relativeTo(base);
+builder.withMethodCall(on(BookingController.class).getBooking(21)).buildAndExpand(42);
+
+URI uri = uriComponents.encode().toUri();
+````
+
+> 作为 5.1 版本，````MvcUriComponentsBuilder````忽略来自````Forwarded````和````X-Forwarded-*````首部字段的信息，它们指定客户端发起的地址。考虑使用 [`ForwardedHeaderFilter`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#filters-forwarded-headers) 来提取并使用或者忽略这些首部字段。
+
+### 1.4.6 链接到视图
+
