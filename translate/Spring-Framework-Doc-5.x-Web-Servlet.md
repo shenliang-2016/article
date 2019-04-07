@@ -2001,4 +2001,9 @@ public class PersonAddressController {
 <a href="${s:mvcUrl('PAC#getAddress').arg(0,'US').buildAndExpand('123')}">Get Address</a>
 ````
 
-上面的例子依赖声明在 Spring 标签库中的````
+上面的例子依赖声明在 Spring 标签库（也就是````META-INF/spring.tld````）中的````mvcUrl````函数，不过你也可以很简单地定义你自己的函数，或者准备一种类似的函数用于其它的模版技术。
+
+它的工作原理如下：在启动时，每个````@RequestMapping````通过````HandlerMethodMappingNamingStrategy````被分配一个默认名称，其默认实现使用类名中的大写字母和方法名（比如，````ThingController````中的````getThing````方法变成````TC#getThing````）。如果存在命名冲突，你可以使用````@RequestMapping(name="...")````来显式指定一个名称，或者实现你自己的````HandlerMethodMappingNamingStrategy````。
+
+## 1.5 异步请求
+
