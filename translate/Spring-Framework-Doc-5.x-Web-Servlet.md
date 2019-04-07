@@ -1906,3 +1906,48 @@ ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromRequest(reques
         .encode();
 ````
 
+你可以创建相对于当前上下文路径的 URIs，如下面例子所示：
+
+````java
+// Re-uses host, port and context path...
+
+ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromContextPath(request)
+    	.path("/accounts").build();
+````
+
+你可以创建相对于一个 Servlet（比如，````/main/*````）的 URIs，如下面例子所示：
+
+````java
+// Re-uses host, port, context path, and Servlet prefix...
+
+ServletUriComponentsBuilder ucb = ServletUriComponentsBuilder.fromServletMapping(request)
+        .path("/accounts").build()
+````
+
+> 作为 5.1 版本，````ServletUriComponentsBuilder````忽略来自````Forwarded````和````X-Forwarded-*````首部字段的信息，它们指定客户端发起的地址。考虑使用 [`ForwardedHeaderFilter`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#filters-forwarded-headers) 来提取并使用或者忽略这些首部字段。
+
+### 1.4.5 链接到控制器
+
+Spring MVC 提供了一种机制来准备链接到控制器方法。比如，下面的 MVC 控制器允许链接创建：
+
+````java
+@Controller
+@RequestMapping("/hotels/{hotel}")
+public class BookingController {
+    
+    @GetMapping("/bookings/{booking}")
+    public ModelAndView getBooking(@PathVariable Long booking) {
+        // ...
+    }
+}
+````
+
+我们可以通过名称表示控制器方法来准备一个链接，如下面例子所示：
+
+````java
+UriComponents uriComponents = MvcUriComponentsBuilder
+	.fromMethodName(BookingController.class, "getBooking", 21).buildAndExpand(42);
+
+URI uri = uriComponents.encode().toUri();
+````
+
