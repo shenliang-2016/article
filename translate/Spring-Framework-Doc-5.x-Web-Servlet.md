@@ -1980,3 +1980,25 @@ URI uri = uriComponents.encode().toUri();
 
 ### 1.4.6 链接到视图
 
+在诸如 Thylmeleaf, FreeMarker, 或者 JSP 视图中，你可以创建链接到注解标注的控制器，通过引用为每个请求映射显式的或者隐式的分配的名称。
+
+考虑下面的例子：
+
+````java
+@RequestMapping("/people/{id}/addresses")
+public class PersonAddressController {
+
+    @RequestMapping("/{country}")
+    public HttpEntity getAddress(@PathVariable String country) { ... }
+}
+````
+
+给定上面的控制器，你可以由 JSP 准备一个链接，如下：
+
+````
+<%@ taglib uri="http://www.springframework.org/tags" prefix="s" %>
+...
+<a href="${s:mvcUrl('PAC#getAddress').arg(0,'US').buildAndExpand('123')}">Get Address</a>
+````
+
+上面的例子依赖声明在 Spring 标签库中的````
