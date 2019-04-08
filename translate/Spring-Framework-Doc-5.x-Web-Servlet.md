@@ -2007,3 +2007,76 @@ public class PersonAddressController {
 
 ## 1.5 异步请求
 
+Spring MVC 中对 Servlet 3.0 异步请求处理进行了广泛集成：
+
+* 在控制器方法中的 [`DeferredResult`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-deferredresult) 和 [`Callable`](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-callable) 返回值提供了对单个异步返回值的基本支持。
+* 控制器可以将多个返回值包装成  [stream](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) ，包括  [SSE](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-sse) 和 [raw data](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-output-stream) 。
+* 控制器可以使用响应式客户端并为响应处理返回 [reactive types](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-reactive-types) 。
+
+### 1.5.1 ````DeferredResult````
+
+一旦 Servlet 容器中开启了异步请求处理特性，控制器方法可以包装任何支持的控制器方法返回值为````DeferredResult````，如下面例子所示：
+
+````java
+@GetMapping("/quotes")
+@ResponseBody
+public DeferredResult<String> quotes() {
+    DeferredResult<String> deferredResult = new DeferredResult<String>();
+    // Save the deferredResult somewhere..
+    return deferredResult;
+}
+
+// From some other thread...
+deferredResult.setResult(data);
+````
+
+控制器可以异步地产生返回值，在不同的线程中产生返回值－比如，响应一个外部事件（JMS 消息），一个调度任务，或者其他事件。
+
+### 1.5.2 ````Callable````
+
+控制器能将任何支持的返回值包装为````java.util.concurrent.Callable````，如下面例子所示：
+
+````java
+@PostMapping
+public Callable<String> processUpload(final MultipartFile file) {
+    
+    return new Callable<String>() {
+        public String call() throws Exception {
+            // ...
+            return "someView";
+        }
+    };
+}
+````
+
+该返回值然后就可以通过配置的````TaskExecutor````运行给定的任务来获取。
+
+### 1.5.3 处理
+
+下面是 Servlet 异步请求处理过程的一个非常简洁的概述：
+
+* 一个````ServletRequest````能够被放入异步模式，通过调用````request.startAsync()````。这样做的主要影响就是该 Servlet （以及任何过滤器）能够退出，但是响应保持打开以使得处理过程随后结束。
+* ````request.startAsync()````调用返回````AsyncContext````，你可以使用它进一步控制异步处理过程。比如，它提供````dispatch````方法，类似于 Servlet API 中的````forward````方法，区别在于它允许一个应用在一个 Servlet 容器线程上恢复请求处理过程。
+* ````ServletRequest````提供了对当前````DispatcherType````的访问，你可以使用它来区别于对初始请求的处理，一个异步分发、一个转发或者其他分发类型。
+
+````DeferredResult````处理过程如下：
+
+* 控制器返回一个````DeferredResult````并将它保存在它可以被访问的一些内存队列或者列表中。
+* Spring MVC 调用````request.startAsync()````。
+* 同时，````DispatcherServlet````和所有配置的过滤器退出请求处理线程，但是响应保持打开状态。
+* 应用设置来自一些线程的````DeferredResult````，同时 Spring MVC 将该请求分发回到 Servlet 容器。
+* ````DispatcherServlet````被再次调用，处理过程恢复以异步产生返回值。
+
+````Callable````处理过程如下：
+
+* 控制器返回一个````Callable````。
+* Spring MVC 调用````request.startAsync()````并提交````Callable````到````TaskExecutor````以在一个单独的线程中处理。
+* 同时，````DispatcherServlet````和所有过滤器退出 Servlet 容器线程，但是响应保持打开状态。
+* 终于，````Callable````产生一个结果，同时 Spring MVC 将请求分发回 Servlet 容器以完成处理。
+* ````DispatcherServlet````再次被调用，并且处理过程恢复以从````Callable````异步产生返回值。
+
+更多背景知识和上下文细节，可以参考相关 [博文](https://spring.io/blog/2012/05/07/spring-mvc-3-2-preview-introducing-servlet-3-async-support) ，其中介绍了 Spring MVC 3.2 中的异步请求处理支持。
+
+**异常处理**
+
+当你使用````DeferredResult````时，你可以选择是否为异常调用````setResult````或者````setErrorResult````。两种情况下，Spring MVC 分发请求回到 Servlet 容器来完成处理。
