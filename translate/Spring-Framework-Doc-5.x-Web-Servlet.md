@@ -2096,3 +2096,82 @@ public Callable<String> processUpload(final MultipartFile file) {
 Servlet API 最初是为了通过过滤器 Servlet 链进行单词传输而设计。被添加到 Servlet 3.0 中的异步请求处理允许应用退出过滤器 Servlet 链的同时保持响应的打开状态已进行进一步处理。Spring MVC 的异步支持都围绕此机制构建。当控制器返回````DeferredResult````时，过滤器 Servlet 链退出，Servlet 容器线程被释放。随后，当````DeferredReuslt````被设定，一个````ASYNC````分发（指向同一个 URL）被执行，同时，控制器会再次被映射，而不会再次调用它，````DeferredResult````值（如果控制器返回了它）被用来恢复处理。
 
 作为对比，Spring WebFlux 并不是构建在 Servlet API 之上，也不需要那种异步请求处理特性，因为它本来就是为异步处理而设计。异步处理被构建在所有框架内的契约中，在请求处理的各个层面被原生支持。
+
+从编程模型角度讲，Spring MVC 和 Spring WebFlux 都支持异步，并都将 [Reactive Types](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-reactive-types) 作为控制器方法的返回值。Spring MVC 甚至支持流式处理，包括反应式反向压力。不过，每个向响应中写入仍然是阻塞式的，在单独的线程上执行，不像 WebFlux，它基于非阻塞式 I/O 而不需要为每个写入任务准备一个额外的线程。
+
+另外一个根本区别是，Spring MVC 不支持异步或者反应式类型使用在控制器方法参数中（比如，````@RequestBody````，等等），同时也没有对异步和反应式类型作为模型属性提供任何显式支持。而以上特性Spring WebFlux 统统支持。
+
+### 1.5.4 HTTP 流
+
+你能够使用````DeferredResult````以及````Callable````为一个单独的异步返回值。如果想要产生多个异步值并将他们写入响应中，应该怎么办呢？本章节将会介绍。
+
+**Objects**
+
+你能够使用````ResponseBodyEmitter````返回值来产生一个对象流，其中每个对象都被````HttpMessageConverter````序列化并被写入响应，如下面例子所示：
+
+````java
+@GetMapping("/events")
+public ResponseBodyEmitter handle() {
+  ResponseBodyEmitter emitter = new ResponseBodyEmitter();
+  // Save the emitter somewhere..
+  return emitter;
+}
+
+// In some other thread
+emitter.send("Hello once");
+  
+// and again later on
+emitter.send("Hello again");
+  
+// and done at some point
+emitter.complete();
+````
+
+你也可以使用````ResponseBodyEmitter````作为````ResponseEntity````中的主体，允许你定制响应的状态码和首部字段。
+
+当一个````emitter````抛出一个````IOException````（比如，如果远程客户端掉线），应用没有责任清理连接，同时也不应该调用````emitter.complete````或者````emitter.completeWithError````。取而代之的，servlet 容器自动初始化一个````AsyncListener````错误通知，其中 Spring MVC 执行一个````completeWithError````调用。这个调用，接下来，执行一个最终的````ASYNC````分发到应用，在其过程中 Spring MVC 调用配置的异常解析器并完成请求处理。
+
+**SSE**
+
+````SseEmitter````（一个````ResponseBodyEmitter````的子类）为 [Server-Sent Events](https://www.w3.org/TR/eventsource/) 提供支持，其中的事件从服务端发出并按照 W3C SSE 规范进行格式化。为了从控制器产生 SSE 流，返回````SseEmitter````，如下面例子所示：
+
+````java
+@GetMapping(path="/events", produces=MediaType.TEXT_EVENT_STREAM_VALUE)
+public SseEmitter handle() {
+    SseEmitter emitter = new SseEmitter();
+    // Save the emitter somewhere..
+    return emitter;
+}
+
+// In some other thread
+emitter.send("Hello once");
+
+// and again later on
+emitter.send("Hello again");
+
+// and done at some point
+emitter.complete();
+````
+
+尽管 SSE 是流进入浏览器的主要选项，注意 IE 是不支持服务端发送的事件的。考虑使用 Spring 的 [WebSocket messaging](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#websocket) 以及 [SockJS fallback](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#websocket-fallback) 来兼容不同类型的浏览器。
+
+**原始数据**
+
+某些时候，绕过消息转化而直接将流写入响应````OutputStream````（比如，文件下载）是很有用的。你可以使用````StreamingResponseBody````返回值类型来实现，如下面例子所示：
+
+````java
+@GetMapping("/download")
+public StreamingResponseBody handle() {
+  return new StreamingResponseBody() {
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
+      // write...
+    }
+  };
+}
+````
+
+你可以使用````StreamingResponseBody````作为````ResponseEntiry````中的主体来定制响应状态码和首部字段。
+
+### 1.5.5 响应式类型
+
