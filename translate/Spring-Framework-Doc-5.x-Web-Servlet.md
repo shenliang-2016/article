@@ -2095,4 +2095,4 @@ public Callable<String> processUpload(final MultipartFile file) {
 
 Servlet API 最初是为了通过过滤器 Servlet 链进行单词传输而设计。被添加到 Servlet 3.0 中的异步请求处理允许应用退出过滤器 Servlet 链的同时保持响应的打开状态已进行进一步处理。Spring MVC 的异步支持都围绕此机制构建。当控制器返回````DeferredResult````时，过滤器 Servlet 链退出，Servlet 容器线程被释放。随后，当````DeferredReuslt````被设定，一个````ASYNC````分发（指向同一个 URL）被执行，同时，控制器会再次被映射，而不会再次调用它，````DeferredResult````值（如果控制器返回了它）被用来恢复处理。
 
-作为对比，Spring WebFlux 并不是构建在 Servlet API 之上，也不需要那种异步请求处理特性，因为它本来就是
+作为对比，Spring WebFlux 并不是构建在 Servlet API 之上，也不需要那种异步请求处理特性，因为它本来就是为异步处理而设计。异步处理被构建在所有框架内的契约中，在请求处理的各个层面被原生支持。
