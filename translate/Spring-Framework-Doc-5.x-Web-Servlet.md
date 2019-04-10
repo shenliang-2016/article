@@ -2175,3 +2175,13 @@ public StreamingResponseBody handle() {
 
 ### 1.5.5 响应式类型
 
+Spring MVC 支持在控制器中使用响应式客户端类库（参考 WebFlux 章节的 [Reactive Libraries](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web-reactive.html#webflux-reactive-libraries)）。这就包括来自````spring-webflux````的````WebClient````等，比如 Spring Data 响应式数据仓库。这些场景下，从控制器方法中返回响应式类型是很方便的。
+
+响应式返回值处理过程如下：
+
+* 单个的 promise 适配到其上，类似于````DeferredResult````的使用。例子包含````Mono````(Reactor)或者````Single````(RxJava)。
+* 一个流媒体类型的多值流（比如````application/stream+json````或者````text/event-stream````）被适配到其上，类似于使用````ResponseBodyEmitter````或者````SseEmitter````。例子包含````Flux````(Reactor)或者````Observable````(RxJava)。应用也可以返回````Flux<ServerSentEvent>````或者````Observable<ServerSentEvent>````。
+* 一个其他媒体类型的多值流（比如````application/json````）被适配到其上，类似于使用````DeferredResult<List<?>>````。
+
+> Spring MVC 通过来自````spring-core````的 [`ReactiveAdapterRegistry`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/core/ReactiveAdapterRegistry.html) 来支持 Reactor 和 RxJava，这就允许它适配到多种响应式类库。
+
