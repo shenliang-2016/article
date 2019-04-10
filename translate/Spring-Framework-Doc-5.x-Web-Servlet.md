@@ -2185,3 +2185,17 @@ Spring MVC 支持在控制器中使用响应式客户端类库（参考 WebFlux 
 
 > Spring MVC 通过来自````spring-core````的 [`ReactiveAdapterRegistry`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/core/ReactiveAdapterRegistry.html) 来支持 Reactor 和 RxJava，这就允许它适配到多种响应式类库。
 
+对流式响应，响应式反响压力是支持的，但是向响应写入数据仍然是阻塞式的，通过配置的````TaskExecutor````在一个单独的线程上执行，以避免阻塞上游数据源（比如````WebClient````返回的````Flux````）。默认情况下，````SompleAsyncTaskExecutor````被用来进行阻塞式写，但是在高负载情况下是不合适的。如果你打算将响应式类型流化，你应该使用 [MVC configuration](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-configuration-spring-mvc) 来配置一个任务执行器。
+
+### 1.5.6 Disconnects
+
+当一个远端客户端断开连接时，Servlet API 没有提供任何通知机制。因此，当向响应流式写入时，无论是通过 [SseEmitter](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-sse) 还是 [reactive types](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-async-reactive-types) ，周期性地发送数据是非常重要的，因为当客户端已经断开连接情况下，数据写入肯定会失败。数据发送可以作为空 SSE 事件的形式或者任何通信对方将解读为心跳信号而忽略的其他数据的形式。
+
+另外，考虑使用 web 消息解决方案（比如 [STOMP over WebSocket](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#websocket-stomp) 或者基于 [SockJS](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#websocket-fallback) 的 WebSocket），其中包含内建的心跳机制。
+
+### 1.5.7 配置
+
+异步请求处理特性必须在 Servlet 容器层面开启。MVC 配置也暴露了若干有关异步请求处理的开关选项。
+
+**Servlet Container**
+
