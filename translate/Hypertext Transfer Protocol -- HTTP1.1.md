@@ -2814,3 +2814,25 @@ Content-Language: mi, en
 
 ````Content-Language````可以被应用于任何媒体类型－并未限定为只能用于文本文档。
 
+## 14.13 Content-Length
+
+````Content-Length````实体首部字段表示实体主体的尺寸，字符的十进制数目，发送给通信对象，或者，在````HEAD````方法请求场景下，实体主体的尺寸应该已经被发送，如同````GET````请求方法的情形。
+
+````
+Content-Length		= "Content-Length" ":" 1*DIGIT
+````
+
+一个例子：
+
+````
+Content-Length: 3495
+````
+
+应用应该使用该字段表示消息体的传输长度，除非被 4.4 章节中的规则禁止。
+
+任何大于或者等于 0 的````Content-Length````值都是有效值。4.4 章节中描述了在没有给定````Content-Length````情况下如何确定消息主体长度。
+
+注意，此字段的含义与 MIME 中对应的定义截然不同，MIME 中该字段时一个使用在````message/external-body````内容类型字段中的可选字段。在 HTTP 中，它应该被发送，如果消息长度可以在传输之前确定，除非被 4.4 章节中的规则禁止。
+
+## 14.14 Content-Location
+
