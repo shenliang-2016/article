@@ -2836,3 +2836,21 @@ Content-Length: 3495
 
 ## 14.14 Content-Location
 
+````Content-Location````实体首部字段可以被用于为封装进入消息中的数据实体提供资源位置，当该数据实体的内容来自不同于请求的资源的 URI 的另外一个单独的位置。服务器应该为对应的响应数据实体的变体提供一个````Content-Location````，特别是在该资源存在多个数据实体相关联的情况下，而这些实体实际上存在多个单独的位置因而可以被单独访问，服务器应该为返回的每个特定变体提供一个````Content-Location````。
+
+````
+Content-Location = "Content-Location" ":" ( absoluteURI | relativeURI)
+````
+
+````Content-Location````字段值同时也为实体定义了基本 URI。
+
+````Content-Location````值并不是初始请求的 URI 的替代品，它只是当前请求的特定返回数据对应的资源的位置陈述。后续的请求可以指定````Content-Location```` URI 作为 request-URI，如果希望它指定了特定数据实体的数据来源。
+
+缓存服务器不能假定包含的````Content-Location````的字段值不同于查询它自己的 URI 的数据实体能够被用于响应该````Content-Location```` URI 上的后续的请求。不过，该````Content-Location````可以被用于区分从同一个资源获取的多个数据实体，如 13.6 章节中所述。
+
+如果````Content-Location````是一个相对 URI，则它会被解读为相对于````Request-URI````。
+
+PUT 和 POST 请求中的````Content-Location````首部字段的含义没有定义，服务器可以安全地忽略它们。
+
+## 14.15 Content-MD5
+
