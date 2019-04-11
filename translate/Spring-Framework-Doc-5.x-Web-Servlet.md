@@ -2220,3 +2220,20 @@ MVC 配置暴露了下列与异步请求处理相关的选项：
 
 注意，你还可以设置````DeferredResult````、````ResponseBodyEmitter````以及````SseEmitter````上的默认超时时间。对于````Callable````，你可以使用````WebAsyncTask````来提供一个超时时间。
 
+## 1.6 CORS
+
+Spring MVC 使得你可以处理 CORS 跨域资源共享。本章节描述如何做。
+
+### 1.6.1 介绍
+
+由于安全原因，浏览器禁止 AJAX 访问当前域之外的资源。比如，你可以在一个浏览器页签中输入你的银行账号，而在另外一个页签中访问 evil.com。该网站中的脚本不应该能够使用你的身份凭证发送 AJAX 请求到你的银行 API-比如，从你的账号中偷钱。
+
+跨域资源共享 CORS 是一个  [W3C specification](https://www.w3.org/TR/cors/) ，被 [most browsers](https://caniuse.com/#feat=cors) 实现，允许你指定何种跨域请求是经过认证的，而不需要使用风险更高而功能更弱的权变方案 IFRAME 或者 JSONP。
+
+## 1.6.2 处理
+
+CORS 规范特别区分了预检请求、简单请求以及实际请求。为了了解 CORS 如何工作，可以参考 [this article](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)，或者参考相关规范获取更多细节。
+
+Spring MVC ````HandlerMapping```` 实现提供对 CORS 的内建支持。将一个请求成功映射到处理器之后，````HandlerMapping````实现检查关于给定请求和处理器的 CORS 配置以采取进一步操作。预检请求被直接处理，简单的和实际的 CORS 请求被解读、校验，同时强制需要 CORS 响应首部字段集合。
+
+为了进行跨域请求（也就是说，````Origin````首部字段存在，同时不同于发出请求的主机域名），你需要显式声明 CORS 配置。如果没有匹配的 CORS 配置被发现，预检请求就会被拒绝。No CORS 首部字段被添加到简单和实际请求的响应中，随后，浏览器拒绝它们。
