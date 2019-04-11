@@ -2199,3 +2199,24 @@ Spring MVC 支持在控制器中使用响应式客户端类库（参考 WebFlux 
 
 **Servlet Container**
 
+Filter 和 Servlet 声明拥有一个````asyncSupported````标志，该标志需要被设置为````true````来开启异步请求处理。另外，Filter 映射应该被声明为处理````ASYNC````的````javax.servlet.DispatchType````。
+
+在 Java 配置类中，当你使用````AbstractAnnotationConfigDispatcherServletInitializer````来初始化 Servlet 容器时，该配置就是自动完成的。
+
+在````web.xml````配置文件中，你可以添加````<async-supported>true</async-supported>````到````DispatcherServlet```` 和 ````Filter```` 声明中，并添加````<dispatcher>ASYNC</dispatcher>````到过滤器映射中。
+
+**Spring MVC**
+
+MVC 配置暴露了下列与异步请求处理相关的选项：
+
+* Java 配置类：使用````WebMvcConfigurer````上的````configureAsyncSupport````回调。
+* XML 命名空间：在````<mvc:annotation-driven>````下使用````<async-support>````。
+
+你可以配置以下内容：
+
+* 异步请求的默认超时时间，如果没有设定，就取决于潜在的 Servlet 容器（比如，Tomcat 上配置的 10 秒）。
+* 用于在流化响应式类型数据时进行阻塞式写入的````AsyncTaskExecutor````，同时也用于执行控制器方法返回的````Callable````实例。我们强烈建议配置此属性，如果你需要流化响应式类型数据或者你的控制器方法返回````Callable````，因为默认情况下，执行器是````SimpleAsyncTaskExecutor````。
+* ````DeferredResultProcessingInterceptor````实现和````CallableProcessingInterceptor````实现。
+
+注意，你还可以设置````DeferredResult````、````ResponseBodyEmitter````以及````SseEmitter````上的默认超时时间。对于````Callable````，你可以使用````WebAsyncTask````来提供一个超时时间。
+
