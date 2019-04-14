@@ -2237,3 +2237,89 @@ CORS 规范特别区分了预检请求、简单请求以及实际请求。为了
 Spring MVC ````HandlerMapping```` 实现提供对 CORS 的内建支持。将一个请求成功映射到处理器之后，````HandlerMapping````实现检查关于给定请求和处理器的 CORS 配置以采取进一步操作。预检请求被直接处理，简单的和实际的 CORS 请求被解读、校验，同时强制需要 CORS 响应首部字段集合。
 
 为了进行跨域请求（也就是说，````Origin````首部字段存在，同时不同于发出请求的主机域名），你需要显式声明 CORS 配置。如果没有匹配的 CORS 配置被发现，预检请求就会被拒绝。No CORS 首部字段被添加到简单和实际请求的响应中，随后，浏览器拒绝它们。
+
+每个````HandlerMapping````可以被使用基于````CorsConfiguration````的 URL 模式单独 [配置](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/handler/AbstractHandlerMapping.html#setCorsConfigurations-java.util.Map-) 。大多数情况下，应用使用 MVC 的 Java 配置类或者 XML 命名空间来声明此类映射，最终产生一个单独的全局映射并被传递给所有````HandlerMapping````实例。
+
+你可以将````HandlerMapping````层面的全局 CORS 配置结合更细粒度的处理器层面的 CORS 配置使用。比如，注解的控制器可以使用类型或者方法层面的````@CrossOrigin````注解（其他处理器可以实现````CorsConfigurationSource````）。
+
+结合全局和局部配置的规则就是普通的添加。比如，所有全局的和所有局部的添加在一起。所有只有一个值的属性都会被接受（比如````allowCredentials````和````maxAge````），局部值覆盖全局值。参考 [`CorsConfiguration#combine(CorsConfiguration)`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/cors/CorsConfiguration.html#combine-org.springframework.web.cors.CorsConfiguration-) 获取更多细节。
+
+> 想要从源码学习更多，或者希望更深入地定制化，检查下面的代码：
+>
+> * ````CorsConfiguration````
+> * ````CorsProcessor````，````DefaultCorsProcessor````
+> * ````AbstractHandlerMapping````
+
+### 1.6.3 ````@CrossOrigin````
+
+````@CrossOrigin````注解在被注解的控制方法上开启跨域请求处理，如下面例子所示：
+
+````java
+@RestController
+@RequestMapping("/account")
+public class AccountController {
+  
+  @CrossOrigin
+  @GetMapping("/{id}")
+  public Account retrieve(@PathVariable Long id) {
+    // ...
+  }
+  
+  @DeleteMapping("/{id}")
+  public void remove(@PathVariable Long id) {
+    // ...
+  }
+}
+````
+
+默认地，````@CrossOrigin````允许：
+
+* 所有域
+* 所有首部字段
+* 所有该控制器方法被映射到的 HTTP 方法
+
+````allowedCredentials````默认不被开启，因为那会建立一个层次的信任，暴露敏感的特定用户的信息（比如 cookies 和 CSRF tokens）因而只能在何时的场景才能使用。
+
+````maxAge````被设定为 30 分钟。
+
+````@CrossOrigin````在类型层面被支持，此时会被所有方法集成，如下面例子所示：
+
+````java
+@CrossOrigin(origins = "https://domain2.com", maxAge = 3600)
+@RestController
+@RequestMapping("/account")
+public class AccountController {
+
+    @GetMapping("/{id}")
+    public Account retrieve(@PathVariable Long id) {
+        // ...
+    }
+
+    @DeleteMapping("/{id}")
+    public void remove(@PathVariable Long id) {
+        // ...
+    }
+}
+````
+
+你也可以同时在类型层面和方法层面使用````@CrossOrigin````注解，如下面例子所示：
+
+````java
+@CrossOrigin(maxAge = 3600)
+@RestController
+@RequestMapping("/account")
+public class AccountController {
+
+    @CrossOrigin("https://domain2.com")
+    @GetMapping("/{id}")
+    public Account retrieve(@PathVariable Long id) {
+        // ...
+    }
+
+    @DeleteMapping("/{id}")
+    public void remove(@PathVariable Long id) {
+        // ...
+    }
+}
+````
+
