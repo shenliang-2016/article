@@ -2872,6 +2872,10 @@ HTTP 扩展了 RFC 1864 以允许为 MIME 复合媒体类型（例如，multipar
 
 在计算或检查摘要之前，不得将所有换行符转换为 CRLF 。在计算摘要时，实际传输的文本中使用的换行符必须保持不变。
 
+注意：由于````Content-MD5````在 HTTP 中的定义与 RFC 1864 中为 MIME 实体主体定义的完全一样，存在几种方式可以区分为 HTTP 实体主体使用的````Content-MD5````和为 MIME 实体主体使用的````Content-MD5````。如果是 HTTP ，不像 MIME ，不会使用````Content-Transfer-Encoding````，仅使用````Tansfer-Encoding````和````Content-Encoding````。另一个区别是 HTTP 比 MIME 更频繁地使用二进制内容类型，因此值得注意的是，在这种情况下，用于计算摘要的字节顺序是为该类型定义的传输字节顺序。最后，HTTP 允许使用几种换行约定中的任何一种来传输文本类型，而不仅仅是使用 CRLF 的规范形式。
+
+## 14.16 Content-Range
+
 
 
 
