@@ -2876,11 +2876,40 @@ HTTP 扩展了 RFC 1864 以允许为 MIME 复合媒体类型（例如，multipar
 
 ## 14.16 Content-Range
 
+随着一个实体主体部分被发送的````Content-Range````实体首部字段表示该部分应该放到完整实体主体中的哪个位置。范围单位定义在 3.12 章节中。
+
+````
+Content-Range			= "Content-Range" ":" content-range-spec
+content-range-spec		= byte-content-range-spec
+byte-content-range-spec	= bytes-unit SP
+						  byte-range-resp-spec
+						  ( instance-length | "*" )
+byte-range-resp-spec	= (first-byte-pos "-" last-byte-pos)
+						  | "*"
+instance-length			= 1*DIGIT
+````
+
+此首部字段应该指明完整实体主体的全长，除非该长度未知或者很难确定。星号“*”字符表示````instance-length````在响应产生时刻是未知的。
+
+不像````byte-content-range-specifier````值，一个````byte-range-resp-spec````必须仅仅指定一个范围，同时必须包含该范围第一个和最后一个字节的绝对字节位置。
+
+一个携带````byte-range-resp-spec````的````byte-content-range-spec````，如果它的````last-byte-pos````值小于它的````first-byte-pos````值，或者其````instance-length````值小于或者等于它的````last-byte-pos````，那么它就是无效的。接收到无效````byte-content-range-spec````的通信参与者必须忽略它以及通过它传输的所有内容。
 
 
 
 
 
+
+
+## 14.47 WWW-Authenticate
+
+````WWW-Authenticate````响应首部字段必须被包含在 401（Unauthorized）状态码响应消息中。字段值由至少一个表示认证规则的````Challenge````和可以应用于````Request-URI````的参数组成。
+
+````
+WWW-Authenticate	= "WWW-Authenticate" ":" 1#challenge
+````
+
+HTTP 访问认证过程在 ”HTTP Authentication: Basic and Digest Access Authentication“ 中描述。用户代理应该谨慎转化该字段的值，因为其中可能包含超过一个 challenge，或者如果提供了多个该字段，一个 challenge 的内容也可能包含一个逗号分隔的认证参数列表。
 
 # 15 安全问题
 
