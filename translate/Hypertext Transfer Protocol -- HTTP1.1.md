@@ -2895,7 +2895,44 @@ instance-length			= 1*DIGIT
 
 一个携带````byte-range-resp-spec````的````byte-content-range-spec````，如果它的````last-byte-pos````值小于它的````first-byte-pos````值，或者其````instance-length````值小于或者等于它的````last-byte-pos````，那么它就是无效的。接收到无效````byte-content-range-spec````的通信参与者必须忽略它以及通过它传输的所有内容。
 
+服务器发送的 416（Requested range not satisfiable）状态码响应应该包含````Content-Range````字段携带值为“\*”的````byte-range-resp-spec````内容。````instance-length````只当选中资源的当前长度。206（Partial Content）状态码响应绝对不能包含````Content-Range````字段携带值为“\*”的````byte-range-resp-spec````内容。
 
+````byte-content-range-spec````取值的例子，假定实体包含总共 1234 个字节：
+
+* 开头的 500 字节
+
+````
+bytes 0-499/1234
+````
+
+* 接下来的 500 字节
+
+````
+bytes 500-999/1234
+````
+
+* 除了开头的 500 字节之外的字节
+
+````
+bytes 500-1234/1234
+````
+
+* 最后的 500 字节
+
+````
+bytes 734-1234/1234
+````
+
+当一个 HTTP 消息包含单个范围的内容（比如，一个对应于单个范围请求的响应，或者对一系列相互重叠而无范围遗漏的范围请求的响应），其内容会连同一个````Content-Range````首部字段被传输，同时一个````Content-Length````首部字段展示实际传输的字节数。比如：
+
+````
+HTTP/1.1 206 Partial content
+Date: Wed, 15 Nov 1995 06:25:24 GMT
+Last-Modified: Wed, 15 Nov 1995 04:58:08 GMT
+Content-Range: bytes 21010-47021/47022
+Content-Length: 26012
+Content-Type: image/gif
+````
 
 
 
