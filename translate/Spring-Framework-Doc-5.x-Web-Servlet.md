@@ -2323,3 +2323,88 @@ public class AccountController {
 }
 ````
 
+### 1.6.4 全局配置
+
+除了细粒度的控制器方法层面的配置，你可能也希望配置一些全局 CORS 配置。你可以在任何````HandlerMapping````上单独设定基于 URL 的````CorsConfiguration````映射。不过，大多数应用使用 MVC Java 配置类或者 MVC XNM 命名空间来进行这些配置。
+
+默认地，全局配置可以为以下对象开启：
+
+* 所有域
+* 所有首部字段
+* ````GET````，````HEAD````，````POST````方法
+
+````allowedCredentials````默认不会开启，因为那会建立一个层次的信任，暴露敏感的特定用户的信息（比如 cookies 和 CSRF tokens）因而只能在何时的场景才能使用。
+
+````maxAge````被设定为 30 分钟。
+
+**Java 配置**
+
+想要在 MVC Java 配置中开启 CORS，可以使用````CorsRegistry````回调，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+  
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    
+    registry.addMapping("/api/**")
+      .allowedOrigins("https://domain2.com")
+      .allowedMethods("PUT", "DELETE")
+      .allowedHeaders("header1", "header2", "header3")
+      .exposedHeaders("header1", "header2")
+      .allowCredentials(true).maxAge(3600);
+    
+    // Add more mappings...
+  }
+}
+````
+
+**XML 配置**
+
+要在 XML 命名空间中开启 CORS ，你可以是使用````<mvc:cors>````元素，如下面例子所示：
+
+````xml
+<mvc:cors>
+
+    <mvc:mapping path="/api/**"
+        allowed-origins="https://domain1.com, https://domain2.com"
+        allowed-methods="GET, PUT"
+        allowed-headers="header1, header2, header3"
+        exposed-headers="header1, header2" allow-credentials="true"
+        max-age="123" />
+
+    <mvc:mapping path="/resources/**"
+        allowed-origins="https://domain1.com" />
+
+</mvc:cors>
+````
+
+### 1.6.5 CORS Filter
+
+我们可以通过内建的 [`CorsFilter`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/filter/CorsFilter.html) 来提供 CORS 支持。
+
+> 如果你试图结合 Spring Security 使用````CorsFilter````，记住 Spring Security 拥有CORS [内建支持](https://docs.spring.io/spring-security/site/docs/current/reference/htmlsingle/#cors) 。
+
+为了配置该过滤器，传递````CorsConfigurationSource````给它的构造器，如下面例子所示：
+
+````java
+CorsConfiguration config = new CorsConfiguration();
+
+// Possibly...
+// config.applyPermitDefaultValues()
+
+config.setAllowCredentials(true);
+config.addAllowedOrigin("https://domain1.com");
+config.addAllowedHeader("*");
+config.addAllowedMethod("*");
+
+UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+source.registerCorsConfiguration("/**", config);
+
+CorsFilter filter = new CorsFilter(source);
+````
+
+## 1.7 Web 安全
+
