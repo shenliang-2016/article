@@ -2423,3 +2423,31 @@ HTTP 缓存可以显著改善 web 应用的性能。HTTP 缓存围绕着````Cach
 
 ### 1.8.1 ````CacheControl````
 
+[`CacheControl`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/http/CacheControl.html) 为配置有关````Cache-Control````首部字段提供了支持并被在很多地方被作为一个参数：
+
+- [`WebContentInterceptor`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/mvc/WebContentInterceptor.html)
+- [`WebContentGenerator`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/support/WebContentGenerator.html)
+- [Controllers](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-caching-etag-lastmodified)
+- [Static Resources](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-caching-static-resources)
+
+尽管 [RFC 7234](https://tools.ietf.org/html/rfc7234#section-5.2.2) 描述了有关````Cache-Control````响应首部字段的所有可能的指令，但是````CacheControl````类型采用面向场景的方法，聚焦于通用场景：
+
+````java
+// Cache for an hour - "Cache-Control: max-age=3600"
+CacheControl ccCacheOneHour = CacheControl.maxAge(1, TimeUnit.HOURS);
+
+// Prevent caching - "Cache-Control: no-store"
+CacheControl ccNoStore = CacheControl.noStore();
+
+// Cache for ten days in public and private caches,
+// public caches should not transform the response
+// "Cache-Control: max-age=864000, public, no-transform"
+CacheControl ccCustom = CacheControl.maxAge(10, TimeUnit.DAYS).noTransform().cachePublic();
+````
+
+````WebContentGenerator````也接受一个更简单的````cachePeriod````属性（单位为秒），如下工作：
+
+* ````-1````值不会产生````Cache-Control````响应首部字段。
+* ````0````值防止被使用````'Cache-Control: no-store'````指令缓存。
+* ````n>0````值缓存给定的响应````n````秒，通过使用````'Cache-Control: max-age=n'````指令。
+
