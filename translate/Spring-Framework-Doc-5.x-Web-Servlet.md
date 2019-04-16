@@ -2408,3 +2408,18 @@ CorsFilter filter = new CorsFilter(source);
 
 ## 1.7 Web 安全
 
+ [Spring Security](https://projects.spring.io/spring-security/) 项目提供了支持来保护 web 应用免遭攻击。参考 Spring Security 项目参考文档，包括：
+
+* [Spring MVC Security](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#mvc)
+* [Spring MVC Test Support](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#test-mockmvc)
+* [CSRF protection](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#csrf)
+* [Security Response Headers](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#headers)
+
+Spring MVC 框架还集成了 [HDIV](https://hdiv.org/)  这个 web 安全框架。
+
+## 1.8 HTTP 缓存
+
+HTTP 缓存可以显著改善 web 应用的性能。HTTP 缓存围绕着````Cache-Control````响应首部字段，然后，有条件地使用请求首部字段（比如````Last-Modified````和````ETag````）。````Cache-Control````指明了浏览器上的私有缓存和代理服务器上的公共缓存如何缓存和重用响应。一个````ETag````首部字段被用于生成一个条件请求，该请求可能导致一个 304 (NOT_MODIFIED) 状态码而不包括消息主体的响应，如果内容没有变化。````ETag````能够被看作是````Last-Modified````首部字段的一个更复杂的继承者。
+
+### 1.8.1 ````CacheControl````
+
