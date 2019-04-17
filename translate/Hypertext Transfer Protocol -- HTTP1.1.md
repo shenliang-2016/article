@@ -3011,6 +3011,32 @@ ETag: " "
 
 ## 14.20 Expect
 
+````Expect````请求首部字段被用来表示客户端需要的特定的服务器行为。
+
+````
+Expect		= "Expect" ":" 1#expectation
+expectation	= "100-continue" | expectation-extension
+expectation-extension = token [ "=" ( token | quoted-string )
+						*expect-params ]
+expect-params = ";" token [ "=" ( token | quoted-string ) ]
+````
+
+服务器不能理解或者不能满足任何请求携带的````Expect````字段中的期望值时，必须响应以合适的错误状态码响应。服务器必须响应以 417（Expectation Failed）状态码响应，如果任何期望不能被满足，或者请求存在其它问题，比如其它一些 4xx 状态码。
+
+这个首部字段定义为可扩展的语法类允许后续的扩展。如果服务器接收到的请求携带的````Expect````首部字段包含一个它不支持的期望扩展，它必须响应以 417（Expectation Failed）状态码响应。
+
+不带引号的期望值的比较是非大小写敏感的，包含 100-continue 符号，而对带引号的期望值扩展是大小写敏感的。
+
+````Expect````机制是逐跳的。也就是说，一个 HTTP/1.1 代理服务器必须返回一个 417（Expectation Failed）状态码响应，当它接收到的请求携带的期望值无法满足时。不过，````Expect````请求首部字段本身却是端到端的，它必须被随着请求转发而被转发。
+
+许多老旧的 HTTP/1.0 和 HTTP/1.1 应用不理解````Expect````首部字段。
+
+参考 8.2.3 章节了解如何使用 100（continue）状态码。
+
+## 14.21 Expires
+
+
+
 
 
 
