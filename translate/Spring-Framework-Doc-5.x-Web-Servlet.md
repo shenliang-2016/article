@@ -2451,3 +2451,53 @@ CacheControl ccCustom = CacheControl.maxAge(10, TimeUnit.DAYS).noTransform().cac
 * ````0````值防止被使用````'Cache-Control: no-store'````指令缓存。
 * ````n>0````值缓存给定的响应````n````秒，通过使用````'Cache-Control: max-age=n'````指令。
 
+### 1.8.2 控制器
+
+控制器可以显式添加 HTTP 缓存支持。我们推荐这样做，因为有关一个资源的````lastModified````或者````ETag````值需要在它与条件请求首部字段进行比较之前被计算。一个控制器可以添加一个````ETag````首部字段和````Cache-Control````设定到一个````ResponseEntity````，如下面例子所示：
+
+````java
+@GetMapping("/book/{id}")
+public ResponseEntity<Book> showBook(@PathVariable Long id) {
+
+    Book book = findBook(id);
+    String version = book.getVersion();
+
+    return ResponseEntity
+            .ok()
+            .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS))
+            .eTag(version) // lastModified is also available
+            .body(book);
+}
+````
+
+上面的例子发送一个 304 (NOT_MODIFIED) 状态码响应，包含以俄国空主体，如果与条件请求首部字段比较的结果表明内容没有变化。否则，````ETag````和````Cache-Control````首部字段被添加到响应中。
+
+你也可以在控制器中进行条件请求首部字段的检查。如下面例子所示：
+
+````java
+@RequestMapping
+public String myHandleMethod(WebRequest webRequest, Model model) {
+
+    long eTag = ...				// 应用特定的计算
+
+    if (request.checkNotModified(eTag)) {
+        return null; 			// 304 状态码响应，没有进一步处理
+    }
+
+    model.addAttribute(...); 			// 继续请求处理
+    return "myViewName";
+}
+````
+
+有三种方法基于````ETag````或者````lastModified````字段值，或者同时使用两者检查条件请求首部字段。对条件````GET````和````HEAD````请求，你可以发送 304 状态码响应。对条件````POST````，````PUT````以及````DELETE````请求，你可以发送 409 (PRECONDITION_FAILED) 状态码响应，以防止并发修改。
+
+### 1.8.3 静态资源
+
+你应该在包含静态资源数据的响应中使用````Cache-Control````和条件响应首部字段来优化性能。参考 [静态资源配置](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-static-resources) 。
+
+### 1.8.4 ````ETag````过滤器
+
+你可以使用````ShallowEtagHeaderFilter````来添加"shallow"````eTag````值，该值由响应内容计算而来，因而，节约了网络带宽但是消耗了 CPU 时间。参考 [Shallow ETag](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#filters-shallow-etag) 。
+
+## 1.9 视图技术
+
