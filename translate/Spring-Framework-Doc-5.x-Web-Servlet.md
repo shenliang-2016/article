@@ -2501,3 +2501,63 @@ public String myHandleMethod(WebRequest webRequest, Model model) {
 
 ## 1.9 视图技术
 
+
+
+
+
+
+
+##1.10 MVC 配置
+
+MVC Java 配置类和 MVC XML 命名空间提供的默认配置适用于大部分应用，同时还有一个配置 API 用来定制配置。
+
+为了进行更高级的个性化配置，而这种高级个性化无法通过配置 API 实现，参考 [Advanced Java Config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-advanced-java) 和 [Advanced XML Config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-config-advanced-xml) 。
+
+你不需要理解由 MVC Java 配置类和 MVC 命名空间创建的内部 beans 。如果你希望了解更多，参考  [Special Bean Types](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-servlet-special-bean-types) and [Web MVC Config](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-servlet-config) 。
+
+### 1.10.1 启用 MVC 配置
+
+在 Java 配置类中，你可以使用````@EnableWebMvc````注解来启用 MVC 配置，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig {
+  
+}
+````
+
+在 XML 配置中，你可以使用````<mvc:annotation-driven>````元素来启用 MVC 配置，如下面例子所示：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <mvc:annotation-driven/>
+
+</beans>
+````
+
+上面的例子注册了一系列 Spring MVC  [infrastructure beans](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-servlet-special-bean-types) 同时适应 classpath 上可用的依赖（比如，用于 JSON、XML 等等负载的转换器）。
+
+### 1.10.2 MVC 配置 API
+
+在 Java 配置类中，你可以实现````WebMvcConfiguration````接口，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+  // 实现配置方法
+}
+````
+
+在 XML 中，你可以检查````<mvc:annotation-driven>````属性和子元素。你可以参考 [Spring MVC XML schema](https://schema.spring.io/mvc/spring-mvc.xsd) 或者使用你的 IDE 的代码自动完成特性来发现哪些属性和子元素是可用的。
+
