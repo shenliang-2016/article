@@ -2561,3 +2561,133 @@ public class WebConfig implements WebMvcConfigurer {
 
 在 XML 中，你可以检查````<mvc:annotation-driven>````属性和子元素。你可以参考 [Spring MVC XML schema](https://schema.spring.io/mvc/spring-mvc.xsd) 或者使用你的 IDE 的代码自动完成特性来发现哪些属性和子元素是可用的。
 
+### 1.10.3 类型转换
+
+默认安装的````Number````和````Date````类型的格式化器包含了对````@NumberFormat````和````@DateTimeFormat````注解的支持。如果 Joda-Time 出现在 classpath 上，则会安装 Joda-Time 格式类库的完整支持。
+
+在 Java 配置类中，你可以注册定制化的格式化器和转换器，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+  
+  @Override
+  public void addFormatters(FormatterRegistry registry) {
+    // ...
+  }
+}
+````
+
+等效的 XML 配置如下：
+
+````xml
+1.10.3. Type Conversion
+Same as in Spring WebFlux
+
+By default formatters, for Number and Date types are installed, including support for the @NumberFormat and @DateTimeFormat annotations. Full support for the Joda-Time formatting library is also installed if Joda-Time is present on the classpath.
+
+In Java configuration, you can register custom formatters and converters, as the following example shows:
+
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        // ...
+    }
+}
+The following example shows how to achieve the same configuration in XML:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <mvc:annotation-driven conversion-service="conversionService"/>
+
+    <bean id="conversionService"
+            class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="org.example.MyConverter"/>
+            </set>
+        </property>
+        <property name="formatters">
+            <set>
+                <bean class="org.example.MyFormatter"/>
+                <bean class="org.example.MyAnnotationFormatterFactory"/>
+            </set>
+        </property>
+        <property name="formatterRegistrars">
+            <set>
+                <bean class="org.example.MyFormatterRegistrar"/>
+            </set>
+        </property>
+    </bean>
+
+</beans>
+````
+
+> 参考  [the `FormatterRegistrar` SPI](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#format-FormatterRegistrar-SPI)  和````FormattingConversionServiceFactoryBean````获取更多何时使用````FormatterRegistrar````接口实现的信息。
+
+### 1.10.4 验证
+
+默认地，如果 [Bean Validation](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#validation-beanvalidation-overview) 出现在 classpath 上（比如，Hibernate Validator），则````LocalValidatorFactoryBean````被注册为全局 [Validator](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#validator) ，用来验证被````@Valid````和````@Validated````注解修饰的控制器方法参数。
+
+在 Java 配置类中，你可以如下定制化全局````Validator````实例：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public Validator getValidator(); {
+        // ...
+    }
+}
+````
+
+等效的 XML 配置文件：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <mvc:annotation-driven validator="globalValidator"/>
+
+</beans>
+````
+
+你也可以注册局部的````Validator````实例，如下面例子所示：
+
+````java
+@Controller
+public class MyController {
+
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.addValidators(new FooValidator());
+    }
+
+}
+````
+
+> 如果你需要在某处注入````LocalValidatorFactoryBean````实例，创建一个 bean 并将其标记为````@Primary````，来避免与 MVC 配置中声明的那个实例发生冲突。
+
+### 1.10.5 拦截器
+
