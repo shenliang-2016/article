@@ -2691,3 +2691,41 @@ public class MyController {
 
 ### 1.10.5 拦截器
 
+在 Java 配置类中，你可以注册施加到到来的请求之上的拦截器，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new LocaleChangeInterceptor());
+        registry.addInterceptor(new ThemeChangeInterceptor()).addPathPatterns("/**").excludePathPatterns("/admin/**");
+        registry.addInterceptor(new SecurityInterceptor()).addPathPatterns("/secure/*");
+    }
+}
+````
+
+下面是相同效果的 XML 配置：
+
+````xml
+<mvc:interceptors>
+    <bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor"/>
+    <mvc:interceptor>
+        <mvc:mapping path="/**"/>
+        <mvc:exclude-mapping path="/admin/**"/>
+        <bean class="org.springframework.web.servlet.theme.ThemeChangeInterceptor"/>
+    </mvc:interceptor>
+    <mvc:interceptor>
+        <mvc:mapping path="/secure/*"/>
+        <bean class="org.example.SecurityInterceptor"/>
+    </mvc:interceptor>
+</mvc:interceptors>
+````
+
+### 1.10.6 Content Types
+
+你可以配置 Spring MVC 如何从请求中确定其请求媒体类型（比如，````Accept````首部字段、URL 路径扩展、查询参数等等）。
+
+默认地，首先被检查的是 URL 路径扩展－将````json````、````xml````、````rss````和````atom````注册为已知扩展（依赖 classpath 上的依赖）。第二顺位检查````Accept````首部字段。
