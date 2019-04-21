@@ -2799,3 +2799,88 @@ public class WebConfiguration implements WebMvcConfigurer {
 - [jackson-datatype-jsr310](https://github.com/FasterXML/jackson-datatype-jsr310)：支持 Java 8 Date 和 Time API 类型。
 - [jackson-datatype-jdk8](https://github.com/FasterXML/jackson-datatype-jdk8)：支持其他 Java 8 类型，比如 `Optional`。
 
+> Jackson XML 支持中启用缩进出了需要 [`jackson-dataformat-xml`](https://search.maven.org/#search|ga|1|a%3A"jackson-dataformat-xml") 还需要 [`woodstox-core-asl`](https://search.maven.org/#search|gav|1|g%3A"org.codehaus.woodstox" AND a%3A"woodstox-core-asl") 依赖。
+
+其他有趣的可用的 Jackson 模块：
+
+* [jackson-datatype-money](https://github.com/zalando/jackson-datatype-money)：支持````javax.money````（非官方模块）。
+* [jackson-datatype-hibernate](https://github.com/FasterXML/jackson-datatype-hibernate)：支持 Hibernate 特定类型和属性（包括懒加载切面）。
+
+下面是等效的 XML 配置：
+
+````xml
+<mvc:annotation-driven>
+    <mvc:message-converters>
+        <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+            <property name="objectMapper" ref="objectMapper"/>
+        </bean>
+        <bean class="org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter">
+            <property name="objectMapper" ref="xmlMapper"/>
+        </bean>
+    </mvc:message-converters>
+</mvc:annotation-driven>
+
+<bean id="objectMapper" class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean"
+      p:indentOutput="true"
+      p:simpleDateFormat="yyyy-MM-dd"
+      p:modulesToInstall="com.fasterxml.jackson.module.paramnames.ParameterNamesModule"/>
+
+<bean id="xmlMapper" parent="objectMapper" p:createXmlMapper="true"/>
+````
+
+### 1.10.8 视图控制器
+
+这是一个定义````ParameterizableViewController````的快捷方法，该控制器在被调用时会立即将请求转发到一个视图。你可以在某些静态场景中使用，如果在视图产生响应之前没有 Java 控制器逻辑执行。
+
+下面的例子展示了如何在 Java 配置类中配置将对````/````的请求转发到名为````home````的视图：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+  
+  @Override
+  public void addViewControllers(ViewControllerRegistry registry) {
+    registry.addViewController("/").setViewName("home");
+  }
+}
+````
+
+下面是等效的 XML 配置：
+
+````xml
+<mvc:view-controller path="/" view-name="home"/>
+````
+
+### 1.10.9 视图解析器
+
+Spring MVC 配置简化了视图解析器的注册。
+
+下面的 Java 配置类展示了如何配置内容协商视图解析，通过使用 JSP 和 Jackson 作为 JSON 渲染的默认````View````：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+  
+  @Override
+  public void configureViewResolvers(ViewResolverRegistry registry) {
+    registry.enableContentNegotiation(new MappingJackson2JsonView());
+    registry.jsp();
+  }
+}
+````
+
+等价的 XML 配置：
+
+````xml
+<mvc:view-resolvers>
+    <mvc:content-negotiation>
+        <mvc:default-views>
+            <bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView"/>
+        </mvc:default-views>
+    </mvc:content-negotiation>
+    <mvc:jsp/>
+</mvc:view-resolvers>
+````
+
