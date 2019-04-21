@@ -2729,3 +2729,73 @@ public class WebConfig implements WebMvcConfigurer {
 你可以配置 Spring MVC 如何从请求中确定其请求媒体类型（比如，````Accept````首部字段、URL 路径扩展、查询参数等等）。
 
 默认地，首先被检查的是 URL 路径扩展－将````json````、````xml````、````rss````和````atom````注册为已知扩展（依赖 classpath 上的依赖）。第二顺位检查````Accept````首部字段。
+
+请考虑将默认设置更改为````Accept````首部字段，同时，如果你必须使用基于 URL 的内容类型解析，考虑使用基于路径扩展的查询参数策略。参考  [Suffix Match](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-suffix-pattern-match) 和 [Suffix Match and RFD](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-rfd) 获取更多信息。
+
+在 Java 配置类中，你可以定制化请求内容类型解析，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer.mediaType("json", MediaType.APPLICATION_JSON);
+        configurer.mediaType("xml", MediaType.APPLICATION_XML);
+    }
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:annotation-driven content-negotiation-manager="contentNegotiationManager"/>
+
+<bean id="contentNegotiationManager" class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+    <property name="mediaTypes">
+        <value>
+            json=application/json
+            xml=application/xml
+        </value>
+    </property>
+</bean>
+````
+
+### 1.10.7 Message Converters
+
+你可以在 Java 配置类中定制化````HttpMessageConverter````，通过覆盖 [`configureMessageConverters()`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/config/annotation/WebMvcConfigurer.html#configureMessageConverters-java.util.List-) （替换 Spring MVC 创建的默认转换器）或者覆盖 [`extendMessageConverters()`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/config/annotation/WebMvcConfigurer.html#extendMessageConverters-java.util.List-) （定制化默认转换器或者将附加转换器添加到默认转换器中）。
+
+下面的例子将定制化的````ObjectMapper````添加为 XML 和 Jackson JSON 的默认转换器：
+
+ ````java
+@Configuration
+@EnableWebMvc
+public class WebConfiguration implements WebMvcConfigurer {
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder()
+                .indentOutput(true)
+                .dateFormat(new SimpleDateFormat("yyyy-MM-dd"))
+                .modulesToInstall(new ParameterNamesModule());
+        converters.add(new MappingJackson2HttpMessageConverter(builder.build()));
+        converters.add(new MappingJackson2XmlHttpMessageConverter(builder.createXmlMapper(true).build()));
+    }
+}
+ ````
+
+上面的例子中， [`Jackson2ObjectMapperBuilder`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/http/converter/json/Jackson2ObjectMapperBuilder.html) 被用于为````MappingJackson2HttpMessageConverter````和````MappingJackson2XmlHttpMessageConverter````创建一个通用配置，开启缩进，定制化的数据格式，以及注册 [`jackson-module-parameter-names`](https://github.com/FasterXML/jackson-module-parameter-names)，同时添加了参数名称访问（Java 8 添加的新特性）支持。
+
+该创建器定制化 Jackson 的默认属性如下：
+
+* [`DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES`](https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/DeserializationFeature.html#FAIL_ON_UNKNOWN_PROPERTIES) 不可用。
+* [`MapperFeature.DEFAULT_VIEW_INCLUSION`](https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/MapperFeature.html#DEFAULT_VIEW_INCLUSION) 不可用。
+
+同时，也自动注册下面周知的模块，如果 classpath 上探测到它们：
+
+- [jackson-datatype-jdk7](https://github.com/FasterXML/jackson-datatype-jdk7)：支持 Java 7 类型，比如 `java.nio.file.Path`。
+- [jackson-datatype-joda](https://github.com/FasterXML/jackson-datatype-joda)：支持 Joda-Time 类型。
+- [jackson-datatype-jsr310](https://github.com/FasterXML/jackson-datatype-jsr310)：支持 Java 8 Date 和 Time API 类型。
+- [jackson-datatype-jdk8](https://github.com/FasterXML/jackson-datatype-jdk8)：支持其他 Java 8 类型，比如 `Optional`。
+
