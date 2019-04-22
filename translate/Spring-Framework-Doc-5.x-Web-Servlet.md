@@ -2507,7 +2507,7 @@ public String myHandleMethod(WebRequest webRequest, Model model) {
 
 
 
-##1.10 MVC 配置
+## 1.10 MVC 配置
 
 MVC Java 配置类和 MVC XML 命名空间提供的默认配置适用于大部分应用，同时还有一个配置 API 用来定制配置。
 
