@@ -3098,3 +3098,44 @@ public class WebConfig implements WebMvcConfigurer {
 <bean id="pathMatcher" class="org.example.app.MyPathMatcher"/>
 ````
 
+### 1.10.13 高级 Java 配置
+
+````@EnableWebMvc````导入````DelegatingWebMvcConfiguration````，它可以：
+
+* 为 Spring MVC 应用提供默认的 Spring 配置。
+* 检测并委派给 WebMvcConfigurer 实现以自定义该配置。
+
+高级模式中，你可以删除````@EnableWebMvc````并直接扩展自````DelegatingWebMvcConfiguration````替代````WebMvcConfigurer````实现，如下面例子所示：
+
+````java
+@Configuration
+public class WebConfig extends DelegatingWebMvcConfiguration {
+
+    // ...
+
+}
+````
+
+你可以在````WebConfig````中保留方法，但是你现在也可以覆盖来自基类的 bean 声明，同时你还可以在 classpath 上拥有任意数量的其他````WebMvcConfigurer````实现。
+
+### 1.10.14 高级 XML 配置
+
+MVC 命名空间没有高级模式。如果你需要自定义 bean 上你不能修改的属性，你可以使用````BeanPostProcessor````上的 Spring ````ApplicationContext````生命周期钩子，如下面例子所示：
+
+````java
+@Component
+public class MyPostProcessor implements BeanPostProcessor {
+
+    public Object postProcessBeforeInitialization(Object bean, String name) throws BeansException {
+        // ...
+    }
+}
+````
+
+注意，你需要声明````MyPostProcessor````为一个 bean ，要么在 XML 中显式声明，要么使它通过````<component-scan/>````声明被探测到。
+
+## 1.11 HTTP/2
+
+Servlet 4 容器需要支持 HTTP / 2，Spring Framework 5 与 Servlet API 4 兼容。从编程模型的角度来看，应用程序不需要特定的任何操作。 但是，存在与服务器配置相关的注意事项。 更多有关详细信息，请参阅 HTTP / 2 Wiki页面。
+
+Servlet API 确实暴露了一个与 HTTP / 2 相关的构造。 您可以使用````javax.servlet.http.PushBuilder````主动将资源推送到客户端，并且它被支持作为````@RequestMapping````方法的方法参数。
