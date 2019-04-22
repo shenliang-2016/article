@@ -2884,3 +2884,217 @@ public class WebConfig implements WebMvcConfigurer {
 </mvc:view-resolvers>
 ````
 
+注意，FreeMarker，Tiles，Groovy Markup 以及脚本模板也需要底层视图技术配置。
+
+MVC 命名空间提供了专用元素。下面的例子使用 FreeMarker：
+
+````xml
+<mvc:view-resolvers>
+    <mvc:content-negotiation>
+        <mvc:default-views>
+            <bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView"/>
+        </mvc:default-views>
+    </mvc:content-negotiation>
+    <mvc:freemarker cache="false"/>
+</mvc:view-resolvers>
+
+<mvc:freemarker-configurer>
+    <mvc:template-loader-path location="/freemarker"/>
+</mvc:freemarker-configurer>
+````
+
+在 Java 配置类中，你可以添加各自的````Configurer```` bean，如下面例子所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureViewResolvers(ViewResolverRegistry registry) {
+        registry.enableContentNegotiation(new MappingJackson2JsonView());
+        registry.freeMarker().cache(false);
+    }
+
+    @Bean
+    public FreeMarkerConfigurer freeMarkerConfigurer() {
+        FreeMarkerConfigurer configurer = new FreeMarkerConfigurer();
+        configurer.setTemplateLoaderPath("/freemarker");
+        return configurer;
+    }
+}
+````
+
+### 1.10.10 静态资源
+
+此选项提供了一种方便的方法来从一个 [`Resource`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/core/io/Resource.html) 位置列表中提供静态资源。
+
+在下面的例子中，给定一个````/resources````开头的请求，该相对路径被用于发现并提供相对于应用根路径下的````/public````或者````/static````下的 classpath 上的静态资源。这些资源被提供为超时时间为将来一年的形式来确保最大化利用浏览器缓存并减少浏览器产生的 HTTP 请求。````Last-Modified````首部字段也会被评估，同时，如果该字段存在，则````304````状态码响应会被返回。
+
+下面的列表展示了 Java 配置类中如何使用：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/resources/**")
+            .addResourceLocations("/public", "classpath:/static/")
+            .setCachePeriod(31556926);
+    }
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:resources mapping="/resources/**"
+    location="/public, classpath:/static/"
+    cache-period="31556926" />
+````
+
+参考 [HTTP caching support for static resources](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc-caching-static-resources) 。
+
+资源处理器也支持一系列的 [`ResourceResolver`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceResolver.html) 实现和 [`ResourceTransformer`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceTransformer.html) 实现，你可以用来创建一个工具链以使用优化的资源。
+
+你可以使用````VersionResourceResolver````来版本化资源 URLs，基于从内容计算而来的 MD5 哈希值、一个固定的应用版本、或者其他。````ContentVersionStrategy```` (MD5 哈希) 是一个好的选择－连同一些显著的异常，比如使用模块加载器的 JavaScript 资源。
+
+下面的例子展示了如何在 Java 配置类中使用````VersionResourceResolver````：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/resources/**")
+                .addResourceLocations("/public/")
+                .resourceChain(true)
+                .addResolver(new VersionResourceResolver().addContentVersionStrategy("/**"));
+    }
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:resources mapping="/resources/**" location="/public/">
+    <mvc:resource-chain>
+        <mvc:resource-cache/>
+        <mvc:resolvers>
+            <mvc:version-resolver>
+                <mvc:content-version-strategy patterns="/**"/>
+            </mvc:version-resolver>
+        </mvc:resolvers>
+    </mvc:resource-chain>
+</mvc:resources>
+````
+
+然后你可以使用````ResourceUrlProvider````来重写 URLs 并应用完整的解析器链和转换器链－比如，来插入版本。MVC 配置提供了````ResourceUrlProvider```` bean 因而他可以被注入其他 bean 中。你也可以为 Thymeleaf、JSPs、FreeMarker 以及其他连同 URL 标签依赖于````HttpServletResponse#encodeURL````使用````ResourceUrlEncodingFilter````实现透明重写。
+
+注意，当同时使用````EncodingResourceResolver````和````VersionedResourceResolver````时，你必须按照此顺序注册它们。这才能确保基于内容的版本永远是可靠基于未编码的文件计算而来。
+
+[WebJars](https://www.webjars.org/documentation) 也通过````WebJarsResourceResolver````被支持，如果````org.webjars:webjars-locator-core````类库出现在 classpath 上，它就会被自动注册。解析器能够重写 URLs 以包括 jar 包的版本，同时也可以无视版本匹配到来的请求 URLs－比如，从````/jquery/jquery.min.js````到````/jquery/1.2.0/jquery.min.js````。
+
+### 1.10.11 默认 Servlet
+
+Spring MVC 允许将````DispatcherServlet````映射到````/````（从而覆盖了容器的默认 Servlet 映射），同时仍然允许静态资源请求被容器的默认 Servlet 处理。它配置一个````DefaultServletHttpRequestHandler````到一个 URL 映射````/**````，同时相对于其他 URL 映射的优先级最低。
+
+此处理器将所有请求转发到默认 Servlet 。因此，它必须留在所有其他 URL ````HandleMappings````的最后。这是你使用````<mvc:annotation-driven>````。另外，如果你设定你自己定制的````HandlerMapping````实例，确保设定其````order````属性比````DefaultServletHttpRequestHandler````更低，后者的````order````属性值为````Integer.MAX_VALUE````。
+
+下面的例子展示了如何通过默认设置开启该特性：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+        configurer.enable();
+    }
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:default-servlet-handler/>
+````
+
+覆盖````/ ````Servlet 映射的警告是，必须通过名称而不是路径来检索默认 Servlet 的````RequestDispatcher````。 ````DefaultServletHttpRequestHandler````尝试使用大多数主要 Servlet 容器（包括 Tomcat，Jetty，GlassFish，JBoss，Resin，WebLogic 和 WebSphere）的已知名称列表，在启动时自动检测容器的默认 Servlet。 如果默认Servlet 已使用其他名称进行自定义配置，或者在默认 Servlet 名称未知的情况下使用其他 Servlet 容器，则必须显式提供默认 Servlet 名称，如以下示例所示：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+        configurer.enable("myCustomDefaultServlet");
+    }
+
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:default-servlet-handler default-servlet-name="myCustomDefaultServlet"/>
+````
+
+### 1.10.12 路径匹配
+
+您可以自定义与路径匹配和 URL 处理相关的选项。 有关各个选项的详细信息，请参阅 [`PathMatchConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/servlet/config/annotation/PathMatchConfigurer.html) javadoc。
+
+下面的例子展示了如何在 Java 配置类中使用定制化路径匹配：
+
+````java
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        configurer
+            .setUseSuffixPatternMatch(true)
+            .setUseTrailingSlashMatch(false)
+            .setUseRegisteredSuffixPatternMatch(true)
+            .setPathMatcher(antPathMatcher())
+            .setUrlPathHelper(urlPathHelper())
+            .addPathPrefix("/api",
+                    HandlerTypePredicate.forAnnotation(RestController.class));
+    }
+
+    @Bean
+    public UrlPathHelper urlPathHelper() {
+        //...
+    }
+
+    @Bean
+    public PathMatcher antPathMatcher() {
+        //...
+    }
+
+}
+````
+
+等效的 XML 配置：
+
+````xml
+<mvc:annotation-driven>
+    <mvc:path-matching
+        suffix-pattern="true"
+        trailing-slash="false"
+        registered-suffixes-only="true"
+        path-helper="pathHelper"
+        path-matcher="pathMatcher"/>
+</mvc:annotation-driven>
+
+<bean id="pathHelper" class="org.example.app.MyPathHelper"/>
+<bean id="pathMatcher" class="org.example.app.MyPathMatcher"/>
+````
+
