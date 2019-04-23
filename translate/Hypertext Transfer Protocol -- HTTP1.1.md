@@ -3140,6 +3140,16 @@ If-Modified-Since = "If-Modified-Since" ":" HTTP-date
 If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT
 ````
 
+携带````If-Modified-Since````首部字段而没有````Range````首部字段的 GET 方法请求表示其数据实体只有在它在````If-Modified-Since````首部字段给出的时间点以来已经发生变化的情况下才会被传输。判断算法考虑如下情况：
+
+(a) 如果请求将正常导致任何 200(OK) 状态码以外的响应，或者如果传输的````If-Modified-Since````给出的时间点是无效的，则响应就会如一个正常的 GET 方法请求一样。任何比服务器当前时间更新的时间都是无效值。
+
+(b) 如果资源变体在````If-Modified-Since````字段给出的时间点以来已经发生了变化，则其响应就与正常的 GET 请求的响应一样。
+
+(c) 如果资源变体在````If-Modified-Since````给出的时间点以来没有发生变化，则服务器应该返回一个 304(Not Modified) 状态码响应。
+
+
+
 
 
 
