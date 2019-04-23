@@ -3140,11 +3140,54 @@ Servlet 4 容器需要支持 HTTP / 2，Spring Framework 5 与 Servlet API 4 兼
 
 Servlet API 确实暴露了一个与 HTTP / 2 相关的构造。 您可以使用````javax.servlet.http.PushBuilder````主动将资源推送到客户端，并且它被支持作为````@RequestMapping````方法的方法参数。
 
-# 2 Rest 客户端
+# 2. Rest 客户端
 
 本章节介绍客户端访问 REST 服务端点得配置。
 
 ## 2.1 ````RestTemplate````
 
 ````RestTemplate````是执行 HTTP 请求的同步客户端。它是一个原生的 Spring REST 客户端，同时基于底层的 HTTP 客户端类库暴露了一个简单的、模板方法 API 。
+
+> 作为 5.0 版本，非阻塞、响应式````WebClient````带来了现代版本的````RestTemplate````，提供了对 [synchronous and asynchronous](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web-reactive.html#webflux-client-synchronous) 的有效支持，比如在流式处理场景下。````RestTemplate````将在将来版本中废弃，因而后续不会再有主要的新特性加入。
+
+更多细节参考 [REST Endpoints](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/integration.html#rest-client-access)。
+
+## 2.2 ````WebClient````
+
+````WebClient````是一个非阻塞式、响应式的客户端，用来执行 HTTP 请求。它被引入 5.0 版本框架，提供了````RestTemplate````的现代进化版本，同时有效支持流式处理场景下的同步和异步处理。
+
+相对于````RestTemplate````，````WebClient````支持如下特性：
+
+* 非阻塞 I/O。
+* 响应式流反向施压。
+* 更低硬件资源消耗的高并发。
+* 函数式风格，继承了 Java 8 lambdas 优点的 fluent API。
+* 同步和异步交互。
+* 流式上传下载。
+
+更多细节参考 [WebClient](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web-reactive.html#webflux-client)。
+
+# 3. 测试
+
+本章节简要介绍 Spring MVC 应用可以使用的````spring-test````中的测试选项。
+
+* Servlet API Mocks：为控制器、过滤器以及其他 web 组件的单元测试模拟 Servlet API 契约的实现。更多细节参考 [Servlet API](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/testing.html#mock-objects-servlet) 。
+* TestContext Framework：支持在 JUnit 和 TestNG 测试中加载 Spring 配置，包括通过测试方法加载的配置的有效缓存，支持通过````MockServletContext````加载````WebApplicationContext````。更多细节参考 [TestContext Framework](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/testing.html#testcontext-framework) 。
+* Spring MVC Test：也被称为````MockMvc````，通过````DispatcherServlet````测试注解修饰的控制器。包含完整的 Spring MVC 基础设施，除了 HTTP server。更多细节参考 [Spring MVC Test](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-framework)。
+* 客户端 REST：````spring-test````提供了一个````MockRestServiceServer````，你可以将其作为一个模拟服务器来测试内部使用````RestTemplate````的客户端代码。更多细节参考 [Client REST Tests](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-client)。
+* ````WebTestClient````：用来测试 WebFlux 应用，不过也可以用来进行端到端的集成测试，到任何服务器，通过 HTTP 连接。它是一个非阻塞、响应式的客户端，非常适合流式处理场景下的异步测试。
+
+# 4. WebSockets
+
+
+
+
+
+# 5. 其他 Web 框架
+
+
+
+
+
+
 
