@@ -3139,3 +3139,12 @@ public class MyPostProcessor implements BeanPostProcessor {
 Servlet 4 容器需要支持 HTTP / 2，Spring Framework 5 与 Servlet API 4 兼容。从编程模型的角度来看，应用程序不需要特定的任何操作。 但是，存在与服务器配置相关的注意事项。 更多有关详细信息，请参阅 HTTP / 2 Wiki页面。
 
 Servlet API 确实暴露了一个与 HTTP / 2 相关的构造。 您可以使用````javax.servlet.http.PushBuilder````主动将资源推送到客户端，并且它被支持作为````@RequestMapping````方法的方法参数。
+
+# 2 Rest 客户端
+
+本章节介绍客户端访问 REST 服务端点得配置。
+
+## 2.1 ````RestTemplate````
+
+````RestTemplate````是执行 HTTP 请求的同步客户端。它是一个原生的 Spring REST 客户端，同时基于底层的 HTTP 客户端类库暴露了一个简单的、模板方法 API 。
+
