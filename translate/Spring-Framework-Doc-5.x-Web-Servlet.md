@@ -3232,3 +3232,11 @@ WebApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(
 
 ## 5.2 JSF
 
+JavaServer Faces（JSF）是 JCP 标准的基于组件，事件驱动的 Web 用户接口框架。 它是 Java EE 官方平台的一部分，但也可单独使用，例如， 通过在 Tomcat 中嵌入 Mojarra 或 MyFaces。
+
+请注意，最近版本的 JSF 与应用服务器中的 CDI 基础设施紧密相关，一些新的 JSF 功能仅在这样的环境中工作。 Spring 的 JSF 支持不再主动发展，主要用于迁移目的，以便对基于 JSF 的旧应用程序进行现代化改造。
+
+Spring 的 JSF 集成中的关键元素是 JSF ````ELResolver````机制。
+
+### 5.2.1 Spring Bean Resolver
+
