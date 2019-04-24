@@ -3185,9 +3185,50 @@ Servlet API 确实暴露了一个与 HTTP / 2 相关的构造。 您可以使用
 
 # 5. 其他 Web 框架
 
+本章介绍 Spring 与第三方 web 框架的集成。
 
+Spring 框架的一个核心建议就是允许选择。一般来说，Spring 不会强迫你使用或者购买任何特定的架构、技术或者方法(不过它可能会推荐一些)。选择与开发者和他们团队最相关的框架、技术以及方法的自由在 web 开发领域尤为有价值，Spring 提供了它自己的 web 框架 ([Spring MVC](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#mvc)and [Spring WebFlux](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/web.html#webflux)) 的同时，也支持与大量的流行的第三方 web 框架集成。
 
+## 5.1 通用配置
 
+在深入探讨集成每个特定 web 框架之前，我们首先来看一下通用的 Spring 配置，这些配置并不特定与任何 web 框架。(本节同样适用于Spring自己的Web框架变体)
 
+Spring 的轻量级应用程序模型支持的一个概念（也许可以找一个更好的词）是一个分层架构。 请记住，在“经典”分层架构中，Web 层只是众多层中的一个。 它作为服务器端应用程序的入口点之一，并委托给服务层中定义的服务对象（外观），以满足特定于业务（和表示技术不可知）的应用场景。 在 Spring 中，这些服务对象、任何其他特定于业务的对象、数据访问对象和其他对象存在于不同的“业务上下文”中，该业务上下文不包含 Web 或表示层对象（表示对象，例如 Spring MVC 控制器，通常是在不同的“表示层上下文”中配置）。 本节详细介绍了如何配置包含应用程序中所有“业务bean”的 Spring 容器（````WebApplicationContext````）。
 
+进入具体细节，你需要做的就是在你的应用的标准的 Java EE servlet ````web.xml````文件中声明一个 [`ContextLoaderListener`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/context/ContextLoaderListener.html) ，同时添加一个````<context-param/>contextConfigLocation<context-param/>````  元素，该元素定义了需要加载的 Spring XML 配置文件集合。
+
+考虑下面的 ````<listeners/>```` 配置：
+
+````xml
+<listener>
+  <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+</listener>
+````
+
+还有下面的 ````<context-param/>```` 配置：
+
+````xml
+<context-param>
+  <param-name>contextConfigLocation</param-name>
+  <param-value>/WEB-INF/applicationContext*.xml</param-value>
+</context-param>
+````
+
+如果你不指定 ````contextConfigLocation```` 上下文参数，则 ````ContextLoaderListener```` 寻找一个名为 ````/WEB-INF/applicationContext.xml```` 文件来加载。一旦该上下文文件被加载，Spring 基于 bean 定义创建一个 [`WebApplicationContext`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/context/WebApplicationContext.html) 对象并将其存储在应用的 ````ServletContext```` 中。
+
+所有 Java web 框架都构建在 Servlet API 基础之上，因此你可以使用下面的代码片段来访问 ````ContextLoaderListener```` 创建的业务上下文 ````ApplicationContext````。
+
+下面例子展示了如何获取 ````WebApplicationContext````：
+
+````java
+WebApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+````
+
+[`WebApplicationContextUtils`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/context/support/WebApplicationContextUtils.html) 只是为了方便，因此你不需要记住 ````ServletContext```` 属性的名称。它的 ````getWebApplicationContext()```` 方法返回 ````null```` ，如果一个对象不存在于 ````WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE```` 键之下。为了避免发生 ````NullPointerExceptions```` ，更好的做法是使用 ````getRequiredWebApplicationContext()```` 方法。此方法在 ````ApplicationContext```` 缺失时会抛出异常。
+
+一旦你拥有了 ````WebApplicationContext```` 的引用，你可以通过 bean 的名称或者类型来获取相应的 beans 。大多数开发者通过名称获取 beans 然后将它们转化成为某个它们实现的接口。
+
+幸运的是，本章节中介绍的大部分框架都包含查找 beans 的简单方法。它们不仅可以轻松地从 Spring 容器中获取bean，而且还允许您在其控制器上使用依赖注入。 每个 Web 框架部分都有关于其特定集成策略的更多详细信息。
+
+## 5.2 JSF
 
