@@ -3240,3 +3240,47 @@ Spring 的 JSF 集成中的关键元素是 JSF ````ELResolver````机制。
 
 ### 5.2.1 Spring Bean Resolver
 
+````SpringBeanFacesELResolver```` 是一个兼容 JSF 的 ````ELResolver```` 实现，与标准的通用 EL 集成，就像 JSF 和 JSP 中使用的那样。它首先进入 Spring 的 “业务上下文” ````WebApplicationContext```` 然后作为底层 JSF 实现的默认解析器。
+
+巧妙的配置，你可以在你的 JSF 的 ````faces-context.xml```` 文件中定义 ````SpringBeanFacesELResolver```` ，如下面例子所示：
+
+````xml
+<faces-config>
+    <application>
+        <el-resolver>org.springframework.web.jsf.el.SpringBeanFacesELResolver</el-resolver>
+        ...
+    </application>
+</faces-config>
+````
+
+### 5.2.2 使用 ````FacesContextUtils````
+
+一个自定义的 ````ELResolver```` 可以工作得很好，当你将你的属性映射到 ````faces-config.xml```` 中的 beans 。不过，有时候你可能需要显式获取一个 bean。[`FacesContextUtils`](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/web/jsf/FacesContextUtils.html) 类使得这么做变得很简单。它类似于 ````WebApplicationContextUtils````，不过它除了包含 ````ServletContext```` 参数，还包含一个 ````FacesContext```` 参数。
+
+下面的例子展示了如何使用 ````FacesContextUtils````：
+
+````java
+ApplicationContext ctx = FacesContextUtils.getWebApplicationContext(FacesContext.getCurrentInstance());
+````
+
+## 5.3 Apache Struts 2.x
+
+ [Struts](https://struts.apache.org/) 由 Craig McClanahan 发明，是一个由 Apache Software Foundation 主持的开源项目。 当时，它大大简化了 JSP / Servlet 编程范例，并赢得了许多使用专有框架的开发人员。 它简化了编程模型，它是开源的（因此在应用中是免费的），它有一个庞大的社区，让项目成长并在 Java Web 开发人员中变得流行。
+
+作为原始 Struts 1.x 的后续版本，请查看 Struts 2.x 和 Struts 提供的 Spring 插件，以实现内置的 Spring 集成。
+
+## 5.4 Apache Tapestry 5.x
+
+Tapestry 是一个面向组件的框架，用于在Java中创建动态，健壮，高度可扩展的 Web 应用程序。
+
+虽然 Spring 拥有自己强大的 Web 层，但是通过将 Tapestry 用于 Web 用户界面和 Spring 容器用于较低层，构建企业 Java 应用程序有许多独特的优势。
+
+有关更多信息，请参阅Tapestry [针对Spring的专用集成模块](https://tapestry.apache.org/integrating-with-spring-framework.html)。
+
+## 5.5 更多资源
+
+通过下面的链接可以获得本章节介绍的各种 web 框架的更多资源：
+
+- [JSF](https://www.oracle.com/technetwork/java/javaee/javaserverfaces-139869.html)
+- [Struts](https://struts.apache.org/)
+- [Tapestry](https://tapestry.apache.org/)
