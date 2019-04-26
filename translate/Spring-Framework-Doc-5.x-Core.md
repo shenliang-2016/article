@@ -1654,3 +1654,13 @@ public class UserPreferences {
 }
 ````
 
+**应用作用域**
+
+考虑如下 XML 配置用来定义 bean ：
+
+````xml
+<bean id="appPreferences" class="com.something.AppPreferences" scope="application"/>
+````
+
+Spring 容器通过对整个 Web 应用程序使用 ````appPreferences```` bean 定义一次来创建 ````AppPreferences```` bean的新实例。 也就是说，````appPreferences```` bean 的作用域是 ````ServletContext```` 级别，并存储为常规的 ````ServletContext```` 属性。 这有点类似于 Spring 单例 bean，但在两个重要方面有所不同：它是每个 ````ServletContext```` 的单例，而不是每个 Spring 的 'ApplicationContext'（在任何给定的 Web 应用程序中可能有几个），它实际上是暴露的，因此 作为 ````ServletContext````属性可见。
+
