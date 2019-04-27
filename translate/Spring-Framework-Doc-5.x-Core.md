@@ -1674,3 +1674,43 @@ public class AppPreferences {
 }
 ````
 
+**作为依赖的 Beans 的作用域**
+
+Spring IoC 容器不仅管理你的对象 (beans) 实例，同时还管理它们的协作者 (或者依赖) 之间的联系。如果你希望注射一个 HTTP 请求作用域 bean 进入另一个更长生存时间作用域的 bean 时，你可以选择注入一个 AOP 代理类来替代该具有作用域的 bean 。也就是说，你需要注入一个代理对象来暴露与该 bean 相同的公共接口，而同时又能够从相应的作用域（比如一个 HTTP 请求）中获取真实的目标对象，并将方法调用委托给真实目标对象。
+
+> 你也可以在 ````singleton```` 作用域的 beans 中间使用 ````<aop:scoped-proxy/>```` ，以及 beans 引用，然后通过一个可以序列化的中间代理，因此可以在反序列化时重新获取目标单例 bean 。
+>
+> 当为一个作用域为 ````prototype```` 的 bean 声明 ````<aop:scoped-proxy/>```` 时，每个到达该共享代理的请求将导致一个新的目标实例的创建，然后该请求会被转发到其上。
+>
+> 同时，具有作用域的代理并不只有这一种生命周期安全的方式来访问具有更短作用域的 beans 。你也可以声明你的注入点 (也就是说，构造器方法或者设置器参数或者自动绑定字段) 为 ````ObjectFactory<MyTargetBean>````，允许一个 ````getObject()```` 调用来按照每次请求按需获取当前实例—而不是单独持有并存储该实例。
+>
+> 作为一个扩展变体，你可以声明 ````ObjectProvider<MyTargetBean>```` ，它提供了几个额外的访问变体，包括 ````getIfAvailable```` 和 ````getIfUnique````。
+>
+> JSR-330 变体被称为 ````Provider```` ，与一个 ````Provider<MyTargetBean>```` 声明和一个相应的为每个查询请求的 ````get()```` 调用共同使用。参考 [JSR-330](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#beans-standard-annotations)。
+
+下面例子中的配置只有一行，不过理解它的原理和作用同样重要：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- an HTTP Session-scoped bean exposed as a proxy -->
+    <bean id="userPreferences" class="com.something.UserPreferences" scope="session">
+        <!-- instructs the container to proxy the surrounding bean -->
+        <aop:scoped-proxy/> <!-- 	The line that defines the proxy. -->
+    </bean>
+
+    <!-- a singleton-scoped bean injected with a proxy to the above bean -->
+    <bean id="userService" class="com.something.SimpleUserService">
+        <!-- a reference to the proxied userPreferences bean -->
+        <property name="userPreferences" ref="userPreferences"/>
+    </bean>
+</beans>
+````
+
