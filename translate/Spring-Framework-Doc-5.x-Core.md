@@ -1714,3 +1714,29 @@ Spring IoC 容器不仅管理你的对象 (beans) 实例，同时还管理它们
 </beans>
 ````
 
+为了创建这样的代理，你插入一个子 ````<aop:scoped-proxy>```` 元素到一个拥有作用域的 bean 定义中（参考  [Choosing the Type of Proxy to Create](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-other-injection-proxies) 和 [XML Schema-based configuration](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#xsd-schemas)）。为什么定义作用域为 ````request````、````session```` 以及自定义作用域的 beans 需要使用 ````<aop:scoped-proxy>```` 元素？考虑下面的单例 bean 定义并将其与需要为上述作用域定义的内容作比较（注意，下面的 ````userPreferences````  bean 定义是不完整的）：
+
+````xml
+<bean id="userPreferences" class="com.something.UserPreferences" scope="session"/>
+
+<bean id="userManager" class="com.something.UserManager">
+    <property name="userPreferences" ref="userPreferences"/>
+</bean>
+````
+
+在上面的例子中，该单例 bean ````userManager```` 被注入一个 HTTP ````session```` 作用域的 bean ````userPreferences```` 。这里的重点是 ````userManager```` bean 是一个单例：它每个容器只实例化一次，它的依赖项（在这种情况下只有一个，````userPreferences```` bean）也只注入一次。这意味着 ````userManager```` bean 仅在完全相同的 ````userPreferences```` 对象（即最初注入它的对象）上运行。
+
+当将一个寿命较短的 bean 注入一个寿命较长的 bean 时，这不是你想要的行为（例如，将一个 HTTP ````Session````-scoped 协作 bean 作为依赖注入单例 bean）。相反，您需要一个 ````userManager```` 对象，并且，对于 HTTP 会话的生命周期，您需要一个特定于 HTTP 会话的 ````userPreferences```` 对象。因此，容器创建一个对象，该对象公开与 ````UserPreferences````类（理想情况下是 ````UserPreferences```` 实例的对象）完全相同的公共接口，该对象可以从作用域机制（HTTP 请求、````Session```` 等）获取真实的 ````UserPreferences```` 对象。容器将此代理对象注入 ````userManager```` bean，该bean不知道此 ````UserPreferences```` 引用是代理。在此示例中，当 ````UserManager```` 实例在依赖注入的 ````UserPreferences```` 对象上调用方法时，它实际上是在代理上调用方法。然后，代理从（在这种情况下）HTTP ````Session```` 中获取真实的 ````UserPreferences```` 对象，并将方法调用委托给检索到的真实 ````UserPreferences```` 对象。
+
+因此，在将 ````request```` 和 ````session-scoped```` 的 bean 注入协作对象时，您需要以下（正确和完整）配置，如以下示例所示：
+
+````xml
+<bean id="userPreferences" class="com.something.UserPreferences" scope="session">
+    <aop:scoped-proxy/>
+</bean>
+
+<bean id="userManager" class="com.something.UserManager">
+    <property name="userPreferences" ref="userPreferences"/>
+</bean>
+````
+
