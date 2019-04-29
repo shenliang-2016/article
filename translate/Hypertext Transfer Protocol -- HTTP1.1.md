@@ -3280,6 +3280,22 @@ Max-Forwards = "Max-Forwards" ":" 1*DIGIT
 
 ## 14.32 Pragma
 
+````Pragma```` 通用首部字段被用来包含可能应用到请求／响应链上的任何消息接收者的特定实现的指令。从协议的视角看，所有 pragma 指令都指定了可选行为，但是，某些系统可能要求该行为和指令一致。
+
+````
+Pragma						= "Pragma" ":" 1#pragma-directive
+pragma-directive	= "no-cache" | extension-pragma
+extension-pragma	= token [ "=" ( token | quoted-string ) ]
+````
+
+当 ````no-cache```` 指令出现在请求消息中，应用应该转发该请求给初始服务器，即使它自己拥有被请求的资源的缓存拷贝。此 pragma 指令拥有与 ````no-cache```` 缓存控制指令相同的语义，定义在这里是为了保持向下兼容 HTTP/1.0。客户端应该同时包含两个首部字段，当一个 ````no-cache```` 请求被发送给不确定是否兼容 HTTP/1.1 协议的服务器时。
+
+Pragma 指令必须被代理或者网关应用传递，无论它们对应用是否有意义，因为该指令可能适用于请求／响应链上的所有消息接收者。为特定参与者制定特定的 pragma 指令是不可能的。不过，任何与通信参与者无关的 pragma 指令应该被该通信参与者忽略。
+
+HTTP/1.1 缓存应该同样对待 ````Pragma: no-cache```` 和 ````Cache-Control: no-cache```` 。HTTP 协议将不会再定义新的 ````pragma```` 指令。
+
+注意：由于作为一个响应首部字段的 ````Pragma: no-cache```` 的含义是未明确指定的，所以它并不能在响应中可靠替代 ````Cache-Control: no-cache```` 首部字段。
+
 
 
 
