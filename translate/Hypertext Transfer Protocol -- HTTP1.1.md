@@ -3296,6 +3296,20 @@ HTTP/1.1 缓存应该同样对待 ````Pragma: no-cache```` 和 ````Cache-Control
 
 注意：由于作为一个响应首部字段的 ````Pragma: no-cache```` 的含义是未明确指定的，所以它并不能在响应中可靠替代 ````Cache-Control: no-cache```` 首部字段。
 
+## 14.33 Proxy-Authenticate
+
+````Proxy-Authenticate```` 响应首部字段必须被作为一个 407 (Proxy Authentication Required) 状态码响应的一部分。该字段值由一个质询，该质询表示适用于此 ````Request-URI```` 的代理的身份验证方案和参数。
+
+````
+Proxy-Authenticate = "Proxy-Authenticate" ":" 1#challenge
+````
+
+HTTP 访问认证过程在 "HTTP 认证：基本和摘要访问认证" 中描述。与 ````WWW-Authenticate```` 不同，````Proxy-Authenticate```` 首部字段仅适用于当前连接，不应传递给下游客户端。但是，中间代理可能需要通过请求下游客户端来获取它们自己的凭证，在某些情况下，这些凭证看起来好像代理正在转发 ````Proxy-Authenticate```` 首部字段。
+
+## 14.34 Proxy-Authorization
+
+
+
 
 
 
