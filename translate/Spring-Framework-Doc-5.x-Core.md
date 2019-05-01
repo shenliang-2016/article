@@ -1740,3 +1740,27 @@ Spring IoC 容器不仅管理你的对象 (beans) 实例，同时还管理它们
 </bean>
 ````
 
+**选择代理创建的类型**
+
+默认地，当 Spring 容器为一个用 ````<aop:scoped-proxy/>```` 标记的 bean 创建一个代理时，一个基于 CGLIB 的代理类被创建。
+
+> CGLIB 代理只会拦截 public 方法调用！不用在这个代理上调用非 public 方法。那些方法调用并不会被下放给实际的作用域内的目标对象。
+
+另外，你可以配置 Spring 容器来为这种有作用域的 beans 创建标准的 JDK 基于接口的代理，通过指定 ````<aop:scoped-proxy/>```` 元素上的 ````proxy-target-class```` 属性的值为 ````false```` 。使用 JDK 基于接口的代理意味着你不需要在应用的类路径上放置额外的类库来影响此类代理。不过，它同时也意味着作用域内的 beans 的类型必须实现至少一个接口，同时，该 bean 被注入的所有协作者都必须通过这些接口中的一个引用它。下面的例子展示了一个基于接口的代理：
+
+````xml
+<!-- DefaultUserPreferences implements the UserPreferences interface -->
+<bean id="userPreferences" class="com.stuff.DefaultUserPreferences" scope="session">
+    <aop:scoped-proxy proxy-target-class="false"/>
+</bean>
+
+<bean id="userManager" class="com.stuff.UserManager">
+    <property name="userPreferences" ref="userPreferences"/>
+</bean>
+````
+
+有关选择基于类的代理还是基于接口的代理的更多细节可参考 [Proxying Mechanisms](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#aop-proxying)。
+
+### 1.5.5 自定义作用域
+
+bean 作用域机制是可扩展的。你可以定义你自己的作用域，甚至重新定义已经存在的作用域，尽管后者通常被认为不是什么好的做法，同时你也不能覆盖内建的 ````singleton```` 和 ````prototype```` 作用域。
