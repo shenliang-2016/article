@@ -1764,3 +1764,40 @@ Spring IoC 容器不仅管理你的对象 (beans) 实例，同时还管理它们
 ### 1.5.5 自定义作用域
 
 bean 作用域机制是可扩展的。你可以定义你自己的作用域，甚至重新定义已经存在的作用域，尽管后者通常被认为不是什么好的做法，同时你也不能覆盖内建的 ````singleton```` 和 ````prototype```` 作用域。
+
+**创建自定义作用域**
+
+为了将你的自定义作用域集成到 Spring 容器中，你需要实现 ````org.springframework.beans.factory.config.Scope```` 接口，该接口将在本节描述。为了了解如何实现你自己的作用域，参考 Spring 框架本身自带的 ````Scope```` 实现及其文档说明，那里详细介绍了你需要实现的方法细节。
+
+````Scope```` 接口拥有四个方法来从作用域中获取对象、从作用域中删除它们以及使它们被销毁。
+
+以会话作用域实现为例，返回会话作用域的 bean (如果不存在，则该方法返回一个 bean 的新实例，在将其绑定到一个会话之后，为了将来的引用)。下面的方法返回潜在作用域中的对象：
+
+````
+Object get(String name, ObjectFactory objectFactory)
+````
+
+会话作用域实现，从潜在的会话中清除会话作用域的 bean 。该对象应该被返回，不过，如果特定名称的对象没有找到，则你可以返回 ````null````  。下面的方法从潜在作用域中删除对象：
+
+````
+Object remove(String name)
+````
+
+下面的方法注册作用域在它自身被销毁或者该作用域中特定名称的对象被销毁时应该执行的回调：
+
+````
+void registerDestructionCallbacks(String name, Runnable destructionCallback)
+````
+
+参考  [javadoc](https://docs.spring.io/spring-framework/docs/5.1.6.RELEASE/javadoc-api/org/springframework/beans/factory/config/Scope.html#registerDestructionCallback) 获取更多有关销毁回调的细节。
+
+下面的方法获取潜在作用域的会话标识符：
+
+````
+String getConversationId()
+````
+
+该标识符每个作用域都不同。对会话作用域实现而言，该标识符可以是该会话的标识符。
+
+**使用自定义作用域**
+
