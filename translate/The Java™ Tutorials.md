@@ -1005,3 +1005,243 @@ class PrePostDemo {
 }
 ````
 
+#### 相等，关系和条件运算符
+
+**相等与关系运算符**
+
+等于和关系运算符确定一个操作数是否大于，小于，等于或不等于另一个操作数。这些操作员中的大多数也可能看起来很熟悉。请记住，在测试两个原始值是否相等时`==`，必须使用“ ”而不是“ `=`”。
+
+````
+==      equal to
+!=      not equal to
+>       greater than
+>=      greater than or equal to
+<       less than
+<=      less than or equal to
+````
+
+以下程序 [`ComparisonDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ComparisonDemo.java)测试比较运算符：
+
+````java
+class ComparisonDemo {
+
+    public static void main(String[] args){
+        int value1 = 1;
+        int value2 = 2;
+        if(value1 == value2)
+            System.out.println("value1 == value2");
+        if(value1 != value2)
+            System.out.println("value1 != value2");
+        if(value1 > value2)
+            System.out.println("value1 > value2");
+        if(value1 < value2)
+            System.out.println("value1 < value2");
+        if(value1 <= value2)
+            System.out.println("value1 <= value2");
+    }
+}
+````
+
+输出：
+
+````
+value1 != value2
+value1 <  value2
+value1 <= value2
+````
+
+**条件操作符**
+
+`&&`与`||` 操作符在两个布尔表达式之间进行 *有条件与*和 *有条件或*运算。这些运算符表现出“短路”行为，这意味着仅在需要时才评估第二个操作数。
+
+````
+&& Conditional-AND
+|| Conditional-OR
+````
+
+以下程序 [`ConditionalDemo1`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ConditionalDemo1.java)测试这些运算符：
+
+````java
+class ConditionalDemo1 {
+
+    public static void main(String[] args){
+        int value1 = 1;
+        int value2 = 2;
+        if((value1 == 1) && (value2 == 2))
+            System.out.println("value1 is 1 AND value2 is 2");
+        if((value1 == 1) || (value2 == 1))
+            System.out.println("value1 is 1 OR value2 is 1");
+    }
+}
+````
+
+另一个条件运算符`?:`，可以被认为是`if-then-else`语句的简写（在本课程的[控制流语句](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)部分中讨论 ）。此运算符也称为*三元运算符，*因为它使用三个操作数。在下面的示例中，此运算符应读作：“如果`someCondition`是`true`，则赋值`value1`to `result`。否则，赋值`value2`to `result`。”
+
+以下程序 [`ConditionalDemo2`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ConditionalDemo2.java)测试`?:`运算符：
+
+````java
+class ConditionalDemo2 {
+
+    public static void main(String[] args){
+        int value1 = 1;
+        int value2 = 2;
+        int result;
+        boolean someCondition = true;
+        result = someCondition ? value1 : value2;
+
+        System.out.println(result);
+    }
+}
+````
+
+因为`someCondition`是，所以该程序在屏幕上打印“1”。如果它使代码更具可读性，则使用`?:`运算符而不是`if-then-else`语句; 例如，当表达式紧凑且没有副作用（例如赋值）时。
+
+**类型比较运算符 instanceof**
+
+`instanceof`操作符将对象与指定类型进行比较。您可以使用它来测试对象是否是类的实例，子类的实例或实现特定接口的类的实例。
+
+以下程序 [`InstanceofDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/InstanceofDemo.java)定义父类（已命名`Parent`），简单接口（已命名`MyInterface`）和`Child`从父进程继承并实现接口的子类（已命名）。
+
+````java
+class InstanceofDemo {
+    public static void main(String[] args) {
+
+        Parent obj1 = new Parent();
+        Parent obj2 = new Child();
+
+        System.out.println("obj1 instanceof Parent: "
+            + (obj1 instanceof Parent));
+        System.out.println("obj1 instanceof Child: "
+            + (obj1 instanceof Child));
+        System.out.println("obj1 instanceof MyInterface: "
+            + (obj1 instanceof MyInterface));
+        System.out.println("obj2 instanceof Parent: "
+            + (obj2 instanceof Parent));
+        System.out.println("obj2 instanceof Child: "
+            + (obj2 instanceof Child));
+        System.out.println("obj2 instanceof MyInterface: "
+            + (obj2 instanceof MyInterface));
+    }
+}
+
+class Parent {}
+class Child extends Parent implements MyInterface {}
+interface MyInterface {}
+````
+
+输出：
+
+````
+obj1 instanceof Parent: true
+obj1 instanceof Child: false
+obj1 instanceof MyInterface: false
+obj2 instanceof Parent: true
+obj2 instanceof Child: true
+obj2 instanceof MyInterface: true
+````
+
+使用`instanceof`运算符时，请记住，`null`不是任何类型的实例。
+
+#### 位运算和移位操作符
+
+Java编程语言还提供对整数类型执行按位和位移操作的运算符。本节中讨论的运算符不太常用。因此，他们的报道很简短; 目的是让您意识到这些运算符的存在。
+
+一元按位补码运算符“ `~`”反转位模式; 它可以应用于任何整数类型，使每个“0”为“1”，每个“1”为“0”。例如，a `byte`包含8位; 将此运算符应用于位模式为“00000000”的值会将其模式更改为“11111111”。
+
+带符号的左移位运算符“ `<<`”将位模式向左移位，带符号的右移位运算符“ `>>`”将位模式向右移位。位模式由左侧操作数给出，位置数由右侧操作数移位。无符号右移运算符“ `>>>`”将零移动到最左边的位置，而后面的最左边位置`">>"`取决于符号扩展。
+
+按位运算`&`符执行按位AND运算。
+
+按位运算`^`符执行按位异或运算。
+
+按位运算`|`符执行按位包含OR运算。
+
+以下程序 [`BitDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/BitDemo.java)使用按位AND运算符将数字“2”打印到标准输出。
+
+````java
+class BitDemo {
+    public static void main(String[] args) {
+        int bitmask = 0x000F;
+        int val = 0x2222;
+        // prints "2"
+        System.out.println(val & bitmask);
+    }
+}
+````
+
+#### 运算符总结
+
+以下快速参考总结了Java编程语言支持的运算符。
+
+**简单赋值操作符**
+
+```
+=       Simple assignment operator
+```
+
+**算术运算符**
+
+```
++       Additive operator (also used
+        for String concatenation)
+-       Subtraction operator
+*       Multiplication operator
+/       Division operator
+%       Remainder operator
+```
+
+**一元操作符**
+
+```
++       Unary plus operator; indicates
+        positive value (numbers are 
+        positive without this, however)
+-       Unary minus operator; negates
+        an expression
+++      Increment operator; increments
+        a value by 1
+--      Decrement operator; decrements
+        a value by 1
+!       Logical complement operator;
+        inverts the value of a boolean
+```
+
+**相等和关系运算符**
+
+```
+==      Equal to
+!=      Not equal to
+>       Greater than
+>=      Greater than or equal to
+<       Less than
+<=      Less than or equal to
+```
+
+**条件操作符**
+
+```
+&&      Conditional-AND
+||      Conditional-OR
+?:      Ternary (shorthand for 
+        if-then-else statement)
+```
+
+**类型比较操作符**
+
+```
+instanceof      Compares an object to 
+                a specified type 
+```
+
+**位运算和位移操作符**
+
+```
+~       Unary bitwise complement
+<<      Signed left shift
+>>      Signed right shift
+>>>     Unsigned right shift
+&       Bitwise AND
+^       Bitwise exclusive OR
+|       Bitwise inclusive OR
+```
+
