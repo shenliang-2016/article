@@ -1294,14 +1294,15 @@ x +（y / 100）//明确，推荐
 
 **语句**
 
-Statements are roughly equivalent to sentences in natural languages. A *statement* forms a complete unit of execution. The following types of expressions can be made into a statement by terminating the expression with a semicolon (`;`).
+语句大致相当于自然语言中的句子。一个*语句*形成一个完整的执行单元。下列类型的表达式可以通过使用终结表达式，一个分号````;````，来变成一个语句。
 
-- Assignment expressions
-- Any use of `++` or `--`
-- Method invocations
-- Object creation expressions
 
-Such statements are called *expression statements*. Here are some examples of expression statements.
+- 赋值表达式
+- 任何使用 `++` or `--` 的表达式
+- 方法调用
+- 对象创建表达式
+
+这种语句被称为*表达式语句*。下面是介个表达式语句的例子：
 
 ```
 // assignment statement
@@ -1313,12 +1314,30 @@ System.out.println("Hello World!");
 // object creation statement
 Bicycle myBike = new Bicycle();
 ```
-
-In addition to expression statements, there are two other kinds of statements: *declaration statements* and *control flow statements*. A *declaration statement* declares a variable. You've seen many examples of declaration statements already:
+除了表达式语句，还存在其他两种语句：*声明语句* 和 *控制流语句*。一个*声明语句*声明一个变量。你应该已经看到过很多声明语句：
 
 ```
 // declaration statement
 double aValue = 8933.234;
 ```
 
-Finally, *control flow statements* regulate the order in which statements get executed. You'll learn about control flow statements in the next section, [Control Flow Statements](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)。
+最后，*控制流语句*调节语句执行的顺序。您将在下一节“控制流语句”中了解 [控制流语句](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)。
+
+**块**
+
+*块*是一组成对的括号之间的零条或多个语句，并且可以在任何地方使用单个语句是允许的。以下示例 [`BlockDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/BlockDemo.java)说明了块的使用：
+
+````java
+class BlockDemo {
+     public static void main(String[] args) {
+          boolean condition = true;
+          if (condition) { // begin block 1
+               System.out.println("Condition is true.");
+          } // end block one
+          else { // begin block 2
+               System.out.println("Condition is false.");
+          } // end block 2
+     }
+}
+````
+
