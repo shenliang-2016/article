@@ -844,3 +844,164 @@ Java编程语言使用“字段”和“变量”作为其术语的一部分。�
 
 在通用编程中，某些运营商往往比其他运营商更频繁地出现; 例如，赋值运算符“ `=`”比无符号右移运算符“ `>>>`” 更常见。考虑到这一点，以下讨论首先关注您最有可能定期使用的运营商，并最终关注那些不太常见的运营商。每个讨论都附有可以编译和运行的示例代码。研究它的输出将有助于强化你刚刚学到的东西。
 
+#### 赋值，算术和一元运算符
+
+**赋值操作符**
+
+您将遇到的最常见的运算符之一是简单的赋值运算符“ `=`”。你在Bicycle类中看到过这个操作符; 它将右侧的值赋给左侧的操作数：
+
+````java
+ int cadence = 0;
+ int speed = 0;
+ int gear = 1;
+````
+
+此运算符也可用于对象以分配*对象引用*，如 [创建对象中所述](https://docs.oracle.com/javase/tutorial/java/javaOO/objectcreation.html)。
+
+**算术运算符**
+
+Java编程语言提供执行加法，减法，乘法和除法的运算符。你很可能会在基础数学方面认识他们。唯一可能对你来说很新的符号是“ `%`”，它将一个操作数除以另一个操作数，并将余数作为结果返回。
+
+| Operator | Description                                            |
+| -------- | ------------------------------------------------------ |
+| `+`      | Additive operator (also used for String concatenation) |
+| `-`      | Subtraction operator                                   |
+| `*`      | Multiplication operator                                |
+| `/`      | Division operator                                      |
+| `%`      | Remainder operator                                     |
+
+以下程序 [`ArithmeticDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ArithmeticDemo.java)测试算术运算符。
+
+````java
+class ArithmeticDemo {
+
+    public static void main (String[] args) {
+
+        int result = 1 + 2;
+        // result is now 3
+        System.out.println("1 + 2 = " + result);
+        int original_result = result;
+
+        result = result - 1;
+        // result is now 2
+        System.out.println(original_result + " - 1 = " + result);
+        original_result = result;
+
+        result = result * 2;
+        // result is now 4
+        System.out.println(original_result + " * 2 = " + result);
+        original_result = result;
+
+        result = result / 2;
+        // result is now 2
+        System.out.println(original_result + " / 2 = " + result);
+        original_result = result;
+
+        result = result + 8;
+        // result is now 10
+        System.out.println(original_result + " + 8 = " + result);
+        original_result = result;
+
+        result = result % 7;
+        // result is now 3
+        System.out.println(original_result + " % 7 = " + result);
+    }
+}
+````
+
+该程序打印以下内容：
+
+````shell
+1 + 2 = 3
+3 - 1 = 2
+2 * 2 = 4
+4 / 2 = 2
+2 + 8 = 10
+10 % 7 = 3
+````
+
+您还可以将算术运算符与简单赋值运算符组合以创建*复合赋值*。例如，`x+=1;`与`x=x+1;`两个增量的值`x`由1。
+
+的`+`操作者也可以用于级联（接合）两个字符串在一起，如示于下述 [`ConcatDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ConcatDemo.java)方案：
+
+````java
+class ConcatDemo {
+    public static void main(String[] args){
+        String firstString = "This is";
+        String secondString = " a concatenated string.";
+        String thirdString = firstString+secondString;
+        System.out.println(thirdString);
+    }
+}
+````
+
+在该程序结束时，变量`thirdString`包含“This is a concatenated string。”，它将打印到标准输出。
+
+**一元运算符**
+
+一元运算符只需要一个操作数; 它们执行各种操作，例如将值递增/递减1，否定表达式或反转布尔值。
+
+| Operator | Description                                                  |
+| -------- | ------------------------------------------------------------ |
+| `+`      | Unary plus operator; indicates positive value (numbers are positive without this, however) |
+| `-`      | Unary minus operator; negates an expression                  |
+| `++`     | Increment operator; increments a value by 1                  |
+| `--`     | Decrement operator; decrements a value by 1                  |
+| `!`      | Logical complement operator; inverts the value of a boolean  |
+
+以下程序 [`UnaryDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/UnaryDemo.java)测试一元运算符：
+
+````java
+class UnaryDemo {
+
+    public static void main(String[] args) {
+
+        int result = +1;
+        // result is now 1
+        System.out.println(result);
+
+        result--;
+        // result is now 0
+        System.out.println(result);
+
+        result++;
+        // result is now 1
+        System.out.println(result);
+
+        result = -result;
+        // result is now -1
+        System.out.println(result);
+
+        boolean success = false;
+        // false
+        System.out.println(success);
+        // true
+        System.out.println(!success);
+    }
+}
+````
+
+可以在操作数之前（前缀）或之后（后缀）应用递增/递减运算符。代码`result++;`并将`++result;`以`result`加1 结束。唯一的区别是前缀version（`++result`）计算增量值，而后缀version（`result++`）计算为原始值。如果您只是执行简单的增量/减量，那么选择哪个版本并不重要。但是，如果您在较大的表达式中使用此运算符，则您选择的运算符可能会产生显着差异。
+
+以下程序 [`PrePostDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/PrePostDemo.java)说明了前缀/后缀一元增量运算符：
+
+````java
+class PrePostDemo {
+    public static void main(String[] args){
+        int i = 3;
+        i++;
+        // prints 4
+        System.out.println(i);
+        ++i;			   
+        // prints 5
+        System.out.println(i);
+        // prints 6
+        System.out.println(++i);
+        // prints 6
+        System.out.println(i++);
+        // prints 7
+        System.out.println(i);
+    }
+}
+````
+
