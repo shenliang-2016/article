@@ -1245,3 +1245,80 @@ instanceof      Compares an object to
 |       Bitwise inclusive OR
 ```
 
+### 表达式，语句和块
+
+现在您已了解变量和运算符，现在是时候了解*表达式*，*语句*和*块*。运算符可用于构建计算值的表达式; 表达式是陈述的核心组成部分; 语句可以分组为块。
+
+**表达式**
+
+一个*表达式*是变量，运算符和方法调用，它们根据语言的语法，计算结果为单个值构成由一个构建体。您已经看过表达式的示例，如下面的粗体所示：
+
+````java
+int cadence = 0;
+anArray[0] = 100;
+System.out.println("Element 1 at index 0: " + anArray[0]);
+
+int result = 1 + 2; // result is now 3
+if (value1 == value2) 
+    System.out.println("value1 == value2");
+````
+
+表达式返回的值的数据类型取决于表达式中使用的元素。表达式`cadence = 0`返回一个，`int`因为赋值运算符返回与其左侧操作数相同的数据类型的值; 在这种情况下，`cadence`是一个`int`。从其他表达式中可以看出，表达式也可以返回其他类型的值，例如`boolean`或`String`。
+
+只要表达式的一部分所需的数据类型与另一部分的数据类型匹配，Java编程语言就允许您从各种较小的表达式构造复合表达式。以下是复合表达式的示例：
+
+````
+1 * 2 * 3
+````
+
+在这个特定的例子中，表达式的计算顺序并不重要，因为乘法的结果与顺序无关; 结果总是相同的，无论您采用乘法的顺序。但是，并非所有表达式都是如此。例如，以下表达式给出不同的结果，具体取决于您是先执行加法还是除法运算：
+
+```
+x + y / 100 // 含糊不清
+```
+
+您可以使用平衡括号精确指定表达式的计算方式:(和）。例如，要使前一个表达式明确，您可以编写以下内容：
+
+```
+（x + y）/ 100 // 明确无误，推荐
+```
+
+如果未明确指示要执行的操作的顺序，则顺序由分配给表达式中使用的运算符的优先级确定。首先评估具有更高优先级的运算符。例如，除法运算符的优先级高于加法运算符。因此，以下两个陈述是等效的：
+
+```
+x + y / 100 
+x +（y / 100）//明确，推荐
+```
+
+在编写复合表达式时，请明确并用括号表示应首先评估哪些运算符。这种做法使代码更易于阅读和维护。
+
+**语句**
+
+Statements are roughly equivalent to sentences in natural languages. A *statement* forms a complete unit of execution. The following types of expressions can be made into a statement by terminating the expression with a semicolon (`;`).
+
+- Assignment expressions
+- Any use of `++` or `--`
+- Method invocations
+- Object creation expressions
+
+Such statements are called *expression statements*. Here are some examples of expression statements.
+
+```
+// assignment statement
+aValue = 8933.234;
+// increment statement
+aValue++;
+// method invocation statement
+System.out.println("Hello World!");
+// object creation statement
+Bicycle myBike = new Bicycle();
+```
+
+In addition to expression statements, there are two other kinds of statements: *declaration statements* and *control flow statements*. A *declaration statement* declares a variable. You've seen many examples of declaration statements already:
+
+```
+// declaration statement
+double aValue = 8933.234;
+```
+
+Finally, *control flow statements* regulate the order in which statements get executed. You'll learn about control flow statements in the next section, [Control Flow Statements](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)。
