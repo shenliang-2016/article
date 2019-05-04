@@ -110,3 +110,74 @@ API是大量现成的软件组件，提供许多有用的功能。它被分为�
 作为独立于平台的环境，Java平台可能比本机代码慢一点。但是，编译器和虚拟机技术的进步使性能接近本机代码的性能而不会威胁到可移植性。
 
 术语“Java虚拟机”和“JVM”表示Java平台的虚拟机。
+
+### Java技术可以做什么？
+
+通用的高级Java编程语言是一个功能强大的软件平台。Java平台的每个完整实现都为您提供以下功能：
+
+- **开发工具**：开发工具提供编译，运行，监视，调试和记录应用程序所需的一切。作为一名新开发人员，您将使用的主要工具是`javac`编译器，`java`启动器和`javadoc`文档工具。
+- **应用程序编程接口（API）**：API提供Java编程语言的核心功能。它提供了各种有用的类，可以在您自己的应用程序中使用。它涵盖了从基本对象到网络和安全性，XML生成和数据库访问等所有内容。核心API非常大; 要了解它包含的内容，请参阅 [Java平台标准版8文档](https://docs.oracle.com/javase/8/docs/index.html)。
+- **部署技术**：JDK软件提供标准机制，例如Java Web Start软件和Java Plug-In软件，用于将应用程序部署到最终用户。
+- **用户界面工具包**：JavaFX，Swing和Java 2D工具包可以创建复杂的图形用户界面（GUI）。
+- **集成库**：集成库，例如Java IDL API，JDBC API，Java命名和目录接口（JNDI）API，Java RMI和基于Internet的ORB间协议技术的Java远程方法调用（Java RMI-IIOP技术），支持数据库访问和远程对象的操纵。
+
+### Java技术将如何改变我的生活？
+
+如果你学习Java编程语言，我们不能保证你的名声，财富甚至是工作。尽管如此，它可能会使您的程序更好，并且比其他语言需要更少的工作量。我们相信Java技术将帮助您执行以下操作：
+
+- **快速入门**：尽管Java编程语言是一种功能强大的面向对象语言，但它易于学习，特别是对于已经熟悉C或C ++的程序员。
+- **编写更少的代码**：程序指标（类计数，方法计数等）的比较表明，用Java编程语言编写的程序可以比用C ++编写的相同程序小四倍。
+- **编写更好的代码**：Java编程语言鼓励良好的编码实践，自动垃圾收集可以帮助您避免内存泄漏。它的面向对象，JavaBeans™组件架构及其广泛，易于扩展的API使您可以重用现有的，经过测试的代码并减少错误。
+- **更快地开发程序**：Java编程语言比C ++更简单，因此，在编写时，您的开发时间可能快两倍。您的程序还需要更少的代码行。
+- **避免平台依赖**：您可以通过避免使用其他语言编写的库来保持程序的可移植性。
+- **编写一次，随处运行**：因为用Java编程语言编写的应用程序被编译成与机器无关的字节码，所以它们在任何Java平台上都能一致地运行。
+- **更轻松地分发软件**：使用Java Web Start软件，用户只需单击鼠标即可启动应用程序。启动时的自动版本检查可确保用户始终了解最新版本的软件。如果有可用更新，Java Web Start软件将自动更新其安装。
+
+# 学习Java语言
+
+该路径涵盖了Java编程语言中编程的基础知识。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**面向对象的编程概念**](https://docs.oracle.com/javase/tutorial/java/concepts/index.html)向您介绍[**面向对象编程**](https://docs.oracle.com/javase/tutorial/java/concepts/index.html)背后的核心概念：对象，消息，类和继承。本课程将向您展示这些概念如何转化为代码。如果您已熟悉面向对象的编程，请随意跳过本课程。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**语言基础知识**](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/index.html)描述了[**语言**](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/index.html)的传统特性，包括变量，数组，数据类型，运算符和控制流。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**类和对象**](https://docs.oracle.com/javase/tutorial/java/javaOO/index.html)描述了如何编写从中创建对象的类，以及如何创建和使用对象。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**注释**](https://docs.oracle.com/javase/tutorial/java/annotations/index.html)是元数据的一种形式，为编译器提供信息。本课程描述了在程序中有效使用注释的位置和方法。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**接口和继承**](https://docs.oracle.com/javase/tutorial/java/IandI/index.html)描述了接口 - 它们是什么，为什么要编写接口，以及如何编写接口。本节还介绍了从另一个类派生一个类的方法。也就是说，*子类*如何从*超类*继承字段和方法。您将了解到所有类都是从类派生的`Object`，以及如何修改子类从超类继承的方法。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**数字和字符串**](https://docs.oracle.com/javase/tutorial/java/data/index.html)本课程介绍如何使用`Number`和`String`对象本课程还介绍如何格式化输出数据。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**泛型**](https://docs.oracle.com/javase/tutorial/java/generics/index.html)是Java编程语言的强大功能。它们可以提高代码的类型安全性，使您可以在编译时检测到更多错误。
+
+[![小道图标](https://docs.oracle.com/javase/tutorial/images/javaIcon.gif)**包**](https://docs.oracle.com/javase/tutorial/java/package/index.html)是Java编程语言的一个特性，它可以帮助您组织和构建类及其相互之间的关系。
+
+## 面向对象的编程概念
+
+如果您以前从未使用过面向对象的编程语言，那么在开始编写任何代码之前，您需要学习一些基本概念。本课将向您介绍对象，类，继承，接口和包。每个讨论都关注这些概念如何与现实世界相关，同时介绍Java编程语言的语法。
+
+### [什么是对象？](https://docs.oracle.com/javase/tutorial/java/concepts/object.html)
+
+对象是相关状态和行为的软件包。软件对象通常用于模拟您在日常生活中发现的真实世界对象。本课程解释了如何在对象中表示状态和行为，介绍数据封装的概念，并解释以这种方式设计软件的好处。
+
+### [什么是类？](https://docs.oracle.com/javase/tutorial/java/concepts/class.html)
+
+类是创建对象的蓝图或原型。本节定义了一个模拟现实世界对象的状态和行为的类。它故意专注于基础知识，展示一个简单的类如何能够清晰地模拟状态和行为。
+
+### [什么是继承？](https://docs.oracle.com/javase/tutorial/java/concepts/inheritance.html)
+
+继承为组织和构建软件提供了强大而自然的机制。本节介绍了类如何从超类继承状态和行为，并解释了如何使用Java编程语言提供的简单语法从另一个类派生一个类。
+
+### [什么是接口？](https://docs.oracle.com/javase/tutorial/java/concepts/interface.html)
+
+接口是一个类和外部世界之间的契约。当类实现接口时，它承诺提供该接口发布的行为。本节定义了一个简单的接口，并解释了实现它的任何类的必要更改。
+
+### [什么是包？](https://docs.oracle.com/javase/tutorial/java/concepts/package.html)
+
+包是用于以逻辑方式组织类和接口的命名空间。将代码放入包中可以使大型软件项目更易于管理。本节解释了这有用的原因，并向您介绍Java平台提供的应用程序编程接口（API）。
+
+### [问题与练习：面向对象的编程概念](https://docs.oracle.com/javase/tutorial/java/concepts/QandE/questions.html)
+
+使用本节中提供的问题和练习来测试您对对象，类，继承，接口和包的理解
+
