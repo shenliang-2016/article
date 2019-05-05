@@ -3308,9 +3308,13 @@ HTTP 访问认证过程在 "HTTP 认证：基本和摘要访问认证" 中描述
 
 ## 14.34 Proxy-Authorization
 
+````Proxy-Authorization```` 请求首部字段允许客户端将自己（或其用户）标识到需要认证的代理。````Proxy-Authorization```` 字段值包含包含代理的用户代理的身份验证信息和/或所请求资源的域的凭证。
 
+````
+Proxy-Authorization = "Proxy-Authorization" ":" credentials
+````
 
-
+HTTP 访问认证过程在 “HTTP认证：基本和摘要访问认证” 中描述。与授权不同，````Proxy-Authorization```` 首部字段仅适用于需要使用 ````Proxy-Authenticate```` 字段进行身份验证的下一个出站代理。在链路中使用多个代理时，````Proxy-Authorization```` 首部字段由期望接收凭据的第一个出站代理使用。代理可以将凭证从客户端请求中继到下一个代理，如果这是代理协作地验证给定请求的机制。
 
 
 
