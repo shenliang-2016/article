@@ -1345,8 +1345,319 @@ class BlockDemo {
 
 源文件中的语句通常按照它们出现的顺序从上到下执行。但是，*控制流语句*通过使用决策，循环和分支来打破执行流程，使您的程序能够*有条件地*执行特定的代码块。本节介绍了决策声明（`if-then`，`if-then-else`，`switch`），该循环语句（`for`，`while`，`do-while`）和分支语句（`break`，`continue`，`return`）的Java编程语言的支持。
 
-#### if-then和if-then-else语句
+#### ````if-then````和 ````if-then-else```` 语句
 
 **````if-then```` 语句**
 
-````if-then```` 语句是最基本的流程控制语句。
+````if-then```` 语句是所有控制流语句中最基本的语句。它告诉程序只有在特定测试评估为 ````true```` 时才执行某段代码。例如，只有在自行车已经运动时，自行车等级才允许制动器降低自行车的速度。 ````applyBrakes```` 方法的一种可能实现如下：
+
+````java
+void applyBrakes() {
+    // the "if" clause: bicycle must be moving
+    if (isMoving){ 
+        // the "then" clause: decrease current speed
+        currentSpeed--;
+    }
+}
+````
+
+如果此测试评估为 ````false````（意味着自行车未运动），则控制跳转到 ````if-then```` 语句的末尾。
+
+此外，只要 “then” 子句只包含一个语句，开括号和结束括号是可选的：
+
+````java
+void applyBrakes() {
+    // same as above, but without braces 
+    if (isMoving)
+        currentSpeed--;
+}
+````
+
+决定何时省略大括号是个人品味的问题。省略它们会使代码变得更脆弱。如果稍后将第二个语句添加到 “then” 子句中，则常见的错误是忘记添加新所需的大括号。编译器无法捕获这种错误，你会得到错误的结果。
+
+**````if-then-else```` 语句**
+
+````if-then-else```` 语句在 “if” 子句求值为 ````false```` 时提供辅助执行路径。如果在自行车不运动时应用制动器，则可以在 ````applyBrakes```` 方法中使用 ````if-then-else```` 语句来执行某些操作。在这种情况下，操作是简单地打印一条错误消息，指出自行车已经停止。
+
+````java
+void applyBrakes() {
+    if (isMoving) {
+        currentSpeed--;
+    } else {
+        System.err.println("The bicycle has already stopped!");
+    } 
+}
+````
+
+以下程序 [`IfElseDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/IfElseDemo.java) 根据测试分数的值分配等级：分数为90％或以上的是A，分数为80％或以上的是B，依此类推。
+
+````java
+class IfElseDemo {
+    public static void main(String[] args) {
+
+        int testscore = 76;
+        char grade;
+
+        if (testscore >= 90) {
+            grade = 'A';
+        } else if (testscore >= 80) {
+            grade = 'B';
+        } else if (testscore >= 70) {
+            grade = 'C';
+        } else if (testscore >= 60) {
+            grade = 'D';
+        } else {
+            grade = 'F';
+        }
+        System.out.println("Grade = " + grade);
+    }
+}
+````
+
+输出是：
+
+````
+Grade = C
+````
+
+您可能已经注意到 ````testscore```` 的值可以满足复合语句中的多个表达式：76> = 70 和 76> = 60。但是，一旦满足条件，就会执行相应的语句（````grade ='C';```` ）并且不评估剩余的条件。
+
+#### ````swith```` 语句
+
+与 ````if-then```` 和 ````if-then-else```` 语句不同，````switch```` 语句可以有许多可能的执行路径。````switch```` 语句使用 ````byte````，````short````，````char```` 和 ````int```` 原始数据类型。它也适用于枚举类型（在[Enum Types](https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html)中讨论），[`String`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html) 类，以及一些包含某些基本类型的特殊类： [`Character`](https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html), [`Byte`](https://docs.oracle.com/javase/8/docs/api/java/lang/Byte.html), [`Short`](https://docs.oracle.com/javase/8/docs/api/java/lang/Short.html), and[`Integer`](https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html) （在[Numbers and Strings](https://docs.oracle.com/javase/tutorial/java/data/index.html)中讨论）。
+
+以下代码示例 [`SwitchDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/SwitchDemo.java) 声明了一个名为 ````month```` 的 ````int````，其值表示月份。 代码使用 ````switch```` 语句根据 ````month```` 的值显示月份的名称。
+
+````java
+public class SwitchDemo {
+    public static void main(String[] args) {
+
+        int month = 8;
+        String monthString;
+        switch (month) {
+            case 1:  monthString = "January";
+                     break;
+            case 2:  monthString = "February";
+                     break;
+            case 3:  monthString = "March";
+                     break;
+            case 4:  monthString = "April";
+                     break;
+            case 5:  monthString = "May";
+                     break;
+            case 6:  monthString = "June";
+                     break;
+            case 7:  monthString = "July";
+                     break;
+            case 8:  monthString = "August";
+                     break;
+            case 9:  monthString = "September";
+                     break;
+            case 10: monthString = "October";
+                     break;
+            case 11: monthString = "November";
+                     break;
+            case 12: monthString = "December";
+                     break;
+            default: monthString = "Invalid month";
+                     break;
+        }
+        System.out.println(monthString);
+    }
+}
+````
+
+这种情况下，标准输出中打印 ````August```` 。
+
+````switch```` 语句的主体称为 *switch块*。 可以使用一个或多个 ````case```` 或 ````default```` 标签来标记 ````switch```` 块中的语句。````switch```` 语句计算其表达式，然后执行匹配的 ````case```` 标签后面的所有语句。
+
+您还可以使用 ````if-then-else```` 语句显示月份的名称：
+
+````java
+int month = 8;
+if (month == 1) {
+    System.out.println("January");
+} else if (month == 2) {
+    System.out.println("February");
+}
+...  // and so on
+````
+
+决定使用 ````if-then-else```` 语句还是 ````switch```` 语句是基于程序可读性和语句测试的表达式两方面考虑。````if-then-else```` 语句可以基于值或条件的范围来测试表达式，而 ````switch```` 语句仅基于单个整数，枚举值或 ````String```` 对象来测试表达式。
+
+另一个关键点是 ````break```` 语句。每个 ````break```` 语句都会终止包含它的 ````switch```` 语句。控制流程继续执行 ````switch```` 块后面的第一个语句。````break```` 语句是必需的，因为没有它们，````switch```` 块中的语句都会被穿透：匹配的 ````case```` 标签之后的所有语句都按顺序执行，而不管后续 ````case```` 标签的表达式，直到遇到 ````break```` 语句。程序 [`SwitchDemoFallThrough`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/SwitchDemoFallThrough.java) 显示 ````switch```` 块中的语句穿透。该程序显示对应于整数 ````month```` 的月份和该年份中的后续月份：
+
+````java
+public class SwitchDemoFallThrough {
+
+    public static void main(String[] args) {
+        java.util.ArrayList<String> futureMonths =
+            new java.util.ArrayList<String>();
+
+        int month = 8;
+
+        switch (month) {
+            case 1:  futureMonths.add("January");
+            case 2:  futureMonths.add("February");
+            case 3:  futureMonths.add("March");
+            case 4:  futureMonths.add("April");
+            case 5:  futureMonths.add("May");
+            case 6:  futureMonths.add("June");
+            case 7:  futureMonths.add("July");
+            case 8:  futureMonths.add("August");
+            case 9:  futureMonths.add("September");
+            case 10: futureMonths.add("October");
+            case 11: futureMonths.add("November");
+            case 12: futureMonths.add("December");
+                     break;
+            default: break;
+        }
+
+        if (futureMonths.isEmpty()) {
+            System.out.println("Invalid month number");
+        } else {
+            for (String monthName : futureMonths) {
+               System.out.println(monthName);
+            }
+        }
+    }
+}
+````
+
+程序输出：
+
+````
+August
+September
+October
+November
+December
+````
+
+从技术上讲，不需要最后的 ````break````，因为后续流程不属于 ````switch```` 语句。 建议在最后使用 ````break````，以便更容易修改代码并减少错误。````default```` 部分处理 ````case```` 部分未明确处理的所有值。
+
+以下代码示例 [`SwitchDemo2`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/SwitchDemo2.java) 显示了语句如何具有多个 ````case```` 标签。代码示例计算特定月份的天数：
+
+````java
+class SwitchDemo2 {
+    public static void main(String[] args) {
+
+        int month = 2;
+        int year = 2000;
+        int numDays = 0;
+
+        switch (month) {
+            case 1: case 3: case 5:
+            case 7: case 8: case 10:
+            case 12:
+                numDays = 31;
+                break;
+            case 4: case 6:
+            case 9: case 11:
+                numDays = 30;
+                break;
+            case 2:
+                if (((year % 4 == 0) && 
+                     !(year % 100 == 0))
+                     || (year % 400 == 0))
+                    numDays = 29;
+                else
+                    numDays = 28;
+                break;
+            default:
+                System.out.println("Invalid month.");
+                break;
+        }
+        System.out.println("Number of Days = "
+                           + numDays);
+    }
+}
+````
+
+程序输出：
+
+````
+Number of Days = 29
+````
+
+**在 ````switch```` 语句中使用 ````String````**
+
+在 Java 7 及后续版本中，````switch```` 语句中的表达式中可以使用 ````String ```` 对象。下面的例子 [`StringSwitchDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/StringSwitchDemo.java) 展示了根据 ````String```` 类型的月份名称计算当月天数：
+
+````java
+public class StringSwitchDemo {
+
+    public static int getMonthNumber(String month) {
+
+        int monthNumber = 0;
+
+        if (month == null) {
+            return monthNumber;
+        }
+
+        switch (month.toLowerCase()) {
+            case "january":
+                monthNumber = 1;
+                break;
+            case "february":
+                monthNumber = 2;
+                break;
+            case "march":
+                monthNumber = 3;
+                break;
+            case "april":
+                monthNumber = 4;
+                break;
+            case "may":
+                monthNumber = 5;
+                break;
+            case "june":
+                monthNumber = 6;
+                break;
+            case "july":
+                monthNumber = 7;
+                break;
+            case "august":
+                monthNumber = 8;
+                break;
+            case "september":
+                monthNumber = 9;
+                break;
+            case "october":
+                monthNumber = 10;
+                break;
+            case "november":
+                monthNumber = 11;
+                break;
+            case "december":
+                monthNumber = 12;
+                break;
+            default: 
+                monthNumber = 0;
+                break;
+        }
+
+        return monthNumber;
+    }
+
+    public static void main(String[] args) {
+
+        String month = "August";
+
+        int returnedMonthNumber =
+            StringSwitchDemo.getMonthNumber(month);
+
+        if (returnedMonthNumber == 0) {
+            System.out.println("Invalid month");
+        } else {
+            System.out.println(returnedMonthNumber);
+        }
+    }
+}
+````
+
+程序的输出是 8 。
+
+将 ````switch```` 表达式中的 ````String```` 与每个 ````case```` 标签关联的表达式进行比较，就好像正在使用 [`String.equals`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#equals-java.lang.Object-) 方法一样。为了使 ````StringSwitchDemo```` 示例无论何种情况都接受任何月份，月份将转换为小写（使用 [`toLowerCase`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#toLowerCase--) 方法），并且与 ````case```` 标签关联的所有字符串均为小写。
+
+注意：此示例检查 ````switch```` 语句中的表达式是否为 ````null````。 确保任何 ````switch```` 语句中的表达式不为 ````null````，以防止抛出 ````NullPointerException````。
