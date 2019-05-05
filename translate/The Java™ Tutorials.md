@@ -1660,4 +1660,151 @@ public class StringSwitchDemo {
 
 将 ````switch```` 表达式中的 ````String```` 与每个 ````case```` 标签关联的表达式进行比较，就好像正在使用 [`String.equals`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#equals-java.lang.Object-) 方法一样。为了使 ````StringSwitchDemo```` 示例无论何种情况都接受任何月份，月份将转换为小写（使用 [`toLowerCase`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#toLowerCase--) 方法），并且与 ````case```` 标签关联的所有字符串均为小写。
 
-注意：此示例检查 ````switch```` 语句中的表达式是否为 ````null````。 确保任何 ````switch```` 语句中的表达式不为 ````null````，以防止抛出 ````NullPointerException````。
+注意：此示例检查 ````switch```` 语句中的表达式是否为 ````null````。确保任何 ````switch```` 语句中的表达式不为 ````null````，以防止抛出 ````NullPointerException````。
+
+#### ````while```` 和 ````do-while```` 语句
+
+````while```` 语句在特定条件为真时继续执行语句块。 其语法可表示为：
+
+````java
+while (expression) {
+     statement(s)
+}
+````
+
+````while```` 语句计算表达式，该表达式必须返回一个布尔值。如果表达式的计算结果为 ````true````，则 ````while```` 语句将执行 ````while```` 块中的语句。````while```` 语句持续测试表达式并执行其中的语句块，直到表达式求值为 ````false````。使用 ````while```` 语句打印1到10之间的值可以在以下 [`WhileDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/WhileDemo.java) 程序中完成：
+
+````java
+class WhileDemo {
+    public static void main(String[] args){
+        int count = 1;
+        while (count < 11) {
+            System.out.println("Count is: " + count);
+            count++;
+        }
+    }
+}
+````
+
+你可以像下面这样使用 ````while```` 语句实现死循环：
+
+````java
+while (true){
+    // your code goes here
+}
+````
+
+Java 语言还提供了 ````do-while```` 语句，可以表示如下：
+
+````java
+do {
+     statement(s)
+} while (expression);
+````
+
+````do-while```` 和 ````while```` 之间的区别在于 ````do-while```` 在循环的底部而不是顶部计算它的表达式。因此，````do```` 块中的语句总是至少执行一次，如下面的 [`DoWhileDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/DoWhileDemo.java) 程序所示：
+
+````java
+class DoWhileDemo {
+    public static void main(String[] args){
+        int count = 1;
+        do {
+            System.out.println("Count is: " + count);
+            count++;
+        } while (count < 11);
+    }
+}
+````
+
+#### ````for```` 语句
+
+````for```` 语句提供了一种迭代一系列值的简洁方法。程序员经常将其称为 “for循环”，因为它反复循环直到满足特定条件。````for```` 语句的一般形式可表示如下：
+
+````java
+for (initialization; termination;
+     increment) {
+    statement(s)
+}
+````
+
+使用此版本的 ````for```` 语句时，请记住：
+
+* 初始化表达式初始化循环， 循环开始时，它执行一次。
+* 当终止表达式求值为 ````false```` 时，循环终止。
+* 每次迭代循环后调用 ````increment```` 表达式， 这个表达式增加或减少一个值是完全可以接受的。
+
+下面的例子 [`ForDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ForDemo.java) 使用普通形式的 ````for```` 语句将 1 到 10 打印到标准输出中：
+
+````java
+class ForDemo {
+    public static void main(String[] args){
+         for(int i=1; i<11; i++){
+              System.out.println("Count is: " + i);
+         }
+    }
+}
+````
+
+输出：
+
+````
+Count is: 1
+Count is: 2
+Count is: 3
+Count is: 4
+Count is: 5
+Count is: 6
+Count is: 7
+Count is: 8
+Count is: 9
+Count is: 10
+````
+
+注意代码如何在初始化表达式中声明变量。 此变量的作用域从其声明扩展到由 ````for```` 语句控制的块的末尾，因此它也可以用在终止和增量表达式中。如果在循环外部不需要控制 ````for```` 语句的变量，则最好在初始化表达式中声明该变量。名称 i，j 和 k 通常用于控制循环。在初始化表达式中声明它们会限制它们的生命周期并减少错误。
+
+````for```` 循环中的 3 个表达式都是可选的，可以如下创建一个无限循环：
+
+````java
+// infinite loop
+for ( ; ; ) {
+    
+    // your code goes here
+}
+````
+
+````for```` 语句还有另一种用于迭代 [Collections](https://docs.oracle.com/javase/tutorial/collections/index.html) 和 [arrays](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html) 的形式。这种形式有时被称为增强````for````语句，可用于使循环更紧凑和易于阅读。要演示，请考虑以下数组，其中包含数字1到10：
+
+````java
+int[] numbers = {1,2,3,4,5,6,7,8,9,10};
+````
+
+下面的例子，[`EnhancedForDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/EnhancedForDemo.java) 使用增强型 ````for```` 循环遍历上面的数组：
+
+````java
+class EnhancedForDemo {
+    public static void main(String[] args){
+         int[] numbers = 
+             {1,2,3,4,5,6,7,8,9,10};
+         for (int item : numbers) {
+             System.out.println("Count is: " + item);
+         }
+    }
+}
+````
+
+程序输出：
+
+````
+Count is: 1
+Count is: 2
+Count is: 3
+Count is: 4
+Count is: 5
+Count is: 6
+Count is: 7
+Count is: 8
+Count is: 9
+Count is: 10
+````
+
+我们推荐你尽可能使用增强型 ````for```` 循环。
