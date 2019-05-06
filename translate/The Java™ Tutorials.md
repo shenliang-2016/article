@@ -862,13 +862,13 @@ Java编程语言使用“字段”和“变量”作为其术语的一部分。�
 
 Java编程语言提供执行加法，减法，乘法和除法的运算符。你很可能会在基础数学方面认识他们。唯一可能对你来说很新的符号是“ `%`”，它将一个操作数除以另一个操作数，并将余数作为结果返回。
 
-| Operator | Description                                            |
-| -------- | ------------------------------------------------------ |
+| Operator | Description                              |
+| -------- | ---------------------------------------- |
 | `+`      | Additive operator (also used for String concatenation) |
-| `-`      | Subtraction operator                                   |
-| `*`      | Multiplication operator                                |
-| `/`      | Division operator                                      |
-| `%`      | Remainder operator                                     |
+| `-`      | Subtraction operator                     |
+| `*`      | Multiplication operator                  |
+| `/`      | Division operator                        |
+| `%`      | Remainder operator                       |
 
 以下程序 [`ArithmeticDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ArithmeticDemo.java)测试算术运算符。
 
@@ -941,13 +941,13 @@ class ConcatDemo {
 
 一元运算符只需要一个操作数; 它们执行各种操作，例如将值递增/递减1，否定表达式或反转布尔值。
 
-| Operator | Description                                                  |
-| -------- | ------------------------------------------------------------ |
+| Operator | Description                              |
+| -------- | ---------------------------------------- |
 | `+`      | Unary plus operator; indicates positive value (numbers are positive without this, however) |
-| `-`      | Unary minus operator; negates an expression                  |
-| `++`     | Increment operator; increments a value by 1                  |
-| `--`     | Decrement operator; decrements a value by 1                  |
-| `!`      | Logical complement operator; inverts the value of a boolean  |
+| `-`      | Unary minus operator; negates an expression |
+| `++`     | Increment operator; increments a value by 1 |
+| `--`     | Decrement operator; decrements a value by 1 |
+| `!`      | Logical complement operator; inverts the value of a boolean |
 
 以下程序 [`UnaryDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/UnaryDemo.java)测试一元运算符：
 
@@ -1808,3 +1808,285 @@ Count is: 10
 ````
 
 我们推荐你尽可能使用增强型 ````for```` 循环。
+
+#### 分支语句
+
+**````break```` 语句**
+
+````break```` 语句有两种形式：有标签的和无标签的。你在先前的 ````switch```` 语句的例子中已经看到过无标签的形式。你也可以使用无标签的 ````break```` 语句来终止 ````for```` 、````while```` 或者 ````do-while```` 循环，如下面例子所示：
+
+````java
+class BreakDemo {
+    public static void main(String[] args) {
+
+        int[] arrayOfInts = 
+            { 32, 87, 3, 589,
+              12, 1076, 2000,
+              8, 622, 127 };
+        int searchfor = 12;
+
+        int i;
+        boolean foundIt = false;
+
+        for (i = 0; i < arrayOfInts.length; i++) {
+            if (arrayOfInts[i] == searchfor) {
+                foundIt = true;
+                break;
+            }
+        }
+
+        if (foundIt) {
+            System.out.println("Found " + searchfor + " at index " + i);
+        } else {
+            System.out.println(searchfor + " not in the array");
+        }
+    }
+}
+````
+
+上面的程序在数组中搜索数字 12 。````break```` 语句在改值被找到时立即终止 ````for```` 循环。控制流程就转移到 ````for```` 循环之后的语句。程序输出：
+
+````
+Found 12 at index 4
+````
+
+无标签的 ````break```` 语句终止内层  ````for```` 、````while```` 或者 ````do-while```` 循环，而有标签的 ````break```` 语句终止外层  ````for```` 、````while```` 或者 ````do-while```` 循环。下面的程序 [`BreakWithLabelDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/BreakWithLabelDemo.java) ，类似于上面的程序，不过使用了内层的 ````for```` 循环在二维数组中搜索目标值。当目标值被找到，有标签的 ````break```` 语句（标签为 “search”）将终止外部的 ````for```` 循环:
+
+````java
+class BreakWithLabelDemo {
+    public static void main(String[] args) {
+
+        int[][] arrayOfInts = { 
+            { 32, 87, 3, 589 },
+            { 12, 1076, 2000, 8 },
+            { 622, 127, 77, 955 }
+        };
+        int searchfor = 12;
+
+        int i;
+        int j = 0;
+        boolean foundIt = false;
+
+    search:
+        for (i = 0; i < arrayOfInts.length; i++) {
+            for (j = 0; j < arrayOfInts[i].length;
+                 j++) {
+                if (arrayOfInts[i][j] == searchfor) {
+                    foundIt = true;
+                    break search;
+                }
+            }
+        }
+
+        if (foundIt) {
+            System.out.println("Found " + searchfor + " at " + i + ", " + j);
+        } else {
+            System.out.println(searchfor + " not in the array");
+        }
+    }
+}
+````
+
+程序的输出：
+
+````
+Found 12 at 1, 0
+````
+
+````break```` 语句终止有标签的语句，它并不是将流程控制转移到标签处的语句，而是转移到标签语句的下一条语句。
+
+**````continue```` 语句**
+
+````continue```` 语句跳过  ````for```` 、````while```` 或者 ````do-while```` 循环的当前迭代器。无标签的形式跳到内层循环体的末尾然后计算循环控制表达式的 ````boolean```` 值。下面的程序 [`ContinueDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ContinueDemo.java) ，遍历一个 ````String```` ，统计其中的字符 "p" 出现的次数。如果当前字符不是 “p”，则 ````continue```` 语句跳过循环的剩余部分并继续处理下一个字符。如果当前字符是“p”，则程序为字符计数加一。
+
+````java
+class ContinueDemo {
+    public static void main(String[] args) {
+
+        String searchMe = "peter piper picked a " + "peck of pickled peppers";
+        int max = searchMe.length();
+        int numPs = 0;
+
+        for (int i = 0; i < max; i++) {
+            // interested only in p's
+            if (searchMe.charAt(i) != 'p')
+                continue;
+
+            // process p's
+            numPs++;
+        }
+        System.out.println("Found " + numPs + " p's in the string.");
+    }
+}
+````
+
+程序输出：
+
+````
+Found 9 p's in the string.
+````
+
+为了更清楚地看出语句的效果，你可以删除其中的 ````continue```` 语句然后重新编译。再次运行程序，将输出错误的结果 35。
+
+有标签的 ````continue```` 语句跳过标签表示的外层循环的当前迭代器。下面的例子 ContinueWithLabelDemo 使用内层循环来搜索包含某个特定字符串的子字符串。需要两个内层循环，一个迭代子字符串，另一个迭代需要搜索的目标字符串。下面的程序，[`ContinueWithLabelDemo`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/examples/ContinueWithLabelDemo.java) ，使用有标签的 ````continue```` 形式来跳过外层循环迭代器。
+
+````java
+class ContinueWithLabelDemo {
+    public static void main(String[] args) {
+
+        String searchMe = "Look for a substring in me";
+        String substring = "sub";
+        boolean foundIt = false;
+
+        int max = searchMe.length() - 
+                  substring.length();
+
+    test:
+        for (int i = 0; i <= max; i++) {
+            int n = substring.length();
+            int j = i;
+            int k = 0;
+            while (n-- != 0) {
+                if (searchMe.charAt(j++) != substring.charAt(k++)) {
+                    continue test;
+                }
+            }
+            foundIt = true;
+                break test;
+        }
+        System.out.println(foundIt ? "Found it" : "Didn't find it");
+    }
+}
+````
+
+程序输出：
+
+````
+Found it
+````
+
+**````return```` 语句**
+
+最后一个分支语句是 ````return```` 语句。该语句退出当前方法，程序控制流返回该方法被调用的位置。该语句有两种形式：有返回值的和无返回值的。为了返回一个值，简单地在 ````return```` 关键字之后放置一个值或者计算该值的表达式即可。
+
+````
+return ++count;
+````
+
+返回值的类型必须符合该方法声明的返回值类型。当方法声明为 ````void```` ，使用无返回值的 ````return```` 形式。
+
+接下来的 [Classes and Objects](https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html) 将覆盖你写方法需要了解的所有知识。
+
+#### 控制流语句总结
+
+````if-then```` 语句是所有控制流语句中最基本的语句。它告诉程序只有在特定测试评估为 ````true```` 时才执行某段代码。 ````if-then-else```` 语句在 “if” 子句求值为 ````false```` 时提供辅助执行路径。与 ````if-then```` 和 ````if-then-else```` 不同，````switch```` 语句允许任意数量的可能执行路径。````while```` 和 ````do-while```` 语句在特定条件为真时不断执行语句块。````do-while```` 和 ````while```` 之间的区别在于 ````do-while```` 在循环的底部而不是顶部计算它的表达式。因此，````do```` 块中的语句总是至少执行一次。````for```` 语句提供了一种迭代一系列值的简洁方法。它有两种形式，其中一种用于循环集合和数组。
+
+## 类和对象
+
+你现在具有了 Java 编程语言的基础知识，可以开始写你自己的类。被章节中，你将学到有关定义你自己的类的信息，包括声明成员变量、方法以及构造器。
+
+你将学到使用你类创建对象，然后使用你创建的对象。
+
+本章节还包括位于其它类内部的内部类，以及枚举类型。
+
+* [类型](https://docs.oracle.com/javase/tutorial/java/javaOO/classes.html)
+
+本章节剖析类型，同时讲述如何声明字段、方法以及构造器。
+
+* [对象](https://docs.oracle.com/javase/tutorial/java/javaOO/objects.html)
+
+本章节覆盖创建和使用对象。你将学到如何实例化一个对象，然后，一旦实例化，如何使用 ````dot```` 操作符访问该对象实例的变量和方法。
+
+* [有关类型的更多话题](https://docs.oracle.com/javase/tutorial/java/javaOO/more.html)
+
+本章节介绍依赖于使用对象引用的类的更多方面以及您在上一节中学习的 ````dot```` 运算符：从方法返回的值，````this```` 关键字，类成员变量与实例变量以及访问控制。
+
+* [内部类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html)
+
+静态内部类，内部类，匿名内部类，局部类，lambda 表达式。同时讨论何时使用何种方式。
+
+* [枚举类型](https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html)
+
+本章节覆盖枚举类型，这是一种特殊类型，允许你定义并使用一系列的常量。
+
+### 类型
+
+[面向对象编程概念](https://docs.oracle.com/javase/tutorial/java/concepts/index.html) 章节中使用了自行车类型作为例子，具有赛车、山地车以及串联自行车等子类型。下面是一个可能的 ````Bicycle```` 类型的实现，向你展示一个完整的类型声明。本章节后续内容将逐步介绍其中的所有内容，现在不需要纠结细节。
+
+````java
+public class Bicycle {
+        
+    // the Bicycle class has
+    // three fields
+    public int cadence;
+    public int gear;
+    public int speed;
+        
+    // the Bicycle class has
+    // one constructor
+    public Bicycle(int startCadence, int startSpeed, int startGear) {
+        gear = startGear;
+        cadence = startCadence;
+        speed = startSpeed;
+    }
+        
+    // the Bicycle class has
+    // four methods
+    public void setCadence(int newValue) {
+        cadence = newValue;
+    }
+        
+    public void setGear(int newValue) {
+        gear = newValue;
+    }
+        
+    public void applyBrake(int decrement) {
+        speed -= decrement;
+    }
+        
+    public void speedUp(int increment) {
+        speed += increment;
+    }
+        
+}
+````
+
+其子类 ````MountainBike```` 类型可能如下：
+
+````java
+public class MountainBike extends Bicycle {
+        
+    // the MountainBike subclass has
+    // one field
+    public int seatHeight;
+
+    // the MountainBike subclass has
+    // one constructor
+    public MountainBike(int startHeight, int startCadence,
+                        int startSpeed, int startGear) {
+        super(startCadence, startSpeed, startGear);
+        seatHeight = startHeight;
+    }   
+        
+    // the MountainBike subclass has
+    // one method
+    public void setHeight(int newValue) {
+        seatHeight = newValue;
+    }   
+
+}
+````
+
+````MountainBike```` 继承了 ````Bicycle```` 的所有字段和方法，同时添加了 ````seatHeight```` 字段和该字段的 ````set```` 方法。
+
+#### 类型声明
+
+你已经看到可以如下形式声明类型：
+
+````java
+class MyClass {
+    // field, constructor, and 
+    // method declarations
+}
+````
+
