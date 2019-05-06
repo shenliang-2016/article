@@ -2383,3 +2383,123 @@ public Polygon polygonFrom(Point[] corners) {
 
 ------
 
+**任意数量的参数**
+
+您可以使用名为 *varargs* 的构造将任意数量的值传递给方法。当您不知道将多少特定类型的参数传递给该方法时，您可以使用 *varargs*。这是手动创建数组的快捷方式（前一种方法可能使用了 *varargs* 而不是数组）。
+
+要使用 varargs，请使用省略号（三个点，...），一个空格和参数名称，放在最后一个参数的类型之后。然后可以使用任何数量的参数调用该方法，包括none。
+
+```java
+public Polygon polygonFrom(Point... corners) {
+    int numberOfSides = corners.length;
+    double squareOfSide1, lengthOfSide1;
+    squareOfSide1 = (corners[1].x - corners[0].x)
+                     * (corners[1].x - corners[0].x) 
+                     + (corners[1].y - corners[0].y)
+                     * (corners[1].y - corners[0].y);
+    lengthOfSide1 = Math.sqrt(squareOfSide1);
+
+    // more method body code follows that creates and returns a 
+    // polygon connecting the Points
+}
+```
+
+你可以看到，在方法中，`corner`被视为一个数组。可以使用数组或参数序列调用该方法。在任何一种情况下，方法体中的代码都会将参数视为数组。
+
+您最常见的是打印方法使用的 varargs 。例如，这个`printf`方法：
+
+```java
+public PrintStream printf(String format, Object... args)
+```
+
+允许你将任意数量的对象打印出来。它可以被如下调用：
+
+```java
+System.out.printf("%s: %d, %s%n", name, idnum, address);
+```
+
+或者：
+
+```java
+System.out.printf("%s: %d, %s, %s, %s%n", name, idnum, address, phone, email);
+```
+
+或者使用不同数量的参数。
+
+**参数名称**
+
+向方法或构造函数声明参数时，可以为该参数提供名称。此名称在方法体内用于引用传入的参数。
+
+参数名称在它的作用域中必须是唯一的。它不能与同一方法或构造函数的另一个参数的名称相同，也不能是方法或构造函数中的局部变量的名称。
+
+参数可以与类的某个字段具有相同的名称。如果是这种情况，则该参数称为 *shadow* 字段。 阴影字段可能使您的代码难以阅读，并且通常仅在设置特定字段的构造函数和方法中使用。例如，考虑以下`Circle`类及其`setOrigin`方法：
+
+```java
+public class Circle {
+    private int x, y, radius;
+    public void setOrigin(int x, int y) {
+        ...
+    }
+}
+```
+
+````Circle```` 类有三个字段：````x````，````y```` 和 ````radius````。 ````setOrigin```` 方法有两个参数，每个参数与其中一个字段具有相同的名称。每个方法参数都会遮蔽共享其名称的字段。因此，在方法体内使用简单名称 ````x```` 或 ````y```` 指的是参数，而不是字段。要访问该字段，您必须使用限定名称。这将在本课程后面的标题为“使用 ````this```` 关键字”一节中讨论。
+
+**传递基本类型参数**
+
+原始参数，例如`int`或`double`，通过*值*传递给方法。 这意味着对参数值的任何更改都仅存在于方法的范围内。方法返回时，参数消失，对它们的任何更改都将丢失。这是一个例子：
+
+```java
+public class PassPrimitiveByValue {
+
+    public static void main(String[] args) {
+           
+        int x = 3;
+           
+        // invoke passMethod() with 
+        // x as argument
+        passMethod(x);
+           
+        // print x to see if its 
+        // value has changed
+        System.out.println("After invoking passMethod, x = " + x);
+           
+    }
+        
+    // change parameter in passMethod()
+    public static void passMethod(int p) {
+        p = 10;
+    }
+}
+```
+
+程序输出：
+
+```
+After invoking passMethod, x = 3
+```
+
+**传递引用类型参数**
+
+引用数据类型参数（如对象）也通过*值*传递给方法。这意味着当方法返回时，传入的引用仍然引用与以前相同的对象。*但是*，如果对象的字段的值具有适当的访问级别，则可以在方法中更改它们的值。
+
+例如，考虑一个移动`Circle`对象的任意类中的方法：
+
+```java
+public void moveCircle(Circle circle, int deltaX, int deltaY) {
+    // code to move origin of circle to x+deltaX, y+deltaY
+    circle.setX(circle.getX() + deltaX);
+    circle.setY(circle.getY() + deltaY);
+        
+    // code to assign a new reference to circle
+    circle = new Circle(0, 0);
+}
+```
+
+如下调用该方法：
+
+```
+moveCircle(myCircle, 23, 56)
+```
+
+在方法内部，````circle````最初是指 ````myCircle````。 该方法将 ````circle````引用的对象的 x 和 y 坐标（即 ````myCircle````）分别改变为23和56。方法返回时，这些更改将保持不变。然后 ````circle```` 被赋予对 ````x = y = 0```` 的新`Circle`对象的引用。但是，这种重新分配没有永久性，因为引用是按值传递的，不能更改。在方法中，````circle```` 指向的对象已经改变，但是，当方法返回时，`myCircle`仍然引用与调用方法之前相同的`Circle`对象。
