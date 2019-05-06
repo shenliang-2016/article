@@ -2229,7 +2229,7 @@ public double calculateAnswer(double wingSpan, int numberOfEngines,
 
 ------
 
-定义：方法声明的两个元素构成了*方法签名*—方法的名称和参数类型。
+**定义：**方法声明的两个元素构成了*方法签名*—方法的名称和参数类型。
 
 ------
 
@@ -2288,7 +2288,7 @@ public class DataArtist {
 
 ------
 
-注意：应谨慎使用重载方法，因为它们会使代码的可读性降低。
+**注意：**应谨慎使用重载方法，因为它们会使代码的可读性降低。
 
 ------
 
@@ -2333,7 +2333,53 @@ public Bicycle() {
 您可以在构造函数的声明中使用访问修饰符来控制哪些其他类可以调用构造函数。
 
 ------
-注意：如果别的类不能调用 ````MyClass```` 构造器，它就不能直接创建 ````MyClass```` 对象。
+**注意：**如果别的类不能调用 ````MyClass```` 构造器，它就不能直接创建 ````MyClass```` 对象。
+
+------
+
+#### 向方法或者构造器传递信息
+
+方法或构造函数的声明声明了该方法或构造函数的参数的数量和类型。例如，以下是根据贷款金额，利率，贷款期限（期数）和贷款的未来价值计算住房贷款的每月付款的方法：
+
+```java
+public double computePayment(
+                  double loanAmt,
+                  double rate,
+                  double futureValue,
+                  int numPeriods) {
+    double interest = rate / 100.0;
+    double partial1 = Math.pow((1 + interest), 
+                    - numPeriods);
+    double denominator = (1 - partial1) / interest;
+    double answer = (-loanAmt / denominator)
+                    - ((futureValue * partial1) / denominator);
+    return answer;
+}
+```
+
+该方法有四个参数：贷款金额，利率，未来价值和期数。前三个是双精度浮点数，第四个是整数。参数在方法体中使用，并且在运行时将采用传入的参数的值。
+
+------
+
+**注意：**参数是指方法声明中的变量列表。 参数是调用方法时传递的实际值。 调用方法时，使用的参数必须与类型和顺序中的声明参数匹配。
+
+------
+
+**参数类型**
+
+您可以将任何数据类型用于方法或构造函数的参数。这包括原始数据类型，如双精度，浮点数和整数，如在`computePayment`方法中看到的，以及引用数据类型，如对象和数组。
+
+这是一个接受数组作为参数的方法示例。在这个例子中，该方法创建一个新的 `Polygon` 对象并从`Point`对象数组初始化它（假设`Point`是一个表示x，y坐标的类）：
+
+```java
+public Polygon polygonFrom(Point[] corners) {
+    // method body goes here
+}
+```
+
+------
+
+**注意:** 如果你希望将一个方法传递给另一个方法，使用 [lambda expression](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 或者 [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) 。
 
 ------
 
