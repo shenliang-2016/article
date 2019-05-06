@@ -2139,3 +2139,156 @@ public int speed;
 
 **访问修饰符**
 
+变量声明语句开头的访问修饰符使得你可以控制哪些类可以访问该成员字段。目前，只考虑 ````public```` 和 ````private```` 两个，其它的访问修饰符后面会讨论。
+
+* ````public```` — 该字段可以从所有其它类访问。
+* ````private```` — 该字段只能被它所在的类内部访问。
+
+本着封装精神，通常会将字段限制为 ````private```` 的。这意味着它们只能直接从 ````Bicycle```` 类访问。不过我们仍然需要访问这些值。那么就可以通过间接的方式来实现，添加 ````public ```` 方法来获取这些字段值：
+
+````java
+public class Bicycle {
+        
+    private int cadence;
+    private int gear;
+    private int speed;
+        
+    public Bicycle(int startCadence, int startSpeed, int startGear) {
+        gear = startGear;
+        cadence = startCadence;
+        speed = startSpeed;
+    }
+        
+    public int getCadence() {
+        return cadence;
+    }
+        
+    public void setCadence(int newValue) {
+        cadence = newValue;
+    }
+        
+    public int getGear() {
+        return gear;
+    }
+        
+    public void setGear(int newValue) {
+        gear = newValue;
+    }
+        
+    public int getSpeed() {
+        return speed;
+    }
+        
+    public void applyBrake(int decrement) {
+        speed -= decrement;
+    }
+        
+    public void speedUp(int increment) {
+        speed += increment;
+    }
+}
+````
+
+**数据类型**
+
+所有的变量必需都有数据类型。你可以使用基本数据类型，比如 ````int```` ，````float````，````boolean```` 等等。或者你可以使用引用类型，比如字符串，数组或者对象。
+
+**变量名称**
+
+所有变量，不论是字段，局部变量还是参数，遵守相同的命名规则，命名传统在 [变量命名](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/variables.html#naming) 中介绍。
+
+本章节中，注意方法和类命名遵循相同的规则和传统，除了：
+
+* 类名的首字母应该大写，同时
+* 方法名的首个词（或唯一词）应该是动词
+
+#### 方法定义
+
+下面是一个典型的方法声明：
+
+```java
+public double calculateAnswer(double wingSpan, int numberOfEngines,
+                              double length, double grossTons) {
+    //do the calculation here
+}
+
+```
+
+方法声明只强制需要以下这些内容，方法返回值类型，名称，一对括号 `()`，以及位于大括号 `{}` 内部的方法体。
+
+更一般地，方法声明包含六种元素，依次为：
+
+1. 访问修饰符—比如 `public`， `private`， 其它几种你随后将会学习到。
+2. 返回值类型—方法返回的值的数据类型，或者 `void` 如果方法不返回任何值。
+3. 方法名—命名规则和传统与变量命名类似，虽然稍微有些不同。
+4. 括号中的参数列表—逗号分隔的输入参数列表，由它们的数据类型开头，被括号 `()` 包围。如果方法不需要参数，你仍然必须使用空括号。
+5. 异常列表—稍后讨论。
+6. 大括号包围的方法体—方法的逻辑代码，包括局部变量声明等。
+
+访问修饰符、返回值类型和参数将在本章节稍后讨论。异常在下一章节讨论。
+
+------
+
+定义：方法声明的两个元素构成了*方法签名*—方法的名称和参数类型。
+
+------
+
+上面方法的方法签名是：
+
+```
+calculateAnswer(double, int, double, double)
+```
+
+**命名一个方法**
+
+虽然方法名称可以是任何合法标识符，但代码约定限制方法名称。按照惯例，方法名称应该是小写的动词或以小写的动词开头的多词名称，后跟形容词，名词等。在多词名称中，每个第二个和后一个词的第一个字母 应该大写。 这里有些例子：
+
+````java
+run
+runFast
+getBackground
+getFinalData
+compareTo
+setX
+isEmpty
+````
+
+通常，方法在其类中具有唯一名称。但是，由于方法重载，方法可能与其他方法具有相同的名称。
+
+**方法重载**
+
+Java编程语言支持重载方法，Java可以区分具有不同方法签名的方法。这意味着如果类中的方法具有不同的参数列表，则它们可以具有相同的名称（有一些规范，将在标题为“接口和继承”的课程中讨论）。
+
+假设您有一个类可以使用书法来绘制各种类型的数据（字符串，整数等），并且包含绘制每种数据类型的方法。为每个方法使用新名称很麻烦 - 例如，````drawString````，````drawInteger````，````drawFloat```` 等。在 Java 编程语言中，您可以对所有绘图方法使用相同的名称，但将不同的参数列表传递给每个方法。因此，数据绘制类可能会声明四个名为````draw```` 的方法，每个方法都有一个不同的参数列表。
+
+```java
+public class DataArtist {
+    ...
+    public void draw(String s) {
+        ...
+    }
+    public void draw(int i) {
+        ...
+    }
+    public void draw(double f) {
+        ...
+    }
+    public void draw(int i, double f) {
+        ...
+    }
+}
+
+```
+
+重载方法由传递给方法的参数的数量和类型区分。在代码示例中，````draw(String s)```` 和 ````draw(int i)```` 是不同且唯一的方法，因为它们需要不同的参数类型。
+
+您不能声明多个具有相同名称和相同数量和类型的参数的方法，因为编译器无法区分它们。
+
+在区分方法时，编译器不考虑返回类型，因此即使它们具有不同的返回类型，也不能使用相同的签名声明两个方法。
+
+------
+
+注意：应谨慎使用重载方法，因为它们会使代码的可读性降低。
+
+------
+
