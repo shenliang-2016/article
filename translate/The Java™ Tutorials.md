@@ -3109,7 +3109,7 @@ ClassName.methodName(args)
 
 **注意：** 你也可以用一个对象引用来引用静态方法，如下：
 
-```
+```java
 instanceName.methodName(args)
 ```
 
@@ -3133,4 +3133,3 @@ public static int getNumberOfBicycles() {
  - 类方法**不能**直接访问实例变量或实例方法 - 它们必须使用对象引用。此外，类方法不能使用 `this` 关键字，因为没有 `this` 的实例可以引用。
 
 **常量**
-
