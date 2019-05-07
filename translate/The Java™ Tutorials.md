@@ -2622,3 +2622,182 @@ int height = new Rectangle().height;
 ```
 
 这个语句将在下一节中讨论。
+
+**初始化一个对象**
+
+`Point` 类代码：
+
+```java
+public class Point {
+    public int x = 0;
+    public int y = 0;
+    //constructor
+    public Point(int a, int b) {
+        x = a;
+        y = b;
+    }
+}
+```
+
+这个类包含一个构造器，你可以认出这个构造器，因为它的声明使用了类名称并且没有返回值类型。该构造器有两个整型参数，声明为 `(int a, int b)`。接下来的语句为这些参数提供了具体的值：
+
+```java
+Point originOne = new Point(23, 94);
+```
+
+这条语句的执行结果如下图所示：
+
+![originOne now points to a Point object.](https://docs.oracle.com/javase/tutorial/figures/java/objects-oneRef.gif)
+
+`Rectangle` 类代码，包含四个构造器：
+
+````java
+public class Rectangle {
+    public int width = 0;
+    public int height = 0;
+    public Point origin;
+
+    // four constructors
+    public Rectangle() {
+        origin = new Point(0, 0);
+    }
+    public Rectangle(Point p) {
+        origin = p;
+    }
+    public Rectangle(int w, int h) {
+        origin = new Point(0, 0);
+        width = w;
+        height = h;
+    }
+    public Rectangle(Point p, int w, int h) {
+        origin = p;
+        width = w;
+        height = h;
+    }
+
+    // a method for moving the rectangle
+    public void move(int x, int y) {
+        origin.x = x;
+        origin.y = y;
+    }
+
+    // a method for computing the area of the rectangle
+    public int getArea() {
+        return width * height;
+    }
+}
+````
+
+每个构造函数都允许您使用基本类型和引用类型为矩形的原点，宽度和高度提供初始值。如果一个类有多个构造函数，则它们必须具有不同的签名。Java 编译器根据参数的数量和类型区分构造函数。当 Java 编译器遇到以下代码时，它知道在 ````Rectangle```` 类中调用构造函数，该类需要一个 ````Point```` 参数，后跟两个整数参数：
+
+```java
+Rectangle rectOne = new Rectangle(originOne, 100, 200);
+```
+
+这会调用 ````Rectangle```` 的一个构造函数，它将 ````origin```` 初始化为 ````originOne````。此外，构造函数将 ````width```` 设置为100，将 ````height```` 设置为200。现在有两个对同一 ````Point```` 对象的引用 - 一个对象可以有多个引用，如下图所示：
+
+![Now the rectangle's origin variable also points to the Point.](https://docs.oracle.com/javase/tutorial/figures/java/objects-multipleRefs.gif)
+
+以下代码行调用 ````Rectangle```` 构造函数，该构造函数需要两个整数参数，这些参数提供 ````width```` 和 ````height```` 的初始值。如果检查构造函数中的代码，您将看到它创建了一个新的 ````Point```` 对象，其 ````x```` 和 ````y```` 值初始化为0：
+
+```java
+Rectangle rectTwo = new Rectangle(50, 100);
+```
+
+下面代码中使用的构造器没有使用任何参数，因此它被称为*无参构造器*：
+
+```java
+Rectangle rect = new Rectangle();
+```
+
+所有类至少有一个构造函数。如果类没有显式声明任何类，那么 Java 编译器会自动提供一个无参构造函数，称为*默认构造函数* 。此默认构造函数调用父类的无参数构造函数，如果类没有其他父级，则调用 ````Object```` 构造函数。如果父级没有构造函数（````Object```` 确实有构造函数），编译器将拒绝该程序。
+
+#### 使用对象
+
+一旦你创建了一个对象，你可能想要用它来做些事情。您可能需要使用其中一个字段的值，更改其中一个字段，或调用其中一个方法来执行操作。
+
+**引用一个对象的字段**
+
+对象字段通过它们的名称访问。你必须使用无歧义的字段名称。
+
+你可以在字段所在的类内部使用简单的字段名称。比如，我们可以在 ````Rectangle```` 类中添加语句来打印 ````width```` 和 ````height```` ：
+
+```java
+System.out.println("Width and height are: " + width + ", " + height);
+```
+
+这种情况下， `width` 和 `height` 就是简单名称。
+
+对象类之外的代码必须使用一个对象引用或者表达式，后面跟随点操作符 ````.```` ，后跟简单字段名。如下所示：
+
+```java
+objectReference.fieldName
+```
+
+例如，`CreateObjectDemo` 类中的代码位于 `Rectangle` 类的代码之外。因此，要引用名为 `rectOne` 的 `Rectangle` 对象中的 `origin`，`width` 和 `height` 字段，`CreateObjectDemo` 类必须分别使用名称`rectOne.origin`，`rectOne.width` 和 `rectOne.height`。该程序使用其中两个名称来显示`rectOne` 的 `width` 和 `height`：
+
+```java
+System.out.println("Width of rectOne: "  + rectOne.width);
+System.out.println("Height of rectOne: " + rectOne.height);
+```
+
+尝试在 `CreateObjectDemo` 类中的代码中使用的简单名称 `width`和 `height` 没有意义 - 这些字段仅存在于对象中 - 并导致编译器错误。
+
+稍后，该程序使用类似的代码来显示有关 `rectTwo` 的信息。相同类型的对象具有自己的相同实例字段的副本。因此，每个 `Rectangle` 对象都有名为 `origin`，`width` 和 `height` 的字段。通过对象引用访问实例字段时，将引用该特定对象的字段。`CreateObjectDemo` 程序中的两个对象 `rectOne` 和 `rectTwo` 具有不同的 `origin`，`width` 和 `height` 字段。
+
+要访问字段，可以使用对象的命名引用（如前面的示例所示），也可以使用任何返回对象引用的表达式。回想一下 `newoperator` 返回对象的引用。因此，您可以使用 `new` 返回的值来访问新对象的字段：
+
+```java
+int height = new Rectangle().height;
+```
+
+该语句创建一个新的 `Rectangle` 对象并立即获得其高度。实质上，该语句计算 `Rectangle` 的默认高度。请注意，在执行此语句之后，程序不再具有对创建的 `Rectangle` 的引用，因为程序从未将引用存储在任何位置。该对象未被引用，其资源可由 Java 虚拟机自由回收。
+
+**调用对象方法**
+
+您还可以使用对象引用来调用对象的方法。将方法的简单名称附加到对象引用，并使用插入点运算符 `.`。此外，您在括号内提供该方法的任何参数。如果方法不需要任何参数，请使用空括号。
+
+```java
+objectReference.methodName(argumentList);
+```
+
+或者：
+
+```java
+objectReference.methodName();
+```
+
+`Rectangle` 类包含两个方法： `getArea()` 来计算长方形的面积， `move()` 用来改变长方形的位置。下面的代码展示了如何调用这两个方法：
+
+```java
+System.out.println("Area of rectOne: " + rectOne.getArea());
+...
+rectTwo.move(40, 72);
+```
+
+第一个语句调用 `rectOne` 的 `getArea()` 方法并显示结果。第二行移动 `rectTwo`，因为 `move()` 方法为对象的 `origin.x` 和 `origin.y` 分配新值。
+
+与实例字段一样，`objectReference` 必须是对象的引用。您可以使用变量名称，但也可以使用任何返回对象引用的表达式。`new` 运算符返回一个对象引用，因此您可以使用 `new` 返回的值来调用新对象的方法：
+
+```java
+new Rectangle(100, 50).getArea()
+```
+
+表达式 `new Rectangle(100,50)` 返回引用 `Rectangle` 对象的对象引用。如图所示，您可以使用点表示法来调用新的 `Rectangle` 的 `getArea()` 方法来计算新矩形的面积。
+
+某些方法（如 `getArea()`）返回一个值。对于返回值的方法，可以在表达式中使用方法调用。您可以将返回值分配给变量，使用它来做出决策或控制循环。此代码将 `getArea()` 返回的值赋给变量 `areaOfRectangle`：
+
+```java
+int areaOfRectangle = new Rectangle(100, 50).getArea();
+```
+
+请记住，在特定对象上调用方法与向该对象发送消息相同。在这种情况下，调用 `getArea()` 的对象就是构造函数返回的矩形。
+
+**垃圾收集器**
+
+某些面向对象的语言要求您跟踪所创建的所有对象，并在不再需要时明确销毁它们。明确地管理内存是单调乏味且容易出错的。Java平台允许您根据需要创建任意数量的对象（当然，受限于系统可以处理的对象），您不必担心会破坏它们。Java运行时环境在确定不再使用对象时删除对象。此过程称为垃圾回收。
+
+当没有对该对象的引用时，对象有资格进行垃圾回收。当变量退出作用域时，通常会删除变量中保存的引用。或者，您可以通过将变量设置为特殊值 `null` 来显式删除对象引用。请记住，程序可以对同一个对象进行多次引用；在对象符合垃圾回收条件之前，必须删除对对象的所有引用。
+
+Java 运行时环境具有垃圾收集器，可以定期释放不再引用的对象使用的内存。垃圾收集器在它认为合适的时机正确时自动完成其工作。
+
