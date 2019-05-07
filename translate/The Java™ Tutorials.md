@@ -2009,7 +2009,7 @@ return ++count;
 
 本章节覆盖枚举类型，这是一种特殊类型，允许你定义并使用一系列的常量。
 
-### 类型
+### 类
 
 [面向对象编程概念](https://docs.oracle.com/javase/tutorial/java/concepts/index.html) 章节中使用了自行车类型作为例子，具有赛车、山地车以及串联自行车等子类型。下面是一个可能的 ````Bicycle```` 类型的实现，向你展示一个完整的类型声明。本章节后续内容将逐步介绍其中的所有内容，现在不需要纠结细节。
 
@@ -2079,7 +2079,7 @@ public class MountainBike extends Bicycle {
 
 ````MountainBike```` 继承了 ````Bicycle```` 的所有字段和方法，同时添加了 ````seatHeight```` 字段和该字段的 ````set```` 方法。
 
-#### 类型声明
+#### 类声明
 
 你已经看到可以如下形式声明类型：
 
@@ -2503,3 +2503,122 @@ moveCircle(myCircle, 23, 56)
 ```
 
 在方法内部，````circle````最初是指 ````myCircle````。 该方法将 ````circle````引用的对象的 x 和 y 坐标（即 ````myCircle````）分别改变为23和56。方法返回时，这些更改将保持不变。然后 ````circle```` 被赋予对 ````x = y = 0```` 的新`Circle`对象的引用。但是，这种重新分配没有永久性，因为引用是按值传递的，不能更改。在方法中，````circle```` 指向的对象已经改变，但是，当方法返回时，`myCircle`仍然引用与调用方法之前相同的`Circle`对象。
+
+### 对象
+
+典型的 Java 程序会创建许多对象，如您所知，通过调用方法进行交互。通过这些对象交互，程序可以执行各种任务，例如实现 GUI，运行动画，或通过网络发送和接收信息。一旦对象完成了它的工作，它的资源就会被回收以供其他对象使用。
+
+下面是个示例小程序，名为 [`CreateObjectDemo`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/CreateObjectDemo.java) ，创建三个对象：一个[`Point`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Point.java) 对象和两个 [`Rectangle`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Rectangle.java) 对象。你需要这三个类的源文件来编译此程序。
+
+```java
+public class CreateObjectDemo {
+
+    public static void main(String[] args) {
+		
+        // Declare and create a point object and two rectangle objects.
+        Point originOne = new Point(23, 94);
+        Rectangle rectOne = new Rectangle(originOne, 100, 200);
+        Rectangle rectTwo = new Rectangle(50, 100);
+		
+        // display rectOne's width, height, and area
+        System.out.println("Width of rectOne: " + rectOne.width);
+        System.out.println("Height of rectOne: " + rectOne.height);
+        System.out.println("Area of rectOne: " + rectOne.getArea());
+		
+        // set rectTwo's position
+        rectTwo.origin = originOne;
+		
+        // display rectTwo's position
+        System.out.println("X Position of rectTwo: " + rectTwo.origin.x);
+        System.out.println("Y Position of rectTwo: " + rectTwo.origin.y);
+		
+        // move rectTwo and display its new position
+        rectTwo.move(40, 72);
+        System.out.println("X Position of rectTwo: " + rectTwo.origin.x);
+        System.out.println("Y Position of rectTwo: " + rectTwo.origin.y);
+    }
+}
+
+```
+
+程序输出：
+
+```
+Width of rectOne: 100
+Height of rectOne: 200
+Area of rectOne: 20000
+X Position of rectTwo: 23
+Y Position of rectTwo: 94
+X Position of rectTwo: 40
+Y Position of rectTwo: 72
+
+```
+
+以下三节使用上面的示例来描述程序中对象的生命周期。通过它们，您将学习如何编写在您自己的程序中创建和使用对象的代码。您还将了解系统在对象生命周期结束后如何清理它们。
+
+#### 创建对象
+
+如你所见，类为对象提供了一张蓝图，你可以从类创建对象，下面的语句来自程序 [`CreateObjectDemo`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/CreateObjectDemo.java) 创建一个对象然后将它分配给一个变量：
+
+```java
+Point originOne = new Point(23, 94);
+Rectangle rectOne = new Rectangle(originOne, 100, 200);
+Rectangle rectTwo = new Rectangle(50, 100);
+
+```
+
+第一行创建一个 [`Point`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Point.java) 类对象，第二句和第三句分别创建一个 [`Rectangle`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Rectangle.java) 类对象。
+
+这些语句都包含三个部分（其中细节随后讨论）：
+
+1. **申明**：变量名和对象类型组成变量声明。
+2. **实例化**：`new` 关键字是 Java 语言的对象创建操作符。
+3. **初始化**：`new` 操作符后面跟随对构造器的调用，用来初始化新创建的对象。
+
+**创建变量来引用对象**
+
+前面你已经学到如何声明变量：
+
+```java
+type name;
+```
+
+这行代码通知编译器你将要使用 *name* 来引用类型为 *type* 的数据。对基本类型的变量，这个声明语句同时也会为该变量分配合适的内存空间。
+
+你也可以在单独一行代码中声明一个引用变量。比如：
+
+```java
+Point originOne;
+```
+
+如果你这样声明`originOne` ，在一个对象实际被创建并分配给该变量之前，该变量的值都是未定的。简单地声明一个引用类型变量并不会创建对象。因此，你需要使用 `new` 操作符，如下一节中所述。在使用该变量之前你必须分配一个对象给 `originOne` 。否则，你将得到一个编译错误。
+
+此状态中的变量（当前不引用任何对象）可以如下所示（变量名称，````originOne````，以及未指向任何内容的引用）：
+
+![originOne is null.](https://docs.oracle.com/javase/tutorial/figures/java/objects-null.gif)
+
+**实例化一个类**
+
+`new` 操作符通过为一个新的对象分配内存空间并返回该内存空间的引用的方式来实例化一个类。````new```` 操作符还调用该对象的构造器。
+
+------
+
+**注意：**阶段 “实例化一个类” 的含义与 “创建一个对象” 是相同的。当你创建一个对象，也就是创建该类的一个实例，因而也就是 “实例化” 一个类。
+
+------
+
+`new` 操作符需要一个单独的后缀参数：一个对构造器的调用。该构造器的名称提供了要实例化的类的名称。
+
+`new` 操作符返回新创建的对象的引用。该引用通常被分配给一个相应数据类型的变量。如下所示：
+
+```java
+Point originOne = new Point(23, 94);
+```
+
+`new` 操作符返回的新对象的引用并不是必须分配给一个变量，也可以直接在表达式中使用。比如：
+
+```java
+int height = new Rectangle().height;
+```
+
+这个语句将在下一节中讨论。
