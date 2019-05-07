@@ -3048,3 +3048,89 @@ public class Bicycle {
 }
 ````
 
+类变量通过它所在的类名和它自己的名字引用：
+
+```java
+Bicycle.numberOfBicycles
+```
+
+这样就将它们是类变量表现的很清楚。
+
+------
+
+**注意：** 你也可以用一个对象引用来引用静态字段，如下：
+
+```java
+myBike.numberOfBicycles
+```
+
+不过我们不建议这种做法，因为这样不能很清楚地表示它们是类变量。
+
+------
+
+你可以使用 `Bicycle` 构造器来设定 `id` 实例变量并增加 `numberOfBicycles` 类变量：
+
+```java
+public class Bicycle {
+        
+    private int cadence;
+    private int gear;
+    private int speed;
+    private int id;
+    private static int numberOfBicycles = 0;
+        
+    public Bicycle(int startCadence, int startSpeed, int startGear){
+        gear = startGear;
+        cadence = startCadence;
+        speed = startSpeed;
+
+        // increment number of Bicycles
+        // and assign ID number
+        id = ++numberOfBicycles;
+    }
+
+    // new method to return the ID instance variable
+    public int getID() {
+        return id;
+    }
+        ...
+}
+```
+
+**类方法**
+
+Java 语言支持 `static` 变量的同时，还支持 `static` 方法。`static` 方法，就是在其声明中包含 `static` 修饰符，应该通过类名调用，而不需要创建类实例。如下：
+
+```java
+ClassName.methodName(args)
+```
+
+------
+
+**注意：** 你也可以用一个对象引用来引用静态方法，如下：
+
+```
+instanceName.methodName(args)
+```
+
+不过我们不建议这种做法，因为这样不能很清楚地表示它们是类方法。
+
+------
+
+`static` 方法的通常用来访问 `static` 字段。比如，我们可以在 `Bicycle` 类中添加一个 `static` 方法来访问 `numberOfBicycles` `static` 变量：
+
+```java
+public static int getNumberOfBicycles() {
+    return numberOfBicycles;
+}
+```
+
+并非所有实例和类变量和方法的组合都是允许的：
+
+ - 实例方法可以直接访问实例变量和实例方法。
+ - 实例方法可以直接访问类变量和类方法。
+ - 类方法可以直接访问类变量和类方法。
+ - 类方法**不能**直接访问实例变量或实例方法 - 它们必须使用对象引用。此外，类方法不能使用 `this` 关键字，因为没有 `this` 的实例可以引用。
+
+**常量**
+
