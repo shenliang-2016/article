@@ -2801,3 +2801,221 @@ int areaOfRectangle = new Rectangle(100, 50).getArea();
 
 Java 运行时环境具有垃圾收集器，可以定期释放不再引用的对象使用的内存。垃圾收集器在它认为合适的时机正确时自动完成其工作。
 
+### 关于类的更多话题
+
+本节介绍依赖于使用对象引用的类的更多方面以及您在前面的对象部分中了解到的 `.`运算符：
+
+* 从方法返回值。
+* `this`关键字。
+* 类与实例成员。
+* 访问控制。
+
+#### 从方法返回值
+
+一个方法返回调用它的代码的时机：
+
+- 方法中所有的语句都执行完成，
+- 执行到一个 `return` 语句，或者，
+- 抛出一个异常 (稍后讨论)。
+
+无论哪个首先发生都无所谓。
+
+你在方法声明中声明方法的返回值类型。在方法体中，你使用 `return` 语句来返回值。
+
+声明 `void` 的方法不返回任何值。它不需要包含 `return` 语句，不过它也可以包含。这种情况下，其中的 `return` 语句的作用是跳出控制流块同时退出该方法。可以简单地写成下面的形式：
+
+```java
+return;
+```
+
+如果你尝试从声明为 `void` 的方法中返回一个值，你将得到一个编译错误。
+
+任何没有声明为 `void` 的方法都必须包含 `return` 语句并返回相应类型的返回值，如下：
+
+```java
+return returnValue;
+```
+
+返回的值的数据类型必须符合方法声明的返回值类型，你不能在声明返回布尔值的方法中返回整形数据。
+
+ [`Rectangle`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Rectangle.java) 类中的 `getArea()` 方法返回一个整型数：
+
+```java
+// a method for computing the area of the rectangle
+public int getArea() {
+  return width * height;
+}
+```
+
+这个方法返回表达式 `width*height` 的计算结果。
+
+`getArea` 方法返回一个基本数据类型。方法也可以返回引用类型。比如，在一个维护 `Bicycle` 对象的程序中，我们可以有下面的方法：
+
+```java
+public Bicycle seeWhosFastest(Bicycle myBike, Bicycle yourBike, Environment env) {
+    Bicycle fastest;
+    // code to calculate which bike is 
+    // faster, given each bike's gear 
+    // and cadence and given the 
+    // environment (terrain and wind)
+    return fastest;
+}
+```
+
+**返回一个类或者接口**
+
+如果此部分让您感到困惑，请跳过它并在完成接口和继承课程后返回该部分。
+
+当方法使用类名作为其返回类型（例如 `whosFastest`）时，返回对象的类型类必须是返回类型的子类或该类本身。假设您有一个类层次结构，其中 `ImaginaryNumber` 是 `java.lang.Number` 的子类，而 `java.lang.Number` 又是 `Object` 的子类，如下图所示。
+
+![The class hierarchy for ImaginaryNumber](https://docs.oracle.com/javase/tutorial/figures/java/classes-hierarchy.gif)
+
+`ImaginaryNumber` 的类继承层级结构。
+
+现在假定你有一个方法声明返回一个 `Number` ：
+
+```java
+public Number returnANumber() {
+    ...
+}
+```
+
+`returnANumber` 方法可以返回 `ImaginaryNumber` 但是不能返回 `Object` 。 `ImaginaryNumber` 是一个 `Number` 因为它是 `Number` 的子类。但是，`Object` 不一定是 `Number`   - 它可以是 `String` 或其他类型。
+
+您可以覆盖方法并定义它以返回原始方法的返回类型的子类，如下所示：
+
+```java
+public ImaginaryNumber returnANumber() {
+    ...
+}
+```
+
+这种称为*协变返回类型* 的技术意味着允许返回类型在与子类相同的方向上变化。
+
+------
+
+**注意:** 你也可以使用接口名称作为返回类型。这种情况下，返回的对象必须实现该接口。
+
+------
+
+#### 使用 `this` 关键字
+
+在实例方法或者构造器内部，`this` 是*当前对象*的引用—该对象的方法或者构造器正在被调用。你可以使用 `this` 关键字在实例方法或者构造器中引用当前对象的任何成员。
+
+**和字段共同使用 `this`**
+
+最常见的使用 `this` 关键字的原因是字段被方法或者构造器参数遮蔽。
+
+b比如，`Point` 类写成如下形式：
+
+```java
+public class Point {
+    public int x = 0;
+    public int y = 0;
+        
+    //constructor
+    public Point(int a, int b) {
+        x = a;
+        y = b;
+    }
+}
+
+```
+
+也可能写成这样：
+
+```java
+public class Point {
+    public int x = 0;
+    public int y = 0;
+        
+    //constructor
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+```
+
+构造函数的每个参数都会遮蔽对象的一个字段 - 构造函数内部的 `x` 是构造函数的第一个参数的本地副本。要引用`Point` 的字段 `x`，构造函数必须使用 `this.x` 。
+
+**和构造器共同使用 `this`**
+
+在构造器内部，你也可以使用 `this` 关键字调用该类的其它构造器。这种调用叫做*显式构造器调用*。下面是另一种形式的 `Rectangle` 类：
+
+```java
+public class Rectangle {
+    private int x, y;
+    private int width, height;
+        
+    public Rectangle() {
+        this(0, 0, 1, 1);
+    }
+    public Rectangle(int width, int height) {
+        this(0, 0, width, height);
+    }
+    public Rectangle(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+    ...
+}
+```
+
+该类包含一组构造函数。每个构造函数都初始化一些或所有矩形的成员变量。构造函数为任何成员变量提供默认值，其初始值不是由参数提供的。例如，无参数构造函数在坐标 `0,0` 处创建 `1x1` 矩形。双参数构造函数调用四参数构造函数，传递宽度和高度，但始终使用 `0,0` 坐标。和以前一样，编译器根据参数的数量和类型确定要调用的构造函数。
+
+如果存在，则另一个构造函数的调用必须是构造函数中的第一行。
+
+#### 类成员的访问控制
+
+访问级别修饰符决定其它类是否可以使用类的特定字段或者调用类的特定方法。下面是两种访问控制级别：
+
+- 处于顶级水平 — `public` ，或者 *package-private* （隐式访问控制修饰符）。
+- 处于成员的水平 — `public` ，`private` ， `protected` ，或者 *package-private* （隐式访问控制修饰符）。
+
+可以使用修饰符 `public` 声明一个类，在这种情况下，该类对于所有类都可见。如果一个类没有修饰符（默认，也称为*包私有*），它只在自己的包中可见（包是相关类的命名组 - 您将在后面的课程中了解它们。）
+
+在成员级别，您也可以使用 `public` 修饰符或隐式修饰符（*package-private*），就像使用顶级类一样，并且具有相同的含义。对于成员，还有两个额外的访问修饰符：`private` 和 `protected`。 `private` 修饰符指定只能在自己的类中访问该成员。`protected` 修饰符指定只能在其自己的包中访问该成员（与 *package-private* 一样），此外，还可以在另一个包中通过其类的子类访问该成员。
+
+下表显示了每个修饰符允许的成员访问权限。
+
+| Modifier    | Class | Package | Subclass | World |
+| ----------- | ----- | ------- | -------- | ----- |
+| `public`    | Y     | Y       | Y        | Y     |
+| `protected` | Y     | Y       | Y        | N     |
+| no modifier | Y     | Y       | N        | N     |
+| `private`   | Y     | N       | N        | N     |
+
+第一个数据列指示类本身是否可以访问由访问级别定义的成员。如您所见，类始终可以访问自己的成员。第二列指示与该类相同的包中的类（无论其父级是否有）可以访问该成员。第三列指示在此包外声明的类的子类是否可以访问该成员。第四列指示是否所有类都可以访问该成员。
+
+访问级别以两种方式影响您。首先，当您使用来自其他源的类（例如 Java 平台中的类）时，访问级别将确定您自己的类可以使用的这些类的哪些成员。其次，当您编写一个类时，您需要确定每个成员变量和类中的每个方法应具有的访问级别。
+
+让我们看一下类的集合，看看访问级别如何影响可见性。下图显示了此示例中的四个类以及它们之间的关系。
+
+![Classes and Packages of the Example Used to Illustrate Access Levels](https://docs.oracle.com/javase/tutorial/figures/java/classes-access.gif)
+
+用于说明访问级别的示例的类和包。
+
+下表显示了Alpha类的成员对于可应用于它们的每个访问修饰符的可见性。
+
+| Modifier    | Alpha | Beta | Alphasub | Gamma |
+| ----------- | ----- | ---- | -------- | ----- |
+| `public`    | Y     | Y    | Y        | Y     |
+| `protected` | Y     | Y    | Y        | N     |
+| no modifier | Y     | Y    | N        | N     |
+| `private`   | Y     | N    | N        | N     |
+
+------
+
+选择访问级别的建议：
+
+如果其他程序员使用您的类，您希望确保不会发生滥用错误。访问级别控制可以帮助您实现。
+
+ - 使用对特定成员有意义的最严格的访问级别。使用 `private` ，除非你有充分的理由不使用它。
+ - 避免除常量之外的 `public` 字段。（本教程中的许多示例都使用 `public` 字段。这可能有助于简明地说明某些要点，但不建议用于生产代码。）公共字段倾向于将您绑定到特定实现，并限制您更改代码的灵活性。
+
+------
+
