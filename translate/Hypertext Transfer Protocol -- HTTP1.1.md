@@ -3316,6 +3316,15 @@ Proxy-Authorization = "Proxy-Authorization" ":" credentials
 
 HTTP 访问认证过程在 “HTTP认证：基本和摘要访问认证” 中描述。与授权不同，````Proxy-Authorization```` 首部字段仅适用于需要使用 ````Proxy-Authenticate```` 字段进行身份验证的下一个出站代理。在链路中使用多个代理时，````Proxy-Authorization```` 首部字段由期望接收凭据的第一个出站代理使用。代理可以将凭证从客户端请求中继到下一个代理，如果这是代理协作地验证给定请求的机制。
 
+## 14.35 Range
+
+### 14.35.1 Byte Ranges
+
+由于所有 HTTP 实体都在 HTTP 消息中表示为字节序列，因此字节范围的概念是对任何 HTTP 实体都有意义。（但是，并非所有客户端和服务器都需要支持字节范围操作。）
+HTTP 中的字节范围规范适用于实体主体中的字节序列（不一定与消息体相同）。
+
+
+
 
 
 
