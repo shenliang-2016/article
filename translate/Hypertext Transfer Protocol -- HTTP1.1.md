@@ -3323,6 +3323,58 @@ HTTP 访问认证过程在 “HTTP认证：基本和摘要访问认证” 中描
 由于所有 HTTP 实体都在 HTTP 消息中表示为字节序列，因此字节范围的概念是对任何 HTTP 实体都有意义。（但是，并非所有客户端和服务器都需要支持字节范围操作。）
 HTTP 中的字节范围规范适用于实体主体中的字节序列（不一定与消息体相同）。
 
+一个字节范围操作可以指定单独一个字节范围，或者一个实体中一系列字节范围。
+
+````
+ranges-specifier = byte-ranges-specifier
+byte-ranges-specifier = bytes-unit "=" byte-range-set
+byte-range-set  = 1#( byte-range-spec | suffix-byte-range-spec )
+byte-range-spec = first-byte-pos "-" [last-byte-pos]
+first-byte-pos  = 1*DIGIT
+last-byte-pos   = 1*DIGIT
+````
+
+`byte-range-spec` 中的第一个 `first-byte-pos` 给出了一个范围内第一个字节的偏移量。`last-byte-pos` 值给出了范围中最后一个字节的字节偏移量。也就是说，字节位置指定一个闭区间。字节偏移量从 0 开始。
+
+如果存在 `last-byte-pos` 值，它就必须大于等于 `byte-range-spec` 中的 `first-byte-pos` 值，否则该 `byte-range-spec` 就是无效语法。包含一个或者多个无效语法的 `byte-range-spec` 值的 `byte-range-set` 接收者必须忽略包含该 `byte-range-set` 的首部字段。
+
+如果不存在 `last-byte-pos` 值，或者该值大于等于当前数据实体主体的长度，则该值会被修改为当前实体主体字节数减一。
+
+通过选择合适的 `last-byte-pos` 值，客户端能够在不知道数据实体尺寸的情况下限制查询获取的字节数。
+
+````
+suffix-byte-range-spec = "-" suffix-length
+suffix-length = 1*DIGIT
+````
+
+`suffix-byte-range-spec`用于指定实体主体的后缀，其长度由`suffix-length`值给定。（也就是说，此形式指定实体主体的最后 N 个字节。）如果实体短于指定的后缀长度，则使用整个实体主体。
+
+如果语法上有效的`byte-range-set`包括至少一个`byte-range-spec`，其`first-byte-pos`小于当前实体主体的长度，或者至少有一个`suffix-byte-range-spec`，包含非零后缀长度，则`byte-range-set`是可以满足的。否则，`byte-range-set`是不可满足的。如果`byte-range-set`不可满足，服务器应该返回状态为 416  (Requested range not satisfiable) 的响应。否则，服务器应该返回状态为206 (Partial Content) 的响应，其中包含实体主体的可满足范围。
+
+字节范围指定器的取值示例（假定实体主体长度为 10000）：
+
+* 头部的 500 字节（字节偏移量 0~499，闭区间）：
+
+  ````bytes=0-499````
+
+* 接下来的 500 字节（字节偏移量 500-999，闭区间）：
+
+  ````bytes=500-999````
+
+* 最后的 500 字节（字节偏移量 9500-9999，闭区间）：
+
+  ````bytes=-500```` 或 ````bytes=9500-````
+
+* 第一个字节和最后一个字节（字节 0 和字节 9999）：
+
+  ````bytes=0-0, -1````
+
+* 第二个500字节的几个合法但非规范的规范（字节偏移500-999，闭区间）：
+
+  ````bytes=500-600,  601-999````
+
+  ````bytes=500-700, 601-999````
+
 
 
 
