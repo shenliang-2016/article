@@ -3544,10 +3544,99 @@ public class DataStructure {
 
 您可以使用内部类来实现帮助程序类，例如本示例中显示的帮助程序类。要处理用户界面事件，您必须知道如何使用内部类，因为事件处理机制会广泛使用它们。
 
-**本地类和匿名类**
+**局部类和匿名类**
 
 还有两种类型的内部类。您可以在方法体内声明内部类。这些类称为 [local classes](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html)。您还可以在方法体内声明内部类，而无需命名该类。这些类称为 [anonymous classes](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)。
 
 **修饰符**
 
 您可以对内部类使用与外部类的其他成员相同的修饰符。例如，您可以使用访问修饰符 `private`，`public` 和 `protected` 来限制对内部类的访问，就像您使用它们来限制对其他类成员的访问一样。
+
+#### 局部类
+
+局部类是在代码块中声明的类，所谓的代码块就是配对的括号包围的若干条语句。你通常可以发现定义在方法体中的局部类。
+
+本节涵盖了以下主题：
+
+- [声明局部类](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html#declaring-local-classes)
+- 访问外部类的成员
+  - [遮蔽和局部类](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html#shadowing-and-local-classes)
+- [局部类类似于内部类](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html#local-classes-are-similar-to-inner-classes)
+
+**声明局部类**
+
+你可以在任何代码块中定义局部类 (参考 [Expressions, Statements, and Blocks](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/expressions.html) 获取更多信息)。比如，你可以在方法主体中定义局部类，在 `for` 循环内部，或者在 `if` 语句块内部。
+
+下面的例子，[`LocalClassExample`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/LocalClassExample.java)， 校验两个电话号码。它在方法 `validatePhoneNumber` 中定义局部类 `PhoneNumber` ：
+
+```java
+public class LocalClassExample {
+  
+    static String regularExpression = "[^0-9]";
+  
+    public static void validatePhoneNumber(
+        String phoneNumber1, String phoneNumber2) {
+      
+        final int numberLength = 10;
+        
+        // Valid in JDK 8 and later:
+       
+        // int numberLength = 10;
+       
+        class PhoneNumber {
+            
+            String formattedPhoneNumber = null;
+
+            PhoneNumber(String phoneNumber){
+                // numberLength = 7;
+                String currentNumber = phoneNumber.replaceAll(
+                  regularExpression, "");
+                if (currentNumber.length() == numberLength)
+                    formattedPhoneNumber = currentNumber;
+                else
+                    formattedPhoneNumber = null;
+            }
+
+            public String getNumber() {
+                return formattedPhoneNumber;
+            }
+            
+            // Valid in JDK 8 and later:
+
+//            public void printOriginalNumbers() {
+//                System.out.println("Original numbers are " + phoneNumber1 +
+//                    " and " + phoneNumber2);
+//            }
+        }
+
+        PhoneNumber myNumber1 = new PhoneNumber(phoneNumber1);
+        PhoneNumber myNumber2 = new PhoneNumber(phoneNumber2);
+        
+        // Valid in JDK 8 and later:
+
+//        myNumber1.printOriginalNumbers();
+
+        if (myNumber1.getNumber() == null) 
+            System.out.println("First number is invalid");
+        else
+            System.out.println("First number is " + myNumber1.getNumber());
+        if (myNumber2.getNumber() == null)
+            System.out.println("Second number is invalid");
+        else
+            System.out.println("Second number is " + myNumber2.getNumber());
+
+    }
+
+    public static void main(String... args) {
+        validatePhoneNumber("123-456-7890", "456-7890");
+    }
+}
+```
+
+该示例通过首先从电话号码中删除除0到9之外的所有字符来验证电话号码。之后，它检查电话号码是否包含正好十位数（北美电话号码的长度）。此示例打印以下内容：
+
+```java
+First number is 1234567890
+Second number is invalid
+```
+
