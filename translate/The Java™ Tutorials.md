@@ -3462,3 +3462,92 @@ System.out.println("ShadowTest.this.x = " + ShadowTest.this.x);
 **序列化**
 
 强烈建议不要对内部类（包括本地类和匿名类）进行序列化。当Java编译器编译某些构造（如内部类）时，它会创建*合成结构* ；这些是类，方法，字段和其他在源代码中没有相应结构的结构。合成结构使 Java 编译器能够在不更改 JVM 的情况下实现新的 Java 语言功能。但是，合成结构可以在不同的 Java 编译器实现之间变化，这意味着 `.class` 文件也可以在不同的实现之间变化。因此，如果序列化内部类，然后使用不同的 JRE 实现反序列化，则可能存在兼容性问题。有关在编译内部类时生成的合成结构的更多信息，请参阅获  [Obtaining Names of Method Parameters](https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html) 一节中的  [Implicit and Synthetic Parameters](https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html#implcit_and_synthetic) 部分。
+
+#### 内部类示例
+
+为了观察使用中的内部类，首先考虑数组。在下面的例子中，你创建一个数组，用整型数值填满它，然后以升序输出其中偶数下标的数值。
+
+[`DataStructure.java`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/DataStructure.java) 例子由以下内容组成：
+
+- `DataStructure` 外部类，包含一个构造器来创建 `DataStructure` 的实例，该实例包含一个填满顺序整型数值的数组，同时还包含一个方法将数组中偶数下标元素值打印出来。
+- `EvenIterator` 内部类，实现了 `DataStructureIterator`  接口，继承了 [`Iterator`](https://docs.oracle.com/javase/8/docs/api/java/util/Iterator.html)`<` [`Integer`](https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html)`>` 接口。迭代器被用来遍历一个数据结构，同时还有相应的方法来检测是否到达最后一个元素、获取当前元素以及删除下一个元素。
+- `main` 方法实例化一个 `DataStructure` 对象(`ds`)，然后调用 `printEven` 方法来打印数组 `arrayOfInts` 中偶数下标的元素值。
+
+````java
+public class DataStructure {
+    
+    // Create an array
+    private final static int SIZE = 15;
+    private int[] arrayOfInts = new int[SIZE];
+    
+    public DataStructure() {
+        // fill the array with ascending integer values
+        for (int i = 0; i < SIZE; i++) {
+            arrayOfInts[i] = i;
+        }
+    }
+    
+    public void printEven() {
+        
+        // Print out values of even indices of the array
+        DataStructureIterator iterator = this.new EvenIterator();
+        while (iterator.hasNext()) {
+            System.out.print(iterator.next() + " ");
+        }
+        System.out.println();
+    }
+    
+    interface DataStructureIterator extends java.util.Iterator<Integer> { } 
+
+    // Inner class implements the DataStructureIterator interface,
+    // which extends the Iterator<Integer> interface
+    
+    private class EvenIterator implements DataStructureIterator {
+        
+        // Start stepping through the array from the beginning
+        private int nextIndex = 0;
+        
+        public boolean hasNext() {
+            
+            // Check if the current element is the last in the array
+            return (nextIndex <= SIZE - 1);
+        }        
+        
+        public Integer next() {
+            
+            // Record a value of an even index of the array
+            Integer retValue = Integer.valueOf(arrayOfInts[nextIndex]);
+            
+            // Get the next even element
+            nextIndex += 2;
+            return retValue;
+        }
+    }
+    
+    public static void main(String s[]) {
+        
+        // Fill the array with integer values and print out only
+        // values of even indices
+        DataStructure ds = new DataStructure();
+        ds.printEven();
+    }
+}
+````
+
+程序输出：
+
+````
+0 2 4 6 8 10 12 14 
+````
+
+请注意，`EvenIterator` 类直接引用 `DataStructure` 对象的 `arrayOfInts` 实例变量。
+
+您可以使用内部类来实现帮助程序类，例如本示例中显示的帮助程序类。要处理用户界面事件，您必须知道如何使用内部类，因为事件处理机制会广泛使用它们。
+
+**本地类和匿名类**
+
+还有两种类型的内部类。您可以在方法体内声明内部类。这些类称为 [local classes](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html)。您还可以在方法体内声明内部类，而无需命名该类。这些类称为 [anonymous classes](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)。
+
+**修饰符**
+
+您可以对内部类使用与外部类的其他成员相同的修饰符。例如，您可以使用访问修饰符 `private`，`public` 和 `protected` 来限制对内部类的访问，就像您使用它们来限制对其他类成员的访问一样。
