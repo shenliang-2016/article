@@ -3413,3 +3413,52 @@ OuterClass.InnerClass innerObject = outerObject.new InnerClass();
 
 **遮蔽**
 
+如果特定作用域（例如内部类或方法定义）中的类型声明（例如成员变量或参数名称）与包含它的外部作用域中的另一个声明具有相同的名称，则内部作用域中的声明将遮蔽外部作用域中的声明。您不能仅通过其名称引用被遮蔽的声明。以下示例 `ShadowTest` 演示了这一点：
+
+````java
+public class ShadowTest {
+
+    public int x = 0;
+
+    class FirstLevel {
+
+        public int x = 1;
+
+        void methodInFirstLevel(int x) {
+            System.out.println("x = " + x);
+            System.out.println("this.x = " + this.x);
+            System.out.println("ShadowTest.this.x = " + ShadowTest.this.x);
+        }
+    }
+
+    public static void main(String... args) {
+        ShadowTest st = new ShadowTest();
+        ShadowTest.FirstLevel fl = st.new FirstLevel();
+        fl.methodInFirstLevel(23);
+    }
+}
+````
+
+程序输出：
+
+````java
+x = 23
+this.x = 1
+ShadowTest.this.x = 0
+````
+
+上面的例子定义了三个名为 `x` 的变量：类 `ShadowTest` 的成员变量，内部类 `FirstLevel` 的成员变量，以及方法 `methodInFirstLevel` 的参数。作为方法参数的变量 `x` 或遮蔽同名的内部类成员变量，因此，当你在方法中使用该变量时，它指的是方法参数。为了表示内部类的成员变量，可以使用 `this` 关键字表示包含当前作用域的外部作用域：
+
+```java
+System.out.println("this.x = " + this.x);
+```
+
+通过使用它们所属于的类的名称来引用更外层作用域中的成员变量。比如，下面的语句在方法`methodInFirstLevel` 中访问`ShadowTest`类的成员变量：
+
+```java
+System.out.println("ShadowTest.this.x = " + ShadowTest.this.x);
+```
+
+**序列化**
+
+强烈建议不要对内部类（包括本地类和匿名类）进行序列化。当Java编译器编译某些构造（如内部类）时，它会创建*合成结构* ；这些是类，方法，字段和其他在源代码中没有相应结构的结构。合成结构使 Java 编译器能够在不更改 JVM 的情况下实现新的 Java 语言功能。但是，合成结构可以在不同的 Java 编译器实现之间变化，这意味着 `.class` 文件也可以在不同的实现之间变化。因此，如果序列化内部类，然后使用不同的 JRE 实现反序列化，则可能存在兼容性问题。有关在编译内部类时生成的合成结构的更多信息，请参阅获  [Obtaining Names of Method Parameters](https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html) 一节中的  [Implicit and Synthetic Parameters](https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html#implcit_and_synthetic) 部分。
