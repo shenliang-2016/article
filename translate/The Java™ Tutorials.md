@@ -3133,3 +3133,283 @@ public static int getNumberOfBicycles() {
  - 类方法**不能**直接访问实例变量或实例方法 - 它们必须使用对象引用。此外，类方法不能使用 `this` 关键字，因为没有 `this` 的实例可以引用。
 
 **常量**
+
+`static` 访问修饰符，与 `final` 访问修饰符结合使用，用来定义常量。`final` 修饰符表示该字段的值不能改变。
+
+比如，下面的变量声明定义了一个名为 `PI` 的常量，其值为圆周率的近似值。
+
+````java
+static final double PI = 3.141592653589793
+````
+
+这种方式定义的常量不能被赋值，如果你的程序试图这么做就会发生编译错误。传统上，常量值的名称通常都是由大写字母组成。如果该名称由一个以上的词组成，则这些词由下划线 `_` 连接。
+
+------
+
+**注意：** 如果基本数据类型或者字符串被定义为常量，同时其值在编译期确定，编译器就会将代码中所有的该常量的名称替换为它的值。这被称为*编译期*常量。如果外部世界中的常量的值已经改变，则你需要重新编译所有使用该常量的类以获取该常量的当前值。
+
+------
+
+**`Bicycle` 类**
+
+经过这一节的修改，`Bicycle` 类变成了：
+
+````java
+public class Bicycle {
+        
+    private int cadence;
+    private int gear;
+    private int speed;
+        
+    private int id;
+    
+    private static int numberOfBicycles = 0;
+
+        
+    public Bicycle(int startCadence,
+                   int startSpeed,
+                   int startGear) {
+        gear = startGear;
+        cadence = startCadence;
+        speed = startSpeed;
+
+        id = ++numberOfBicycles;
+    }
+
+    public int getID() {
+        return id;
+    }
+
+    public static int getNumberOfBicycles() {
+        return numberOfBicycles;
+    }
+
+    public int getCadence() {
+        return cadence;
+    }
+        
+    public void setCadence(int newValue) {
+        cadence = newValue;
+    }
+        
+    public int getGear(){
+        return gear;
+    }
+        
+    public void setGear(int newValue) {
+        gear = newValue;
+    }
+        
+    public int getSpeed() {
+        return speed;
+    }
+        
+    public void applyBrake(int decrement) {
+        speed -= decrement;
+    }
+        
+    public void speedUp(int increment) {
+        speed += increment;
+    }
+}
+````
+
+#### 初始化字段
+
+如你所见，你通常可以在声明字段时提供一个初始值：
+
+````java
+public class BedAndBreakfast {
+
+    // initialize to 10
+    public static int capacity = 10;
+
+    // initialize to false
+    private boolean full = false;
+}
+````
+
+当初始化值可用并且初始化可以放在一行上时，这很有效。然而，这种形式的初始化由于其简单性而具有局限性。如果初始化需要一些逻辑（例如，错误处理或 `for` 循环来填充复杂的数组），则简单的赋值是不合适的。实例变量可以在构造函数中初始化，其中可以使用错误处理或其他逻辑。为了为类变量提供相同的功能，Java 编程语言包括静态初始化块。
+
+------
+
+**注意：** 没有必要在类定义的开头处声明字段，虽然这种做法是最常见的做法。不过在使用它们之前声明和初始化它们是必须的。
+
+------
+
+**静态初始化块**
+
+*静态初始化块* 是由大括号包围起来的普通代码块，以 `static` 关键字引导。下面是个例子：
+
+````java
+static {
+  // whatevet code is needed for initialization goes here
+}
+````
+
+一个类可以包含任意数量的静态初始化块，它们可以出现在类主体的任意位置。运行时系统保证静态初始化块会按照它们在源代码中出现的顺序被调用。
+
+另外一种静态代码块，你可以写一个私有静态方法：
+
+````java
+class Whatever {
+    public static varType myVar = initializeClassVariable();
+        
+    private static varType initializeClassVariable() {
+
+        // initialization code goes here
+    }
+}
+````
+
+私有静态方法的优点是，它们可以随后被重新使用，如果你需要重新初始化类变量。
+
+**初始化实例成员**
+
+通常，你可以将实例化和初始化变量的代码放入构造器。存在两种不同的方法来使用构造器来实例化变量：初始化块和 `final` 方法。
+
+实例变量的初始化块看起来类似于静态初始化块，只是没有 `static` 关键字：
+
+````java
+{
+  // whatever code is needed for initialization goes here
+}
+````
+
+Java 编译器将初始化块复制到每个构造器中。因此，这种方法可以用来在多个构造器之间共享代码块。
+
+`final` 方法不能在子类中被覆盖。这一点将在接口和继承章节中讨论。下面是使用 `final` 方法初始化实例变量的例子：
+
+````java
+class Whatever {
+    private varType myVar = initializeInstanceVariable();
+        
+    protected final varType initializeInstanceVariable() {
+
+        // initialization code goes here
+    }
+}
+````
+
+如果子类可能希望重用初始化方法，这尤其有用。该方法是 `final` 的，因为在实例初始化期间调用非 `final` 方法可能会导致问题。
+
+#### 创建和使用类和对象小结
+
+类声明为类命名，并用大括号包含类主体。类名称可以由修饰符引导。类主体包含字段、方法以及类的构造器。类使用字段保持静态信息，使用方法实现行为。构造器初始化类的实例，使用类名作为名称，形如一个没有返回值类型的方法。
+
+控制类和成员的访问的方法相同：在它们的声明中使用访问修饰符，比如 `public` 等。
+
+通过在成员声明中使用 `static` 关键字，你可以指定类变量或者类方法。没有声明为 `static` 的成员就隐式作为实例变量。类变量由所有类实例共享，可以通过类名称或者实例引用访问。类的实例获取每个实例变量的自己的副本，必须通过实例引用访问它们。
+
+你可以使用 `new` 操作符和构造器从类创建对象。`new` 操作符返回新创建的对象的引用。你可以将该引用赋值给一个变量或者直接使用它。
+
+可以通过使用限定名称来引用在声明它们的类之外的代码可访问的实例变量和方法。实例变量的限定名称如下所示：
+
+````
+objectReference.variableName
+````
+
+方法的全限定名称形如：
+
+````
+objectReference.methodName(argumentList)
+````
+
+或者：
+
+````
+objectReference.methodName()
+````
+
+垃圾收集器会自动清理未使用的对象。如果程序不再包含对它的引用，则不使用该对象。您可以通过将包含引用的变量设置为 `null`来显式删除引用。
+
+### 嵌套类
+
+Java 语言允许你在类内部定义另一个类。这种位于其它类内部的类被称为*内部类*，形如：
+
+````java
+class OuterClass {
+    ...
+    class NestedClass {
+        ...
+    }
+}
+````
+
+------
+
+**术语：** 内部类分为两种：静态的和非静态的。声明为 `static` 的就是*静态嵌套类*。其它的称为*内部类*。
+
+------
+
+````java
+class OuterClass {
+    ...
+    static class StaticNestedClass {
+        ...
+    }
+    class InnerClass {
+        ...
+    }
+}
+````
+
+嵌套类是它所在的类的成员。非静态的嵌套类（内部类）可以访问它所在的类的其它成员，即使它们被声明为 `private` 的。静态嵌套类不能访问它们所在的类的其它成员。作为 `OuterClass` 的成员，嵌套类可以被声明为 `private` ，`public`，`protected` 或者*package private* 。（回想一下，外部类只能声明为 `public` 或 `package private`）
+
+**为什么使用嵌套类？**
+
+使用嵌套类的令人信服的理由包括：
+
+* **它是一种逻辑类分组仅在一个地方使用的方法**：如果一个类只对另一个类有用，那么将它嵌入该类并将两者保持在一起是合乎逻辑的。嵌套这样的“帮助类”使得它们的包更加简化。
+* **它增加了封装**：考虑两个顶级类A和B，其中B需要访问A的成员，否则这些成员将被声明为私有。通过将类B隐藏在类A中，可以将A的成员声明为私有，并且B可以访问它们。另外，B本身可以对外部隐藏。
+* **它可以带来更易读和可维护的代码**：在顶级类中嵌套小类会使代码更接近于使用它的位置。
+
+**静态嵌套类**
+
+与类方法和变量一样，静态嵌套类与其外部类相关联。和静态类方法一样，静态嵌套类不能直接引用其封闭类中定义的实例变量或方法：它只能通过对象引用来使用它们。
+
+------
+
+**注意：**静态嵌套类与其外部类（和其他类）的实例成员交互，就像任何其他顶级类一样。 实际上，静态嵌套类在行为上是一个顶级类，它已嵌套在另一个顶级类中以方便打包。
+
+------
+
+静态嵌套类通过包含它的类名访问：
+
+```java
+OuterClass.StaticNestedClass
+```
+
+比如，使用下面的语法来闯进静态嵌套类的对象：
+
+```java
+OuterClass.StaticNestedClass nestedObject = new OuterClass.StaticNestedClass();
+```
+
+**内部类**
+
+与实例方法和变量一样，内部类与其所在的类的实例相关联，并且可以直接访问该对象的方法和字段。此外，由于内部类与实例相关联，因此本身无法定义任何静态成员。
+
+作为内部类的实例的对象存在于外部类的实例中。 考虑以下类：
+
+````java
+class OuterClass {
+    ...
+    class InnerClass {
+        ...
+    }
+}
+````
+
+`InnerClass` 的实例只能存在于 `OuterClass` 的实例中，并且可以直接访问其所在类实例的方法和字段。
+
+要实例化内部类，必须首先实例化外部类。然后，使用以下语法在外部对象中创建内部对象：
+
+````java
+OuterClass.InnerClass innerObject = outerObject.new InnerClass();
+````
+
+有两种特殊的内部类： [local classes](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html) 和 [anonymous classes](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)。
+
+**遮蔽**
+
