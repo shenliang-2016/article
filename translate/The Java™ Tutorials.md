@@ -3640,3 +3640,39 @@ First number is 1234567890
 Second number is invalid
 ```
 
+**访问外部类成员**
+
+局部类可以访问它的外部类的成员。在上面的例子中，`PhoneNumber` 构造器访问成员 `LocalClassExample.regularExpression`。
+
+另外，局部类可以访问局部变量。不过局部类只能访问声明为 `final` 的局部变量。当局部类访问包围它的代码块中的局部变量或者参数时，它*捕获*那些变量和参数。比如， `PhoneNumber` 构造器可以访问局部变量 `numberLength` 因为它被声明为 `final`；`numberLength` 是*被捕获*的变量。
+
+但是，从Java SE 8开始，本地类可以访问包围它的代码块的 `final` 或者等效 `final` 的局部变量和参数。在初始化之后其值永远不会改变的变量或参数就是等效 `final` 的。例如，假设变量 `numberLength` 未声明为 `final`，并且您在`PhoneNumber` 构造函数中添加下面例子中的赋值语句，以将有效电话号码的长度更改为7位数：
+
+```java
+PhoneNumber(String phoneNumber) {
+    numberLength = 7;
+    String currentNumber = phoneNumber.replaceAll(
+        regularExpression, "");
+    if (currentNumber.length() == numberLength)
+        formattedPhoneNumber = currentNumber;
+    else
+        formattedPhoneNumber = null;
+}
+```
+
+由于这个赋值语句，变量 `numberLength` 不再是 `final` 等效的。因此，Java编译器生成类似于 “local variables referenced from an inner class must be final or effectively final" 的错误消息，其中内部类 `PhoneNumber` 尝试访问`numberLength` 变量：
+
+```java
+if (currentNumber.length() == numberLength)
+```
+
+从Java SE 8开始，如果在方法中声明本地类，它可以访问方法的参数。例如，您可以在 `PhoneNumberlocal` 类中定义以下方法：
+
+```java
+public void printOriginalNumbers() {
+    System.out.println("Original numbers are " + phoneNumber1 +
+        " and " + phoneNumber2);
+}
+```
+
+`printOriginalNumbers` 方法访问 `validatePhoneNumber` 方法的参数 `phoneNumber1` 和 `phoneNumber2` 。
