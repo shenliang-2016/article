@@ -3676,3 +3676,72 @@ public void printOriginalNumbers() {
 ```
 
 `printOriginalNumbers` 方法访问 `validatePhoneNumber` 方法的参数 `phoneNumber1` 和 `phoneNumber2` 。
+
+**遮蔽和局部类**
+
+在一个局部类中的类型声明（比如一个变量）遮蔽外部作用域中的同名声明。参考 [Shadowing](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#shadowing) 获取更多信息。
+
+**局部类类似于内部类**
+
+局部类类似于内部类，因为他们不能定义或者声明任何静态成员。静态方法中的局部类，比如上面的 `PhoneNumber` 类，定义在静态方法 `validatePhoneNumber` 内部，只能引用外部类中的静态成员。例如，如果你没有将成员变量 `regularExpression` 定义为静态变量，则 Java 编译器会产生类似于 "no-static variable regularExpression cannot be referenced from a static context" 的错误信息。
+
+局部类是非静态的，因为它们访问外部代码块的实例成员。因此它们不能包含大多数种类的静态声明。
+
+你不能在一个代码块中声明一个接口，接口本质上是静态的。比如，下面的代码块无法通过编译：
+
+````java
+public void greetInEnglish() {
+    interface HelloThere {
+       public void greet();
+    }
+    class EnglishHelloThere implements HelloThere {
+        public void greet() {
+           System.out.println("Hello " + name);
+        }
+    }
+    HelloThere myGreeting = new EnglishHelloThere();
+    myGreeting.greet();
+}
+````
+
+你不能在一个局部类中声明静态初始化器或者静态成员接口。下面的代码同样不能通过编译。编译器将会产生类似于 "modifier 'static' is only allowed in constant variable declaration" ，当它遇到该方法定义：
+
+````java
+public void sayGoodbyeInEnglish() {
+    class EnglishGoodbye {
+        public static void sayGoodbye() {
+            System.out.println("Bye bye");
+        }
+    }
+    EnglishGoodbye.sayGoodbye();
+}
+````
+
+局部类可以具有静态成员，前提是它们是常量变量。（常量变量是基本类型或 `String` 类型的变量，声明为 `final` 并使用编译时常量表达式初始化。编译时常量表达式通常是可在编译时计算的字符串或算术表达式。参考  [Understanding Class Members](https://docs.oracle.com/javase/tutorial/java/javaOO/classvars.html) 了解更多信息。）以下代码可以通过编译，因为静态成员 `EnglishGoodbye.farewell` 是一个常量变量：
+
+````java
+public void sayGoodbyeInEnglish() {
+    class EnglishGoodbye {
+        public static final String farewell = "Bye bye";
+        public void sayGoodbye() {
+            System.out.println(farewell);
+        }
+    }
+    EnglishGoodbye myEnglishGoodbye = new EnglishGoodbye();
+    myEnglishGoodbye.sayGoodbye();
+}
+````
+
+#### 匿名类
+
+匿名类使您可以使代码更简洁。它们使您能够同时声明和实例化一个类。它们就像局部类，除了它们没有名字。如果您只需要使用局部类一次，请使用它们。
+
+本节包括以下主题
+
+- [声明匿名类](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html#declaring-anonymous-classes)
+- [匿名类的语法](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html#syntax-of-anonymous-classes)
+- [访问外部作用域的局部变量，以及声明和访问匿名类的成员](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html#accessing)
+- [匿名类的示例](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html#examples-of-anonymous-classes)
+
+**声明匿名类**
+
