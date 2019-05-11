@@ -3745,3 +3745,91 @@ public void sayGoodbyeInEnglish() {
 
 **声明匿名类**
 
+虽然局部类是类声明，但匿名类是表达式，这意味着您在另一个表达式中定义该类。以下示例[`HelloWorldAnonymousClasses`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/HelloWorldAnonymousClasses.java) 在局部变量 `frenchGreeting` 和 `spanishGreeting` 的初始化语句中使用匿名类，但使用本地类来初始化变量 `englishGreeting`：
+
+````java
+public class HelloWorldAnonymousClasses {
+  
+    interface HelloWorld {
+        public void greet();
+        public void greetSomeone(String someone);
+    }
+  
+    public void sayHello() {
+        
+        class EnglishGreeting implements HelloWorld {
+            String name = "world";
+            public void greet() {
+                greetSomeone("world");
+            }
+            public void greetSomeone(String someone) {
+                name = someone;
+                System.out.println("Hello " + name);
+            }
+        }
+      
+        HelloWorld englishGreeting = new EnglishGreeting();
+        
+        HelloWorld frenchGreeting = new HelloWorld() {
+            String name = "tout le monde";
+            public void greet() {
+                greetSomeone("tout le monde");
+            }
+            public void greetSomeone(String someone) {
+                name = someone;
+                System.out.println("Salut " + name);
+            }
+        };
+        
+        HelloWorld spanishGreeting = new HelloWorld() {
+            String name = "mundo";
+            public void greet() {
+                greetSomeone("mundo");
+            }
+            public void greetSomeone(String someone) {
+                name = someone;
+                System.out.println("Hola, " + name);
+            }
+        };
+        englishGreeting.greet();
+        frenchGreeting.greetSomeone("Fred");
+        spanishGreeting.greet();
+    }
+
+    public static void main(String... args) {
+        HelloWorldAnonymousClasses myApp =
+            new HelloWorldAnonymousClasses();
+        myApp.sayHello();
+    }            
+}
+````
+
+**匿名类语法**
+
+如前所述，一个匿名类是一个表达式。匿名类表达式的语法看起来像是调用构造器，除了该代码块中包含一个类定义。
+
+考虑 `frenchGreeting` 对象的实例化：
+
+````java
+HelloWorld frenchGreeting = new HelloWorld() {
+    String name = "tout le monde";
+    public void greet() {
+        greetSomeone("tout le monde");
+    }
+    public void greetSomeone(String someone) {
+        name = someone;
+        System.out.println("Salut " + name);
+    }
+};
+````
+
+匿名类表达式由以下部分组成：
+
+* `new` 操作符
+
+* 类实现的接口名称或者类扩展的类名称。在上述例子中，匿名类实现了 `HelloWorld` 接口。
+* 包含构造函数的参数的括号，就像普通的类实例创建表达式一样。注意：实现接口时，没有构造函数，因此您使用一对空括号，如本例所示。
+* 一个主体，类声明主体。更特殊的，在这个主体中，允许方法声明，而不允许语句。
+
+因为匿名类定义是一个表达式，它必须是一条语句的一部分。在这个例子中，匿名类表达式是 `frenchGreeting` 对象实例化语句的一部分。(这就是为什么在右大括号之后是一个分号)
+
