@@ -3833,3 +3833,24 @@ HelloWorld frenchGreeting = new HelloWorld() {
 
 因为匿名类定义是一个表达式，它必须是一条语句的一部分。在这个例子中，匿名类表达式是 `frenchGreeting` 对象实例化语句的一部分。(这就是为什么在右大括号之后是一个分号)
 
+**访问外部作用域的局部变量，以及声明和访问匿名类的成员**
+
+类似于局部类，匿名类能够 [捕获变量](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html#accessing-members-of-an-enclosing-class) ；它们同样可以访问外围作用域中的局部变量：
+
+- 匿名类可以访问包围它的类的成员。
+- 匿名类不能访问包围它的外围作用域中的没有声明为 `final` 和等效 `final` 的局部变量。
+- 类似于嵌套类，匿名类中的类型声明（比如一个变量）会遮蔽外围作用域中的同名声明。参考 [Shadowing](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#shadowing) 获取更多信息。
+
+匿名类作为局部类起成员也有相同的限制：
+
+* 您不能在匿名类中声明静态初始化程序或成员接口。
+* 匿名类可以具有静态成员，前提是它们是常量变量。
+
+注意你可以在匿名类中声明下以下内容：
+
+- 字段
+- 额外的方法（即使他们没有实现超类型的任何方法）
+- 实例初始化器
+- 局部类
+
+不过，你不能在匿名类中声明构造器。
