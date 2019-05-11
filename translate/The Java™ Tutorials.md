@@ -3854,3 +3854,155 @@ HelloWorld frenchGreeting = new HelloWorld() {
 - 局部类
 
 不过，你不能在匿名类中声明构造器。
+
+**匿名类示例**
+
+匿名类通常用于图形用户界面程序开发。
+
+考虑下面的 JavaFX 例子 [`HelloWorld.java`](https://docs.oracle.com/javase/8/javafx/get-started-tutorial/hello_world.htm) (来自 [Hello World, JavaFX Style](https://docs.oracle.com/javase/8/javafx/get-started-tutorial/hello_world.htm) 在 [Getting Started with JavaFX](https://docs.oracle.com/javase/8/javafx/get-started-tutorial/javafx_get_started.htm))。该例子创建了一个框架包含 **Say 'Hello World'** 按钮：
+
+````java
+
+import javafx.scene.control.Button;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+ 
+public class HelloWorld extends Application {
+    public static void main(String[] args) {
+        launch(args);
+    }
+    
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Hello World!");
+        Button btn = new Button();
+        btn.setText("Say 'Hello World'");
+        btn.setOnAction(new EventHandler<ActionEvent>() {
+ 
+            @Override
+            public void handle(ActionEvent event) {
+                System.out.println("Hello World!");
+            }
+        });
+        
+        StackPane root = new StackPane();
+        root.getChildren().add(btn);
+        primaryStage.setScene(new Scene(root, 300, 250));
+        primaryStage.show();
+    }
+}
+````
+
+在此示例中，方法调用 `btn.setOnAction` 指定在选择 **Say“Hello World”** 按钮时发生的情况。此方法需要 `EventHandler <ActionEvent>` 类型的对象。`EventHandler <ActionEvent>` 接口只包含一个方法 `handle`。该示例使用匿名类表达式，而不是使用新类实现此方法。请注意，此表达式是传递给 `btn.setOnAction` 方法的参数。
+
+因为 `EventHandler <ActionEvent>` 接口只包含一个方法，所以可以使用 lambda 表达式而不是匿名类表达式。有关更多信息，请参阅[Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html)表达式一节。
+
+匿名类是实现包含两个或更多方法的接口的理想选择。以下 JavaFX 示例来自 UI 控件的自定义部分。突出显示的代码创建一个仅接受数值的文本字段。它通过重写从 `TextInputControl` 类继承的 `replaceText` 和 `replaceSelection` 方法，使用匿名类重新定义 `TextField` 类的默认实现。
+
+````java
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+
+public class CustomTextFieldSample extends Application {
+    
+    final static Label label = new Label();
+ 
+    @Override
+    public void start(Stage stage) {
+        Group root = new Group();
+        Scene scene = new Scene(root, 300, 150);
+        stage.setScene(scene);
+        stage.setTitle("Text Field Sample");
+ 
+        GridPane grid = new GridPane();
+        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setVgap(5);
+        grid.setHgap(5);
+ 
+        scene.setRoot(grid);
+        final Label dollar = new Label("$");
+        GridPane.setConstraints(dollar, 0, 0);
+        grid.getChildren().add(dollar);
+        
+        final TextField sum = new TextField() {
+            @Override
+            public void replaceText(int start, int end, String text) {
+                if (!text.matches("[a-z, A-Z]")) {
+                    super.replaceText(start, end, text);                     
+                }
+                label.setText("Enter a numeric value");
+            }
+ 
+            @Override
+            public void replaceSelection(String text) {
+                if (!text.matches("[a-z, A-Z]")) {
+                    super.replaceSelection(text);
+                }
+            }
+        };
+ 
+        sum.setPromptText("Enter the total");
+        sum.setPrefColumnCount(10);
+        GridPane.setConstraints(sum, 1, 0);
+        grid.getChildren().add(sum);
+        
+        Button submit = new Button("Submit");
+        GridPane.setConstraints(submit, 2, 0);
+        grid.getChildren().add(submit);
+        
+        submit.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                label.setText(null);
+            }
+        });
+        
+        GridPane.setConstraints(label, 0, 1);
+        GridPane.setColumnSpan(label, 3);
+        grid.getChildren().add(label);
+        
+        scene.setRoot(grid);
+        stage.show();
+    }
+ 
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+````
+
+#### Lambda 表达式
+
+匿名类的一个问题是，如果匿名类的实现非常简单，例如只包含一个方法的接口，那么匿名类的语法可能看起来不实用且不清楚。 在这些情况下，您通常会尝试将功能作为参数传递给另一个方法，例如当有人单击按钮时应采取的操作。Lambda表达式使您可以执行此操作，将功能视为方法参数，或将代码视为数据。
+
+前面一个小节，[Anonymous Classes](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)，向你展示了如何实现一个基类而必须要给它一个名称。尽管这通常比命名类要简洁一些，但是即使是对只包含一个方法的类来说，匿名类都似乎仍然有些复杂和繁琐。Lambda 表达式允许你更简洁地表达单方法类的实例。
+
+本小节包含以下主体：
+
+- [Lambda表达式的理想用例](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#use-case)
+  - [方法1：创建搜索匹配一个特征的成员的方法](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach1)
+  - [方法2：创建更多广义搜索方法](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach2)
+  - [方法3：在局部类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach3)
+  - [方法4：在匿名类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach4)
+  - [方法5：使用Lambda表达式指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach5)
+  - [方法6：将标准功能接口与Lambda表达式一起使用](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach6)
+  - [方法7：在整个应用程序中使用Lambda表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach7)
+  - [方法8：更广泛地使用泛型](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach8)
+  - [方法9：使用接受Lambda表达式作为参数的聚合操作](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach9)
+- [GUI应用程序中的Lambda表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#lambda-expressions-in-gui-applications)
+- [Lambda表达式的语法](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#syntax)
+- [访问外围作用域的局部变量](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#accessing-local-variables)
+- [目标类型](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#target-typing)
+  - [目标类型和方法参数](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#target-types-and-method-arguments)
+- [序列化](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#serialization)
+
+**Lambda表达式的理想用例**
+
