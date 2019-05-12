@@ -4019,3 +4019,147 @@ public class CustomTextFieldSample extends Application {
 | fa           | mei                                                          |
 
 假设此社交网络应用程序的成员由以下 [`Person`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Person.java)类表示：
+
+````java
+public class Person {
+
+    public enum Sex {
+        MALE, FEMALE
+    }
+
+    String name;
+    LocalDate birthday;
+    Sex gender;
+    String emailAddress;
+
+    public int getAge() {
+        // ...
+    }
+
+    public void printPerson() {
+        // ...
+    }
+}
+````
+
+假设您的社交网络应用程序的成员存储在 `List <Person>` 实例中。
+
+本节首先介绍这种用例的简单方法。它使用局部类和匿名类改进了这种方法，然后使用 lambda 表达式以高效和简洁的方法完成。在示例 `RosterTest` 中找到本节中描述的代码。
+
+**方法1：创建搜索匹配一个特征的成员的方法**
+
+一种简单的方法是创建几种方法 ，每种方法都会搜索与一个特征匹配的成员，例如性别或年龄。以下方法打印超过指定年龄的会员：
+
+```java
+public static void printPersonsOlderThan(List<Person> roster, int age) {
+    for (Person p : roster) {
+        if (p.getAge() >= age) {
+            p.printPerson();
+        }
+    }
+}
+```
+
+**注意**:  [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) 是一个有序 [`Collection`](https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html)。一个 *集合* 是一个对象，它将多个元素组织称为一个单独的单元。集合用来存储、查询、操作依据传输聚合数据。有关集合的更多信息，参考 [Collections](https://docs.oracle.com/javase/tutorial/collections/index.html) 。
+
+这种方法可能会使您的应用程序变得脆弱，这是由于引入了更新（例如更新的数据类型）导致应用程序无法工作的可能性。假设您升级应用程序并更改 `Person` 类的结构，使其包含不同的成员变量，也许该类记录和测量年龄与不同的数据类型或算法。您必须重写大量 API 以适应此更改。此外，这种方法是不必要的限制。例如，如果您想要打印年龄小于某个年龄的会员，该怎么办？
+
+**方法2：创建更多广义搜索方法**
+
+下面的方法比 `printPersonOlderThan` 更一般，打印特定年龄范围的会员：
+
+```java
+public static void printPersonsWithinAgeRange(
+    List<Person> roster, int low, int high) {
+    for (Person p : roster) {
+        if (low <= p.getAge() && p.getAge() < high) {
+            p.printPerson();
+        }
+    }
+}
+```
+
+如果您想要打印指定性别的成员，或指定性别和年龄范围的组合，该怎么办？如果您决定更改 `Person` 类并添加其他属性（如关系状态或地理位置），该怎么办？虽然这种方法比 `printPersonsOlderThan` 更通用，但是尝试为每个可能的搜索查询创建单独的方法仍然会导致代码脆弱。您可以将在不同类中按照不同条件进行搜索的代码分开。
+
+**方法3：在局部类中指定搜索条件代码**
+
+下面的方法打印匹配到你指定 的搜索条件的会员：
+
+```java
+public static void printPersons(
+    List<Person> roster, CheckPerson tester) {
+    for (Person p : roster) {
+        if (tester.test(p)) {
+            p.printPerson();
+        }
+    }
+}
+```
+
+此方法通过调用`tester.test`方法检查`List`参数`roster`中包含的每个`Person`实例是否满足`CheckPerson`参数`tester`中指定的搜索条件。如果方法`tester.test`返回`true`值，则在`Person`实例上调用方法`printPersons`。
+
+要指定搜索条件，请实现`CheckPerson`接口：
+
+```
+interface CheckPerson {
+    boolean test(Person p);
+}
+```
+
+下面的类通过指定方法`test`的实现来实现`CheckPerson`接口。此方法筛选符合美国选择性服务条件的会员：如果其`Person`参数为男性且年龄介于18和25之间，则返回`true`值：
+
+```java
+class CheckPersonEligibleForSelectiveService implements CheckPerson {
+    public boolean test(Person p) {
+        return p.gender == Person.Sex.MALE &&
+            p.getAge() >= 18 &&
+            p.getAge() <= 25;
+    }
+}
+```
+
+为了使用这个类，你创建一个它的新的实例病调用 `printPersons` 方法：
+
+```java
+printPersons(
+    roster, new CheckPersonEligibleForSelectiveService());
+```
+
+虽然这种方法不那么脆弱 - 如果你改变`Person`的结构，你不必重写方法 - 你还有其他代码：你计划在你的应用程序中执行的每个搜索的新接口和局部类。因为`CheckPersonEligibleForSelectiveService`实现了一个接口，所以您可以使用匿名类而不是局部类，并且无需为每次搜索声明一个新类。
+
+**方法4：在匿名类中指定搜索条件代码**
+
+以下调用方法`printPersons`的一个参数是一个匿名类，它过滤了符合美国选择性服务条件的成员：男性和年龄在18到25岁之间：
+
+```java
+printPersons(
+    roster,
+    new CheckPerson() {
+        public boolean test(Person p) {
+            return p.getGender() == Person.Sex.MALE
+                && p.getAge() >= 18
+                && p.getAge() <= 25;
+        }
+    }
+);
+```
+
+此方法减少了所需的代码量，因为您不必为要执行的每个搜索创建新类。但是，考虑到`CheckPerson`接口只包含一个方法，匿名类的语法很笨重。在这种情况下，您可以使用lambda表达式而不是匿名类，如下一节中所述。
+
+**方法5：使用Lambda表达式指定搜索条件代码**
+
+`CheckPerson` 接口是一个*函数式接口*。函数式接口指的是仅仅包含一个[abstract method](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html) （函数式接口可以包含一个或者多个 [default methods](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html) 或者 [static methods](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html#static) 。）的任何接口。因为函数式接口只包含一个抽象方法，当你实现该接口时就可以忽略该方法名称。为了这样做，不再使用匿名类表达式，而是使用*lambda 表达式*，如下面例子所示：
+
+```java
+printPersons(
+    roster,
+    (Person p) -> p.getGender() == Person.Sex.MALE
+        && p.getAge() >= 18
+        && p.getAge() <= 25
+);
+```
+
+参考 [Syntax of Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#syntax) 获取更多有关如何定义 lambda 表达式的信息。
+
+您可以使用标准函数式接口代替CheckPerson`接口，这可以进一步减少所需的代码量。
+
