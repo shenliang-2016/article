@@ -4161,5 +4161,5 @@ printPersons(
 
 参考 [Syntax of Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#syntax) 获取更多有关如何定义 lambda 表达式的信息。
 
-您可以使用标准函数式接口代替CheckPerson`接口，这可以进一步减少所需的代码量。
+您可以使用标准函数式接口代替`CheckPerson`接口，这可以进一步减少所需的代码量。
 
