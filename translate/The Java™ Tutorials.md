@@ -3993,7 +3993,7 @@ public class CustomTextFieldSample extends Application {
   - [方法3：在局部类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach3)
   - [方法4：在匿名类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach4)
   - [方法5：使用Lambda表达式指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach5)
-  - [方法6：将标准功能接口与Lambda表达式一起使用](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach6)
+  - [方法6：将标准函数式接口与Lambda表达式一起使用](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach6)
   - [方法7：在整个应用程序中使用Lambda表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach7)
   - [方法8：更广泛地使用泛型](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach8)
   - [方法9：使用接受Lambda表达式作为参数的聚合操作](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach9)
@@ -4008,15 +4008,15 @@ public class CustomTextFieldSample extends Application {
 
 假设您正在创建社交网络应用程序。您希望创建一项功能，使管理员能够对满足特定条件的社交网络应用程序成员执行任何类型的操作，例如发送消息。下表详细描述了此用例：
 
-| 字段         | 描述                                                         |
-| ------------ | ------------------------------------------------------------ |
-| 名字         | 在选中的成员上执行动作                                       |
-| 主操作员     | 管理员                                                       |
-| 前置条件     | 管理员登入系统                                               |
-| 后置条件     | 动作只在符合特定条件的成员身上执行                           |
+| 字段     | 描述                                       |
+| ------ | ---------------------------------------- |
+| 名字     | 在选中的成员上执行动作                              |
+| 主操作员   | 管理员                                      |
+| 前置条件   | 管理员登入系统                                  |
+| 后置条件   | 动作只在符合特定条件的成员身上执行                        |
 | 主要成功场景 | 管理员指定要对其执行特定操作的成员的条件。管理员指定要对这些选定成员执行的操作。管理员选择**提交**按钮。系统查找符合指定条件的所有成员。系统执行指定的操作。对所有匹配成员采取行动。 |
-| 扩展         | 1A。管理员可以选择在指定要执行的操作之前或选择**提交**按钮之前预览符合指定条件的成员。 |
-| fa           | mei                                                          |
+| 扩展     | 1A。管理员可以选择在指定要执行的操作之前或选择**提交**按钮之前预览符合指定条件的成员。 |
+| fa     | mei                                      |
 
 假设此社交网络应用程序的成员由以下 [`Person`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Person.java)类表示：
 
@@ -4162,4 +4162,201 @@ printPersons(
 参考 [Syntax of Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#syntax) 获取更多有关如何定义 lambda 表达式的信息。
 
 您可以使用标准函数式接口代替`CheckPerson`接口，这可以进一步减少所需的代码量。
+
+**方法6：将标准函数式接口与Lambda表达式一起使用**
+
+重新考虑 `CheckPerson` 接口：
+
+```java
+interface CheckPerson {
+    boolean test(Person p);
+}
+```
+
+这是一个非常简单的接口。它是一个函数式接口，因为只包含一个抽象方法。该方法携带一个参数并返回一个 `boolean` 值。该方法太简单而不值得在你的应用中定义一个。因此，JDK 定义了若干标准函数式接口，放在包 `java.util.function` 中。
+
+比如，你可以使用 `Predicate<T>` 接口来替换 `CheckPerson` 。该接口包含方法 `boolean test(T t)`：
+
+```java
+interface Predicate<T> {
+    boolean test(T t);
+}
+```
+
+接口 `Predicate<T>` 是一个泛型接口的例子。(有关泛型的更多信息，参考 [Generics (Updated)](https://docs.oracle.com/javase/tutorial/java/generics/index.html) 章节。) 泛型类型 (比如泛型接口) 在尖括号 (`<>`)中指定一个或者多个类型参数。该接口值包含一个类型参数， `T` 。当你使用实际类型参数声明或者实例化一个泛型类型时，你将拥有一个参数化类型。比如，下面的例子是参数化类型 `Predicate<Person>` ：
+
+```java
+interface Predicate<Person> {
+    boolean test(Person t);
+}
+```
+
+参数化类型包含一个方法，该方法的返回类型和参数与 `CheckPerson.boolean test(Person p)` 相同。接下来，你可以使用 `Predicate<T>` 替代 `CheckPerson` 如下面例子所示：
+
+```java
+public static void printPersonsWithPredicate(
+    List<Person> roster, Predicate<Person> tester) {
+    for (Person p : roster) {
+        if (tester.test(p)) {
+            p.printPerson();
+        }
+    }
+}
+```
+
+由此，下面的方法调用与你在 [方法3：在局部类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach3) 中调用 `printPersons` 一样可以获取符合选择性服务条件的会员：
+
+```java
+printPersonsWithPredicate(
+    roster,
+    p -> p.getGender() == Person.Sex.MALE
+        && p.getAge() >= 18
+        && p.getAge() <= 25
+);
+```
+
+这并不是在方法中使用 lambda 表达式的唯一方式。下面的内容将介绍使用 lambda 表达式的其它方式。
+
+**方法7：在整个应用程序中使用Lambda表达式**
+
+重新考虑方法 `printPersonsWithPredicate` 以查看可以使用 lambda 表达式的其他位置：
+
+```java
+public static void printPersonsWithPredicate(
+    List<Person> roster, Predicate<Person> tester) {
+    for (Person p : roster) {
+        if (tester.test(p)) {
+            p.printPerson();
+        }
+    }
+}
+```
+
+此方法检查 `List` 参数名单中包含的每个 `Person` 实例是否满足 `Predicate` 参数测试器中指定的条件。如果 `Personinstance` 确实满足 `tester` 所指定的条件，则在 `Person` 实例上调用 `printPersron` 方法。
+
+您可以指定在满足测试人员指定条件的 `Person` 实例上执行的不同操作，而不是调用方法 `printPerson` 。您可以使用 lambda 表达式指定此操作。假设你想要一个类似于 `printPerson` 的 lambda 表达式，它接受一个参数（`Person` 类型的对象）并返回 `void` 。请记住，要使用 lambda 表达式，您需要实现一个函数式接口。在这种情况下，您需要一个包含抽象方法的函数式接口，该方法可以接受一个 `Person` 类型的参数并返回 `void` 。 `Consumer <T>` 接口包含具有这些特征的 `void accept(T t)`方法。以下方法将调用 `p.printPerson()` 替换为调用方法 `accept` 的 `Consumer <Person>` 实例：
+
+```java
+public static void processPersons(
+    List<Person> roster,
+    Predicate<Person> tester,
+    Consumer<Person> block) {
+        for (Person p : roster) {
+            if (tester.test(p)) {
+                block.accept(p);
+            }
+        }
+}
+```
+
+由此，下面的方法调用与你在 [方法3：在局部类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach3) 中调用 `printPersons` 一样可以获取符合选择性服务条件的会员。用于打印会员的 lambda 表达式如下：
+
+```java
+processPersons(
+     roster,
+     p -> p.getGender() == Person.Sex.MALE
+         && p.getAge() >= 18
+         && p.getAge() <= 25,
+     p -> p.printPerson()
+);
+```
+
+如果您想要对会员的个人资料进行更多操作而不是打印出来，该怎么办？ 假设您要验证成员的个人资料或检索他们的联系信息？ 在这种情况下，您需要一个包含返回值的抽象方法的函数式接口。 `Function <T，R>` 接口包含方法 `R apply(T t)` 。 以下方法检索参数 `mapper` 指定的数据，然后在其上执行参数 `block` 指定的操作：
+
+```java
+public static void processPersonsWithFunction(
+    List<Person> roster,
+    Predicate<Person> tester,
+    Function<Person, String> mapper,
+    Consumer<String> block) {
+    for (Person p : roster) {
+        if (tester.test(p)) {
+            String data = mapper.apply(p);
+            block.accept(data);
+        }
+    }
+}
+```
+
+以下方法从有资格获得选择性服务的名册中包含的每个成员检索电子邮件地址，然后将其打印出来：
+
+```java
+processPersonsWithFunction(
+    roster,
+    p -> p.getGender() == Person.Sex.MALE
+        && p.getAge() >= 18
+        && p.getAge() <= 25,
+    p -> p.getEmailAddress(),
+    email -> System.out.println(email)
+);
+```
+
+**方法8：更广泛地使用泛型**
+
+重新考虑方法 `processPersonsWithFunction` 。以下是它的通用版本，它接受包含任何数据类型元素的集合作为参数：
+
+```java
+public static <X, Y> void processElements(
+    Iterable<X> source,
+    Predicate<X> tester,
+    Function <X, Y> mapper,
+    Consumer<Y> block) {
+    for (X p : source) {
+        if (tester.test(p)) {
+            Y data = mapper.apply(p);
+            block.accept(data);
+        }
+    }
+}
+```
+
+要打印有资格获得选择性服务的成员的电子邮件地址，请按如下方式调用 `processElements` 方法：
+
+```java
+processElements(
+    roster,
+    p -> p.getGender() == Person.Sex.MALE
+        && p.getAge() >= 18
+        && p.getAge() <= 25,
+    p -> p.getEmailAddress(),
+    email -> System.out.println(email)
+);
+```
+
+此方法调用执行以下操作：
+
+1. 从集合 `source` 中获取对象源。在此示例中，它从集合 `roster` 中获取 `Person` 对象的源。请注意，集合 `roster` 是 `List` 类型的集合，也是 `Iterable` 类型的对象。
+2. 过滤与 `Predicate` 类型 `tester` 匹配的对象。在此示例中，`Predicate` 对象是一个 lambda 表达式，指定哪些成员有资格获得选择性服务。
+3. 将每个筛选对象映射到 `Function` 类型对象 `mapper` 指定的值。在此示例中，`Function` 对象是一个 lambda 表达式，它返回成员的电子邮件地址。
+4. 对 `Consumer` 对象 `block` 指定的每个映射对象执行操作。在此示例中，`Consumer` 对象是一个 lambda 表达式，用于输出字符串，该字符串是 `Function` 对象返回的电子邮件地址。
+
+您可以使用聚合操作替换每个操作。
+
+**方法9：使用接受Lambda表达式作为参数的聚合操作**
+
+以下示例使用聚合操作来打印有资格获得选择性服务的集合 `roster` 中包含的成员的电子邮件地址：
+
+```java
+roster
+    .stream()
+    .filter(
+        p -> p.getGender() == Person.Sex.MALE
+            && p.getAge() >= 18
+            && p.getAge() <= 25)
+    .map(p -> p.getEmailAddress())
+    .forEach(email -> System.out.println(email));
+```
+
+下表将方法 `processElements` 执行的每个操作映射到相应的聚合操作：
+
+| `processElements` Action    | Aggregate Operation                      |
+| --------------------------- | ---------------------------------------- |
+| 获取对象的源                      | `Stream<E> stream ()`                    |
+| 过滤匹配到 `Predicate` 的对象       | `Stream<T> filter(Predicate<? super T> predicate)` |
+| 将对象映射到 `Function` 对象指定的另一个值 | `<R> Stream<R> map(Function<? super T,? extends R> mapper)` |
+| 执行一个由 `Consumer` 指定的操作      | `void forEach(Consumer<? super T> action)` |
+
+操作 `filter`，`map` 和 `forEach` 是*聚合操作*。聚合操作处理流中的元素，而不是直接来自集合（这是在此示例中调用的第一个方法是 `stream` 的原因）。流是一系列元素。与集合不同，它不是存储元素的数据结构。相反，流通过管道携带来自源（例如集合）的值。*管道*是一系列流操作，在此示例中为 `filter-map-forEach` 。此外，聚合操作通常接受 lambda 表达式作为参数，使您可以自定义它们的行为方式。
+
+关于聚合操作的完整讨论，参考 [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 章节。
 
