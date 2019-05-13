@@ -4538,3 +4538,72 @@ void methodInFirstLevel(int x) {
 System.out.println("x = " + x);
 ```
 
+**目标类型**
+
+你如何确定一个 lambda 表达式的类型？回想选择年龄在 18 到 25 岁之间的男性会员的 lambda 表达式：
+
+```java
+p -> p.getGender() == Person.Sex.MALE
+    && p.getAge() >= 18
+    && p.getAge() <= 25
+```
+
+该 lambda 表达式使用在下面两个方法中：
+
+- `public static void printPersons(List<Person> roster, CheckPerson tester)` in [方法3：在局部类中指定搜索条件代码](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach3)
+- `public void printPersonsWithPredicate(List<Person> roster, Predicate<Person> tester)` in [方法6：将标准函数式接口与Lambda表达式一起使用](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach6)
+
+当Java运行时调用方法`printPersons`时，它期望数据类型为`CheckPerson`，因此lambda表达式属于这种类型。但是，当Java运行时调用方法`printPersonsWithPredicate`时，它期望数据类型为`Predicate <Person>`，因此lambda表达式属于这种类型。这些方法所期望的数据类型称为*目标类型*。要确定lambda表达式的类型，Java编译器将使用发现lambda表达式的上下文或情境的目标类型。因此，您只能在Java编译器可以确定目标类型的情况下使用lambda表达式：
+
+- 变量声明
+- 赋值
+- 返回语句
+- 数组初始化器
+- 方法或者构造器函数
+- Lambda 表达式主体
+- 条件表达式， `?:`
+- 转换表达式
+
+**目标类型和方法参数**
+
+对于方法参数，Java编译器使用另外两种语言特性确定目标类型：重载解析和类型参数推断。
+
+考虑下面的两个函数式接口 ( [`java.lang.Runnable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html) 和 [`java.util.concurrent.Callable`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html))：
+
+```java
+public interface Runnable {
+    void run();
+}
+
+public interface Callable<V> {
+    V call();
+}
+```
+
+方法 `Runnable.run` 不返回值，但是 `Callable<V>.call` 返回值。
+
+假定你已经重载了方法 `invoke` 如下 (参考 [Defining Methods](https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html) 获取更多方法重载的信息)：
+
+```java
+void invoke(Runnable r) {
+    r.run();
+}
+
+<T> T invoke(Callable<T> c) {
+    return c.call();
+}
+```
+
+下面的语句调用的是哪个方法？
+
+```java
+String s = invoke(() -> "done");
+```
+
+将调用方法`invoke(Callable <T>)`，因为该方法返回一个值；方法`invoke(Runnable)`没有。在这种情况下，lambda表达式`() - >“done”`的类型是`Callable <T>`。
+
+**序列化**
+
+You can [serialize](https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html) a lambda expression if its target type and its captured arguments are serializable. However, like [inner classes](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#serialization), the serialization of lambda expressions is strongly discouraged.
+
+你可以 [序列化](https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html) 一个 lambda 表达式，如果它的目标类型和它捕获的参数是可以序列化的。不过，类似于 [inner classes](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#serialization) ，我们并不推荐对 lambda 表达式进行序列化。
