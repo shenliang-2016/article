@@ -4692,3 +4692,87 @@ Arrays.sort(rosterAsArray, Person::compareByAge);
  - 它的形式参数列表是从`Comparator <Person> .compare`复制的，它是`（Person，Person）`。
  - 它的主体调用方法`Person.compareByAge`。
 
+**方法引用种类**
+
+方法引用有四种：
+
+| Kind                                                         | Example                                |
+| ------------------------------------------------------------ | -------------------------------------- |
+| Reference to a static method                                 | `ContainingClass::staticMethodName`    |
+| Reference to an instance method of a particular object       | `containingObject::instanceMethodName` |
+| Reference to an instance method of an arbitrary object of a particular type | `ContainingType::methodName`           |
+| Reference to a constructor                                   | `ClassName::new`                       |
+
+**静态方法引用**
+
+ `Person::compareByAge` 就是一个静态方法引用。
+
+**特定对象实例方法的引用**
+
+例子：
+
+```java
+class ComparisonProvider {
+    public int compareByName(Person a, Person b) {
+        return a.getName().compareTo(b.getName());
+    }
+        
+    public int compareByAge(Person a, Person b) {
+        return a.getBirthday().compareTo(b.getBirthday());
+    }
+}
+ComparisonProvider myComparisonProvider = new ComparisonProvider();
+Arrays.sort(rosterAsArray, myComparisonProvider::compareByName);
+```
+
+方法引用`myComparisonProvider :: compareByName`调用方法`compareByName`，它是对象`myComparisonProvider`的一部分。JRE推断出方法类型参数，在本例中是`（Person，Person）`。
+
+**特定类型任意对象的实例方法引用**
+
+例子：
+
+```java
+String[] stringArray = { "Barbara", "James", "Mary", "John",
+    "Patricia", "Robert", "Michael", "Linda" };
+Arrays.sort(stringArray, String::compareToIgnoreCase);
+```
+
+方法引用`String :: compareToIgnoreCase`的等效lambda表达式将具有形式参数列表`（String a，String b）`，其中`a`和`b`是用于更好地描述此示例的任意名称。方法引用将调用方法`a.compareToIgnoreCase（b）`。
+
+**构造器引用**
+
+您可以使用名称`new`以与静态方法相同的方式引用构造函数。 以下方法将元素从一个集合复制到另一个集合：
+
+```java
+public static <T, SOURCE extends Collection<T>, DEST extends Collection<T>>
+    DEST transferElements(
+        SOURCE sourceCollection,
+        Supplier<DEST> collectionFactory) {
+        
+        DEST result = collectionFactory.get();
+        for (T t : sourceCollection) {
+            result.add(t);
+        }
+        return result;
+}
+```
+
+函数式接口`Supplier`包含一个不带参数的`get`方法并返回一个对象。因此，您可以使用lambda表达式调用方法`transferElements`，如下所示：
+
+```java
+Set<Person> rosterSetLambda =
+    transferElements(roster, () -> { return ；new HashSet<>(); });
+```
+
+你可以如下使用构造器引用替换其中的 lambda 表达式：
+
+```java
+Set<Person> rosterSet = transferElements(roster, HashSet::new);
+```
+
+Java编译器推断您要创建一个包含`Person`类型元素的`HashSet`集合。或者，您可以按如下方式指定：
+
+```java
+Set<Person> rosterSet = transferElements(roster, HashSet<Person>::new);
+```
+
