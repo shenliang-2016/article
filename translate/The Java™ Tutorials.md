@@ -4360,3 +4360,181 @@ roster
 
 关于聚合操作的完整讨论，参考 [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 章节。
 
+**GUI应用程序中的Lambda表达式**
+
+要处理图形用户界面（GUI）应用程序中的事件（例如键盘操作，鼠标操作和滚动操作），通常会创建事件处理程序，这通常涉及实现特定接口。通常，事件处理程序接口是功能接口，他们往往只有一种方法。
+
+在 JavaFX 示例 [`HelloWorld.java`](https://docs.oracle.com/javase/8/javafx/get-started-tutorial/hello_world.htm) (在前面章节 [Anonymous Classes](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html) 中讨论过)，你可以将匿名内部类替换为 lambda 表达式语句：
+
+```java
+        btn.setOnAction(new EventHandler<ActionEvent>() {
+
+            @Override
+            public void handle(ActionEvent event) {
+                System.out.println("Hello World!");
+            }
+        });
+```
+
+方法调用 `btn.setOnAction` 指定当您选择 `btn` 对象表示的按钮时会发生什么。此方法需要 `EventHandler <ActionEvent>` 类型的对象。`EventHandler <ActionEvent>` 接口只包含一个方法，`void handle(T event)`。此接口是一个函数式接口，因此您可以使用以下突出显示的 lambda 表达式来替换它：
+
+```java
+        btn.setOnAction(
+          event -> System.out.println("Hello World!")
+        );
+```
+
+**Lambda表达式的语法**
+
+一个 lambda 表达式由以下部分组成：
+
+- 括号中用逗号分隔的形式参数列表。 `CheckPerson.test` 方法包含一个参数 `p` ，它表示 `thePerson` 类的一个实例。
+
+  **注意**: 您可以省略 lambda 表达式中参数的数据类型。此外，如果只有一个参数，则可以省略括号。例如，以下 lambda 表达式也是有效的：
+
+  ```java
+  p -> p.getGender() == Person.Sex.MALE 
+      && p.getAge() >= 18
+      && p.getAge() <= 25
+  ```
+
+- 箭头符号 `->`
+
+- 一个主体，由单个表达式或语句块组成。此示例使用以下表达式：
+
+  ```java
+  p.getGender() == Person.Sex.MALE 
+      && p.getAge() >= 18
+      && p.getAge() <= 25
+  ```
+
+  如果指定单个表达式，则Java运行时将计算表达式，然后返回其值。或者，您可以使用 `return` 语句：
+
+  ```java
+  p -> {
+      return p.getGender() == Person.Sex.MALE
+          && p.getAge() >= 18
+          && p.getAge() <= 25;
+  }
+  ```
+
+  `return` 语句不是表达式；在 lambda 表达式中，必须将语句括在大括号（{}）中。但是，您不必在大括号中包含 `void` 方法调用。例如，以下是有效的 lambda 表达式：
+
+  ```java
+  email -> System.out.println(email)
+  ```
+
+请注意，lambda 表达式看起来很像方法声明；您可以将 lambda 表达式视为匿名方法 - 没有名称的方法。
+
+下面的例子 [`Calculator`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Calculator.java) ，是一个 lambda 表达式的示例，它采用多个形式参数：
+
+```java
+public class Calculator {
+  
+    interface IntegerMath {
+        int operation(int a, int b);   
+    }
+  
+    public int operateBinary(int a, int b, IntegerMath op) {
+        return op.operation(a, b);
+    }
+ 
+    public static void main(String... args) {
+    
+        Calculator myApp = new Calculator();
+        IntegerMath addition = (a, b) -> a + b;
+        IntegerMath subtraction = (a, b) -> a - b;
+        System.out.println("40 + 2 = " +
+            myApp.operateBinary(40, 2, addition));
+        System.out.println("20 - 10 = " +
+            myApp.operateBinary(20, 10, subtraction));    
+    }
+}
+```
+
+方法 `operateBinary` 对两个整数操作数执行数学运算。操作本身由 `IntegerMath` 实例指定。该示例使用 lambda 表达式，加法和减法定义了两个操作。该示例打印以下内容：
+
+```java
+40 + 2 = 42
+20 - 10 = 10
+```
+
+**访问外围作用域的局部变量**
+
+像局部类和匿名类一样，lambda 表达式可以捕获变量；它们对封闭范围的局部变量具有相同的访问权限。但是，与局部类和匿名类不同，lambda 表达式没有任何遮蔽问题（有关更多信息，请参阅 [Shadowing](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#shadowing)  ）。Lambda 表达式是词法范围的。这意味着它们不会从超类继承任何名称或引入新级别的作用域。lambda 表达式中的声明与封闭环境中的声明一样被解释。以下示例 [`LambdaScopeTest`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/LambdaScopeTest.java) 演示了这一点：
+
+```java
+import java.util.function.Consumer;
+
+public class LambdaScopeTest {
+
+    public int x = 0;
+
+    class FirstLevel {
+
+        public int x = 1;
+
+        void methodInFirstLevel(int x) {
+            
+            // The following statement causes the compiler to generate
+            // the error "local variables referenced from a lambda expression
+            // must be final or effectively final" in statement A:
+            //
+            // x = 99;
+            
+            Consumer<Integer> myConsumer = (y) -> 
+            {
+                System.out.println("x = " + x); // Statement A
+                System.out.println("y = " + y);
+                System.out.println("this.x = " + this.x);
+                System.out.println("LambdaScopeTest.this.x = " +
+                    LambdaScopeTest.this.x);
+            };
+
+            myConsumer.accept(x);
+
+        }
+    }
+
+    public static void main(String... args) {
+        LambdaScopeTest st = new LambdaScopeTest();
+        LambdaScopeTest.FirstLevel fl = st.new FirstLevel();
+        fl.methodInFirstLevel(23);
+    }
+}
+```
+
+程序输出：
+
+```shell
+x = 23
+y = 23
+this.x = 1
+LambdaScopeTest.this.x = 0
+```
+
+如果在 lambda 表达式 `myConsumer` 的声明中用参数 `x` 代替 `y`，则编译器会生成错误：
+
+```java
+Consumer<Integer> myConsumer = (x) -> {
+    // ...
+}
+```
+
+编译器生成错误 “variable x is already defined in method methodInFirstLevel(int)” ，因为 lambda 表达式不会引入新的作用域级别。因此，您可以直接访问封闭范围的字段，方法和局部变量。例如，lambda 表达式直接访问 `methodInFirstLevel` 方法的参数 `x` 。要访问封闭类中的变量，请使用关键字 `this` 。在此示例中，`this.x` 引用成员变量 `FirstLevel.x` 。
+
+但是，与局部类和匿名类一样，lambda 表达式只能访问最终或最终等效的封闭块的局部变量和参数。例如，假设您在`methodInFirstLevel` 定义语句之后立即添加以下赋值语句：
+
+```java
+void methodInFirstLevel(int x) {
+    x = 99;
+    // ...
+}
+```
+
+由于这个赋值语句，变量 `FirstLevel.x` 不再是等效 `final` 的。因此，Java编译器生成类似于 “local variables referenced from a lambda expression must be final or effectively final” 的错误消息，其中 lambda 表达式 `myConsumer` 尝试访问 `FirstLevel.x` 变量：
+
+```java
+System.out.println("x = " + x);
+```
+
