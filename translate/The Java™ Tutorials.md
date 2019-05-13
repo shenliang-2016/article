@@ -4607,3 +4607,88 @@ String s = invoke(() -> "done");
 You can [serialize](https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html) a lambda expression if its target type and its captured arguments are serializable. However, like [inner classes](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#serialization), the serialization of lambda expressions is strongly discouraged.
 
 你可以 [序列化](https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html) 一个 lambda 表达式，如果它的目标类型和它捕获的参数是可以序列化的。不过，类似于 [inner classes](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html#serialization) ，我们并不推荐对 lambda 表达式进行序列化。
+
+##### 方法引用
+
+你使用 [lambda expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 来创建匿名方法。不过，有时候 lambda 表达式仅仅只是调用一个现成的方法。这些场景下，通常可以很清楚地用方法名称表示现有的方法。方法引用使得你可以这么做。它们是紧凑的、容易阅读的关于拥有名称的方法的 lambda 表达式。
+
+再次考虑在 [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 章节中讨论过的 [`Person`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/Person.java) 类：
+
+```java
+public class Person {
+
+    public enum Sex {
+        MALE, FEMALE
+    }
+
+    String name;
+    LocalDate birthday;
+    Sex gender;
+    String emailAddress;
+
+    public int getAge() {
+        // ...
+    }
+    
+    public Calendar getBirthday() {
+        return birthday;
+    }    
+
+    public static int compareByAge(Person a, Person b) {
+        return a.birthday.compareTo(b.birthday);
+    }}
+```
+
+Suppose that the members of your social networking application are contained in an array, and you want to sort the array by age. You could use the following code (find the code excerpts described in this section in the example [`MethodReferencesTest`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/MethodReferencesTest.java)):
+
+假设您的社交网络应用程序的成员包含在一个数组中，并且您希望按年龄对数组进行排序。您可以使用以下代码（查找示例 [`MethodReferencesTest`](https://docs.oracle.com/javase/tutorial/java/javaOO/examples/MethodReferencesTest.java) 中本节中描述的代码摘录）：
+
+```java
+Person[] rosterAsArray = roster.toArray(new Person[roster.size()]);
+
+class PersonAgeComparator implements Comparator<Person> {
+    public int compare(Person a, Person b) {
+        return a.getBirthday().compareTo(b.getBirthday());
+    }
+}
+        
+Arrays.sort(rosterAsArray, new PersonAgeComparator());
+```
+
+这个 `sort` 调用的方法签名如下：
+
+```java
+static <T> void sort(T[] a, Comparator<? super T> c)
+```
+
+Notice that the interface `Comparator` is a functional interface. Therefore, you could use a lambda expression instead of defining and then creating a new instance of a class that implements `Comparator`:
+
+请注意，接口`Comparator`是一个函数式接口。因此，您可以使用 lambda 表达式而不是定义然后创建实现`Comparator`的类的新实例：
+
+```java
+Arrays.sort(rosterAsArray,
+    (Person a, Person b) -> {
+        return a.getBirthday().compareTo(b.getBirthday());
+    }
+);
+```
+
+但是，这种比较两个`Person`实例的出生日期的方法已经存在为`Person.compareByAge`。您可以在lambda表达式的主体中调用此方法：
+
+```java
+Arrays.sort(rosterAsArray,
+    (a, b) -> Person.compareByAge(a, b)
+);
+```
+
+因为此lambda表达式调用现有方法，所以可以使用方法引用而不是lambda表达式：
+
+```java
+Arrays.sort(rosterAsArray, Person::compareByAge);
+```
+
+方法引用`Person :: compareByAge`在语义上与lambda表达式`（a，b） - > Person.compareByAge（a，b）`相同。每个都有以下特点：
+
+ - 它的形式参数列表是从`Comparator <Person> .compare`复制的，它是`（Person，Person）`。
+ - 它的主体调用方法`Person.compareByAge`。
+
