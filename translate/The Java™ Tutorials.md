@@ -4696,12 +4696,12 @@ Arrays.sort(rosterAsArray, Person::compareByAge);
 
 方法引用有四种：
 
-| Kind                                                         | Example                                |
-| ------------------------------------------------------------ | -------------------------------------- |
-| Reference to a static method                                 | `ContainingClass::staticMethodName`    |
-| Reference to an instance method of a particular object       | `containingObject::instanceMethodName` |
+| Kind                                     | Example                                |
+| ---------------------------------------- | -------------------------------------- |
+| Reference to a static method             | `ContainingClass::staticMethodName`    |
+| Reference to an instance method of a particular object | `containingObject::instanceMethodName` |
 | Reference to an instance method of an arbitrary object of a particular type | `ContainingType::methodName`           |
-| Reference to a constructor                                   | `ClassName::new`                       |
+| Reference to a constructor               | `ClassName::new`                       |
 
 **静态方法引用**
 
@@ -4775,4 +4775,184 @@ Java编译器推断您要创建一个包含`Person`类型元素的`HashSet`集�
 ```java
 Set<Person> rosterSet = transferElements(roster, HashSet<Person>::new);
 ```
+
+##### 何时使用嵌套类、局部类、匿名类或者 lambda 表达式
+
+如 [嵌套类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html) 一节所述，嵌套类使您能够对仅在一个地方使用的类进行逻辑分组，增加封装的使用，并创建更易读和可维护的代码。局部类，匿名类和 lambda 表达式也具有这些优点;但是，它们旨在用于更具体的情况：
+
+*  [局部类](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html) ：如果您需要创建多个类的实例，访问其构造函数或引入新的命名类型（例如，您需要稍后调用其他方法），请使用它。
+* [匿名类](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)：如果需要声明字段或其他方法，请使用它。
+* [Lambda 表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) ：
+  *  如果要封装要传递给其他代码的单个行为单元，请使用它。例如，如果希望对集合的每个元素执行某个操作，完成进程或进程遇到错误，则可以使用lambda表达式。
+  * 如果您需要一个简单的功能接口实例并且不应用任何前述条件（例如，您不需要构造函数，命名类型，字段或其他方法），请使用它。
+* [嵌套类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html)：如果您的要求与本地类的要求类似，则使用它，您希望使类型更广泛可用，并且您不需要访问局部变量或方法参数。
+  * 如果需要访问封闭实例的非公共字段和方法，请使用非静态嵌套类（或内部类）。如果不需要此访问权限，请使用静态嵌套类。
+
+#### 枚举类型
+
+*枚举类型*是一种特殊的数据类型，它使变量成为一组预定义的常量。变量必须等于为其预定义的值之一。常见示例包括罗盘方向（NORTH，SOUTH，EAST和WEST的值）和星期几。
+
+因为它们都是常量，因此枚举类型字段名都是大写字母组成。
+
+在 Java 语言中，你可以使用 `enum` 关键字来定义枚举类型。比如，你可以指定一个星期几枚举类型如下：
+
+```java
+public enum Day {
+    SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
+    THURSDAY, FRIDAY, SATURDAY 
+}
+```
+
+您需要在需要表示一组固定常量时使用枚举类型。这包括自然枚举类型，例如太阳系中的行星和数据集，您可以在编译时知道所有可能的值 - 例如，菜单上的选项，命令行标志等。
+
+下面的代码向你展示如何使用上面定义的 `Day` 枚举类型：
+
+```java
+public class EnumTest {
+    Day day;
+    
+    public EnumTest(Day day) {
+        this.day = day;
+    }
+    
+    public void tellItLikeItIs() {
+        switch (day) {
+            case MONDAY:
+                System.out.println("Mondays are bad.");
+                break;
+                    
+            case FRIDAY:
+                System.out.println("Fridays are better.");
+                break;
+                         
+            case SATURDAY: case SUNDAY:
+                System.out.println("Weekends are best.");
+                break;
+                        
+            default:
+                System.out.println("Midweek days are so-so.");
+                break;
+        }
+    }
+    
+    public static void main(String[] args) {
+        EnumTest firstDay = new EnumTest(Day.MONDAY);
+        firstDay.tellItLikeItIs();
+        EnumTest thirdDay = new EnumTest(Day.WEDNESDAY);
+        thirdDay.tellItLikeItIs();
+        EnumTest fifthDay = new EnumTest(Day.FRIDAY);
+        fifthDay.tellItLikeItIs();
+        EnumTest sixthDay = new EnumTest(Day.SATURDAY);
+        sixthDay.tellItLikeItIs();
+        EnumTest seventhDay = new EnumTest(Day.SUNDAY);
+        seventhDay.tellItLikeItIs();
+    }
+}
+```
+
+输出：
+
+```shell
+Mondays are bad.
+Midweek days are so-so.
+Fridays are better.
+Weekends are best.
+Weekends are best.
+```
+
+Java编程语言枚举类型比其他语言中的对应类型更强大。枚举声明定义了一个类（称为枚举类型）。枚举类主体可以包括方法和其他字段。编译器在创建枚举时会自动添加一些特殊方法。例如，它们具有静态 `values` 方法，该方法返回一个数组，该数组按照声明的顺序包含枚举的所有值。此方法通常与 for-each 构造结合使用，以迭代枚举类型的值。例如，下面 `Planet` 类示例中的代码迭代太阳系中的所有行星。
+
+```java
+for (Planet p : Planet.values()) {
+    System.out.printf("Your weight on %s is %f%n",
+                      p, p.surfaceWeight(mass));
+}
+```
+
+------
+
+**注意:** *所有*枚举类型隐含继承 `java.lang.Enum`。由于一个类只能有一个父类（参考 [Declaring Classes](https://docs.oracle.com/javase/tutorial/java/javaOO/classdecl.html)），Java 语言不支持多继承状态 (参考 [多继承状态，实现以及类型](https://docs.oracle.com/javase/tutorial/java/IandI/multipleinheritance.html))，因此枚举类不能扩展任何其它内容。
+
+------
+
+在以下示例中，`Planet` 是一种枚举类型，表示太阳系中的行星。它们具有恒定的质量和半径属性。
+
+每个枚举常量都声明为质量和半径参数的值。创建常量时，这些值将传递给构造函数。 Java要求在任何字段或方法之前首先定义常量。此外，当存在字段和方法时，枚举常量列表必须以分号结尾。
+
+------
+
+**注意：**枚举类型的构造函数必须是包私有或私有访问。 它会自动创建在枚举主体开头定义的常量。 您不能自己调用枚举构造函数。
+
+------
+
+除了它的属性和构造函数之外，`Planet` 还有一些方法可以让您检索每个行星上物体的表面重力和重量。这是一个示例程序，它可以减轻地球上的重量（以任何单位）并计算并打印所有行星上的重量（以同一单位）：
+
+```java
+public enum Planet {
+    MERCURY (3.303e+23, 2.4397e6),
+    VENUS   (4.869e+24, 6.0518e6),
+    EARTH   (5.976e+24, 6.37814e6),
+    MARS    (6.421e+23, 3.3972e6),
+    JUPITER (1.9e+27,   7.1492e7),
+    SATURN  (5.688e+26, 6.0268e7),
+    URANUS  (8.686e+25, 2.5559e7),
+    NEPTUNE (1.024e+26, 2.4746e7);
+
+    private final double mass;   // in kilograms
+    private final double radius; // in meters
+    Planet(double mass, double radius) {
+        this.mass = mass;
+        this.radius = radius;
+    }
+    private double mass() { return mass; }
+    private double radius() { return radius; }
+
+    // universal gravitational constant  (m3 kg-1 s-2)
+    public static final double G = 6.67300E-11;
+
+    double surfaceGravity() {
+        return G * mass / (radius * radius);
+    }
+    double surfaceWeight(double otherMass) {
+        return otherMass * surfaceGravity();
+    }
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: java Planet <earth_weight>");
+            System.exit(-1);
+        }
+        double earthWeight = Double.parseDouble(args[0]);
+        double mass = earthWeight/EARTH.surfaceGravity();
+        for (Planet p : Planet.values())
+           System.out.printf("Your weight on %s is %f%n",
+                             p, p.surfaceWeight(mass));
+    }
+}
+```
+
+如果从命令行运行 `Planet.class`，参数为175，则会得到以下输出：
+
+```shell
+$ java Planet 175
+Your weight on MERCURY is 66.107583
+Your weight on VENUS is 158.374842
+Your weight on EARTH is 175.000000
+Your weight on MARS is 66.279007
+Your weight on JUPITER is 442.847567
+Your weight on SATURN is 186.552719
+Your weight on URANUS is 158.397260
+Your weight on NEPTUNE is 199.207413
+```
+
+# 注解
+
+*注解* ，一种元数据形式，提供有关不属于程序本身的程序的数据。注解对它们修饰的代码的操作没有直接影响。
+
+注解有许多用途，其中包括：
+
+* **给编译器的信息**- 编译器可以使用注解来检测错误或抑制警告。
+* **编译期和部署时处理** - 软件工具可以处理注解信息以生成代码，XML文件等。
+* **运行时处理** - 可以在运行时检查某些注解。
+
+本课程介绍了可以使用注解的位置，如何应用注解，Java平台，标准版（Java SE API）中可用的预定义注解类型，类型注解如何与可插拔类型系统结合使用以编写更强大的代码类型检查，以及如何实现可重复注解。
 
