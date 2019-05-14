@@ -4956,3 +4956,178 @@ Your weight on NEPTUNE is 199.207413
 
 本课程介绍了可以使用注解的位置，如何应用注解，Java平台，标准版（Java SE API）中可用的预定义注解类型，类型注解如何与可插拔类型系统结合使用以编写更强大的代码类型检查，以及如何实现可重复注解。
 
+## 注解基础
+
+**注解的格式**
+
+注解的最简单形式如下：
+
+```java
+@Entity
+```
+
+符号 (`@`) 告诉编译器它后面跟随的是一个注解。在下面的例子中，注解的名称是 `Override` ：
+
+```java
+@Override
+void mySuperMethod() { ... }
+```
+
+注解可以包含*元素*，元素可以有名称或者没有名称，同时给定这些元素的值：
+
+```java
+@Author(
+   name = "Benjamin Franklin",
+   date = "3/27/2003"
+)
+class MyClass() { ... }
+```
+
+或者：
+
+```java
+@SuppressWarnings(value = "unchecked")
+void myMethod() { ... }
+```
+
+如果注解中只包含一个名为 `value` 的元素，则该名称可以忽略：
+
+```java
+@SuppressWarnings("unchecked")
+void myMethod() { ... }
+```
+
+如果注解不包含元素，则括号也可以忽略，如上面例子中的 `@Override` 注解。
+
+在同一个声明中使用多个注解也是可以的：
+
+```java
+@Author(name = "Jane Doe")
+@EBook
+class MyClass { ... }
+```
+
+如果多个注解是相同的类型，则这就被称为可重复注解：
+
+```java
+@Author(name = "Jane Doe")
+@Author(name = "John Smith")
+class MyClass { ... }
+```
+
+可重复注解由 Java SE 8 版本支持。更多信息参考 [Repeating Annotations](https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html) 。
+
+注解类型可以是 Java SE API 的 `java.lang` 或 `java.lang.annotation` 包中定义的类型之一。在前面的示例中， `Override` 和 `SuppressWarnings` 是预定义的 Java 注解。也可以定义自己的注解类型。上一个示例中的 `Author` 和 `Ebook` 注解是自定义注解类型。
+
+**哪里可以使用注解**
+
+注解可以应用于声明：类、字段、方法以及其它程序元素的声明。当用于声明上时，方便起见，每个注解都各自一行。
+
+在 Java SE 8 中，注解也可以被用于类型的使用。下面是几个例子：
+
+- 类实例创建表达式：
+
+  ```java
+  new @Interned MyObject();
+  ```
+
+- 类型转换：
+
+  ```java
+  myString = (@NonNull String) str;
+  ```
+
+- `implements` 代码块：
+
+  ```java
+  class UnmodifiableList<T> implements
+          @Readonly List<@Readonly T> { ... }
+  ```
+
+- 异常抛出声明：
+
+  ```java
+  void monitorTemperature() throws
+          @Critical TemperatureException { ... }
+  ```
+
+上面这种形式的注解被称为*类型注解*。更多信息参考 [类型注解和可插拔类型系统](https://docs.oracle.com/javase/tutorial/java/annotations/type_annotations.html) 。
+
+## 声明一个注解类型
+
+许多注解可以替代代码中的注释。
+
+假设一个软件组传统上启动每个类的主体，其中包含提供重要信息的注释：
+
+```java
+public class Generation3List extends Generation2List {
+
+   // Author: John Doe
+   // Date: 3/17/2002
+   // Current revision: 6
+   // Last modified: 4/12/2004
+   // By: Jane Doe
+   // Reviewers: Alice, Bill, Cindy
+
+   // class code goes here
+
+}
+```
+
+要使用注释添加此相同元数据，必须先定义注释类型。这样做的语法是：
+
+```java
+@interface ClassPreamble {
+   String author();
+   String date();
+   int currentRevision() default 1;
+   String lastModified() default "N/A";
+   String lastModifiedBy() default "N/A";
+   // Note use of array
+   String[] reviewers();
+}
+```
+
+注解类型定义类似于接口定义，其中 `interface` 关键字前面带有at符号（@）（@ = AT，在注解类型中）。注解类型是一种*接口*形式，将在后面的课程中介绍。目前，您不需要了解接口。
+
+
+
+前一个注解定义的主体包含注解类型元素声明，它看起来很像方法。请注意，它们可以定义可选的默认值。
+
+定义注解类型后，您可以使用该类型的注解，并填入值，如下所示：
+
+```java
+@ClassPreamble (
+   author = "John Doe",
+   date = "3/17/2002",
+   currentRevision = 6,
+   lastModified = "4/12/2004",
+   lastModifiedBy = "Jane Doe",
+   // Note array notation
+   reviewers = {"Alice", "Bob", "Cindy"}
+)
+public class Generation3List extends Generation2List {
+
+// class code goes here
+
+}
+```
+
+------
+
+**注意：**要使 `@ClassPreamble` 中的信息出现在 Javadoc 生成的文档中，必须使用 `@Documented` 注解修饰 `@ClassPreamble` 定义：
+
+```java
+// import this to use @Documented
+import java.lang.annotation.*;
+
+@Documented
+@interface ClassPreamble {
+
+   // Annotation element definitions
+   
+}
+```
+
+------
+
