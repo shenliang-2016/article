@@ -4944,7 +4944,7 @@ Your weight on URANUS is 158.397260
 Your weight on NEPTUNE is 199.207413
 ```
 
-# 注解
+## 注解
 
 *注解* ，一种元数据形式，提供有关不属于程序本身的程序的数据。注解对它们修饰的代码的操作没有直接影响。
 
@@ -4956,7 +4956,7 @@ Your weight on NEPTUNE is 199.207413
 
 本课程介绍了可以使用注解的位置，如何应用注解，Java平台，标准版（Java SE API）中可用的预定义注解类型，类型注解如何与可插拔类型系统结合使用以编写更强大的代码类型检查，以及如何实现可重复注解。
 
-## 注解基础
+### 注解基础
 
 **注解的格式**
 
@@ -5053,7 +5053,7 @@ class MyClass { ... }
 
 上面这种形式的注解被称为*类型注解*。更多信息参考 [类型注解和可插拔类型系统](https://docs.oracle.com/javase/tutorial/java/annotations/type_annotations.html) 。
 
-## 声明一个注解类型
+### 声明一个注解类型
 
 许多注解可以替代代码中的注释。
 
@@ -5130,4 +5130,86 @@ import java.lang.annotation.*;
 ```
 
 ------
+
+### 预定义注解类型
+
+Java SE API 中已经定义了一系列注解类型。某些注解供 Java 编译器使用，一些用于其他注解。
+
+**Java 语言使用的注解类型**
+
+定义在 `java.lang` 中的预定义注解类型有 `@Deprecated`，`@Override` 和 `@SuppressWarnings` 。
+
+**@Deprecated** [`@Deprecated`](https://docs.oracle.com/javase/8/docs/api/java/lang/Deprecated.html) 注解表示它修饰的元素是*过时的*因而不能再继续使用。当程序无论何时使用一个此注解修饰的方法、类或者字段时编译器都会产生一个警告。当元素是过时的，它应该同时被 Javadoc 标签 `@deprecated` 修饰，如下面例子中所示。在Javadoc注释和注释中使用at符号（@）并非巧合：它们在概念上是相关的。另请注意，Javadoc标记以小写d开头，注释以大写D开头。
+
+```java
+   // Javadoc comment follows
+    /**
+     * @deprecated
+     * explanation of why it was deprecated
+     */
+    @Deprecated
+    static void deprecatedMethod() { }
+}
+```
+
+**@Override** [`@Override`](https://docs.oracle.com/javase/8/docs/api/java/lang/Override.html) 注解提示编译器该元素意图覆盖超类中声明过的元素。方法覆盖将在  [Interfaces and Inheritance](https://docs.oracle.com/javase/tutorial/java/IandI/index.html) 中讨论。
+
+```java
+   // mark method as a superclass method
+   // that has been overridden
+   @Override 
+   int overriddenMethod() { }
+```
+
+虽然在重写方法时不需要使用此注解，但它有助于防止出错。如果使用 `@Override` 标记的方法无法正确覆盖其某个超类中的方法，则编译器会生成错误。
+
+**@SuppressWarnings** [`@SuppressWarnings`](https://docs.oracle.com/javase/8/docs/api/java/lang/SuppressWarnings.html) 注解告诉编译器抑制它本来会生成的特定警告。在以下示例中，使用了过时的方法，编译器通常会生成警告。但是，在这种情况下，注解会导致警告被抑制。
+
+```java
+   // use a deprecated method and tell 
+   // compiler not to generate a warning
+   @SuppressWarnings("deprecation")
+    void useDeprecatedMethod() {
+        // deprecation warning
+        // - suppressed
+        objectOne.deprecatedMethod();
+    }
+```
+
+每个编译器警告都属于一个类别。 Java语言规范列出了两个类别：`deprecation` 和 `unchecked`。当与 [泛型](https://docs.oracle.com/javase/tutorial/java/generics/index.html) 出现之前编写的遗留代码交互时，可能会发生 `unchecked` 警告。要禁止多种类别的警告，请使用以下语法：
+
+```java
+@SuppressWarnings({"unchecked", "deprecation"})
+```
+
+**@SafeVarargs** [`@SafeVarargs`](https://docs.oracle.com/javase/8/docs/api/java/lang/SafeVarargs.html) 在应用于方法或构造函数时，断言代码不对其 `varargs` 参数执行可能不安全的操作。使用此注释类型时，将禁止与 `varargs` 使用相关的未经检查的警告。
+
+**@FunctionalInterface** [`@FunctionalInterface`](https://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html) 在 Java SE 8 中引入，表示声明的类型是一个函数式接口，函数式接口在 Java 语言规范中定义。
+
+**应用于其他注解的注解**
+
+应用于其他注解的注解被称为 *元注解*。`java.lang.annotation` 中定义了几种元注解。
+
+**@Retention** [`@Retention`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Retention.html) 指定它修饰的注解的存储方式：
+
+- `RetentionPolicy.SOURCE` – 被修饰的注解只存在于源代码层面而会被编译器忽略。
+- `RetentionPolicy.CLASS` – 被修饰的注解存活到编译期，而会被虚拟机忽略。
+- `RetentionPolicy.RUNTIME` – 被修饰的注解会被虚拟机保留，因而可以用在运行时环境中。
+
+**@Documented** [`@Documented`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Documented.html) 注解表明，无论何时使用指定的注解，都应使用 Javadoc 工具记录这些元素。（默认情况下，注解不包含在 Javadoc 中。）有关更多信息，请参阅 [Javadoc tools page](https://docs.oracle.com/javase/8/docs/technotes/guides/javadoc/index.html) 。
+
+**@Target** [`@Target`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Target.html) 修饰另一个注解，限制该注解可以应用到哪些 Java 元素上。该注解指定以下元素类型之一作为它的值：
+
+- `ElementType.ANNOTATION_TYPE` 可被用于注解类型
+- `ElementType.CONSTRUCTOR` 可被用于构造器
+- `ElementType.FIELD` 可被用于字段或属性
+- `ElementType.LOCAL_VARIABLE` 可被用于局部变量
+- `ElementType.METHOD` 可被用于方法级注解
+- `ElementType.PACKAGE` 可被用于包声明
+- `ElementType.PARAMETER` 可被用于方法参数
+- `ElementType.TYPE` 可被用于类的任意元素
+
+**@Inherited** [`@Inherited`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html) 表明注解类型可以从超类继承。（默认情况下不是这样。）当用户查询注解类型并且该类没有此类型的注解时，将查询类的超类以获取注解类型。此注解仅适用于类声明。
+
+**@Repeatable** [`@Repeatable`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Repeatable.html) Java SE 8中引入的注解，表明其标记的注解可以多次应用于相同的声明或类型。有关更多信息，请参阅 [Repeating Annotations](https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html) 。
 
