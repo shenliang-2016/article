@@ -5359,3 +5359,31 @@ public class OperateBMW760i implements OperateCar {
 
 机器人汽车示例显示了用作行业标准应用程序编程接口（API）的接口。 API在商业软件产品中也很常见。 通常，公司销售的软件包包含另一家公司希望在其自己的软件产品中使用的复杂方法。 一个例子是销售给制作最终用户图形程序的公司的数字图像处理方法包。 图像处理公司编写其类以实现接口，并将其公开给客户。 然后，图形公司使用接口协议中定义的签名和返回类型调用图像处理方法。 虽然图像处理公司的API是公开的（对其客户），但它的API实现仍然是一个严密保密的秘密 - 事实上，只要它继续实现它的客户所依赖的原始接口，它就可以在以后随时修改其实现 。
 
+#### 定义接口
+
+接口声明包含访问修饰符，关键字 `interface`，接口名称，逗号分隔的父接口列表（如果存在），还有接口体。比如：
+
+```java
+public interface GroupedInterface extends Interface1, Interface2, Interface3 {
+
+    // constant declarations
+    
+    // base of natural logarithms
+    double E = 2.718282;
+ 
+    // method signatures
+    void doSomething (int i, double x);
+    int doSomethingElse(String s);
+}
+```
+
+`public ` 访问限定符表示该接口可以被任何包中的任何类使用。如果你没有指定接口访问限定符，则该接口只能被同一个包中定义的类使用。
+
+接口可以扩展其他接口，就像类子类或扩展另一个类一样。但是，虽然类只能扩展另一个类，但接口可以扩展任意数量的接口。 接口声明包括它扩展的所有接口的逗号分隔列表。
+
+**接口体**
+
+接口体可以包含 [抽象方法](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html)，[默认方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html)，以及 [静态方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html#static)。接口中的抽象方法后跟分号，但没有大括号（抽象方法不包含实现）。 默认方法使用`default`修饰符定义，静态方法使用`static`关键字定义。 接口中的所有抽象，默认和静态方法都是隐式的 `public`，因此您可以省略`public`修饰符。
+
+此外，接口可以包含常量声明。接口中定义的所有常量值都隐式为 `public`，`static` 和 `final`。 再一次，您可以省略这些修饰符。
+
