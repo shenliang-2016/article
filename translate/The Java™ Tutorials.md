@@ -4781,11 +4781,11 @@ Set<Person> rosterSet = transferElements(roster, HashSet<Person>::new);
 如 [嵌套类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html) 一节所述，嵌套类使您能够对仅在一个地方使用的类进行逻辑分组，增加封装的使用，并创建更易读和可维护的代码。局部类，匿名类和 lambda 表达式也具有这些优点;但是，它们旨在用于更具体的情况：
 
 *  [局部类](https://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html) ：如果您需要创建多个类的实例，访问其构造函数或引入新的命名类型（例如，您需要稍后调用其他方法），请使用它。
-* [匿名类](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)：如果需要声明字段或其他方法，请使用它。
-* [Lambda 表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) ：
+*  [匿名类](https://docs.oracle.com/javase/tutorial/java/javaOO/anonymousclasses.html)：如果需要声明字段或其他方法，请使用它。
+*  [Lambda 表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) ：
   *  如果要封装要传递给其他代码的单个行为单元，请使用它。例如，如果希望对集合的每个元素执行某个操作，完成进程或进程遇到错误，则可以使用lambda表达式。
-  * 如果您需要一个简单的功能接口实例并且不应用任何前述条件（例如，您不需要构造函数，命名类型，字段或其他方法），请使用它。
-* [嵌套类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html)：如果您的要求与本地类的要求类似，则使用它，您希望使类型更广泛可用，并且您不需要访问局部变量或方法参数。
+  *  如果您需要一个简单的功能接口实例并且不应用任何前述条件（例如，您不需要构造函数，命名类型，字段或其他方法），请使用它。
+*  [嵌套类](https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html)：如果您的要求与本地类的要求类似，则使用它，您希望使类型更广泛可用，并且您不需要访问局部变量或方法参数。
   * 如果需要访问封闭实例的非公共字段和方法，请使用非静态嵌套类（或内部类）。如果不需要此访问权限，请使用静态嵌套类。
 
 #### 枚举类型
@@ -5212,4 +5212,68 @@ Java SE API 中已经定义了一系列注解类型。某些注解供 Java 编�
 **@Inherited** [`@Inherited`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html) 表明注解类型可以从超类继承。（默认情况下不是这样。）当用户查询注解类型并且该类没有此类型的注解时，将查询类的超类以获取注解类型。此注解仅适用于类声明。
 
 **@Repeatable** [`@Repeatable`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Repeatable.html) Java SE 8中引入的注解，表明其标记的注解可以多次应用于相同的声明或类型。有关更多信息，请参阅 [Repeating Annotations](https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html) 。
+
+### 类型注解和可插拔类型系统
+
+
+在 Java SE 8 发布之前，注解只能被应用到声明上。在 Java SE 8 版本中，注解已经可以被用于任何*类型使用*。这就意味着注解可以用在任何你使用类型的地方。一些展示类型使用位置的例子是类实例创建表达式（`new`）、转型、`implements` 语句、以及 `throws` 语句。这种形式的注解被称为*类型注解*。在 [Annotations Basics](https://docs.oracle.com/javase/tutorial/java/annotations/basics.html) 中给出了几个例子。
+
+类型注解的目的是支持改进的 Java 程序分析，通过保证更强的类型检查。Java SE 8 没有提供类型检查框架，但是允许你自己实现或者下载一个类型检查框架，该框架实现一个或者多个与 Java 编译器结合使用的插件模块。
+比如，你想要保证你的程序中的某个特定变量绝对不会被赋值 `null` ，你希望避免触发 `NullPointerException` 。你可以实现一个自定义插件来执行该检查。接下来你可以修改代码，在该特定变量上添加注解，表明它绝对不能被赋值 `null` 。变量声明如下：
+
+```java
+@NonNull String str;
+```
+当你编译该代码时，在命令行中包含该 `NonNull` 模块，编译器打印一个警告，如果它检测到潜在的问题，允许你修改代码来避免错误。在你修改代码消除所有警告之后，该特定错误在程序运行时将不可能发生。
+你可以使用多个类型检查模块，每个模块负责检查一种错误。通过这种方式，你可以在 Java 类型系统之上，构建特定的类型检查层，在任何时候用在任何需要的地方。
+结合使用类型注解和可插拔的类型检查器，你可以编写更健壮和包含更少潜在问题的代码。
+很多情况下，你不需要编写自己的类型检查模块。已经有人为你做好了三部分工作。比如，你可能希望利用华盛顿大学提供的类型检查器框架的优点。该框架包含一个 `NonNull` 模块，以及正则表达式模块、一个互斥锁模块。更多信息，参考 [Checker Framework](http://types.cs.washington.edu/checker-framework/) 。
+
+### 可重复注解
+存在几种情况你可能会希望将同样类型的注解应用于一个声明或者类型使用。在 Java SE 8 中，可重复注解允许你这么做。
+比如，你正在写的代码使用一个计时器服务允许你在给定时间或者按照某种调度策略执行一个方法，类似于 UNIX 的 `cron` 服务。现在你希望设定一个计时器来运行一个方法，
+ `doPeriodicCleanup`,  在每个月的最后一天和每个周五的下午 11：00 。为了设定该定时器运行，创建一个 `@Schedule` 注解并将它两次应用到方法 `doPeriodicCleanup` 上。第一次使用指定每个月的最后一天，第二次使用指定每个周五的下午 11：00 。如下面例子所示：
+````java
+@Schedule(dayOfMonth="last")
+@Schedule(dayOfWeek="Fri", hour="23")
+public void doPeriodicCleanup() { ... }
+````
+上面的例子应用注解到方法上。你可以在任何使用标准注解的地方任意次数地重复使用一个注解。比如，你的一个类用来粗粒未授权访问异常。你可以在该类上使用两次 `@Alert` 注解来支持业务管理员角色和系统管理员角色：
+````java
+@Alert(role="Manager")
+@Alert(role="Administrator")
+public class UnauthorizedAccessException extends SecurityException { ... }
+````
+考虑到兼容性，可重复注解存储在 Java 编译器自动生成的容器注解中。为了保证编译器这么做，你必须在代码中使用两种声明：
+**第一步：声明一个可重复注解类型**
+该注解类型必须使用 `@Repeatable` 元注解。下面的例子定义了一个 `@Schedule` 可重复注解类型：
+
+````java
+import java.lang.annotation.Repeatable;
+
+@Repeatable(Schedules.class)
+public @interface Schedule {
+  String dayOfMonth() default "first";
+  String dayOfWeek() default "Mon";
+  int hour() default 12;
+}
+````
+`@Repeatable` 元注解的值（在括号中）是Java编译器为存储重复注解而生成的容器注解的类型。在此示例中，包含注解类型是 `Schedules`，因此重复 `@Schedule` 注解存储在`@Schedules` 注解中。
+
+将相同的注解应用于声明而不首先声明它是可重复的，这会导致编译时错误。
+
+**第二步：声明包含注解类型**
+包含注解类型必须具有带数组类型的 `value` 元素。数组的元素类型必须是可重复的注解类型。 包含注解类型 `Schedules` 的声明如下：
+
+````java
+public @interface Schedules {
+    Schedule[] value();
+}
+````
+
+**检索注解**
+Reflection API 中有几种可用于检索注解的方法。返回单个注解的方法（例如 `AnnotatedElement.getAnnotation(Class <T>)`）的行为未更改，因为如果存在所请求类型的一个注解，它们仅返回单个注解。如果存在多个所请求类型的注解，则可以通过首先获取其容器注解来获取它们。通过这种方式，遗留代码继续工作。Java SE 8中引入了其他方法，它们扫描容器注解以一次返回多个注解，例如 `AnnotatedElement.getAnnotationsByType(Class <T>)`。有关所有可用方法的信息，请参阅 [AnnotatedElement](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AnnotatedElement.html)  类规范。
+
+**设计注意事项**
+设计注解类型时，必须考虑该类型注解的基数。现在可以使用注解零次，一次，或者，如果注解的类型被标记为    `@Repeatable` ，则不止一次。也可以通过使用 `@Target` 元注解来限制可以使用注解类型的位置。例如，您可以创建只能在方法和字段上使用的可重复注解类型。仔细设计注解类型非常重要，以确保使用注解的程序员发现它尽可能灵活和强大。
 
