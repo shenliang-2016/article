@@ -5245,7 +5245,9 @@ public void doPeriodicCleanup() { ... }
 public class UnauthorizedAccessException extends SecurityException { ... }
 ````
 考虑到兼容性，可重复注解存储在 Java 编译器自动生成的容器注解中。为了保证编译器这么做，你必须在代码中使用两种声明：
+
 **第一步：声明一个可重复注解类型**
+
 该注解类型必须使用 `@Repeatable` 元注解。下面的例子定义了一个 `@Schedule` 可重复注解类型：
 
 ````java
@@ -5263,6 +5265,7 @@ public @interface Schedule {
 将相同的注解应用于声明而不首先声明它是可重复的，这会导致编译时错误。
 
 **第二步：声明包含注解类型**
+
 包含注解类型必须具有带数组类型的 `value` 元素。数组的元素类型必须是可重复的注解类型。 包含注解类型 `Schedules` 的声明如下：
 
 ````java
@@ -5272,8 +5275,87 @@ public @interface Schedules {
 ````
 
 **检索注解**
+
 Reflection API 中有几种可用于检索注解的方法。返回单个注解的方法（例如 `AnnotatedElement.getAnnotation(Class <T>)`）的行为未更改，因为如果存在所请求类型的一个注解，它们仅返回单个注解。如果存在多个所请求类型的注解，则可以通过首先获取其容器注解来获取它们。通过这种方式，遗留代码继续工作。Java SE 8中引入了其他方法，它们扫描容器注解以一次返回多个注解，例如 `AnnotatedElement.getAnnotationsByType(Class <T>)`。有关所有可用方法的信息，请参阅 [AnnotatedElement](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AnnotatedElement.html)  类规范。
 
 **设计注意事项**
+
 设计注解类型时，必须考虑该类型注解的基数。现在可以使用注解零次，一次，或者，如果注解的类型被标记为    `@Repeatable` ，则不止一次。也可以通过使用 `@Target` 元注解来限制可以使用注解类型的位置。例如，您可以创建只能在方法和字段上使用的可重复注解类型。仔细设计注解类型非常重要，以确保使用注解的程序员发现它尽可能灵活和强大。
+
+## 接口和继承
+
+[接口](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html)
+
+前面的章节中你已经看过了实现一个接口的例子。本节中你将看到更多，接口的目的，发明接口的动机，以及接口的写法。
+
+[继承](https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html)
+
+本节描述从另外一个类产生一个类的方法。也就是说，*子类*如何从*超类*继承字段和方法。你将看到所有的类都是从 `Object` 类派生而来，以及如何在子类中修改从超类继承来的方法。本节也包含类似接口的*抽象类*。
+
+### 接口
+
+软件工程中有许多情况，当不同的程序员团队同意一份“契约”来阐明他们的软件如何相互作用时，这是很重要的。每个组都应该能够编写代码，而不必知道如何编写其他组的代码。一般来说，*接口*就是这样的契约。
+
+例如，想象一个未来主义社会，计算机控制的机器人汽车在没有人工操作员的情况下将乘客运送到城市街道。汽车制造商编写操作汽车的软件（当然是Java） - 停止，启动，加速，左转等等。另一个工业集团，电子制导仪器制造商，使计算机系统接收GPS（全球定位系统）位置数据和无线传输交通状况并利用该信息来驾驶汽车。
+
+汽车制造商必须发布一个行业标准的接口协议，详细说明可以调用什么方法来使汽车移动（任何汽车，来自任何制造商）。然后，制导仪器制造商可以编写调用接口协议中描述的方法的软件来命令汽车。工业集团都不需要知道如何实现其他团队的软件。事实上，每个小组都认为其软件具有高度专有性，并保留随时修改它的权利，只要它继续遵守已发布的接口协议即可。
+
+**Java 中的接口**
+
+在 Java 语言中，*接口*是引用类型，类似于类，不过只能包含常量，方法签名，默认方法，静态方法以及嵌套类型。只有默认方法和静态方法才能有方法体。接口不能被实例化—它们只能被其他类实现或者被其他接口扩展。稍后会讨论扩展。
+
+定义一个接口类似于创建一个新类：
+
+```java
+public interface OperateCar {
+
+   // constant declarations, if any
+
+   // method signatures
+   
+   // An enum with values RIGHT, LEFT
+   int turn(Direction direction,
+            double radius,
+            double startSpeed,
+            double endSpeed);
+   int changeLanes(Direction direction,
+                   double startSpeed,
+                   double endSpeed);
+   int signalTurn(Direction direction,
+                  boolean signalOn);
+   int getRadarFront(double distanceToCar,
+                     double speedOfCar);
+   int getRadarRear(double distanceToCar,
+                    double speedOfCar);
+         ......
+   // more method signatures
+}
+```
+
+注意方法签名没有大括号，而是以分号终结。
+
+为了使用接口，你需要编写一个类来实现该接口。当一个可实例化的类实现一个接口，它就需要为接口中声明的每个方法都提供方法体。比如：
+
+```java
+public class OperateBMW760i implements OperateCar {
+
+    // the OperateCar method signatures, with implementation --
+    // for example:
+    int signalTurn(Direction direction, boolean signalOn) {
+       // code to turn BMW's LEFT turn indicator lights on
+       // code to turn BMW's LEFT turn indicator lights off
+       // code to turn BMW's RIGHT turn indicator lights on
+       // code to turn BMW's RIGHT turn indicator lights off
+    }
+
+    // other members, as needed -- for example, helper classes not 
+    // visible to clients of the interface
+}
+```
+
+在上面的机器人汽车示例中，汽车制造商将实现接口协议。 当然，雪佛兰的实现将与丰田的实现大不相同，但两家制造商都将遵循相同的接口协议。 作为接口客户的导航仪制造商将构建使用汽车位置上的GPS数据，数字街道地图和交通数据来驱动汽车的系统。 这样，引导系统将调用接口方法：转弯，改变车道，制动，加速等。
+
+**接口作为API**
+
+机器人汽车示例显示了用作行业标准应用程序编程接口（API）的接口。 API在商业软件产品中也很常见。 通常，公司销售的软件包包含另一家公司希望在其自己的软件产品中使用的复杂方法。 一个例子是销售给制作最终用户图形程序的公司的数字图像处理方法包。 图像处理公司编写其类以实现接口，并将其公开给客户。 然后，图形公司使用接口协议中定义的签名和返回类型调用图像处理方法。 虽然图像处理公司的API是公开的（对其客户），但它的API实现仍然是一个严密保密的秘密 - 事实上，只要它继续实现它的客户所依赖的原始接口，它就可以在以后随时修改其实现 。
 
