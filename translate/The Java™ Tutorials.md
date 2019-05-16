@@ -5574,3 +5574,139 @@ public interface DoIt {
 ````
 
 注意，你必须为默认方法提供一个实现，你也可以定义新的 [静态方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html#static) 到已经存在的接口中。实现你的接口的类的用户不需要修改或者重新编译那些类就可以直接享受到这些默认方法和静态方法的强化能力。
+
+#### 默认方法和静态方法
+
+章节 [Interfaces](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html) 描述了一个涉及计算机控制汽车制造商的例子，他们发布了行业标准接口，描述了可以调用哪些方法来操作他们的汽车。如果那些计算机控制的汽车制造商为他们的汽车添加新的功能，例如飞行，该怎么办？这些制造商需要指定新方法，以使其他公司（如电子制导仪器制造商）能够使其软件适应飞行汽车。这些汽车制造商将在哪些地方宣布这些与航班相关的新方法？如果他们将它们添加到原始接口，那么实现这些接口的程序员将不得不重写他们的实现。如果他们将它们作为静态方法添加，那么程序员会将它们视为实用方法，而不是必要的核心方法。
+
+默认方法允许你向你的类库中的接口中添加新功能方法的同时保证与实现这些接口的老版本的代码的二进制兼容性。
+
+考虑下面的接口：
+
+````java
+import java.time.*; 
+ 
+public interface TimeClient {
+    void setTime(int hour, int minute, int second);
+    void setDate(int day, int month, int year);
+    void setDateAndTime(int day, int month, int year,
+                               int hour, int minute, int second);
+    LocalDateTime getLocalDateTime();
+}
+````
+
+下面的类实现了该接口：
+
+````java
+package defaultmethods;
+
+import java.time.*;
+import java.lang.*;
+import java.util.*;
+
+public class SimpleTimeClient implements TimeClient {
+    
+    private LocalDateTime dateAndTime;
+    
+    public SimpleTimeClient() {
+        dateAndTime = LocalDateTime.now();
+    }
+    
+    public void setTime(int hour, int minute, int second) {
+        LocalDate currentDate = LocalDate.from(dateAndTime);
+        LocalTime timeToSet = LocalTime.of(hour, minute, second);
+        dateAndTime = LocalDateTime.of(currentDate, timeToSet);
+    }
+    
+    public void setDate(int day, int month, int year) {
+        LocalDate dateToSet = LocalDate.of(day, month, year);
+        LocalTime currentTime = LocalTime.from(dateAndTime);
+        dateAndTime = LocalDateTime.of(dateToSet, currentTime);
+    }
+    
+    public void setDateAndTime(int day, int month, int year,
+                               int hour, int minute, int second) {
+        LocalDate dateToSet = LocalDate.of(day, month, year);
+        LocalTime timeToSet = LocalTime.of(hour, minute, second); 
+        dateAndTime = LocalDateTime.of(dateToSet, timeToSet);
+    }
+    
+    public LocalDateTime getLocalDateTime() {
+        return dateAndTime;
+    }
+    
+    public String toString() {
+        return dateAndTime.toString();
+    }
+    
+    public static void main(String... args) {
+        TimeClient myTimeClient = new SimpleTimeClient();
+        System.out.println(myTimeClient.toString());
+    }
+}
+````
+
+假定你想要向 `TimeClient` 接口添加新功能方法，比如通过一个 [`ZonedDateTime`](https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html) 对象指定时区的能力， (类似于一个[`LocalDateTime`](https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html) 对象，除了它存储时区信息)：
+
+```java
+public interface TimeClient {
+    void setTime(int hour, int minute, int second);
+    void setDate(int day, int month, int year);
+    void setDateAndTime(int day, int month, int year,
+        int hour, int minute, int second);
+    LocalDateTime getLocalDateTime();                           
+    ZonedDateTime getZonedDateTime(String zoneString);
+}
+```
+
+随着 `TimeClient` 接口的修改，你将不得不修改 `SimpleTimeClient` 以及实现方法 `getZonedDateTime` 。不过，相比于让 `getZonedDateTime` 保持 `abstract` (如前面例子所示)，你可以定义一个*默认实现*。 (回想一下， [抽象方法](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html) 是一种没有实现的方法声明。)
+
+````java
+package defaultmethods;
+ 
+import java.time.*;
+
+public interface TimeClient {
+    void setTime(int hour, int minute, int second);
+    void setDate(int day, int month, int year);
+    void setDateAndTime(int day, int month, int year,
+                               int hour, int minute, int second);
+    LocalDateTime getLocalDateTime();
+    
+    static ZoneId getZoneId (String zoneString) {
+        try {
+            return ZoneId.of(zoneString);
+        } catch (DateTimeException e) {
+            System.err.println("Invalid time zone: " + zoneString +
+                "; using default time zone instead.");
+            return ZoneId.systemDefault();
+        }
+    }
+        
+    default ZonedDateTime getZonedDateTime(String zoneString) {
+        return ZonedDateTime.of(getLocalDateTime(), getZoneId(zoneString));
+    }
+}
+````
+
+在方法签名的开头使用 `default` 关键字来指定接口中的某个方法定义是默认方法。接口中声明的所有方法，包括默认方法，都隐含是 `public` 的，因此你可以忽略 `public` 访问修饰符。
+
+使用此接口，你不需要修改 `SimpleTimeClient` ，但是该类 (以及所有实现了 `TimeClient` 接口的类)，都将拥有已经定义的 `getZonedDateTime` 方法。下面的例子， [`TestSimpleTimeClient`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/TestSimpleTimeClient.java) ，调用来自 `SimpleTimeClient` 实例的 `getZonedDateTime` 方法：
+
+````java
+package defaultmethods;
+ 
+import java.time.*;
+import java.lang.*;
+import java.util.*;
+
+public class TestSimpleTimeClient {
+    public static void main(String... args) {
+        TimeClient myTimeClient = new SimpleTimeClient();
+        System.out.println("Current time: " + myTimeClient.toString());
+        System.out.println("Time in California: " +
+            myTimeClient.getZonedDateTime("Blah blah").toString());
+    }
+}
+````
+
