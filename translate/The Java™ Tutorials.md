@@ -5522,3 +5522,55 @@ public boolean isEqual(Object object1, Object object2) {
 
 这些方法适用于任何 `relatable` 对象，无论它们的类继承是什么。当它们实现 `Relatable` 时，它们可以是它们自己的类（或超类）类型和 `Relatable` 类型。这为他们提供了多重继承的一些优点，他们可以获得来自超类和接口的行为。
 
+#### 进化中的接口
+
+考虑一个你已经开发出来的接口 `DoIt`：
+
+````java
+public interface DoIt {
+   void doSomething(int i, double x);
+   int doSomethingElse(String s);
+}
+````
+
+假设，稍后，你希望在接口中添加第三个方法，则该接口变为：
+
+````java
+public interface DoIt {
+
+   void doSomething(int i, double x);
+   int doSomethingElse(String s);
+   boolean didItWork(int i, double x, String s);
+   
+}
+````
+
+如果你进行这样的修改，则所有实现了老 `DoIt` 接口的类都将报废，因为接口已经变化了。依赖此接口的所有程序将在喧闹中崩溃。
+
+尝试预测您的接口的所有用途，并从一开始就完全指定它。如果要向接口添加其他方法，可以使用多中方法。你可以创建一个扩展 `DoIt` 的 `DoItPlus` 接口：
+
+````java
+public interface DoItPlus extends DoIt {
+
+   boolean didItWork(int i, double x, String s);
+   
+}
+````
+
+现在你的代码的用户可以选择继续使用旧接口还是升级到新接口。
+
+另外，你可以将新方法定义为 [默认方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html). 下面定义名为 `didItWork` 的默认方法：
+
+````java
+public interface DoIt {
+
+   void doSomething(int i, double x);
+   int doSomethingElse(String s);
+   default boolean didItWork(int i, double x, String s) {
+       // Method body 
+   }
+   
+}
+````
+
+注意，你必须为默认方法提供一个实现，你也可以定义新的 [静态方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html#static) 到已经存在的接口中。实现你的接口的类的用户不需要修改或者重新编译那些类就可以直接享受到这些默认方法和静态方法的强化能力。
