@@ -5477,3 +5477,48 @@ public class RectanglePlus
 
 ------
 
+#### 使用接口作为类型
+
+当你定义一个新接口，你实际上是定义了一个新的引用数据类型。你可以在任何能够使用其它数据类型名称的地方使用接口名称。如果你定义了一个引用变量，其类型是一个接口，则任何你赋予它的对象都必须是实现了该接口的类的实例。
+
+作为一个例子，
+
+作为一个例子，这里有一个方法，用于查找一对对象中的最大对象，对于从实现 `Relatable` 接口 的类实例化的任何对象：
+
+```java
+public Object findLargest(Object object1, Object object2) {
+   Relatable obj1 = (Relatable)object1;
+   Relatable obj2 = (Relatable)object2;
+   if ((obj1).isLargerThan(obj2) > 0)
+      return object1;
+   else 
+      return object2;
+}
+```
+
+通过将 `object1` t转型为 `Relatable` 类型，它就可以调用 `isLargerThan` 方法。
+
+如果您在各种类中实现 `Relatable`，则可以将从这些类中实例化的对象通过 `findLargest()` 方法进行比较 - 前提是两个对象属于同一个类。同样，它们都可以通过以下方法进行比较：
+
+```java
+public Object findSmallest(Object object1, Object object2) {
+   Relatable obj1 = (Relatable)object1;
+   Relatable obj2 = (Relatable)object2;
+   if ((obj1).isLargerThan(obj2) < 0)
+      return object1;
+   else 
+      return object2;
+}
+
+public boolean isEqual(Object object1, Object object2) {
+   Relatable obj1 = (Relatable)object1;
+   Relatable obj2 = (Relatable)object2;
+   if ( (obj1).isLargerThan(obj2) == 0)
+      return true;
+   else 
+      return false;
+}
+```
+
+这些方法适用于任何 `relatable` 对象，无论它们的类继承是什么。当它们实现 `Relatable` 时，它们可以是它们自己的类（或超类）类型和 `Relatable` 类型。这为他们提供了多重继承的一些优点，他们可以获得来自超类和接口的行为。
+
