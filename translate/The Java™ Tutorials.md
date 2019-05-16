@@ -5710,3 +5710,73 @@ public class TestSimpleTimeClient {
 }
 ````
 
+**扩展包含默认方法的接口**
+
+当你扩展包含默认方法的接口时，你可以这么做：
+
+- 完全不管默认方法，扩展接口将继承其中的默认方法。
+- 重新声明默认方法，将它变成 `abstract` 的。
+- 重新定义默认方法，也就是重载它。
+
+假设你扩展接口 `TimeClient` 如下：
+
+```java
+public interface AnotherTimeClient extends TimeClient { }
+```
+
+任何实现了接口 `AnotherTimeClient` 类将拥有由默认方法 `TimeClient.getZonedDateTime` 指定的实现 。
+
+假定你扩展接口 `TimeClient` 如下：
+
+```java
+public interface AbstractZoneTimeClient extends TimeClient {
+    public ZonedDateTime getZonedDateTime(String zoneString);
+}
+```
+
+任何实现接口 `AbstractZoneTimeClient` 的类将必须实现方法 `getZonedDateTime` 。该方法是一个 `abstract` 方法，就像接口中所有其他非默认、非静态方法。
+
+假定你扩展接口 `TimeClient` 如下：
+
+```java
+public interface HandleInvalidTimeZoneClient extends TimeClient {
+    default public ZonedDateTime getZonedDateTime(String zoneString) {
+        try {
+            return ZonedDateTime.of(getLocalDateTime(),ZoneId.of(zoneString)); 
+        } catch (DateTimeException e) {
+            System.err.println("Invalid zone ID: " + zoneString +
+                "; using the default time zone instead.");
+            return ZonedDateTime.of(getLocalDateTime(),ZoneId.systemDefault());
+        }
+    }
+}
+```
+
+任何实现接口 `HandleInvalidTimeZoneClient` 的类将使用由此接口指定的 `getZonedDateTime` 方法实现，而不是接口 `TimeClient` 指定的那个。
+
+**静态方法**
+
+除了默认方法，你还可以在接口中定义 [静态方法  。（静态方法是一种与定义它的类相关联的方法，而不是与任何对象相关联。该类的每个实例都共享其静态方法。）这使您可以更轻松地在库中组织辅助方法；您可以在同一个接口中保留特定于接口的静态方法，而不是在单独的类中。以下示例定义一个静态方法，该方法检索与时区标识符对应的 [`ZoneId`](https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html) 对象；如果没有与给定标识符对应的`ZoneId`对象，它使用系统默认时区。（因此，您可以简化方法`getZonedDateTime`）：
+
+```java
+public interface TimeClient {
+    // ...
+    static public ZoneId getZoneId (String zoneString) {
+        try {
+            return ZoneId.of(zoneString);
+        } catch (DateTimeException e) {
+            System.err.println("Invalid time zone: " + zoneString +
+                "; using default time zone instead.");
+            return ZoneId.systemDefault();
+        }
+    }
+
+    default public ZonedDateTime getZonedDateTime(String zoneString) {
+        return ZonedDateTime.of(getLocalDateTime(), getZoneId(zoneString));
+    }    
+}
+```
+
+Like static methods in classes, you specify that a method definition in an interface is a static method with the `static` keyword at the beginning of the method signature. All method declarations in an interface, including static methods, are implicitly `public`, so you can omit the `public` modifier.
+
+与类中的静态方法一样，您指定接口中的方法定义是静态方法，在方法签名的开头使用`static`关键字。接口中的所有方法声明（包括静态方法）都隐式为 “public” 的，因此您可以省略`public`修饰符。
