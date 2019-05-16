@@ -5387,3 +5387,93 @@ public interface GroupedInterface extends Interface1, Interface2, Interface3 {
 
 此外，接口可以包含常量声明。接口中定义的所有常量值都隐式为 `public`，`static` 和 `final`。 再一次，您可以省略这些修饰符。
 
+#### 实现接口
+
+为了声明一个实现某个接口的类，你需要在类声明中包含 `implement` 语句片段。你的类可以实现超过一个接口，因而 `implements` 关键字后面跟随的是一个逗号分隔的该类实现的接口列表。方便起见，`implements` 语句片段跟在 `extends` 语句片段之后，如果两者同时存在。
+
+**一个接口示例**
+
+考虑一个定义来比较对象大小的接口：
+
+````java
+public interface Relatable {
+        
+    // this (object calling isLargerThan)
+    // and other must be instances of 
+    // the same class returns 1, 0, -1 
+    // if this is greater than, 
+    // equal to, or less than other
+    public int isLargerThan(Relatable other);
+}
+````
+
+如果你希望可以比较两个同类对象，无论它们实际上是什么，实例化它们的类应该实现接口 `Relatable`。
+
+任何类都能够实现 `Relatable` 接口，如果存在某种方法可以比较从该类实例化而来的对象的尺寸。多字符串来说，其尺寸可以是其中的字符数目。对书本来说，尺寸可以是页数。对学生来说，尺寸可以是体重。等等。对平面几何图形对象来说，面积是一个好的选。而体积对应于三维几何对象。所有这些类都能实现 `isLargerThan()` 方法。
+
+如果你知道一个类实现了 `Relatable`  接口，则你知道可以比较从该类实例化而来的对象的尺寸。
+
+**实现 `Relatable` 接口**
+
+下面是曾出现在 [Creating Objects](https://docs.oracle.com/javase/tutorial/java/javaOO/objectcreation.html) 章节中的 `Rectangle` 类，重写并实现 `Relatable` 接口：
+
+```java
+public class RectanglePlus 
+    implements Relatable {
+    public int width = 0;
+    public int height = 0;
+    public Point origin;
+
+    // four constructors
+    public RectanglePlus() {
+        origin = new Point(0, 0);
+    }
+    public RectanglePlus(Point p) {
+        origin = p;
+    }
+    public RectanglePlus(int w, int h) {
+        origin = new Point(0, 0);
+        width = w;
+        height = h;
+    }
+    public RectanglePlus(Point p, int w, int h) {
+        origin = p;
+        width = w;
+        height = h;
+    }
+
+    // a method for moving the rectangle
+    public void move(int x, int y) {
+        origin.x = x;
+        origin.y = y;
+    }
+
+    // a method for computing
+    // the area of the rectangle
+    public int getArea() {
+        return width * height;
+    }
+    
+    // a method required to implement
+    // the Relatable interface
+    public int isLargerThan(Relatable other) {
+        RectanglePlus otherRect 
+            = (RectanglePlus)other;
+        if (this.getArea() < otherRect.getArea())
+            return -1;
+        else if (this.getArea() > otherRect.getArea())
+            return 1;
+        else
+            return 0;               
+    }
+}
+```
+
+因为 `RectanglePlus` 实现了 `Relatable`，任何两个 `RectanglePlus`  对象的尺寸可以被比较。
+
+------
+
+**注意：** `isLargerThan` 方法（在 `Relatable` 接口中定义）采用 `Relatable` 类型的对象。代码行（在前面的示例中以粗体显示）将 `other` 转换为 `RectanglePlus` 实例。类型转换告诉编译器对象到底是什么。直接在 `other` 实例上调用 `getArea` 将无法编译，因为编译器不理解 `other` 实际上是 `RectanglePlus` 的实例。
+
+------
+
