@@ -5780,3 +5780,243 @@ public interface TimeClient {
 Like static methods in classes, you specify that a method definition in an interface is a static method with the `static` keyword at the beginning of the method signature. All method declarations in an interface, including static methods, are implicitly `public`, so you can omit the `public` modifier.
 
 与类中的静态方法一样，您指定接口中的方法定义是静态方法，在方法签名的开头使用`static`关键字。接口中的所有方法声明（包括静态方法）都隐式为 “public” 的，因此您可以省略`public`修饰符。
+
+**将默认方法集成进入现存的类库**
+
+默认方法允许你添加新的功能到现有的接口中的同时保证基于该接口的老版本编写的代码的二进制兼容性。特别地，默认方法允许你添加接受 lambda 表达式作为参数的方法到现有的接口中。本节介绍如何通过默认方法和静态方法增强 [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) 接口。
+
+考虑 [Questions and Exercises: Classes](https://docs.oracle.com/javase/tutorial/java/javaOO/QandE/creating-questions.html) 中描述的 `Card` 和 `Deck` 类，下面的例子重写了 [`Card`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/Card.java) 和 [`Deck`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/Deck.java) 类作为接口。其中 `Card` 接口包含两个 `enum` 类型 (`Suit` 和 `Rank`) 以及两个抽象方法 (`getSuit` 和 `getRank`)：
+
+`````java
+package defaultmethods;
+
+public interface Card extends Comparable<Card> {
+    
+    public enum Suit { 
+        DIAMONDS (1, "Diamonds"), 
+        CLUBS    (2, "Clubs"   ), 
+        HEARTS   (3, "Hearts"  ), 
+        SPADES   (4, "Spades"  );
+        
+        private final int value;
+        private final String text;
+        Suit(int value, String text) {
+            this.value = value;
+            this.text = text;
+        }
+        public int value() {return value;}
+        public String text() {return text;}
+    }
+    
+    public enum Rank { 
+        DEUCE  (2 , "Two"  ),
+        THREE  (3 , "Three"), 
+        FOUR   (4 , "Four" ), 
+        FIVE   (5 , "Five" ), 
+        SIX    (6 , "Six"  ), 
+        SEVEN  (7 , "Seven"),
+        EIGHT  (8 , "Eight"), 
+        NINE   (9 , "Nine" ), 
+        TEN    (10, "Ten"  ), 
+        JACK   (11, "Jack" ),
+        QUEEN  (12, "Queen"), 
+        KING   (13, "King" ),
+        ACE    (14, "Ace"  );
+        private final int value;
+        private final String text;
+        Rank(int value, String text) {
+            this.value = value;
+            this.text = text;
+        }
+        public int value() {return value;}
+        public String text() {return text;}
+    }
+    
+    public Card.Suit getSuit();
+    public Card.Rank getRank();
+}
+`````
+
+`Deck` 接口包含各种操作方法：
+
+````java
+package defaultmethods; 
+ 
+import java.util.*;
+import java.util.stream.*;
+import java.lang.*;
+ 
+public interface Deck {
+    
+    List<Card> getCards();
+    Deck deckFactory();
+    int size();
+    void addCard(Card card);
+    void addCards(List<Card> cards);
+    void addDeck(Deck deck);
+    void shuffle();
+    void sort();
+    void sort(Comparator<Card> c);
+    String deckToString();
+
+    Map<Integer, Deck> deal(int players, int numberOfCards)
+        throws IllegalArgumentException;
+
+}
+````
+
+ [`PlayingCard`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/PlayingCard.java) 类实现了接口 `Card`，同时 [`StandardDeck`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/StandardDeck.java) 类实现了接口 `Deck` 。
+
+`StandardDeck` 类实现抽象方法 `Deck.sort`如下：
+
+```java
+public class StandardDeck implements Deck {
+    
+    private List<Card> entireDeck;
+    
+    // ...
+    
+    public void sort() {
+        Collections.sort(entireDeck);
+    }
+    
+    // ...
+}
+```
+
+ `Collections.sort` 方法对其中元素类型实现了接口 [`Comparable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Comparable.html)  接口的 `List` 实例中的元素进行排。 `entireDeck` 的成员是一个 `List` 实例，其元素类型是 `Card`，该类型扩展了 `Comparable` 接口。 `PlayingCard` 类型实现 [`Comparable.compareTo`](https://docs.oracle.com/javase/8/docs/api/java/lang/Comparable.html#compareTo-T-) 方法如下：
+
+```java
+public int hashCode() {
+    return ((suit.value()-1)*13)+rank.value();
+}
+
+public int compareTo(Card o) {
+    return this.hashCode() - o.hashCode();
+}
+```
+
+The method `compareTo` causes the method `StandardDeck.sort()` to sort the deck of cards first by suit, and then by rank.
+
+方法 `compareTo` 使方法 `StandardDeck.sort()` 首先按套装对卡片组进行排序，然后按等级排序。
+
+如果你想先按等级排序，然后按套装排序怎么办？您需要实现 [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) 接口以指定新的排序条件，并使用  [`sort(List list, Comparator c)`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#sort-java.util.List-java.util.Comparator-) （包含 `Comparator` 参数的 `sort` 方法的版本）。您可以在 `StandardDeck` 类中定义以下方法：
+
+```java
+public void sort(Comparator<Card> c) {
+    Collections.sort(entireDeck, c);
+}  
+```
+
+使用这个方法，你可以指定方法 `Collections.sort` 使用何种维度对 `Card` 类实例进行排序。实现这一目的的一种方法是实现 `Comparator` 接口来指定排序维度。如下面例子 [`SortByRankThenSuit`](https://docs.oracle.com/javase/tutorial/java/IandI/examples/defaultmethods/SortByRankThenSuit.java) 所示：
+
+```java
+package defaultmethods;
+
+import java.util.*;
+import java.util.stream.*;
+import java.lang.*;
+
+public class SortByRankThenSuit implements Comparator<Card> {
+    public int compare(Card firstCard, Card secondCard) {
+        int compVal =
+            firstCard.getRank().value() - secondCard.getRank().value();
+        if (compVal != 0)
+            return compVal;
+        else
+            return firstCard.getSuit().value() - secondCard.getSuit().value(); 
+    }
+}
+```
+
+下面的例子对牌进行排序，先按照点数，再按花色：
+
+```java
+StandardDeck myDeck = new StandardDeck();
+myDeck.shuffle();
+myDeck.sort(new SortByRankThenSuit());
+```
+
+但是，这种方法过于冗长。如果你可以指定你想要排序的东西，而不是你想要排序的方式会更好。假设您是编写 `Comparator` 接口的开发人员。您可以向 `Comparator` 接口添加哪些默认或静态方法，以使其他开发人员能够更轻松地指定排序条件？
+
+首先，假设您想按点数对扑克牌进行排序，而忽略花色，您可以按如下方式调用 `StandardDeck.sort` 方法：
+
+```java
+StandardDeck myDeck = new StandardDeck();
+myDeck.shuffle();
+myDeck.sort(
+    (firstCard, secondCard) ->
+        firstCard.getRank().value() - secondCard.getRank().value()
+); 
+```
+
+由于接口 `Comparator` 是一个 [函数式接口](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#approach6) ，你可以将 lambda 表达式作为 `sort` 方法的一个参数。在这个例子中，lambda 表达式比较两个整数值。
+
+如果他们可以通过仅调用 `Card.getRank` 方法创建 `Comparator` 实例，那么对于您的开发人员来说会更简单。特别是，如果您的开发人员可以创建一个比较任何可以从 `getValue` 或 `hashCode` 等方法返回数值的对象的 `Comparator` 实例，那将会很有帮助。`Comparator` 接口由静态方法  [`comparing`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#comparing-java.util.function.Function-java.util.Comparator-) 增强：
+
+```java
+myDeck.sort(Comparator.comparing((card) -> card.getRank()));  
+```
+
+这个例子中，你可以使用一个 [方法引用](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) 来替代：
+
+```java
+myDeck.sort(Comparator.comparing(Card::getRank));  
+```
+
+这个调用更好地展示了*对什么进行排序*而不是*如何排序*。
+
+`Comparator` 接口已经通过其它各种静态方法 `comparing` 的变体增强，比如 [`comparingDouble`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#comparingDouble-java.util.function.ToDoubleFunction-java.util.Comparator-) 以及 [`comparingLong`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#comparingLong-java.util.function.ToLongFunction-) ，它们允许你创建 `Comparator` 接口的其它实例来比较其它数据类型。
+
+假设您的开发人员想要创建一个可以比较对象多个维度的 `Comparator` 实例。例如，你如何先按等级点数扑克牌，然后按花色排序？和之前一样，您可以使用 lambda 表达式来指定这些排序条件：
+
+
+```java
+StandardDeck myDeck = new StandardDeck();
+myDeck.shuffle();
+myDeck.sort(
+    (firstCard, secondCard) -> {
+        int compare =
+            firstCard.getRank().value() - secondCard.getRank().value();
+        if (compare != 0)
+            return compare;
+        else
+            return firstCard.getSuit().value() - secondCard.getSuit().value();
+    }      
+); 
+```
+如果你的开发人员可以从一系列`Comparator`实例构建一个`Comparator`实例，那对你来说会更简单。使用默认方法 [`thenComparing`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#thenComparing-java.util.Comparator-) 增强了 `Comparator` 接口：
+
+
+```java
+myDeck.sort(
+    Comparator
+        .comparing(Card::getRank)
+        .thenComparing(Comparator.comparing(Card::getSuit)));
+```
+
+The `Comparator` interface has been enhanced with other versions of the default method `thenComparing` (such as [`thenComparingDouble`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#thenComparingDouble-java.util.function.ToDoubleFunction-) and [`thenComparingLong`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#thenComparingLong-java.util.function.ToLongFunction-)) that enable you to build `Comparator` instances that compare other data types.
+
+`Comparator` 接口已使用默认方法  `thenComparing`  的其他版本进行了增强（例如 [`thenComparingDouble`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#thenComparingDouble-java.util.function.ToDoubleFunction-) 和 [`thenComparingLong`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#thenComparingLong-java.util.function.ToLongFunction-) ），使您可以构建比较其他数据类型的 `Comparator` 实例。
+
+假设您的开发人员想要创建一个 `Comparator` 实例，使其能够以相反的顺序对对象集合进行排序。例如，你如何按照点数的降序排序扑克牌组，从Ace到2（而不是从2到Ace）？ 和以前一样，您可以指定另一个 lambda 表达式。但是，如果您的开发人员可以通过调用方法来反转现有的 `Comparator`，则会更简单。`Comparator` 接口已通过此功能得到增强，默认方法 [`reversed`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#reversed--) ：
+
+```java
+myDeck.sort(
+    Comparator.comparing(Card::getRank)
+        .reversed()
+        .thenComparing(Comparator.comparing(Card::getSuit)));
+```
+
+此示例演示了如何使用默认方法，静态方法，lambda表达式和方法引用增强 `Comparator` 接口，以创建更具表现力的库方法，业务程序员可以通过查看它们的调用方式快速推断出来。使用这些构造来增强库中的接口。
+
+#### 接口综述
+
+接口声明可以包含方法签名，默认方法，静态方法和常量定义。 具有实现的方法是默认方法和静态方法。
+
+实现接口的类必须实现接口中声明的所有方法。
+
+可以在任何可以使用类型的地方使用接口名称。
+
+### 继承
+
