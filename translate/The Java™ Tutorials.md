@@ -6046,3 +6046,149 @@ Java平台中的所有类都是 `Object` 的后代
 
 在层次结构的顶部，`Object` 是所有类中最通用的。层次结构底部附近的类提供更专业的行为。
 
+**继承的例子**
+
+下面是可能的 `Bicycle` 类的实现：
+
+````java
+public class Bicycle {
+        
+    // the Bicycle class has three fields
+    public int cadence;
+    public int gear;
+    public int speed;
+        
+    // the Bicycle class has one constructor
+    public Bicycle(int startCadence, int startSpeed, int startGear) {
+        gear = startGear;
+        cadence = startCadence;
+        speed = startSpeed;
+    }
+        
+    // the Bicycle class has four methods
+    public void setCadence(int newValue) {
+        cadence = newValue;
+    }
+        
+    public void setGear(int newValue) {
+        gear = newValue;
+    }
+        
+    public void applyBrake(int decrement) {
+        speed -= decrement;
+    }
+        
+    public void speedUp(int increment) {
+        speed += increment;
+    }
+        
+}
+````
+
+ `MountainBike` 类作为 `Bicycle` 类的子类如下：
+
+````java
+public class MountainBike extends Bicycle {
+        
+    // the MountainBike subclass adds one field
+    public int seatHeight;
+
+    // the MountainBike subclass has one constructor
+    public MountainBike(int startHeight,
+                        int startCadence,
+                        int startSpeed,
+                        int startGear) {
+        super(startCadence, startSpeed, startGear);
+        seatHeight = startHeight;
+    }   
+        
+    // the MountainBike subclass adds one method
+    public void setHeight(int newValue) {
+        seatHeight = newValue;
+    }   
+}
+````
+
+`MountainBike` 继承 `Bicycle` 的所有字段和方法，并添加了字段 `seatHeight` 以及一个方法来设置它。除了构造器，这类似于你完整编写一个新的 `MountainBike`类，包含四个字段和五个方法。不过，你没必要这样全新编写。当 `Bicycle` 类中的方法非常复杂并需要大量时间调试的情况下继承非常有价值。
+
+**你可以在子类中做什么**
+
+子类继承其父类的所有 *public* 和 *protected* 成员，无论子类在哪个包中。如果子类与其父类在同一个包中，它还继承父类的 *package-private* 成员。您可以按原样使用继承的成员，替换它们，隐藏它们或用新成员补充它们：
+
+ - 可以直接使用继承的字段，就像任何其他字段一样。
+ - 您可以在子类中声明一个与超类中的字段相同的字段，因此*隐藏*它（不推荐）。
+ - 您可以在子类中声明不在超类中的新字段。
+ - 继承的方法可以直接使用。
+ - 您可以在子类中编写一个新的 *instance* 方法，该方法与超类中的签名具有相同的签名，因此*覆盖*它。
+ - 您可以在子类中编写一个新的 *static* 方法，该方法与超类中的签名具有相同的签名，因此*隐藏*它。
+ - 您可以在子类中声明不在超类中的新方法。
+ - 你可以编写一个子类构造函数，它可以隐式地或使用关键字`super`来调用超类的构造函数。
+
+本课程的以下部分将扩展这些主题。
+
+**超类中的私有成员**
+
+子类不会继承父类的 `private` 成员。然而，如果超类拥有 `public` 或者 `protected` 成员来访问它的 `private` 字段，这些方法同样可以为子类所用。
+
+嵌套类可以访问其封闭类的所有私有成员 - 包括字段和方法。因此，子类继承的公共或受保护嵌套类可以间接访问超类的所有私有成员。
+
+**对象转型**
+
+我们已经看到一个对象是实例化它出来的类的数据类型。比如，如果我们写：
+
+```java
+public MountainBike myBike = new MountainBike();
+```
+
+则 `myBike` 就是类型 `MountainBike`。
+
+`MountainBike` 从 `Bicycle` 和 `Object` 派生而来。因此 `MountainBike` 既是 `Bicycle` 又是 `Object`，同时它可以在需要`Bicycle`或`Object`对象的任何地方使用。
+
+反过来就不一定是正确的： `Bicycle` *可以是*  `MountainBike` ，但是并不一定。类似的， `Object` *可以使*  `Bicycle` 或者 `MountainBike`，但是并不一定。
+
+*转型*展示了在继承和实现允许的对象中使用一种类型的对象代替另一种类型。例如，如果我们写：
+
+```java
+Object obj = new MountainBike(); 
+```
+
+则 `obj` 既是 `Object` 又是 `MountainBike` (直到s `obj` 被赋值为其他不是 `MountainBike` 的对象)。这被称为 *隐式转型*。
+
+另一方面，如果我们写：
+
+```java
+MountainBike myBike = obj;
+```
+
+我们将得到一个变异错误，因为编译器并不知道 `obj` 是 `MountainBike`。不过，我们可以告诉编译器，会通过*显式转型* 将一个 `MountainBike` 赋值给 `obj` ：
+
+```java
+MountainBike myBike = (MountainBike)obj;
+```
+
+这个强制转换插入一个运行时检查，为`obj`分配一个`MountainBike`，这样编译器就可以安全地假设`obj`是一个`MountainBike`。如果`obj`在运行时不是`MountainBike`，则会抛出异常。
+
+------
+
+**注意：**您可以使用 `instanceof` 运算符对特定对象的类型进行逻辑测试。这可以避免由不恰当的转型导致的运行时错误。例如：
+
+```java
+if (obj instanceof MountainBike) {
+    MountainBike myBike = (MountainBike)obj;
+}
+```
+
+这里`instanceof`运算符验证`obj`是否指向`MountainBike`，以便我们可以在知道不会抛出运行时异常前提下使用转型。
+
+------
+
+#### 状态多继承，实现和类型
+
+类和接口之间的一个显著区别是类可以有字段而接口不能。此外，您可以实例化一个类来创建一个对象，这是您无法使用接口进行的。如“什么是对象？”一节中所述，对象将其状态存储在字段中，这些字段在类中定义。Java编程语言不允许扩展多个类的一个原因是避免了多重继承状态的问题，即从多个类继承字段的能力。例如，假设您能够定义一个扩展多个类的新类。通过实例化该类来创建对象时，该对象将继承所有类的超类中的字段。如果来自不同超类的方法或构造函数实例化相同的字段会怎样？哪个方法或构造函数优先？由于接口不包含字段，因此您不必担心多重继承状态所导致的问题。
+
+实现的多重继承是从多个类继承方法定义的能力。这种类型的多重继承会出现问题，例如名称冲突和歧义。当支持这种类型的多重继承的编程语言的编译器遇到包含具有相同名称的方法的超类时，它们有时无法确定要访问或调用的成员或方法。此外，程序员可能通过向超类添加新方法而无意中引入名称冲突。默认方法引入了一种形式的多重继承实现。一个类可以实现多个接口，该接口可以包含具有相同名称的默认方法。Java编译器提供了一些规则来确定特定类使用哪种默认方法。
+
+Java编程语言支持多种类型的继承，这是类实现多个接口的能力。一个对象可以有多种类型：它自己的类的类型以及该类实现的所有接口的类型。这意味着如果将变量声明为接口的类型，则其值可以引用从实现接口的任何类实例化的任何对象。这在“将接口用作类型”一节中讨论。
+
+与多实现继承一样，类可以继承在其扩展的接口中定义的方法的不同实现（作为默认或静态）。在这种情况下，编译器或用户必须决定使用哪一个。
+
