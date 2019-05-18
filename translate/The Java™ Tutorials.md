@@ -6192,3 +6192,221 @@ Java编程语言支持多种类型的继承，这是类实现多个接口的能�
 
 与多实现继承一样，类可以继承在其扩展的接口中定义的方法的不同实现（作为默认或静态）。在这种情况下，编译器或用户必须决定使用哪一个。
 
+#### 覆盖和方法隐藏
+
+**实例方法**
+
+子类中的一个实例方法，如果方法签名（方法名称、参数个数和参数类型）与超类中的方法相同，则会覆盖超类中的方法。
+
+子类覆盖方法的能力允许一个类从尽可能接近需求的超类继承并按照具体需求修改行为。覆盖方法与被它覆盖的方法具有相同的名称，相同的参数个数和类型，相同的返回类型。覆盖方法也可以返回被覆盖方法返回类型的子类型。该子类型被称为*协变返回类型*。
+
+当你覆盖一个方法，你可能会希望使用 `@Override` 注解来告诉编译器你试图覆盖超类中的一个方法。如果编译器探测到超类中不存在这样的方法，就会产生一个变异错误。更多信息参考 [`Annotations`](https://docs.oracle.com/javase/tutorial/java/annotations/index.html)。
+
+**静态方法**
+
+如果子类定义了一个静态方法，该方法与超类中的静态方法具有相同的签名，那么子类中的方法将*隐藏*超类中的方法。
+
+隐藏静态方法和覆盖实例方法之间的区别具有重要意义：
+
+ - 被调用的重写实例方法的版本是子类中的版本。
+ - 被调用的隐藏静态方法的版本取决于它是从超类还是从子类调用的。
+
+考虑一个包含两个类的示例。 第一个是`Animal`，它包含一个实例方法和一个静态方法：
+
+```java
+public class Animal {
+    public static void testClassMethod() {
+        System.out.println("The static method in Animal");
+    }
+    public void testInstanceMethod() {
+        System.out.println("The instance method in Animal");
+    }
+}
+```
+
+ `Animal` 的子类叫做 `Cat`：
+
+```java
+public class Cat extends Animal {
+    public static void testClassMethod() {
+        System.out.println("The static method in Cat");
+    }
+    public void testInstanceMethod() {
+        System.out.println("The instance method in Cat");
+    }
+
+    public static void main(String[] args) {
+        Cat myCat = new Cat();
+        Animal myAnimal = myCat;
+        Animal.testClassMethod();
+        myAnimal.testInstanceMethod();
+    }
+}
+```
+
+`Cat` 类重写 `Animal` 中的实例方法，并隐藏 `Animal` 中的静态方法。此类中的 `main` 方法创建 `Cat` 的实例并在类上调用 `testClassMethod()` 并在实例上调用 `testInstanceMethod()` 。
+
+程序输出如下：
+
+```java
+The static method in Animal
+The instance method in Cat
+```
+
+正如所承诺的那样，被调用的隐藏静态方法的版本是超类中的版本，被调用的重写实例方法的版本是子类中的版本。
+
+**接口方法**
+
+接口中的 [默认方法](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html) 和 [抽象方法](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html) 像实例方法一样被继承。不过，当超类或者接口提供了多个相同方法签名的默认方法时，编辑器将遵循继承规则来解决名称冲突。由下面两条原则驱动：
+
+- 实例方法优先于接口默认方法。
+
+  考虑下面的类和接口：
+
+  ```java
+  public class Horse {
+      public String identifyMyself() {
+          return "I am a horse.";
+      }
+  }
+  ```
+
+  ```java
+  public interface Flyer {
+      default public String identifyMyself() {
+          return "I am able to fly.";
+      }
+  }
+  ```
+
+  ```
+  public interface Mythical {
+      default public String identifyMyself() {
+          return "I am a mythical creature.";
+      }
+  }
+  ```
+
+  ```java
+  public class Pegasus extends Horse implements Flyer, Mythical {
+      public static void main(String... args) {
+          Pegasus myApp = new Pegasus();
+          System.out.println(myApp.identifyMyself());
+      }
+  }
+  ```
+
+  方法 `Pegasus.identifyMyself` 返回字符串 `I am a horse` 。
+
+- 被其他候选者覆盖的方法会被忽略。当超类共享一个共同的祖先时，就会出现这种情况。
+
+  考虑下面的接口和类：
+
+  ```java
+  public interface Animal {
+      default public String identifyMyself() {
+          return "I am an animal.";
+      }
+  }
+  ```
+
+  ```java
+  public interface EggLayer extends Animal {
+      default public String identifyMyself() {
+          return "I am able to lay eggs.";
+      }
+  }
+  ```
+
+  ```java
+  public interface FireBreather extends Animal { }
+  ```
+
+  ```java
+  public class Dragon implements EggLayer, FireBreather {
+      public static void main (String... args) {
+          Dragon myApp = new Dragon();
+          System.out.println(myApp.identifyMyself());
+      }
+  }
+  ```
+
+  方法 `Dragon.identifyMyself` 返回字符串 `I am able to lay eggs.`
+
+如果两个或多个独立定义的缺省方法冲突，或者缺省方法与抽象方法冲突，则Java编译器会产生编译器错误。您必须显式覆盖超类方法。
+
+考虑一下现在可以飞行的计算机控制汽车的例子。你有两个接口（`OperateCar`和`FlyCar`）为同一个方法（`startEngine`）提供默认实现：
+
+```java
+public interface OperateCar {
+    // ...
+    default public int startEngine(EncryptedKey key) {
+        // Implementation
+    }
+}
+public interface FlyCar {
+    // ...
+    default public int startEngine(EncryptedKey key) {
+        // Implementation
+    }
+}
+```
+
+实现`OperateCar`和`FlyCar`的类必须覆盖方法`startEngine`。您可以使用`super`关键字调用任何默认实现。
+
+```java
+public class FlyingCar implements OperateCar, FlyCar {
+    // ...
+    public int startEngine(EncryptedKey key) {
+        FlyCar.super.startEngine(key);
+        OperateCar.super.startEngine(key);
+    }
+}
+```
+
+在`super`之前的名称（在这个例子中，`FlyCar`或`OperateCar`）必须引用一个直接超级接口，它定义或继承被调用方法的默认值。这种形式的方法调用不限于区分包含具有相同签名的默认方法的多个已实现接口。您可以使用`super`关键字在类和接口中调用默认方法。
+
+类中的继承实例方法可以覆盖抽象接口方法。考虑以下接口和类：
+
+```java
+public interface Mammal {
+    String identifyMyself();
+}
+public class Horse {
+    public String identifyMyself() {
+        return "I am a horse.";
+    }
+}
+public class Mustang extends Horse implements Mammal {
+    public static void main(String... args) {
+        Mustang myApp = new Mustang();
+        System.out.println(myApp.identifyMyself());
+    }
+}
+```
+
+方法`Mustang.identifyMyself`返回字符串 `I am a horse.` 。类 `Mustang`从类`Horse`继承方法`identifyMyself`，它覆盖了接口 `Mammal` 中同名的抽象方法。
+
+**注意**：接口中的静态方法永远不会被继承。
+
+**修改器**
+
+覆盖方法的访问修饰符可以允许比重写方法更多但不是更少的访问。例如，超类中的 `protected` 实例方法可以在子类中 `public` ，但不是 `private` 。
+
+如果尝试将超类中的实例方法更改为子类中的静态方法，则会出现编译时错误，反之亦然。
+
+**总结**
+
+下表总结了在定义具有与超类中的方法相同的签名的方法时发生的情况。
+
+|              | Superclass Instance Method | Superclass Static Method |
+| ------------ | -------------------------- | ------------------------ |
+| 子类实例方法 | 覆盖                       | 产生编译错误             |
+| 子类静态方法 | 产生编译错误               | 隐藏                     |
+
+------
+
+**注意：**在子类中，您可以重载从超类继承的方法。这种重载方法既不隐藏也不覆盖超类实例方法 - 它们是新方法，对于子类是唯一的。
+
+------
+
