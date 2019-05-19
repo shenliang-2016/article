@@ -6611,3 +6611,37 @@ super(parameter list);
 
 如果子类构造函数显式或隐式地调用其超类的构造函数，您可能会认为将会调用一整个构造函数链，一直回到`Object`的构造函数。事实上，情况就是这样。它被称为*构造函数链*，当需要很长的类后代时你需要注意它。
 
+#### `Object` 作为超类
+
+[`object`](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html) 类位于`java.lang`包中，位于类层次结构树的顶端。每个类都是`Object`类的直接或间接的后代。您使用或编写的每个类都继承了`Object`的实例方法。您可能不需要使用任何这些方法，但是，如果您选择这样做，则可能需要使用特定于您的类的代码覆盖它们。本节中讨论的继承自`Object`的方法是：
+
+- `protected Object clone() throws CloneNotSupportedException`
+        Creates and returns a copy of this object.
+- `public boolean equals(Object obj)`
+        Indicates whether some other object is "equal to" this one.
+- `protected void finalize() throws Throwable`
+        Called by the garbage collector on an object when garbage
+        collection determines that there are no more references to the object
+- `public final Class getClass()`
+        Returns the runtime class of an object.
+- `public int hashCode()`
+        Returns a hash code value for the object.
+- `public String toString()`
+        Returns a string representation of the object.
+
+The `notify`, `notifyAll`, and `wait` methods of `Object` all play a part in synchronizing the activities of independently running threads in a program, which is discussed in a later lesson and won't be covered here. There are five of these methods:
+
+- `public final void notify()`
+- `public final void notifyAll()`
+- `public final void wait()`
+- `public final void wait(long timeout)`
+- `public final void wait(long timeout, int nanos)`
+
+------
+
+Note: There are some subtle aspects to a number of these methods, especially the `clone` method.
+
+------
+
+**`clone()` 方法**
+
