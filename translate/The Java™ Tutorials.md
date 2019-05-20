@@ -6616,20 +6616,19 @@ super(parameter list);
 [`object`](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html) 类位于`java.lang`包中，位于类层次结构树的顶端。每个类都是`Object`类的直接或间接的后代。您使用或编写的每个类都继承了`Object`的实例方法。您可能不需要使用任何这些方法，但是，如果您选择这样做，则可能需要使用特定于您的类的代码覆盖它们。本节中讨论的继承自`Object`的方法是：
 
 - `protected Object clone() throws CloneNotSupportedException`
-        Creates and returns a copy of this object.
+    创建并返回该对象的一个拷贝。
 - `public boolean equals(Object obj)`
-        Indicates whether some other object is "equal to" this one.
+    表示其他对象是否等于这个对象。
 - `protected void finalize() throws Throwable`
-        Called by the garbage collector on an object when garbage
-        collection determines that there are no more references to the object
+    当垃圾收集器确定不存在引用指向此对象时由垃圾收集器在该对象上调用。
 - `public final Class getClass()`
-        Returns the runtime class of an object.
+    返回一个对象的运行时类型。
 - `public int hashCode()`
-        Returns a hash code value for the object.
+    返回对象的哈希值。
 - `public String toString()`
-        Returns a string representation of the object.
+    返回对象的字符串表示。
 
-The `notify`, `notifyAll`, and `wait` methods of `Object` all play a part in synchronizing the activities of independently running threads in a program, which is discussed in a later lesson and won't be covered here. There are five of these methods:
+`Object`的`notify`，`notifyAll`和`wait`方法都在同步程序中独立运行的线程的活动中起作用，这将在后面的课程中讨论，这里不再介绍。这些方法有五种：
 
 - `public final void notify()`
 - `public final void notifyAll()`
@@ -6639,7 +6638,7 @@ The `notify`, `notifyAll`, and `wait` methods of `Object` all play a part in syn
 
 ------
 
-Note: There are some subtle aspects to a number of these methods, especially the `clone` method.
+**注意：**许多方法都有一些微妙的方面，尤其是`clone`方法。
 
 ------
 
