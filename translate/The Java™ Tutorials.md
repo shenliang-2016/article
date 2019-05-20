@@ -6644,3 +6644,136 @@ super(parameter list);
 
 **`clone()` 方法**
 
+如果一个类，或者它的超类之一，实现了 `Cloneable` 接口，你就可以使用 `clone()` 方法来创建现存对象的一个拷贝。可以这么写：
+
+```java
+aCloneableObject.clone();
+```
+
+`Object`'s implementation of this method checks to see whether the object on which `clone()` was invoked implements the `Cloneable` interface. If the object does not, the method throws a `CloneNotSupportedException` exception. Exception handling will be covered in a later lesson. For the moment, you need to know that `clone()` must be declared as
+
+`Object`的这个方法的实现检查 `clone()`被调用的对象是否实现了`Cloneable`接口。如果对象没有，则该方法抛出`CloneNotSupportedException`异常。稍后的课程将介绍异常处理。目前，您需要知道`clone()`必须声明为：
+
+```java
+protected Object clone() throws CloneNotSupportedException
+```
+
+或者：
+
+```java
+public Object clone() throws CloneNotSupportedException
+```
+
+如果你正在写的 `clone()` 方法来覆盖 `Object` 中的那个。
+
+如果调用`clone()`的对象实现了`Cloneable`接口，那么`object`的`clone()`方法的实现会创建一个与原始对象相同的类的对象并初始化新对象的成员变量与原始对象的相应成员变量具有相同的值。
+
+使类可复制的最简单方法是将 `implements Cloneable` 添加到类的声明中。然后你的对象可以调用`clone()`方法。
+
+对于某些类，`Object`的`clone()`方法的默认行为可以正常工作。但是，如果一个对象包含对外部对象的引用，比如说 `ObjExternal`，则可能需要覆盖`clone()`以获得正确的行为。否则，一个对象所做的 `ObjExternal` 的更改也会在其克隆中可见。这意味着原始对象及其克隆不是独立的 - 要将它们分离，你必须覆盖`clone()`以便它克隆对象本身*和*`ObjExternal`。然后原始对象引用 `ObjExternal` ，并且克隆引用 `ObjExternal` 的克隆，以便对象及其克隆真正独立。
+
+**`equals()` 方法**
+
+The `equals()` method compares two objects for equality and returns `true` if they are equal. The `equals()` method provided in the `Object` class uses the identity operator (`==`) to determine whether two objects are equal. For primitive data types, this gives the correct result. For objects, however, it does not. The `equals()` method provided by `Object` tests whether the object *references* are equal—that is, if the objects compared are the exact same object.
+
+To test whether two objects are equal in the sense of *equivalency* (containing the same information), you must override the `equals()` method. Here is an example of a `Book` class that overrides `equals()`:
+
+`equals()`方法比较两个对象是否相等，如果它们相等则返回 `true`。`Object`类中提供的`equals()`方法使用相等运算符（`==`）来确定两个对象是否相等。对于基本数据类型，这会给出正确的结果。但是，对于对象，结果就跟我们想象的不太一样。`Object`提供的`equals()`方法测试对象*引用*是否相等 - 即，被比较的对象是否是完全相同的对象。
+
+要测试两个对象在 *equivalency*（包含相同的信息）意义上是否相等，必须覆盖`equals()`方法。这是一个覆盖`equals()`的`Book`类的例子：
+
+```java
+public class Book {
+    ...
+    public boolean equals(Object obj) {
+        if (obj instanceof Book)
+            return ISBN.equals((Book)obj.getISBN()); 
+        else
+            return false;
+    }
+}
+```
+
+考虑这个代码来测试`Book`类的两个实例是否相等：
+
+```java
+// Swing Tutorial, 2nd edition
+Book firstBook  = new Book("0201914670");
+Book secondBook = new Book("0201914670");
+if (firstBook.equals(secondBook)) {
+    System.out.println("objects are equal");
+} else {
+    System.out.println("objects are not equal");
+}
+```
+
+This program displays `objects are equal` even though `firstBook` and `secondBook` reference two distinct objects. They are considered equal because the objects compared contain the same ISBN number.
+
+You should always override the `equals()` method if the identity operator is not appropriate for your class.
+
+即使`firstBook`和`secondBook`引用两个不同的对象，该程序也会显示`对象相等`。它们被认为是相同的，因为比较的对象包含相同的 ISBN 号。
+
+如果相等运算符不适合您的类，则应始终覆盖`equals（）`方法。
+
+------
+
+**注意：**如果重写`equals()`，则还必须覆盖 `hashCode()`。
+
+------
+
+**`finalize()` 方法**
+
+The `Object` class provides a callback method, `finalize()`, that *may be* invoked on an object when it becomes garbage. `Object`'s implementation of `finalize()` does nothing—you can override `finalize()` to do cleanup, such as freeing resources.
+
+The `finalize()` method *may be* called automatically by the system, but when it is called, or even if it is called, is uncertain. Therefore, you should not rely on this method to do your cleanup for you. For example, if you don't close file descriptors in your code after performing I/O and you expect `finalize()` to close them for you, you may run out of file descriptors.
+
+`Object`类提供了一个回调方法`finalize()`，当它变成垃圾时，*可以在对象上调用*。 `object`的`finalize()`的实现什么都不做 - 你可以覆盖`finalize()`去做清理，比如释放资源。
+
+系统可以自动调用`finalize()`方法，但是它何时被调用，它是否确实被调用，都是不确定的。因此，您不应该依赖此方法为您进行清理。例如，如果在执行 I/O 后没有在代码中关闭文件描述符，并且您希望`finalize()`为您关闭它们，则可能会用完文件描述符。
+
+**`getClass()` 方法**
+
+You cannot override `getClass`.
+
+The `getClass()` method returns a `Class` object, which has methods you can use to get information about the class, such as its name (`getSimpleName()`), its superclass (`getSuperclass()`), and the interfaces it implements (`getInterfaces()`). For example, the following method gets and displays the class name of an object:
+
+你不能覆盖`getClass`。
+
+`getClass()`方法返回一个`Class`对象，它有一些方法可以用来获取有关该类的信息，例如它的名字（`getSimpleName()`），它的超类（`getSuperclass()`）和 它实现的接口（`getInterfaces()`）。例如，以下方法获取并显示对象的类名称：
+
+```java
+void printClassName(Object obj) {
+    System.out.println("The object's" + " class is " +
+        obj.getClass().getSimpleName());
+}
+```
+
+`java.lang`包中的 [`Class`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html)有很多方法 （超过50个）。例如，您可以测试以查看类是不是注解（`isAnnotation()`），接口（`isInterface()`）还是枚举（`isEnum()`）。你可以看到对象的字段是什么（`getFields()`）或它的方法是什么（`getMethods()`），依此类推。
+
+**`hashCode()` 方法**
+
+The value returned by `hashCode()` is the object's hash code, which is the object's memory address in hexadecimal.
+
+By definition, if two objects are equal, their hash code *must also* be equal. If you override the `equals()` method, you change the way two objects are equated and `Object`'s implementation of `hashCode()` is no longer valid. Therefore, if you override the `equals()` method, you must also override the `hashCode()` method as well.
+
+`hashCode()`返回的值是对象的哈希码，它是十六进制的对象的内存地址。
+
+根据定义，如果两个对象相等，则它们的哈希码也必须相等。如果重写`equals()`方法，则改变两个对象的等价方式，`Object`的`hashCode()`的实现不再有效。因此，如果重写`equals()`方法，则还必须覆盖`hashCode()`方法。
+
+**`toString()` 方法**
+
+您应该始终考虑覆盖类中的`toString()`方法。
+
+`Object`的`toString()`方法返回对象的`String`表示，这对调试非常有用。对象的`String`表示完全取决于对象，这就是你需要在类中重写`toString()`的原因。
+
+您可以使用`toString()`和`System.out.println()`来显示对象的文本表示，例如`Book`的实例：
+
+```java
+System.out.println(firstBook.toString());
+```
+
+对于正确覆盖的`toString()`方法，它会打印一些有用的东西，如下所示：
+
+```shell
+ISBN: 0201914670; The Swing Tutorial; A Guide to Constructing GUIs, 2nd Edition
+```
