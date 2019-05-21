@@ -6851,3 +6851,94 @@ JDK中实现多个接口的类的示例是 [`HashMap`](https://docs.oracle.com/j
 
 请注意，许多软件库都使用抽象类和接口：`HashMap` 类实现了几个接口，并且还扩展了抽象类 `AbstractMap`。
 
+**抽象类的例子**
+
+在面向对象的绘图应用程序中，您可以绘制圆形，矩形，线条，贝塞尔曲线和许多其他图形对象。这些对象都具有某些状态（例如：位置，方向，线条颜色，填充颜色）和行为（例如：`moveTo`，`rotate`，`resize`，`draw`）。对于所有图形对象，这些状态和行为中的一些是相同的（例如：位置，填充颜色和 `moveTo`）。其他需要不同的实现（例如，`resize` 或 `draw`）。所有 `GraphicObjects` 必须能够 `draw` 自己或调整自己的大小；它们在如何做到这一点上有所不同。这是抽象超类的完美情况。您可以利用相似性并声明所有图形对象从同一个抽象父对象（例如，`GraphicObject`）继承，如下图所示：
+
+![Classes Rectangle, Line, Bezier, and Circle Inherit from GraphicObject ](https://docs.oracle.com/javase/tutorial/figures/java/classes-graphicObject.gif)
+
+首先，声明一个抽象类 `GraphicObject`，以提供所有子类完全共享的成员变量和方法，例如当前位置和 `moveTo` 方法。 `GraphicObject` 还声明了抽象方法，例如 `draw` 或 `resize`，它们需要由所有子类实现，但必须以不同的方式实现。`GraphicObject` 类看起来像这样：
+
+````java
+abstract class GraphicObject {
+    int x, y;
+    ...
+    void moveTo(int newX, int newY) {
+        ...
+    }
+    abstract void draw();
+    abstract void resize();
+}
+````
+
+每个 `GraphicObject` 的非抽象子类，比如 `Circle` 和 `Rectangle`，必须提供 `draw` 和 `resize` 方法的实现：
+
+```java
+class Circle extends GraphicObject {
+    void draw() {
+        ...
+    }
+    void resize() {
+        ...
+    }
+}
+class Rectangle extends GraphicObject {
+    void draw() {
+        ...
+    }
+    void resize() {
+        ...
+    }
+}
+```
+
+**当抽象类实现接口**
+
+在 [`Interfaces`](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html) 章节中，注意到实现接口的类必须实现所有接口的方法。但是，如果声明该类是抽象的，则可以定义一个不实现所有接口方法的类。例如：
+
+```java
+abstract class X implements Y {
+  // implements all but one method of Y
+}
+
+class XX extends X {
+  // implements the remaining method in Y
+}
+```
+
+在这种情况下，类`X`必须是`abstract` 的，因为它没有完全实现`Y`，但类`XX`实际上实现了`Y`。
+
+**类成员**
+
+抽象类可以具有 `static` 字段和 `static` 方法。您可以像使用任何其他类一样使用带有类引用的静态成员（例如， `AbstractClass.staticMethod()`）。
+
+#### 继承综述
+
+除了`Object`类，一个类只有一个直接超类。类继承其所有超类中的字段和方法，无论是直接还是间接。子类可以覆盖它继承的方法，也可以隐藏它继承的字段或方法。 （注意，隐藏字段通常是糟糕的编程习惯。）
+
+[覆盖和隐藏方法](https://docs.oracle.com/javase/tutorial/java/IandI/override.html) 章节中的表显示了使用与超类中的方法相同的签名声明方法的效果。
+
+`Object`类是类层次结构的顶层。所有类都是此类的后代，并从中继承方法。从`Object`继承的有用方法包括`toString()`，`equals()`，`clone()`和`getClass()`。
+
+您可以通过在类的声明中使用`final`关键字来阻止类被子类化。同样，您可以通过将方法声明为 `final` 方法来防止子类覆盖该方法。
+
+抽象类只能被子类化，它无法实例化。抽象类可以包含声明但未实现的方法 - 抽象方法。子类然后提供抽象方法的实现。
+
+## 数字和字符串
+
+[Numbers](https://docs.oracle.com/javase/tutorial/java/data/numbers.html)
+
+本节首先讨论 `Number` 类（在 `java.lang` 包中）及其子类。特别是，本节讨论了使用这些类的实例化而不是原始数据类型的情况。此外，本节还讨论了处理数字时可能需要的其他类，例如格式化或使用数学函数来补充语言中内置的运算符。 最后，讨论了自动装箱和拆箱，这是一种简化代码的编译器功能。
+
+[Strings](https://docs.oracle.com/javase/tutorial/java/data/strings.html)
+
+在Java编程中广泛使用的字符串，是一系列字符。在Java编程语言中，字符串是对象。本节介绍如何使用 `String` 类创建和操作字符串。它还比较了 `String` 和 `StringBuilder` 类。
+
+### Numbers
+
+本节首先讨论 `java.lang` 包中的 `Number` 类，它的子类，以及使用这些类的实例化而不是原始数字类型的情况。
+
+本节还介绍了 `PrintStream` 和 `DecimalFormat` 类，它们提供了编写格式化数字输出的方法。
+
+最后，讨论了 `java.lang` 中的 `Math` 类。它包含数学函数，以补充语言中内置的运算符。该类具有三角函数，指数函数等方法。
+
