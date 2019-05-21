@@ -6830,3 +6830,24 @@ When an abstract class is subclassed, the subclass usually provides implementati
 
 ------
 
+**抽象类和接口对比**
+
+抽象类与接口类似。您无法实例化它们，并且它们可能包含有实现或未实现的方法声明。但是，对于抽象类，您可以声明非 `static` 和非 `final` 的字段，并定义 `public` ，`protected` 和 `private` 具体方法。使用接口，所有字段都自动为 `public` ，`static` 和 `final`，并且您声明或定义的所有方法（作为默认方法）都是 `public` 的。此外，您只能扩展一个类，无论它是否是抽象的，而您可以实现任意数量的接口。
+
+抽象类还是接口，应该使用谁？
+
+ - 如果这些陈述中的任何一个适用于您的情况，请考虑使用抽象类：
+       - 您希望在几个密切相关的类之间共享代码。
+       - 您希望扩展抽象类的类具有许多常用方法或字段，或者需要除 `public` 之外的访问修饰符（例如 `protected` 和 `private`）。
+       - 您想声明非 `static` 或非 `final` 字段。这使您可以定义可以访问和修改它们所属对象的状态的方法。
+ - 如果任何这些陈述适用于您的情况，请考虑使用接口：
+       - 您希望不相关的类实现您的接口。 例如， [`Comparable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Comparable.html) 和 [`Cloneable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Cloneable.html) 接口由许多不相关的类实现。
+       - 您希望指定特定数据类型的行为，但不关心谁实现其行为。
+       - 您希望利用类型的多重继承。
+
+JDK中的抽象类的一个示例是 [`AbstractMap`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractMap.html)，它是集合框架的一部分。它的子类（包括 `HashMap`，`TreeMap` 和  `ConcurrentHashMap`）共享 `AbstractMap` 定义的许多方法（包括 `get`，`put`，`isEmpty`，`containsKey` 和 `containsValue`）。
+
+JDK中实现多个接口的类的示例是 [`HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html)，它实现 `Serializable`，`Cloneable和Map <K，V>` 接口。通过读取此接口列表，您可以推断出可以克隆 `HashMap` 的实例（无论是谁实现该类），可序列化（这意味着它可以转换为字节流：请参阅 [Serializable Objects](https://docs.oracle.com/javase/tutorial/jndi/objects/serial.html)），并具有 `map` 的功能。此外，`Map <K，V>` 接口已经增强了许多默认方法，例如 `merge` 和 `forEach`，实现此接口的旧类不必自己定义。
+
+请注意，许多软件库都使用抽象类和接口：`HashMap` 类实现了几个接口，并且还扩展了抽象类 `AbstractMap`。
+
