@@ -6399,10 +6399,10 @@ public class Mustang extends Horse implements Mammal {
 
 下表总结了在定义具有与超类中的方法相同的签名的方法时发生的情况。
 
-|              | Superclass Instance Method | Superclass Static Method |
-| ------------ | -------------------------- | ------------------------ |
-| 子类实例方法 | 覆盖                       | 产生编译错误             |
-| 子类静态方法 | 产生编译错误               | 隐藏                     |
+|        | Superclass Instance Method | Superclass Static Method |
+| ------ | -------------------------- | ------------------------ |
+| 子类实例方法 | 覆盖                         | 产生编译错误                   |
+| 子类静态方法 | 产生编译错误                     | 隐藏                       |
 
 ------
 
@@ -6777,3 +6777,56 @@ System.out.println(firstBook.toString());
 ```shell
 ISBN: 0201914670; The Swing Tutorial; A Guide to Constructing GUIs, 2nd Edition
 ```
+#### 编写 `final` 类和方法
+
+你可以将类的全部或者符分方法声明为*final*的。你在方法声明中使用 `fianl` 关键字表示该方法不能被子类覆盖。`Object` 类就是这样做的，其中的很多方法都是 `final` 的。
+
+你可能希望将某个方法声明为 `final` 的，如果该方法实现不能被改变，而且它对保持对象状态的一致性非常关键。比如，你可能希望将 `ChessAlgorithm` 类中的 `getFirstPlayer` 方法声明为 `final` 的：
+
+
+````java
+class ChessAlgorithm {
+    enum ChessPlayer { WHITE, BLACK }
+    ...
+    final ChessPlayer getFirstPlayer() {
+        return ChessPlayer.WHITE;
+    }
+    ...
+}
+````
+
+
+从构造器中调用的方法通常应该声明为 `fianl` 的。如果构造器调用的方法不是 `fianl` 的，则子类可能会重新定义该方法，从而导致期望之外的结果。
+
+注意，你也可以声明完整的类为 `final` 的。`final` 类不能有子类。这样做相当有用，比如，当创建一个不可变类，类似与 `String` 类时。
+
+#### 抽象类和抽象方法
+
+抽象类是一个声明为 `abstract` 的类 - 它可能包含也可能不包含抽象方法。抽象类无法实例化，但可以进行子类化。
+
+抽象方法是在没有实现的情况下声明的方法（没有大括号，后跟分号），如下所示：
+
+```java
+abstract void moveTo(double deltaX, double deltaY);
+```
+
+如果一个类包含 `abstract` 方法，则该类本身也必须声明为 `abstract` 的。如下：
+
+```java
+public abstract class GraphicObject {
+   // declare fields
+   // declare nonabstract methods
+   abstract void draw();
+}
+```
+
+When an abstract class is subclassed, the subclass usually provides implementations for all of the abstract methods in its parent class. However, if it does not, then the subclass must also be declared `abstract`.
+
+当抽象类被子类化时，子类通常为其父类中的所有抽象方法提供实现。但是，如果没有，那么子类也必须声明为 `abstract` 。
+
+------
+
+**注意：**未声明为 `default` 或 `static` 的接口（请参阅  [Interfaces](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html)  部分）中的方法是隐式抽象的，因此 `abstract` 修饰符不与接口方法一起使用。（可以使用，但不是必要的。）
+
+------
+
