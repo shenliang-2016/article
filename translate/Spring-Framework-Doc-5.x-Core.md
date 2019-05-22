@@ -2007,5 +2007,21 @@ public class DefaultBlogService implements BlogService {
 
 如果现有bean类已经具有与约定一致的变量命名的回调方法，则可以通过使用`<bean/>`本身的 `init-method`和`destroy-method`属性指定（在XML中）方法名称来覆盖缺省值。 
 
-Spring容器保证在为bean提供所有依赖项后立即调用已配置的初始化回调。因此，在原始bean引用上调用初始化回调，这意味着 AOP 拦截器等尚未应用于bean。首先完全创建目标bean，然后应用带有拦截器链的 AOP 代理（例如）。如果目标bean和代理是分开定义的，那么您的代码甚至可以绕过代理与原始目标bean交互。因此，将拦截器应用于`init`方法是不一致的，因为这样做会将目标bean的生命周期耦合到其代理或拦截器，并在代码直接与原始目标bean交互时形成奇怪的语义。
+Spring容器保证在为bean提供所有依赖项后立即调用已配置的初始化回调。因此，在原始bean引用上调用初始化回调，这意味AOP拦截器等尚未应用于bean。首先完全创建目标bean，然后应用带有拦截器链的AOP代理（例如）。如果目标bean和代理是分开定义的，那么您的代码甚至可以绕过代理与原始目标bean交互。因此，将拦截器应用于`init`方法是不一致的，因为这样做会将目标bean的生命周期耦合到其代理或拦截器，并在代码直接与原始目标bean交互时形成奇怪的语义。
+
+**结合生命周期机制**
+
+作为 Spring 2.5，你可以有以下三种选择来控制 bean 的生命周期行为：
+
+-  [`InitializingBean`](https://docs.spring.io/spring/docs/5.1.7.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-initializingbean) 和 [`DisposableBean`](https://docs.spring.io/spring/docs/5.1.7.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-disposablebean) 回调接口
+- 定制 `init()` 和 `destroy()` 方法
+-  [`@PostConstruct` 和 `@PreDestroy` 注解](https://docs.spring.io/spring/docs/5.1.7.RELEASE/spring-framework-reference/core.html#beans-postconstruct-and-predestroy-annotations) 。你可以结合这些机制来控制给定的 bean。
+
+> 如果为bean配置了多个生命周期机制，并且每个机制都配置了不同的方法名称，则每个配置的方法都按照此注释后列出的顺序执行。但是，如果为初始化方法配置了相同的方法名称，例如`init()` - 对于多个这些生命周期机制，该方法将执行一次，如[上一节中所述。
+
+为同一个bean配置的多个生命周期机制具有不同的初始化方法，如下所示：
+
+1.  `@PostConstruct` 注解修饰的方法
+2. `afterPropertiesSet()` 作为 `InitializingBean` 回调接口定义的方法
+3. 定制的 `init()` 方法
 
