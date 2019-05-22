@@ -1761,7 +1761,7 @@ Spring IoC 容器不仅管理你的对象 (beans) 实例，同时还管理它们
 
 有关选择基于类的代理还是基于接口的代理的更多细节可参考 [Proxying Mechanisms](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#aop-proxying)。
 
-### 1.5.5 自定义作用域
+#### 1.5.5 自定义作用域
 
 bean 作用域机制是可扩展的。你可以定义你自己的作用域，甚至重新定义已经存在的作用域，尽管后者通常被认为不是什么好的做法，同时你也不能覆盖内建的 ````singleton```` 和 ````prototype```` 作用域。
 
@@ -1773,19 +1773,19 @@ bean 作用域机制是可扩展的。你可以定义你自己的作用域，甚
 
 以会话作用域实现为例，返回会话作用域的 bean (如果不存在，则该方法返回一个 bean 的新实例，在将其绑定到一个会话之后，为了将来的引用)。下面的方法返回潜在作用域中的对象：
 
-````
+````java
 Object get(String name, ObjectFactory objectFactory)
 ````
 
 会话作用域实现，从潜在的会话中清除会话作用域的 bean 。该对象应该被返回，不过，如果特定名称的对象没有找到，则你可以返回 ````null````  。下面的方法从潜在作用域中删除对象：
 
-````
+````java
 Object remove(String name)
 ````
 
 下面的方法注册作用域在它自身被销毁或者该作用域中特定名称的对象被销毁时应该执行的回调：
 
-````
+````java
 void registerDestructionCallbacks(String name, Runnable destructionCallback)
 ````
 
@@ -1793,11 +1793,94 @@ void registerDestructionCallbacks(String name, Runnable destructionCallback)
 
 下面的方法获取潜在作用域的会话标识符：
 
-````
+````java
 String getConversationId()
 ````
 
 该标识符每个作用域都不同。对会话作用域实现而言，该标识符可以是该会话的标识符。
 
 **使用自定义作用域**
+
+当你编写并测试一个或者多个自定义 `Scope` 实现之后，你需要让 Spring 容器注意到你的新的作用域。下面的方法是向 Spring 容器注册新的 `Scope` 的核心方法：
+
+```java
+void registerScope(String scopeName, Scope scope);
+```
+
+上面的方法声明在 `ConfigurableBeanFactory` 接口中，该接口可通过 Spring 随附的大多数具体 `ApplicationContext` 实现上的 `BeanFactory` 属性获得。
+
+`registerScope(...)` 方法的第一个参数是与作用域关联的唯一名称。Spring 容器本身中的这些名称的实例是 `singleton` 和 `prototype`。`registerScope(...)` 方法的第二个参数是您希望注册和使用的自定义 `Scope` 实现的实例。
+
+假设您编写自定义 `Scope` 实现，然后按照下一个示例中的说明进行注册。
+
+> 下一个示例使用 `SimpleThreadScope` ，它包含在 Spring 中，但默认情况下未注册。对于您自己的自定义 `Scope` 实现，指令是相同的。
+
+```java
+Scope threadScope = new SimpleThreadScope();
+beanFactory.registerScope("thread", threadScope);
+```
+
+然后，您可以创建符合自定义 `Scope` 规则的 `bean` 定义，如下所示：
+
+```java
+<bean id="..." class="..." scope="thread">
+```
+
+使用自定义 `Scope` 实现，您不必局限于 `Scope` 的编程式注册。您还可以使用 `CustomScopeConfigurer` 类以声明方式执行作用域注册。如以下示例所示：
+
+``` xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <bean class="org.springframework.beans.factory.config.CustomScopeConfigurer">
+        <property name="scopes">
+            <map>
+                <entry key="thread">
+                    <bean class="org.springframework.context.support.SimpleThreadScope"/>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="thing2" class="x.y.Thing2" scope="thread">
+        <property name="name" value="Rick"/>
+        <aop:scoped-proxy/>
+    </bean>
+
+    <bean id="thing1" class="x.y.Thing1">
+        <property name="thing2" ref="thing2"/>
+    </bean>
+
+</beans>
+```
+
+> 当你在 `FactoryBean` 实现中放置 `<aop:scope-proxy/>` 时，它表示有作用域的工厂 bean 自己，而不是由 `getObject()` 返回的对象。
+
+### 1.6 定制 Bean 本质属性
+
+Spring Framework 提供了许多可用于自定义 bean 特性的接口。本节将它们分组如下：
+
+- [生命周期回调](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle)
+- [`ApplicationContextAware` and `BeanNameAware`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-aware)
+- [其它 `Aware` 接口](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#aware-list)
+
+#### 1.6.1 生命周期回调
+
+要与容器的 bean 生命周期管理进行交互，可以实现 Spring `InitializingBean` 和 `DisposableBean` 接口。容器为前者调用 `afterPropertiesSet()`，为后者调用 `destroy()`，在 bean 初始化和销毁时执行某些操作。
+
+> JSR-250 `@PostConstruc` t和 `@PreDestroy` 注解通常被认为是在现代 Spring 应用程序中接收生命周期回调的最佳实践。使用这些注释意味着您的 bean 不会耦合到特定于 Spring 的接口。有关详细信息，请参阅 [使用 `@PostConstruct` 和 `@PreDestroy`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-postconstruct-and-predestroy-annotations) 。
+>
+> 如果您不想使用 JSR-250 注解但仍想删除耦合，请考虑 `init-method` 和 `destroy-method`  bean定义元数据。
+
+在内部，Spring Framework 使用 `BeanPostProcessor` 实现来处理它可以找到的任何回调接口并调用适当的方法。如果您需要 Spring 默认提供的自定义功能或其他生命周期行为，您可以自己实现 `BeanPostProcessor` 。 有关更多信息，请参阅  [容器扩展点](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-extension) 。
+
+除了初始化和销毁回调之外，Spring 管理的对象还可以实现 `Lifecycle` 接口，以便这些对象可以参与启动和关闭过程，这是由容器自身的生命周期驱动的。
+
+本节描述了生命周期回调接口。
 
