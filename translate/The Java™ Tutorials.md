@@ -6942,3 +6942,54 @@ class XX extends X {
 
 最后，讨论了 `java.lang` 中的 `Math` 类。它包含数学函数，以补充语言中内置的运算符。该类具有三角函数，指数函数等方法。
 
+#### Numbers 类
+
+当我们使用数字时，大多数情况下都会使用基本数据类型。比如：
+
+
+
+````java
+int i = 500;
+float gpa = 3.65f;
+byte mask = 0xff;
+
+````
+
+不过，有理由使用对象而不使用基本数据类型，同时 Java 平台提供了 *wrapper* 类来包装所有的基本数据类型。这些类将基本数据类型*包装*进入对象。通常，该包装过程由编译器自动完成，如果你在期望一个对象的地方使用基本数据类型，编译器就会通过该基本数据类型的包装器对它进行*装箱*。类似的，如果你在期望基本数据类型的地方使用数字对象，编译器将会为你自动*拆箱*。更多信息，参考 [自动装箱和拆箱](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html)
+
+所有数值类型的包装器类都是抽象类 `Number` 的子类：
+
+![The class hierarchy of Number.](https://docs.oracle.com/javase/tutorial/figures/java/objects-numberHierarchy.gif)
+
+------
+
+**注意：** 另外还有四种 `Number` 的子类，这里不讨论。 `BigDecimal` 和 `BigInteger` 被用于高精度计算。`AtomicInteger` 和 `AtomicLong` 被用于多线程应用。
+
+------
+
+有三个理由佐证应该优先使用 `Number` 对象而不是基本数据类型：
+
+1. 作为期望对象的方法的参数（通常在操作数字集合时使用）。
+2. 使用由类定义的常量（如 `MIN_VALUE` 和 `MAX_VALUE`），它们提供数据类型的上限和下限。
+3. 使用类方法将值转换为其它基本数据类型，或者由其它数据类型转换而来，比如将数值转换为字符串或者从字符串转换来数值，以及在计数系统之间进行转换（十进制，八进制，十六进制，二进制）。
+
+下表列出了Number类的所有子类实现的实例方法。
+
+| 方法                                       | 描述                                       |
+| :--------------------------------------- | ---------------------------------------- |
+| `byte byteValue()`<br />`short shortValue()`<br />`int intValue()`<br />`long longValue()`<br />`float floatValue()`<br />`double doubleValue()` | 将 `Number` 对象转化未返回的基本数据类型。               |
+| `int compareTo(Byte anotherByte)`<br />`int compareTo(Double anotherDouble)`<br />`int compareTo(Float anotherFloat)`<br />`int compareTo(Integer anotherInteger)`<br />`int compareTo(Long anotherLong)`<br />`int compareTo(Short anotherShort)` | 将 `Number` 对象与参数比较。                      |
+| `boolean equals(Object obj)`             | 确定此数字对象是否等于参数。如果参数不为 `null` 并且是相同类型且具有相同数值的对象，则方法返回 `true`。对于 `Double` 和 `Float` 对象有一些额外要求，在 Java API 文档中描述。 |
+
+每个 `Number` 类都包含其他方法，这些方法可用于将数字转换为字符串以及转换为数字系统之间的数字。下表列出了 `Integer` 类中的这些方法。其他 `Number` 子类的方法类似：
+
+| 方法                                       | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| `static Integer decode(String s)`        | 将字符串解码为整数。 可以接受十进制，八进制或十六进制数字的字符串表示作为输入。 |
+| `static int parseInt(String s)`          | 返回一个整数（仅十进制）。                            |
+| `static int parseInt(String s, int radix)` | 给定十进制，二进制，八进制或十六进制（基数分别等于10、2、8 或 16）数字作为输入的字符串表示形式，返回一个整数。 |
+| `String toString()`                      | 返回表示此 `Integer` 值的 `String` 对象。          |
+| `static String toString(int i)`          | 返回表示指定整数的 `String` 对象。                   |
+| `static Integer valueOf(int i)`          | 返回包含指定基元值的 `Integer` 对象。                 |
+| `static Integer valueOf(String s)`       | 返回一个包含指定字符串表示形式值的 `Integer` 对象。          |
+| `static Integer valueOf(String s, int radix)` | 返回一个 `Integer` 对象，该对象包含指定字符串表示形式的整数值，并使用 `radix` 值进行解析。例如，如果 `s = "333"` 且 `radix = 8`，则该方法返回等于八进制数 `333` 的十进制整数。 |
