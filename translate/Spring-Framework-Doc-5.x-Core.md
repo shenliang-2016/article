@@ -2172,3 +2172,72 @@ The callback is invoked after population of normal bean properties but before an
 | `ServletContextAware`            | 容器运行的当前 `ServletContext`。仅在Web敏感的Spring `ApplicationContext` 中有效。 | [Spring MVC](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc) |
 
 请再次注意，使用这些接口会将您的代码绑定到Spring API，而不会遵循 `Inversion of Control` 风格。因此，我们建议将它们用于需要以编程方式访问容器的基础架构bean。
+
+### 1.7 Bean 定义继承
+
+bean定义可以包含许多配置信息，包括构造函数参数，属性值和特定于容器的信息，例如初始化方法，静态工厂方法名称等。子bean定义从父定义继承配置数据。子定义可以覆盖某些值或根据需要添加其他值。使用父bean和子bean定义可以节省大量的输入。实际上，这是一种模板形式。
+
+如果以编程方式使用 `ApplicationContext` 接口，则子bean定义由 `ChildBeanDefinition` 类表示。大多数用户不在此级别上使用它们。相反，它们在类（如 `ClassPathXmlApplicationContext`）中以声明方式配置bean定义。使用基于XML的配置元数据时，可以使用 `parent` 属性指定子bean定义，将父bean指定为此属性的值。以下示例显示了如何执行此操作：
+
+```xml
+<bean id="inheritedTestBean" abstract="true"
+        class="org.springframework.beans.TestBean">
+    <property name="name" value="parent"/>
+    <property name="age" value="1"/>
+</bean>
+
+<bean id="inheritsWithDifferentClass"
+        class="org.springframework.beans.DerivedTestBean"
+        parent="inheritedTestBean" init-method="initialize">  
+    <property name="name" value="override"/>
+    <!-- the age property value of 1 will be inherited from parent -->
+</bean>
+```
+
+如果没有指定，则bean定义使用父定义中的bean类，但也可以覆盖它。在后一种情况下，子bean类必须与父类兼容（即，它必须接受父类的属性值）。
+
+子bean定义从父级继承作用域，构造函数参数值，属性值和方法覆盖，并带有添加新值的选项。 您指定的任何作用域，初始化方法，销毁方法或静态工厂方法设置都会覆盖相应的父设置。
+
+其余设置始终取自子定义：依赖，`autowire` 模式，依赖性检查，单例和惰性初始化。
+
+前面的示例通过使用 `abstract` 属性将父bean定义显式标记为 `abstract`。如果父定义未指定类，则需要将父bean定义显式标记为 `abstract`，如以下示例所示：
+
+```xml
+<bean id="inheritedTestBeanWithoutClass" abstract="true">
+    <property name="name" value="parent"/>
+    <property name="age" value="1"/>
+</bean>
+
+<bean id="inheritsWithClass" class="org.springframework.beans.DerivedTestBean"
+        parent="inheritedTestBeanWithoutClass" init-method="initialize">
+    <property name="name" value="override"/>
+    <!-- age will inherit the value of 1 from the parent bean definition-->
+</bean>
+```
+
+父bean不能单独实例化，因为它不完整，并且也明确标记为 `abstract` 的。当定义是 `abstract` 的时，它仅可用作纯模板bean定义，用作子定义的父定义。尝试使用这样一个 `abstract` 的父bean，通过将它作为另一个bean的 `ref` 属性引用或者使用父bean ID进行显式 `getBean()` 调用会返回错误。类似地，容器的内部 `preInstantiateSingletons()` 方法忽略定义为 `abstract` 的bean定义。
+
+> `ApplicationContext` 默认情况下预先实例化所有单例。因此，重要的是（至少对于单例bean），如果你有一个（父）bean定义，而你只打算将其用作模板，并且这个定义指定了一个类，你必须确保将 `abstract` 属性设置为 `true` 。 否则应用程序上下文将实际（尝试）预先实例化该抽象bean。
+
+### 1.8 容器扩展点
+
+通常，应用程序开发人员不需要继承 `ApplicationContext` 实现类。相反，可以通过插入特殊集成接口的实现来扩展Spring IoC容器。接下来的几节将介绍这些集成接口。
+
+#### 1.8.1 使用 `BeanPostProcessor` 自定义Bean
+
+`BeanPostProcessor` 接口定义了可以实现的回调方法，以提供您自己的（或覆盖容器的默认）实例化逻辑，依赖关系解析逻辑等。如果要在Spring容器完成实例化，配置和初始化bean之后实现某些自定义逻辑，则可以插入一个或多个自定义 `BeanPostProcessor` 实现。
+
+您可以配置多个 `BeanPostProcessor` 实例，并且可以通过设置 `order` 属性来控制这些 `BeanPostProcessor` 实例的执行顺序。仅当 `BeanPostProcessor` 实现 `Ordered` 接口时，才能设置此属性。如果编写自己的 `BeanPostProcessor`，则应考虑实现 `Ordered` 接口。有关更多详细信息，请参阅 [`BeanPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html) 和 [`Ordered`](https://docs.spring.io/spring-framework/docs/5.1.5.RELEASE/javadoc-api/org/springframework/core/Ordered.html) 接口文档。另请参阅 [编程方式注册`BeanPostProcessor` 实例](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-programmatically-registering-beanpostprocessors) 。
+
+> `BeanPostProcessor` 实例操作bean（或对象）实例。也就是说，Spring IoC容器实例化一个bean实例，然后 `BeanPostProcessor` 实例完成它们的工作。
+>
+> `BeanPostProcessor` 实例的作用域是容器范围。仅当您使用容器层次结构时，这才是相关的。如果在一个容器中定义 `BeanPostProcessor`，它只对该容器中的bean进行后处理。换句话说，在一个容器中定义的bean不会被另一个容器中定义的 `BeanPostProcessor` 进行后处理，即使两个容器都是同一层次结构的一部分。
+>
+> 要更改实际的bean定义（即定义bean的蓝图），您需要使用 `BeanFactoryPostProcessor`，如 [Customizing Configuration Metadata with a 通过 `BeanFactoryPostProcessor` 定制配置元数据](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-extension-factory-postprocessors) 中所述。
+
+`org.springframework.beans.factory.config.BeanPostProcessor` 接口由两个回调方法组成。当这样的类被注册为容器的后处理器时，对于容器创建的每个bean实例，后处理器在容器初始化方法之前从容器中获取回调（例如 `InitializingBean.afterPropertiesSet()` 或在任何bean初始化回调之后调用任何声明的 `init` 方法）。后处理器可以对bean实例执行任何操作，包括完全忽略回调。bean后处理器通常检查回调接口，或者它可以用代理包装bean。一些Spring AOP基础结构类实现为bean后处理器，以便提供代理包装逻辑。
+
+`ApplicationContext` 自动检测在实现 `BeanPostProcessor` 接口的配置元数据中定义的任何bean。`ApplicationContext` 将这些bean注册为后处理器，以便在创建bean时可以稍后调用它们。Bean后处理器可以以与任何其他bean相同的方式部署在容器中。
+
+注意，在配置类上使用 `@Bean` 工厂方法声明 `BeanPostProcessor` 时，工厂方法的返回类型应该是实现类本身，或者至少是 `org.springframework.beans.factory.config.BeanPostProcessor` 接口，指示该bean的后处理器性质。否则， `ApplicationContext` 无法在完全创建之前按类型自动检测它。由于 `BeanPostProcessor` 需要尽早实例化以便应用于上下文中其他bean的初始化，因此这种早期类型检测至关重要。
+
