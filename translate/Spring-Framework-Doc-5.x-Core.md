@@ -2153,3 +2153,22 @@ The callback is invoked after population of normal bean properties but before an
 在普通bean属性的产生之后、在初始化回调之前调用的回调方法诸如 `InitializingBean`，`afterPropertiesSet` 或自定义 `init` 方法。
 
 #### 1.6.3  其它`Aware`接口
+
+除了 `ApplicationContextAware` 和 `BeanNameAware`（前面讨论过）之外，Spring还提供了一系列 `Aware` 接口，让bean向容器表明它们需要某种基础结构依赖性。作为一般规则，名称是依赖类型的良好指示。下表总结了最重要的 `Aware` 接口：
+
+| 名称                               | 依赖注入                                     | 解释                                       |
+| -------------------------------- | ---------------------------------------- | ---------------------------------------- |
+| `ApplicationContextAware`        | 声明 `ApplicationContext` 。                | [`ApplicationContextAware` and `BeanNameAware`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-aware) |
+| `ApplicationEventPublisherAware` | `ApplicationContext` 中包装的时间发布器。          | [Additional Capabilities of the `ApplicationContext`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#context-introduction) |
+| `BeanClassLoaderAware`           | 类加载器用来加载 bean 类。                         | [Instantiating Beans](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-class) |
+| `BeanFactoryAware`               | 声明 `BeanFactory` 。                       | [`ApplicationContextAware` and `BeanNameAware`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-aware) |
+| `BeanNameAware`                  | 声明 bean 的名称。                             | [`ApplicationContextAware` and `BeanNameAware`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#beans-factory-aware) |
+| `BootstrapContextAware`          | 资源适配器`BootstrapContext` 运行所在的容器。通常仅在JCA敏感的 `ApplicationContext` 实例中可用。 | [JCA CCI](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/integration.html#cci) |
+| `LoadTimeWeaverAware`            | 定义的weaver用于在加载时处理类定义。                    | [Load-time Weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) |
+| `MessageSourceAware`             | 用于解析消息的已配置策略（支持参数化和国际化）。                 | [Additional Capabilities of the `ApplicationContext`](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#context-introduction) |
+| `NotificationPublisherAware`     | Spring JMX 通知发布器。                        | [Notifications](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/integration.html#jmx-notifications) |
+| `ResourceLoaderAware`            | 配置的加载程序，用于对资源进行低级访问。                     | [Resources](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/core.html#resources) |
+| `ServletConfigAware`             | 容器运行的当前 `ServletConfig`。仅在Web敏感的Spring `ApplicationContext` 中有效。 | [Spring MVC](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc) |
+| `ServletContextAware`            | 容器运行的当前 `ServletContext`。仅在Web敏感的Spring `ApplicationContext` 中有效。 | [Spring MVC](https://docs.spring.io/spring/docs/5.1.5.RELEASE/spring-framework-reference/web.html#mvc) |
+
+请再次注意，使用这些接口会将您的代码绑定到Spring API，而不会遵循 `Inversion of Control` 风格。因此，我们建议将它们用于需要以编程方式访问容器的基础架构bean。
