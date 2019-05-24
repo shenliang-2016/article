@@ -6993,3 +6993,62 @@ byte mask = 0xff;
 | `static Integer valueOf(int i)`          | 返回包含指定基元值的 `Integer` 对象。                 |
 | `static Integer valueOf(String s)`       | 返回一个包含指定字符串表示形式值的 `Integer` 对象。          |
 | `static Integer valueOf(String s, int radix)` | 返回一个 `Integer` 对象，该对象包含指定字符串表示形式的整数值，并使用 `radix` 值进行解析。例如，如果 `s = "333"` 且 `radix = 8`，则该方法返回等于八进制数 `333` 的十进制整数。 |
+
+#### 格式化数字输出
+
+之前您已经看到使用 `print` 和 `println` 方法将字符串打印到标准输出（ `System.out` ）。由于所有数字都可以转换为字符串（您将在本课后面看到），因此您可以使用这些方法打印出字符串和数字的任意组合。但是，Java编程语言还有其他方法，可以在包含数字时对打印输出进行更多控制。
+
+**`printf` 和 `Print` 方法**
+
+`java.io` 包中包含一个 `PrintStream` 类，它有两种格式化方法可用于替换 `print` 和 `println`。这些方法，`format` 和 `printf`，彼此相同。您一直使用的熟悉的 `System.out` 恰好是 `PrintStream` 对象，因此您可以在 `System.out` 上调用 `PrintStream` 方法。因此，您可以在您之前使用 `print` 或 `println` 的代码中的任何位置使用 `format` 或 `printf`。例如：
+
+```java
+System.out.format(.....);
+```
+
+两种 [`java.io.PrintStream`](https://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html) 方法的语法是相同的：
+
+```java
+public PrintStream format(String format, Object... args)
+```
+
+其中 `format` 是一个字符串，用于指定要使用的格式，`args` 是要使用该格式打印的变量列表。一个简单的例子：
+
+```java
+System.out.format("The value of " + "the float variable is " +
+     "%f, while the value of the " + "integer variable is %d, " +
+     "and the string is %s", floatVar, intVar, stringVar); 
+```
+
+第一个参数 `format` 是一个格式字符串，指定如何格式化第二个参数 `args` 中的对象。格式字符串包含纯文本和格式说明符，它们是格式化 `Object ... args`参数的特殊字符。（符号 `Object ... args` 称为 `varargs`，这意味着参数的数量可能会有所不同。）
+
+格式说明符以百分号（％）开头，以*转换器*结束。转换器是一个字符，指示要格式化的参数类型。在百分号（％）和转换器之间，您可以使用可选的标志和说明符。[`java.util.Formatter`](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) 中记录了许多转换器，标志和说明符.
+
+基本的例子：
+
+```java
+int i = 461012;
+System.out.format("The value of i is: %d%n", i);
+```
+
+`％d` 指定单个变量是十进制整数。`％n` 是与平台无关的换行符。输出是：
+
+```java
+The value of i is: 461012
+```
+
+`printf` 和 `format` 方法被重载。每个版本都有一个具有以下语法的版本：
+
+```java
+public PrintStream format(Locale l, String format, Object... args)
+```
+
+例如，要在法语系统中打印数字（使用逗号代替浮点数的英文表示中的小数位），您将使用：
+
+```java
+System.out.format(Locale.FRANCE,
+    "The value of the float " + "variable is %f, while the " +
+    "value of the integer variable " + "is %d, and the string is %s%n", 
+    floatVar, intVar, stringVar); 
+```
+
