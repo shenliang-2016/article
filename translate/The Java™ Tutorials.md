@@ -7052,3 +7052,117 @@ System.out.format(Locale.FRANCE,
     floatVar, intVar, stringVar); 
 ```
 
+**例子**
+
+下表列出了表格后面的示例程序 `TestFormat.java` 中使用的一些转换器和标志。
+
+| 转换器    | 标识   | 解释                                       |
+| ------ | ---- | ---------------------------------------- |
+| d      |      | 一个十进制整数。                                 |
+| f      |      | 一个浮点数。                                   |
+| n      |      | 对应于运行应用程序的平台的新行字符。您应该始终使用 `％n`，而不是 `\n`。 |
+| tB     |      | 日期和时间转换 - 特定于语言环境的月份全名。                  |
+| td, te |      | 日期和时间转换 - 每月2位数的日期。`td` 根据需要有前导零，`te` 没有。 |
+| ty, tY |      | 日期和时间转换- `ty = 2` 位数年份，`tY = 4` 位数年份。    |
+| tl     |      | 12小时制的日期和时间转换小时。                         |
+| tM     |      | 日期和时间转换 - 以2位数分钟，必要时带前导零。                |
+| tp     |      | 日期和时间转换 - 特定于语言环境的上午/下午（小写）。             |
+| tm     |      | 日期和时间转换 - 以2位数字表示的月份，必要时带有前导零。           |
+| tD     |      | 日期和时间转换-日期为 `％tm％td％ty`                  |
+|        | 08   | 宽度为八个字符，必要时带前导零。                         |
+|        | +    | 包含符号，正或者负号。                              |
+|        | ,    | 包括特定于语言环境的分组字符。                          |
+|        | -    | 左对齐..                                    |
+|        | .3   | 小数点后三位。                                  |
+|        | 10.3 | 宽度为十个字符，右对齐，小数点后三位。                      |
+
+以下程序显示了您可以使用格式进行的一些格式化。输出显示在嵌入注释中的双引号内：
+
+```java
+import java.util.Calendar;
+import java.util.Locale;
+
+public class TestFormat {
+    
+    public static void main(String[] args) {
+      long n = 461012;
+      System.out.format("%d%n", n);      //  -->  "461012"
+      System.out.format("%08d%n", n);    //  -->  "00461012"
+      System.out.format("%+8d%n", n);    //  -->  " +461012"
+      System.out.format("%,8d%n", n);    // -->  " 461,012"
+      System.out.format("%+,8d%n%n", n); //  -->  "+461,012"
+      
+      double pi = Math.PI;
+
+      System.out.format("%f%n", pi);       // -->  "3.141593"
+      System.out.format("%.3f%n", pi);     // -->  "3.142"
+      System.out.format("%10.3f%n", pi);   // -->  "     3.142"
+      System.out.format("%-10.3f%n", pi);  // -->  "3.142"
+      System.out.format(Locale.FRANCE,
+                        "%-10.4f%n%n", pi); // -->  "3,1416"
+
+      Calendar c = Calendar.getInstance();
+      System.out.format("%tB %te, %tY%n", c, c, c); // -->  "May 29, 2006"
+
+      System.out.format("%tl:%tM %tp%n", c, c, c);  // -->  "2:34 am"
+
+      System.out.format("%tD%n", c);    // -->  "05/29/06"
+    }
+}
+```
+
+------
+
+**注意：**本节中的讨论仅涵盖 `format` 和 `printf` 方法的基础知识。更多详细信息可以在 Essential trail 的 [`Basic I/O` ](https://docs.oracle.com/javase/tutorial/essential/io/formatting.html) 部分的“Formatting”页面中找到。
+
+使用String.format创建字符串在 [Strings](https://docs.oracle.com/javase/tutorial/java/data/strings.html) 中介绍。
+
+------
+
+**`DecimalFormat` 类**
+
+您可以使用 [`java.text.DecimalFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html)来控制前导和尾随零，前缀和后缀，分组（千分位）分隔符和小数分隔符的显示。`DecimalFormat` 在数字格式化方面提供了极大的灵活性，但它可以使您的代码更复杂。
+
+下面的示例通过将模式字符串传递给 `DecimalFormat` 构造函数来创建 `DecimalFormat` 对象 `myFormatter` 。然后，`myFormatter` 调用 `format()` 方法，`DecimalFormat` 继承自 `NumberFormat`，它接受 `double` 值作为参数，并返回字符串中的格式化数字：
+
+这是一个示例程序，演示了 `DecimalFormat` 的用法：
+
+```java
+import java.text.*;
+
+public class DecimalFormatDemo {
+
+   static public void customFormat(String pattern, double value ) {
+      DecimalFormat myFormatter = new DecimalFormat(pattern);
+      String output = myFormatter.format(value);
+      System.out.println(value + "  " + pattern + "  " + output);
+   }
+
+   static public void main(String[] args) {
+
+      customFormat("###,###.###", 123456.789);
+      customFormat("###.##", 123456.789);
+      customFormat("000000.000", 123.78);
+      customFormat("$###,###.###", 12345.67);  
+   }
+}
+```
+
+输出：
+
+```shell
+123456.789  ###,###.###  123,456.789
+123456.789  ###.##  123456.79
+123.78  000000.000  000123.780
+12345.67  $###,###.###  $12,345.67
+```
+
+对输出的解释：
+
+| 值          | 模式           | 输出          | 解释                                       |
+| ---------- | ------------ | ----------- | ---------------------------------------- |
+| 123456.789 | ###,###.###  | 123,456.789 | 井号（＃）表示一个数字，逗号是分组分隔符的占位符，句点是小数分隔符的占位符。   |
+| 123456.789 | ###.##       | 123456.79   | `value` 在小数点右侧有三位数，但 `pattern` 只有两位。`format` 方法通过舍入来处理这个问题。 |
+| 123.78     | 000000.000   | 000123.780  | `pattern`指定前导零和尾随零，因为使用0字符而不是井号（＃）。      |
+| 12345.67   | $###,###.### | $12,345.67  | `pattern`中的第一个字符是美元符号（$）。 请注意，它紧接在格式化 `output` 中最左边的数字之前。 |
+
