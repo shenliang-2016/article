@@ -3395,15 +3395,56 @@ Range = "Range" ":" ranges-specifier
 
 如果支持 `Range` 请求的代理接收到 `Range` 请求，将请求转发到入站服务器，并接收整个实体作为回复，则它应该只将请求的范围返回给其客户端。如果与其缓存分配策略一致，它应该将整个收到的响应存储在其缓存中。
 
+## 14.36 Referer
 
+`Referer` 请求首部字段允许客户端为服务器的偏好指定地址（URI）来获取 `Request-URI` 指定的资源（“referrer”，尽管该首部字段拼写错误。）`Referer` 请求首部字段允许服务器生成对感兴趣的资源，日志以及优化的缓存的反向链接列表。它还允许跟踪过时或错误的链接以进行维护。 如果 `Request-URI` 是从没有自己的 URI 的源获取的，则该首部字段就绝对不能被发送。例如来自用户键盘的输入。
 
+````shell
+Referer		= "Referer" ":" ( absoluteURI | relativeURI )
+````
 
+例如：
 
+````
+Referer: http://www.w3.org/hypertext/DataSources/Overview.html
+````
 
+如果字段值是一个相对 URI，则它应该是相对于 `Request-URI`。该 URI 绝对不能包含一个片段。参考 15.1.3 了解更多安全考量。
 
+## 14.37 Retry-After
 
+`Retry-After` 响应首部字段可与 503（Service Unavailable）响应一起使用以表示服务预计对请求客户端不可用的时间长度。该字段也可以与任何 3xx （Redirection）响应一起使用，指示在发出重定向之前要求用户代理等待的最短时间。此字段的值可以是 HTTP 日期，也可以是整数秒（十进制）表示响应之后的时间。
 
+````
+Retry-After	 = "Retry-After" ":" ( HTTP-date | delta-seconds )
+````
 
+例子：
+
+````
+Retry-After: Fri, 31 Dec 1999 23:59:59 GMT
+Retry-After: 120
+````
+
+后一个例子中，延迟是 2 分钟。
+
+## 14.38 Server
+
+`Server` 响应首部字段包含有关初始服务器用于处理请求的软件的信息。该字段可以包含多个产品标识和商标，以及所有的子产品商标等。这些信息按照重要程度排列：
+
+````
+Server 	= "Server" ":" 1*( product | comment )
+````
+
+例子：
+
+````
+Server: CERN/3.0 libwww/2.17
+````
+
+如果该响应正在被转发通过一个代理，该代理程序绝对不能修改该 `Server` 响应首部字段。同时，它应该包含一个 `Via` 字段。
+
+注意：显示服务器的特定软件版本可能会使服务器计算机变得更容易受到已知包含安全漏洞的软件的攻击。服务器实现鼓励将此字段设为可配置选项。
 
 
 
