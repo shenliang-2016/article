@@ -3475,6 +3475,44 @@ TE: trailers, deflate;q=0.5
 
 如果`TE`字段值为空或者如果不存在`TE`字段，则唯一的传输编码是“chunked”。 一条消息没有传输编码总是可以接受的。
 
+## 14.40 Trailer
+
+`Trailer` 通用字段值表示出现在分片传输编码的消息`trailer`中的给定的首部字段集合。
+
+````
+Trailer		= "Trailer" ":" 1#field-name
+````
+
+HTTP/1.1 消息应该在使用分片传输编码并携带非空 `trailer` 的消息中包含一个 `Trailer` 首部字段。这样做允许消息接收方了解期望接受`trailer`中哪个字段。
+
+如果`Trailer`首部字段出现，该`trailer`不应该包含任何首部字段。参考 3.6.1 章节中在 `chunked` 传输编码中使用`trailer`的限制条件。
+
+`Trailer`首部字段中列出的消息首部字段绝对不能包含：
+
+* `Transfer=Encoding`
+* `Content-Length`
+* `Trailer`
+
+## 14.41 Transfer-Encoding
+
+`Transfer-Encoding`通用首部字段表示为了保证消息传输的安全性而对消息体应用了何种转换。与`content-coding` 的区别在于，传输编码是消息的一个属性，而不是实体的。
+
+````
+Transfer-Encoding		= "Transfer-Encoding" ":" 1#transfer-coding
+````
+
+例子：
+
+````
+Transfer-Encoding: chunked
+````
+
+如果多个编码已经被应用于一个实体，则传输编码必须按照应用顺序列出。有关编码参数的附加信息可以通过其他本规范没有定义的实体首部字段给出。
+
+很多老版本的 HTTP/1.0 应用都不理解`Transfer-Encoding`首部字段。
+
+## 14.42 Upgrade
+
 
 
 
