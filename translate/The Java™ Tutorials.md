@@ -2,7 +2,7 @@
 
 [主页](https://docs.oracle.com/javase/tutorial/index.html)
 
-#Java教程学习路径
+## Java教程学习路径
 
 > Java教程是为JDK 8编写的。本页描述的示例和实践没有利用后续版本中引入的改进。
 
@@ -7251,4 +7251,137 @@ The rint of 43.74 is 44
 The max of 16 and 45 is 45
 The min of 16 and 45 is 16
 ````
+
+**指数和对数方法**
+
+下面列出了`Math`类中的指数和对数方法。
+
+| 方法                                       | 描述                                |
+| ------------------------------------------ | ----------------------------------- |
+| `double exp(double d)`                     | 返回自然对数的底数，e，参数值次幂。 |
+| `double log(double d)`                     | 返回参数的自然对数。                |
+| `double pow(double base, double exponent)` | 返回第一个参数的第二个参数值次幂。  |
+| `double sqrt(double d)`                    | 返回参数的平方根。                  |
+
+下面是实例：
+
+````java
+public class ExponentialDemo {
+    public static void main(String[] args) {
+        double x = 11.635;
+        double y = 2.76;
+
+        System.out.printf("The value of " + "e is %.4f%n",
+                          Math.E);
+
+        System.out.printf("exp(%.3f) " + "is %.3f%n",
+                          x, Math.exp(x));
+
+        System.out.printf("log(%.3f) is " + "%.3f%n",
+                          x, Math.log(x));
+
+        System.out.printf("pow(%.3f, %.3f) " + "is %.3f%n",
+                          x, y, Math.pow(x, y));
+
+        System.out.printf("sqrt(%.3f) is " + "%.3f%n",
+                          x, Math.sqrt(x));
+    }
+}
+````
+
+输出：
+
+````shell
+The value of e is 2.7183
+exp(11.635) is 112983.831
+log(11.635) is 2.454
+pow(11.635, 2.760) is 874.008
+sqrt(11.635) is 3.411
+````
+
+**三角函数方法**
+
+`Math`类同时提供了一系列三角函数方法，如下面表中所示。这些方法的参数是弧度表示的角。你可以通过`toRadians`方法将角度转化为弧度。
+
+| 方法                                                         | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `double sin(double d)`                                       | 返回给定双精度值的正弦值。                                   |
+| `double cos(double d)`                                       | 返回给定双精度值的余弦值。                                   |
+| `double tan(double d)`                                       | 返回给定双精度值的正切值。                                   |
+| `double asin(double d)`                                      | 返回给定双精度值的正割值。                                   |
+| `double acos(double d)`                                      | 返回给定双精度值的余割值。                                   |
+| `double atan(double d)`                                      | 返回给定双精度值的余切值。                                   |
+| `double atan2(double y, double x)`                           | 将直角坐标 `(x, y)` 转换为极坐标 `(r, theta)` 并返回 `theta`。 |
+| `double toDegrees(double d)`<br />`double toRadians(double d)` | 将参数转换为角度或者弧度。                                   |
+
+下面是一个实例：
+
+````java
+public class TrigonometricDemo {
+    public static void main(String[] args) {
+        double degrees = 45.0;
+        double radians = Math.toRadians(degrees);
+        
+        System.out.format("The value of pi " + "is %.4f%n",
+                           Math.PI);
+
+        System.out.format("The sine of %.1f " + "degrees is %.4f%n",
+                          degrees, Math.sin(radians));
+
+        System.out.format("The cosine of %.1f " + "degrees is %.4f%n",
+                          degrees, Math.cos(radians));
+
+        System.out.format("The tangent of %.1f " + "degrees is %.4f%n",
+                          degrees, Math.tan(radians));
+
+        System.out.format("The arcsine of %.4f " + "is %.4f degrees %n", 
+                          Math.sin(radians), 
+                          Math.toDegrees(Math.asin(Math.sin(radians))));
+
+        System.out.format("The arccosine of %.4f " + "is %.4f degrees %n", 
+                          Math.cos(radians),  
+                          Math.toDegrees(Math.acos(Math.cos(radians))));
+
+        System.out.format("The arctangent of %.4f " + "is %.4f degrees %n", 
+                          Math.tan(radians), 
+                          Math.toDegrees(Math.atan(Math.tan(radians))));
+    }
+}
+````
+
+输出：
+
+````shell
+The value of pi is 3.1416
+The sine of 45.0 degrees is 0.7071
+The cosine of 45.0 degrees is 0.7071
+The tangent of 45.0 degrees is 1.0000
+The arcsine of 0.7071 is 45.0000 degrees
+The arccosine of 0.7071 is 45.0000 degrees
+The arctangent of 1.0000 is 45.0000 degrees
+````
+
+**随机数**
+
+`random()`方法返回一个从 0.0 到 1.0 之间选择的伪随机数。取值范围包含 0.0 但不包含 1.0 。换句话说，`0.0 <= Math.random() < 1.0`。为了获取其它取值范围的随机数，你可以对该方法返回值进行算数运算。比如，获取 0 到 9 之间的随机数：
+
+````java
+int number = (int)(Math.random() * 10);
+````
+
+通过将返回值乘以 10，可能的取值范围变成`0.0 <= number < 10.0` 。
+
+使用`Math.random()`方法可以方便地产生单个的随机数。如果你需要产生随机数序列，你应该创建`java.util.Random`实例并调用该对象上的方法来产生随机数序列。
+
+#### Numbers 小结
+
+您可以使用其中一个包装类--`Byte`，`Double`，`Float`，`Integer`，`Long`或`Short`  - 来在对象中包装许多基本类型。Java编译器会在必要时自动为您包装（装箱）基本数据类型，并在必要时再将其解包。
+
+`Number`类包括常量和有用的类方法。`MIN_VALUE`和`MAX_VALUE`常量包含该类型对象可以包含的最小值和最大值。`byteValue`，`shortValue`和类似方法将一种数字类型转换为另一种数字类型。`valueOf`方法将字符串转换为数字，`toString`方法将数字转换为字符串。
+
+要格式化包含输出数字的字符串，可以使用`PrintStream`类中的`printf()`或`format()`方法。或者，您可以使用`NumberFormat`类使用模式自定义数字格式。
+
+`Math`类包含用于执行数学函数的各种类方法，包括指数，对数和三角方法。`Math`还包括基本算术函数，例如绝对值和舍入，以及用于生成随机数的方法`random()`。
+
+### 字符
 
