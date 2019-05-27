@@ -7166,3 +7166,89 @@ public class DecimalFormatDemo {
 | 123.78     | 000000.000   | 000123.780  | `pattern`指定前导零和尾随零，因为使用0字符而不是井号（＃）。      |
 | 12345.67   | $###,###.### | $12,345.67  | `pattern`中的第一个字符是美元符号（$）。 请注意，它紧接在格式化 `output` 中最左边的数字之前。 |
 
+#### 超越基本算数
+
+Java编程语言支持基本算术及其算术运算符：+， - ，*，/和％。`java.lang`包中的`Math`类提供了用于执行更高级数学计算的方法和常量。
+
+`Math` 类中的方法都是`static`的，因此你可以直接从类调用它们，例如：
+
+```java
+Math.cos(angle);
+```
+
+------
+
+**注意：** 使用 `static import` 语言特性，你不必在每个数学方法前面写上`Math`：
+
+```java
+import static java.lang.Math.*;
+```
+
+这就允许你使用简单方法名称调用 `Math` 类方法，比如：
+
+````java
+cos(angle);
+````
+
+------
+
+**常量和基础方法**
+
+`Math` 类包含两个常量：
+
+* `Math.E`，自然对数的底数
+* `Math.PI`，圆周率
+
+`Math` 类包含超过 40 个`static`方法。下面列出了大量基础方法。
+
+| 方法                                       | 描述                        |
+| ---------------------------------------- | ------------------------- |
+| `double abs(double d)`<br />`float abs(float f)`<br />`int abs(int i)`<br />`long abs(long lng)` | 返回参数的绝对值。                 |
+| `double ceil(double d)`                  | 返回大于等于参数的最小整数，作为双精度浮点数返回。 |
+| `double floor(double d)`                 | 返回小于等于参数的最大整数，作为双精度浮点数返回。 |
+| `double rint(double d)`                  | 返回最接近参数值的整数，作为双精度浮点数返回。   |
+| `long round(double d)`<br />`int round(float f)` | 返回最接近参数值的长整型数或者整数。        |
+| `double min(double arg1, double arg2)`<br />`float min(float arg1, float arg2)`<br />`int min(int arg1, int arg2)`<br />`long min(long arg1, long arg2)` | 返回两个参数中较小的哪个。             |
+| `double max(double arg1, double arg2)`<br />`float max(float arg1, float arg2)`<br />`int max(int arg1, int arg2)`<br />`long max(long arg1, long arg2)` | 返回两个参数中较大的那个。             |
+
+下面是个示例程序：
+
+````java
+public class BasicMathDemo {
+    public static void main(String[] args) {
+        double a = -191.635;
+        double b = 43.74;
+        int c = 16, d = 45;
+
+        System.out.printf("The absolute value " + "of %.3f is %.3f%n", 
+                          a, Math.abs(a));
+
+        System.out.printf("The ceiling of " + "%.2f is %.0f%n", 
+                          b, Math.ceil(b));
+
+        System.out.printf("The floor of " + "%.2f is %.0f%n", 
+                          b, Math.floor(b));
+
+        System.out.printf("The rint of %.2f " + "is %.0f%n", 
+                          b, Math.rint(b));
+
+        System.out.printf("The max of %d and " + "%d is %d%n",
+                          c, d, Math.max(c, d));
+
+        System.out.printf("The min of of %d " + "and %d is %d%n",
+                          c, d, Math.min(c, d));
+    }
+}
+````
+
+输出：
+
+````shell
+The absolute value of -191.635 is 191.635
+The ceiling of 43.74 is 44
+The floor of 43.74 is 43
+The rint of 43.74 is 44
+The max of 16 and 45 is 45
+The min of 16 and 45 is 16
+````
+
