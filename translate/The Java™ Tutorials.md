@@ -7400,3 +7400,45 @@ Character ch = new Character('a');
 ````
 某些环境下，Java编译器会为你创建`Character`对象。比如，如果你向期望对象参数的方法传递一个`char`类型值，编译器会自动将`char`包装为`Character`。这种特性叫做自动装箱/拆箱。更多有关信息，参考  [自动装箱/拆箱](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html) 。
 
+------
+
+**注意：** `Character`类是不可变的，因此，一旦该类对象被创建出来，就不能修改了。
+
+------
+
+下面的表列出了`Character`类中最有用的一些方法，当然不仅仅是这些方法。完整的方法列表参考 [java.lang.Character](https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html) API  规范。
+
+| 方法                                       | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| `boolean isLetter(char ch)`<br />`boolean isDigit(char ch)` | 确定给定的字符是否是字母还是数字。                        |
+| `boolean isWhitespace(char ch)`          | 确定给定字符是否是空白字符。                           |
+| `boolean isUpperCase(char ch)boolean`<br /> `isLowerCase(char ch)` | 确定给定的字符值是否是大写或者小写。                       |
+| `char toUpperCase(char ch)`<br />`char toLowerCase(char ch)` | 返回给定字符值得大写或者小写形式。                        |
+| `toString(char ch)`                      | 返回一个 `String` 对象表示给定的字符值，也就是返回包含单个字符的字符串。 |
+
+**转义序列**
+
+由反斜杠`\`引导的字符是所谓的转义序列，对编译器有特定含义。下面列出了一些Java中的转义序列：
+
+| 转义序列 | 描述              |
+| ---- | --------------- |
+| `\t` | 在当前位置插入一个`tab`。 |
+| `\b` | 在当前位置插入一个回删。    |
+| `\n` | 在当前位置插入一个新行。    |
+| `\r` | 在当前位置插入一个回车换行。  |
+| `\f` | 在当前位置插入换页符。     |
+| `\'` | 在当前位置插入单引号。     |
+| `\"` | 在当前位置插入双引号。     |
+| `\\` | 在当前位置插入反斜杠字符。   |
+
+当转义序列出现在打印语句中时，编译器会相应解读它们。比如，如果你想要输出包含双引号的字符串，你就必须使用转义序列`\"`, 如下所示：
+
+```
+She said "Hello!" to me.
+```
+
+你需要这样写：
+
+```java
+System.out.println("She said \"Hello!\" to me.");
+```
