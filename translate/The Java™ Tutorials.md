@@ -7256,12 +7256,12 @@ The min of 16 and 45 is 16
 
 下面列出了`Math`类中的指数和对数方法。
 
-| 方法                                       | 描述                                |
-| ------------------------------------------ | ----------------------------------- |
-| `double exp(double d)`                     | 返回自然对数的底数，e，参数值次幂。 |
-| `double log(double d)`                     | 返回参数的自然对数。                |
+| 方法                                       | 描述                 |
+| ---------------------------------------- | ------------------ |
+| `double exp(double d)`                   | 返回自然对数的底数，e，参数值次幂。 |
+| `double log(double d)`                   | 返回参数的自然对数。         |
 | `double pow(double base, double exponent)` | 返回第一个参数的第二个参数值次幂。  |
-| `double sqrt(double d)`                    | 返回参数的平方根。                  |
+| `double sqrt(double d)`                  | 返回参数的平方根。          |
 
 下面是实例：
 
@@ -7303,16 +7303,16 @@ sqrt(11.635) is 3.411
 
 `Math`类同时提供了一系列三角函数方法，如下面表中所示。这些方法的参数是弧度表示的角。你可以通过`toRadians`方法将角度转化为弧度。
 
-| 方法                                                         | 描述                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `double sin(double d)`                                       | 返回给定双精度值的正弦值。                                   |
-| `double cos(double d)`                                       | 返回给定双精度值的余弦值。                                   |
-| `double tan(double d)`                                       | 返回给定双精度值的正切值。                                   |
-| `double asin(double d)`                                      | 返回给定双精度值的正割值。                                   |
-| `double acos(double d)`                                      | 返回给定双精度值的余割值。                                   |
-| `double atan(double d)`                                      | 返回给定双精度值的余切值。                                   |
-| `double atan2(double y, double x)`                           | 将直角坐标 `(x, y)` 转换为极坐标 `(r, theta)` 并返回 `theta`。 |
-| `double toDegrees(double d)`<br />`double toRadians(double d)` | 将参数转换为角度或者弧度。                                   |
+| 方法                                       | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| `double sin(double d)`                   | 返回给定双精度值的正弦值。                            |
+| `double cos(double d)`                   | 返回给定双精度值的余弦值。                            |
+| `double tan(double d)`                   | 返回给定双精度值的正切值。                            |
+| `double asin(double d)`                  | 返回给定双精度值的正割值。                            |
+| `double acos(double d)`                  | 返回给定双精度值的余割值。                            |
+| `double atan(double d)`                  | 返回给定双精度值的余切值。                            |
+| `double atan2(double y, double x)`       | 将直角坐标 `(x, y)` 转换为极坐标 `(r, theta)` 并返回 `theta`。 |
+| `double toDegrees(double d)`<br />`double toRadians(double d)` | 将参数转换为角度或者弧度。                            |
 
 下面是一个实例：
 
@@ -7384,4 +7384,19 @@ int number = (int)(Math.random() * 10);
 `Math`类包含用于执行数学函数的各种类方法，包括指数，对数和三角方法。`Math`还包括基本算术函数，例如绝对值和舍入，以及用于生成随机数的方法`random()`。
 
 ### 字符
+
+大多数时候，如果你使用一个单独的字符值，你可以使用基本数据类型`char`。比如：
+````java
+char ch = 'a'; 
+// Unicode for uppercase Greek omega character
+char uniChar = '\u03A9';
+// an array of chars
+char[] charArray = { 'a', 'b', 'c', 'd', 'e' };
+````
+不过，有些时候，你需要将一个字符作为一个对象使用。比如，作为一个期望一个对象参数的方法的参数。Java提供了一个包装类来将`char`包装为`Character`对象。`Character`类对象包含一个单独的字段，该字段类型为`char`。此字符类还提供一系列有用的方法来操作它。
+你可以利用`Character`构造器创建`Character`对象：
+````java
+Character ch = new Character('a');
+````
+某些环境下，Java编译器会为你创建`Character`对象。比如，如果你向期望对象参数的方法传递一个`char`类型值，编译器会自动将`char`包装为`Character`。这种特性叫做自动装箱/拆箱。更多有关信息，参考  [自动装箱/拆箱](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html) 。
 
