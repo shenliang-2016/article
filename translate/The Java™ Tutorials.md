@@ -7442,3 +7442,172 @@ She said "Hello!" to me.
 ```java
 System.out.println("She said \"Hello!\" to me.");
 ```
+
+### 字符串
+
+字符串在Java语言中广泛应用，是一个字符序列。在 Java 编程语言中，字符串是对象。
+
+Java 平台提供 `String` 类来创建和操作字符串。
+
+**创建字符串**
+
+最直接的创建字符串：
+
+````java
+String greeting = "Hello world!";
+````
+
+这个例子中，“Hello world!”是一个字符串字面量—代码中由双引号包围起来的字符序列。无论何时，只要一个字符串字面量出现在代码中，编译器就会根据它的值创建 `String` 对象。这个例子中的 `Hello world!`。
+
+像其它对象一样，你也可以使用`new`关键字和构造器来创建字符串。`String`类拥有13个构造器来允许你提供各种形式的初始值来创建字符串，比如字符数组等：
+
+````java
+char[] helloArray = { 'h', 'e', 'l', 'l', 'o', '.' };
+String helloString = new String(helloArray);
+System.out.println(helloString);
+````
+
+最后一行代码输出“hello”。
+
+------
+
+**注意：** `String`类是不可变的，因此`String`对象一旦创建就不能改变了。该类包含大量的方法，接下来会讨论其中一些，看起来会修改字符串。由于字符串是不可变的，这些方法实际上是创建并返回一个新的包含操作结果的字符串。
+
+------
+
+**字符串长度**
+
+用来获取对象信息的方法被称为访问器方法。你可以对字符串使用的一个访问器方法是`length()`，返回字符串对象包含的字符数量。下面两行代码执行之后，`len`等于17：
+
+````java
+String palindrome = "Dot saw I was Tod";
+int len = palindrome.length();
+````
+
+回文指的是对称的单词或者语句。下面是一个遍历回文的方法，它调用`String`的`charAt()`方法，该方法返回字符串中的第 i 个字符。
+
+````java
+public class StringDemo {
+    public static void main(String[] args) {
+        String palindrome = "Dot saw I was Tod";
+        int len = palindrome.length();
+        char[] tempCharArray = new char[len];
+        char[] charArray = new char[len];
+        
+        // put original string in an 
+        // array of chars
+        for (int i = 0; i < len; i++) {
+            tempCharArray[i] = 
+                palindrome.charAt(i);
+        } 
+        
+        // reverse array of chars
+        for (int j = 0; j < len; j++) {
+            charArray[j] =
+                tempCharArray[len - 1 - j];
+        }
+        
+        String reversePalindrome =
+            new String(charArray);
+        System.out.println(reversePalindrome);
+    }
+}
+````
+
+输出：
+
+````
+doT saw I was toD
+````
+
+为了实现字符串遍历，该程序将字符串转化为一个字符数组，随后又恢复成为字符串。`String`包含一个方法`getChars()`，可以将一个字符串或者一个字符串的一部分转换为字符数组，因此可以将上面例子中第一个循环修改为：
+
+```
+palindrome.getChars(0, len, tempCharArray, 0);
+```
+
+**串联字符串**
+
+`String`包含连接两个字符串的方法：
+
+````java
+string1.concat(string2); 
+````
+
+返回一个新字符串，其中字符串2连接在字符串1后面。
+
+你也可以使用`concat()`方法连接字符串字面量：
+
+````java
+"My name is ".concat("Rumplestiltskin");
+````
+
+更常见的连接是`+`操作符：
+
+````
+"Hello," + " world" + "!"
+````
+
+结果是：
+
+```
+"Hello, world!"
+```
+
+ `+` 操作符被普遍用在 `print` 语句中。比如：
+
+```java
+String string1 = "saw I was ";
+System.out.println("Dot " + string1 + "Tod");
+```
+
+打印：
+
+```
+Dot saw I was Tod
+```
+
+这种连接可以在任何对象之间进行，如果对象不是字符串，则其`toString()`方法会被调用将其转化为`String`。
+
+------
+
+**注意：** Java 语言不允许源文件中的字符串字面量跨越多行，所以你必须在每行的末尾使用`+`来连接：
+
+````java
+String quote = 
+    "Now is the time for all good " +
+    "men to come to the aid of their country.";
+````
+
+这种用法在打印语句中也很常见。
+
+------
+
+**创建格式化字符串**
+
+你已经看到过通过 `printf()` 和 `format()` 方法来格式化输出数字。  `String` 类拥有等价的方法`format()`，返回一个 `String` 对象而不是 `PrintStream` 对象。
+
+使用`String`的静态`format()`方法可以创建一个可以重用的格式化字符串，而不是一次性打印语句。例如：
+
+```java
+System.out.printf("The value of the float " +
+                  "variable is %f, while " +
+                  "the value of the " + 
+                  "integer variable is %d, " +
+                  "and the string is %s", 
+                  floatVar, intVar, stringVar); 
+```
+
+可替换为：
+
+```java
+String fs;
+fs = String.format("The value of the float " +
+                   "variable is %f, while " +
+                   "the value of the " + 
+                   "integer variable is %d, " +
+                   " and the string is %s",
+                   floatVar, intVar, stringVar);
+System.out.println(fs);
+```
+
