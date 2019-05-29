@@ -7611,3 +7611,38 @@ fs = String.format("The value of the float " +
 System.out.println(fs);
 ```
 
+#### 字符串和数字之间转化
+
+**字符串转化为数字**
+
+通常，程序会以包含在一个字符串对象中的数值结束，比如由用户输入的值。
+包装原始数字类型（`Byte`，`Integer`，`Double`，`Float`，`Long`和`Short`）的`Number`子类每个都提供一个名为`valueOf`的类方法，该方法将字符串转换为该类型的对象。下面是一个示例 `ValueOfDemo`，它从命令行获取两个字符串，将它们转换为数字，并对值执行算术运算：
+````java
+public class ValueOfDemo {
+    public static void main(String[] args) {
+
+        // this program requires two 
+        // arguments on the command line 
+        if (args.length == 2) {
+            // convert strings to numbers
+            float a = (Float.valueOf(args[0])).floatValue(); 
+            float b = (Float.valueOf(args[1])).floatValue();
+
+            // do some arithmetic
+            System.out.println("a + b = " +
+                               (a + b));
+            System.out.println("a - b = " +
+                               (a - b));
+            System.out.println("a * b = " +
+                               (a * b));
+            System.out.println("a / b = " +
+                               (a / b));
+            System.out.println("a % b = " +
+                               (a % b));
+        } else {
+            System.out.println("This program " +
+                "requires two command-line arguments.");
+        }
+    }
+}
+````
