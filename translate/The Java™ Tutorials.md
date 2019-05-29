@@ -7646,3 +7646,97 @@ public class ValueOfDemo {
     }
 }
 ````
+
+当你使用命令行参数 4.5 和 87.2 时，上述程序会输出：
+````shell
+a + b = 91.7
+a - b = -82.7
+a * b = 392.4
+a / b = 0.0516055
+a % b = 4.5
+````
+------
+
+注意：包装基本数字类型的每个`Number`子类还提供了一个`parseXXXX()`方法（例如，`parseFloat()`，可用于将字符串转化为基本数字。由于返回基本类型而不是对象，因此`parseFloat()`方法比`valueOf()`方法更直接。例如，在`ValueOfDemo`程序中，我们可以使用：
+
+```java
+float a = Float.parseFloat(args[0]);
+float b = Float.parseFloat(args[1]);
+```
+
+------
+
+**数字转换为字符串**
+
+有时候你需要将数字转化为字符串，因为你需要以这些值的字符串形式操作它们。有几种简单的方法将数字转化为字符串：
+````java
+int i;
+// Concatenate "i" with an empty string; conversion is handled for you.
+String s1 = "" + i;
+````
+或者：
+````java
+// The valueOf class method.
+String s2 = String.valueOf(i);
+````
+每个`Number`子类都包含一个类方法`toString()`，将基本数据类型转化为字符串。比如：
+````java
+int i;
+double d;
+String s3 = Integer.toString(i); 
+String s4 = Double.toString(d); 
+````
+下面的例子使用该方法将数字转换为字符串，然后使用字符串方法计算小数点之前和小数点之后的位数：
+````java
+public class ToStringDemo {
+    
+    public static void main(String[] args) {
+        double d = 858.48;
+        String s = Double.toString(d);
+        
+        int dot = s.indexOf('.');
+        
+        System.out.println(dot + " digits " +
+            "before decimal point.");
+        System.out.println( (s.length() - dot - 1) +
+            " digits after decimal point.");
+    }
+}
+````
+程序输出：
+````
+3 digits before decimal point.
+2 digits after decimal point.
+````
+#### 操作字符串中的字符
+`String`类包含许多方法用来检查字符串的内容，在字符串内部查找字符或者子串，改变大小写，以及其它操作。
+**通过下标获取字符和子串**
+你可以获取字符串中处于特定下标位置的字符，通过调用`charAt()`访问器方法。字符串中第一个字符的下标是0，最后一个字符的下标是`length()-1`。比如下面的代码获取字符串中第九个字符：
+````java
+String anotherPalindrome = "Niagara. O roar again!"; 
+char aChar = anotherPalindrome.charAt(9);
+````
+如下图所示，第九个字符是`O`：
+
+![Use the charAt method to get a character at a particular index.](https://docs.oracle.com/javase/tutorial/figures/java/objects-charAt.gif)
+
+如果你希望从字符串中获取连续的多个字符，你可以使用`substring`方法。该方法有两个版本，如下面表中所示：
+
+| 方法                                       | 描述                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| `String substring(int beginIndex, int endIndex)` | 返回一个新字符串，该字符串是此字符串的子字符串。子字符串从指定的`beginIndex`开始，并扩展到索引`endIndex - 1`处的字符。 |
+| `String substring(int beginIndex)`       | 返回一个新字符串，该字符串是此字符串的子字符串。 `beginIndex`参数指定第一个字符的索引。 这里，返回的子字符串延伸到原始字符串的末尾。 |
+
+以下代码从Niagara 回文获取从索引11延伸到索引15的子字符串，但不包括索引15，即“roar”一词：
+
+````java
+String anotherPalindrome = "Niagara. O roar again!"; 
+String roar = anotherPalindrome.substring(11, 15);
+````
+
+![Use the substring method to get part of a string.](https://docs.oracle.com/javase/tutorial/figures/java/objects-substring.gif)
+
+**操作字符串的其它方法**
+
+
+
