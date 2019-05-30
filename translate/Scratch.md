@@ -1,63 +1,145 @@
-#### 比较字符串和部分字符串
+#### 
 
-`String` 类包含大量方法用来比较字符串或者部分字符串。下面列出了这些方法：
-
-| Method                                   | Description                              |
-| ---------------------------------------- | ---------------------------------------- |
-| `boolean endsWith(String suffix)`<br />`boolean startsWith(String prefix)` | 返回 `true` 如果字符串以参数给出的字符串结尾或者开头。          |
-| `boolean startsWith(String prefix, int offset)` | 考察从索引偏移量`offset`开始的字符串，如果它以指定为参数的子字符串开头，则返回`true`。 |
-| `int compareTo(String anotherString)`    | 按字典顺序比较两个字符串。返回一个整数，指示此字符串是大于（结果是> 0），等于（结果是= 0）还是小于（结果是<0）参数。 |
-| `int compareToIgnoreCase(String str)`    | 按字典顺序比较两个字符串，忽略大小写的差异。返回一个整数，指示此字符串是大于（结果是> 0），等于（结果是= 0）还是小于（结果是<0）参数。 |
-| `boolean equals(Object anObject)`        | 当且仅当参数是`String`对象时才返回`true`，该`String`对象表示与此对象相同的字符序列。 |
-| `boolean equalsIgnoreCase(String anotherString)` | 当且仅当参数是`String`对象时才返回`true`，该对象表示与此对象相同的字符序列，忽略大小写的差异。 |
-| `boolean regionMatches(int toffset, String other, int ooffset, int len)` | 测试此字符串的指定区域是否与`String`参数的指定区域匹配。`Region`的长度为`len`，从此字符串的索引`toffset`开始，另一个字符串的`ooffset`开始。 |
-| `boolean regionMatches(boolean ignoreCase, int toffset, String other, int ooffset, int len)` | 测试此字符串的指定区域是否与`String`参数的指定区域匹配。`Region`的长度为`len`，从此字符串的索引`toffset`开始，另一个字符串的`ooffset`开始。`boolean`参数指示是否应忽略大小写；如果为`true`，则在比较字符时忽略大小写。 |
-| `boolean matches(String regex)`          | 测试此字符串是否与指定的正则表达式匹配。正则表达式在标题为“正则表达式”的课程中讨论。 |
-
-下面的程序，`RegionMatchesDemo`，使用 `regionMatches` 方法在一个字符串中搜索另一个字符串：
+例如，下面的代码：
 
 ````java
-public class RegionMatchesDemo {
-    public static void main(String[] args) {
-        String searchMe = "Green Eggs and Ham";
-        String findMe = "Eggs";
-        int searchMeLength = searchMe.length();
-        int findMeLength = findMe.length();
-        boolean foundIt = false;
-        for (int i = 0; 
-             i <= (searchMeLength - findMeLength);
-             i++) {
-           if (searchMe.regionMatches(i, findMe, 0, findMeLength)) {
-              foundIt = true;
-              System.out.println(searchMe.substring(i, i + findMeLength));
-              break;
-           }
-        }
-        if (!foundIt)
-            System.out.println("No match found.");
-    }
-}
+// creates empty builder, capacity 16
+StringBuilder sb = new StringBuilder();
+// adds 9 character string at beginning
+sb.append("Greetings");
 ````
 
-这个程序的输出是`Eggs`。
+将产生容量 16 长度 9 的字符串构建器：
 
-程序逐步遍历`searchMe`引用的字符串。对于每个字符，程序调用`regionMatches`方法来确定以当前字符开头的子字符串是否与程序正在查找的字符串匹配。
+![A string builder's length is the number of characters it contains; a string builder's capacity is the number of character spaces that have been allocated.](https://docs.oracle.com/javase/tutorial/figures/java/objects-stringBuffer.gif)
 
-#### `StringBuilder` 类
+`StringBuilder`类拥有若干方法关于长度和容量，`String`类没有这些方法。
 
-`StringBuilder`对象与`String`对象类似，只是它们可以被修改。在内部，这些对象被视为包含一系列字符的可变长度数组。在任何时候，可以通过方法调用来改变序列的长度和内容。
+| 方法                                   | 描述                                                         |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `void setLength(int newLength)`        | 设置字符序列的长度，如果 `newLength` 小于 `length()`，则字符序列的尾部字符将会被截断。如果 `newLength` 大于 `length()`， `null`字符就会被添加到字符序列之后。 |
+| `void ensureCapacity(int minCapacity)` | 确保容量至少等于给定的最小值。                               |
 
-除非`StringBuilder`在更简单的代码（参见本节末尾的示例程序）或更好的性能方面具有优势的场景，否则应始终使用字符串。例如，如果需要连接大量字符串，则附加到`StringBuilder`对象会更有效率。
+很多操作 (比如 `append()`, `insert()`, 或者 `setLength()`) 能够增加字符串构建器中字符序列的长度，而结果 `length()` 可能会超过目前的 `capacity()`。当这种情况发生时，容量将会自动扩展。
 
-**长度和容量**
+**`StringBuilder` 操作**
 
-与`String`类一样，`StringBuilder`类有一个`length()`方法，该方法返回构建器中字符序列的长度。
+`String`中不可用的`StringBuilder`上的主要操作是`append()`和`insert()`方法，它们被重载以接受任何类型的数据。每个都将其参数转换为字符串，然后将该字符串的字符追加或插入字符串生成器中的字符序列。`append`方法总是在现有字符序列的末尾添加这些字符，而`insert`方法在指定位置添加字符。
 
-与字符串不同，每个字符串构建器也具有容量，即已分配的字符空间数。 `capacity()`方法返回的容量始终大于或等于长度（通常大于），并将根据需要自动扩展以适应字符串构建器的添加。
+以下是`StringBuilder`类的一些方法。
 
-| 构造器                               | 描述                                       |
-| --------------------------------- | ---------------------------------------- |
-| `StringBuilder()`                 | 创建容量为16的空字符串构建器。(包含16个空元素)               |
-| `StringBuilder(CharSequence cs)`  | 构建一个字符串构建器包含参数 `CharSequence`给出的字符，同时还在后面跟着16个空元素。 |
-| `StringBuilder(int initCapacity)` | 创建一个具有特定初始容量的空字符串构建器。                    |
-| `StringBuilder(String s)`         | 创建一个字符串构建器，它包含参数给出的特定字符串，同时在后面跟随16个空元素。  |
+| 方法                                                         | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `StringBuilder append(boolean b)`<br />`StringBuilder append(char c)`<br />`StringBuilder append(char[] str)`<br />`StringBuilder append(char[] str, int offset, int len)`<br />`StringBuilder append(double d)`<br />`StringBuilder append(float f)`<br />`StringBuilder append(int i)`<br />`StringBuilder append(long lng)`<br />`StringBuilder append(Object obj)`<br />`StringBuilder append(String s)` | 将参数追加到此字符串构建器。在附加操作发生之前，数据将转换为字符串。 |
+| `StringBuilder delete(int start, int end)`<br />`StringBuilder deleteCharAt(int index)` | 第一种方法在`StringBuilder`的字符序列中删除从`start`到`end-1`（包括）的子序列。第二种方法删除位于`index`的字符。 |
+| `StringBuilder insert(int offset, boolean b)`<br />`StringBuilder insert(int offset, char c)`<br />`StringBuilder insert(int offset, char[] str)`<br />`StringBuilder insert(int index, char[] str, int offset, int len)`<br />`StringBuilder insert(int offset, double d)`<br />`StringBuilder insert(int offset, float f)`<br />`StringBuilder insert(int offset, int i)`<br />`StringBuilder insert(int offset, long lng)`<br />`StringBuilder insert(int offset, Object obj)`<br />`StringBuilder insert(int offset, String s)` | 将第二个参数插入到字符串构建器中。第一个整数参数表示要在其中插入数据的索引。在插入操作发生之前，数据将转换为字符串。 |
+| `StringBuilder replace(int start, int end, String s)`<br />`void setCharAt(int index, char c)` | 替换此字符串生成器中的指定字符。                             |
+| `StringBuilder reverse()`                                    | 反转此字符串构建器中的字符序列。                             |
+| `String toString()`                                          | 返回包含构建器中的字符序列的字符串。                         |
+
+------
+
+**注意：**您可以在`StringBuilder`对象上使用任何`String`方法，方法是首先使用`StringBuilder`类的`toString()`方法将字符串构建器转换为字符串。然后使用`StringBuilder(String str)`构造函数将字符串转换回字符串构建器。
+
+------
+
+**例子**
+
+标题为“字符串”一节中列出的`StringDemo`程序是一个程序的示例，如果使用`StringBuilder`而不是`String`则该程序会更有效率。
+
+`StringDemo`反转了回文。在这里，它再次出现：
+
+```java
+public class StringDemo {
+    public static void main(String[] args) {
+        String palindrome = "Dot saw I was Tod";
+        int len = palindrome.length();
+        char[] tempCharArray = new char[len];
+        char[] charArray = new char[len];
+        
+        // put original string in an 
+        // array of chars
+        for (int i = 0; i < len; i++) {
+            tempCharArray[i] = 
+                palindrome.charAt(i);
+        } 
+        
+        // reverse array of chars
+        for (int j = 0; j < len; j++) {
+            charArray[j] =
+                tempCharArray[len - 1 - j];
+        }
+        
+        String reversePalindrome =
+            new String(charArray);
+        System.out.println(reversePalindrome);
+    }
+}
+```
+
+程序输出：
+
+```shell
+doT saw I was toD
+```
+
+为了完成字符串反转，程序将字符串转换为字符数组（第一个`for`循环），将数组反转为第二个数组（第二个`for`循环），然后转换回字符串。
+
+如果将`palindrome`字符串转换为字符串构建器，则可以在`StringBuilder`类中使用`reverse()`方法。它使代码更简单，更易于阅读：
+
+```java
+public class StringBuilderDemo {
+    public static void main(String[] args) {
+        String palindrome = "Dot saw I was Tod";
+         
+        StringBuilder sb = new StringBuilder(palindrome);
+        
+        sb.reverse();  // reverse it
+        
+        System.out.println(sb);
+    }
+}
+```
+
+程序输出：
+
+```shell
+doT saw I was toD
+```
+
+请注意，`println()`打印字符串构建器，如下所示：
+
+```java
+System.out.println(sb);
+```
+
+`sb.toString()`是隐式调用的，因为它与`println()`调用中的任何其他对象一样。
+
+------
+
+**注意：**还有一个与`StringBuilder`类完全相同的`StringBuffer`类，除了它的方法是同步的，它是线程安全的。线程将在关于并发的课程中讨论。
+
+------
+
+#### 字符和字符串小结
+
+大多数情况下，如果使用单个字符值，则将使用原始`char`类型。但是，有时候需要使用`char`作为对象 - 例如，作为期望对象的方法参数。Java编程语言提供了一个*wrapper*类，为了这个目的，它将`char`包装在`Character`对象中。 `Character`类型的对象包含一个类型为`char`的字段。 这个[`Character`](https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html) 类还提供了许多用于操作字符的有用类（即静态）方法。
+
+字符串是一系列字符，广泛用于Java编程。在Java编程语言中，字符串是对象。 [`String`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html) 类有60多个方法和13个构造函数。
+
+最常见的是，您如下创建一个字符串：
+
+```shell
+String s = "Hello world!";
+```
+
+而不是使用其中一个`String`构造函数。
+
+`String`类有很多方法可以查找和检索子字符串；然后可以使用`+`连接运算符将它们轻松地重新组合成新的字符串。
+
+`String`类还包括许多实用方法，其中包括`split()`，`toLowerCase()`，`toUpperCase()`和`valueOf()`。后一种方法在将用户输入字符串转换为数字时是必不可少的。`Number`子类还具有将字符串转换为数字的方法，反之亦然。
+
+除了`String`类之外，还有一个[`StringBuilder`](https://docs.oracle.com/javase/8/docs/api/java/lang/StringBuilder.html) 类。使用`StringBuilder`对象有时比使用字符串更有效。`StringBuilder`类提供了一些对字符串有用的方法，其中包括`reverse()`。但是，一般来说，`String`类有更多种方法。
+
+可以使用`StringBuilder`构造函数将字符串转换为字符串构建器。可以使用`toString()`方法将字符串构建器转换为字符串。
+
