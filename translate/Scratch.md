@@ -1,111 +1,36 @@
-### 自动装箱和拆箱
+## 泛型
 
-*自动装箱*是一种Java编译器自动执行的在基本数据类型和它们对应的对象包装类之间的转换机制。比如，将`int` 转换为`Integer`，`double`转换为`Double`，等等。如果这种转换反向进行，则被称为*自动拆箱*。
+在任何重要的软件项目中，错误总是如影随形。仔细的规划，编程和测试可以帮助减少它们的可能性，但不知何故，它们总会找到一种方法来混进你的代码。随着新功能的引入以及您的代码库在规模和复杂性方面的增长，这一点变得尤为明显。
 
-下面是一个自动装箱的最简单的例子：
+幸运的是，一些错误比其他错误更容易被发现。例如，编译时错误可以在早期检测到；您可以使用编译器的错误消息来确定问题所在并立即修复它。但是，运行时错误可能会更成问题；它们并不总是立即浮出水面，当它们发生时，可能是在程序中远离问题的实际原因的位置。
 
-```java
-Character ch = 'a';
-```
+泛型通过在编译时检测到更多错误来增加代码的稳定性。完成本课程后，您可能需要跟进 Gilad Bracha 的 [Generics](https://docs.oracle.com/javase/tutorial/extra/generics/index.html) 教程。
 
-本章节中其它例子中用到了泛型。如果你对泛型语法还不熟悉，参考 [Generics (Updated)](https://docs.oracle.com/javase/tutorial/java/generics/index.html) 部分。
+### 为什么使用泛型
 
-考虑下面的代码：
+简而言之，泛型使*类型*（类和接口）在定义类，接口和方法时成为参数。与方法声明中使用的更熟悉的*形式参数*非常类似，类型参数提供了一种方法，您可以使用不同的输入重用相同的代码。不同之处在于形式参数的输入是值，而类型参数的输入是类型。
 
-```java
-List<Integer> li = new ArrayList<>();
-for (int i = 1; i < 50; i += 2)
-    li.add(i);
-```
+使用泛型的代码比非泛型代码有许多好处：
 
-虽然您将`int`值作为基本类型而不是`Integer`对象添加到`li`，但代码会通过编译。因为`li`是`Integer`对象的列表，而不是`int`值列表，所以您可能想知道为什么Java编译器不会发出编译时错误。编译器不会生成错误，因为它从`i`创建一个`Integer`对象并将对象添加到`li`。因此，编译器在运行时将以前的代码转换为以下代码：
+ - 在编译时进行更强大的类型检查。
+   Java编译器将强类型检查应用于通用代码，并在代码违反类型安全性时发出错误。修复编译时错误比修复运行时错误更容易，因为运行时错误很难发现。
+ - 消除转型。
+
+下面的代码片段没有使用泛型，因而需要转型：
 
 ```java
-List<Integer> li = new ArrayList<>();
-for (int i = 1; i < 50; i += 2)
-    li.add(Integer.valueOf(i));
+List list = new ArrayList();
+list.add("hello");
+String s = (String) list.get(0);
 ```
 
-将原始值（例如`int`）转换为相应包装类（`Integer`）的对象称为`autoboxing`。 当基本数据类型值为如下情况时，Java编译器应用自动装箱：
-
-- 被作为参数传递给期望它对应的包装类型的方法时。
-- 被赋值给对应的包装类型的变量时。
-
-考虑下面的方法：
+使用泛型重写，不再需要转型：
 
 ```java
-public static int sumEven(List<Integer> li) {
-    int sum = 0;
-    for (Integer i: li)
-        if (i % 2 == 0)
-            sum += i;
-        return sum;
-}
+List<String> list = new ArrayList<String>();
+list.add("hello");
+String s = list.get(0);   // no cast
 ```
 
-由于求余数(`%`) 和一元加 (`+=`) 操作符不能应用于 `Integer` 对象，你可能会好奇为啥Java编译器在编译该方法时并没有抛出异常。因为它在运行时调用了 `intValue` 方法将 `Integer` 转换成了 `int` ：
-
-```java
-public static int sumEven(List<Integer> li) {
-    int sum = 0;
-    for (Integer i : li)
-        if (i.intValue() % 2 == 0)
-            sum += i.intValue();
-        return sum;
-}
-```
-
-将包装类型（`Integer`）的对象转换为其对应的原始（`int`）值称为自动拆箱。当包装类的对象是下列情况时，Java编译器应用拆箱：
-
- - 作为参数传递给期望相应基本数据类型值的方法。
- - 赋值给相应基本数据类型的变量。
-
-`Unboxing`示例显示了其工作原理：
-
-```java
-import java.util.ArrayList;
-import java.util.List;
-
-public class Unboxing {
-
-    public static void main(String[] args) {
-        Integer i = new Integer(-8);
-
-        // 1. Unboxing through method invocation
-        int absVal = absoluteValue(i);
-        System.out.println("absolute value of " + i + " = " + absVal);
-
-        List<Double> ld = new ArrayList<>();
-        ld.add(3.1416);    // Π is autoboxed through method invocation.
-
-        // 2. Unboxing through assignment
-        double pi = ld.get(0);
-        System.out.println("pi = " + pi);
-    }
-
-    public static int absoluteValue(int i) {
-        return (i < 0) ? -i : i;
-    }
-}
-```
-
-程序输出：
-
-```shell
-absolute value of -8 = 8
-pi = 3.1416
-```
-
-自动装箱和拆箱使开发人员可以编写更清晰的代码，使其更易于阅读。下表列出了原始类型及其相应的包装类，Java编译器使用这些类进行自动装箱和拆箱：
-
-| 基本数据类型  | 包装类型      |
-| ------- | --------- |
-| boolean | Boolean   |
-| byte    | Byte      |
-| char    | Character |
-| float   | Float     |
-| int     | Integer   |
-| long    | Long      |
-| short   | Short     |
-| double  | Double    |
-
+- 使程序员能够实现通用算法。
+  通过使用泛型，程序员可以实现通用算法，这些算法可以处理不同类型的集合，可以自定义，并且类型安全且易于阅读。
