@@ -1,104 +1,141 @@
-**类型参数命名约定**
+#### 原始类型
 
-按照约定，类型参数名称应该是单个的大写字母。这一点与你所知道的变量的命名完全不同，不过理由很充分：如果不这么约定，就很难区分类型变量和原始的类或者接口名称。
-
-最常用的类型参数名称有：
-
-* E - Element（在 Java 集合框架中广泛应用）
-* K - Key
-* N - Number
-* T - Type
-* V - Value
-* S, U, V etc - 第二、第三、第四类型
-
-你将看到这些名称贯穿整个 Java SE API 和本文的剩余章节。
-
-**调用及实例化泛型类型**
-
-为了引用你的代码中的泛型`Box`类，你必须执行一个*泛型类型调用*，该调用将使用某种具体类型替换 `T` ，比如 `Integer`：
+*原始类型*是没有任何类型参数的泛型类或者泛型接口。比如，给定泛型 `Box` 类：
 
 ```java
-Box<Integer> integerBox;
+public class Box<T> {
+    public void set(T t) { /* ... */ }
+    // ...
+}
 ```
 
-您可以将泛型类型调用视为与普通方法调用类似，但不是将参数传递给方法，而是将*类型参数*  - `Integer`在这种情况下传递给`Box`类本身。
-
-------
-
-`Type Parameter`和`Type Argument`术语：
-
-  许多开发人员可以互换地使用术语`Type Parameter`和`Type Argument`，但这些术语并不相同。编码时，提供`Type Parameter`以创建参数化类型。 因此，`Foo <T>`中的`T`是一个`Type Parameter`，而`Foo <String> f`中的`String`是一个类`Type Argument`。本课程在使用这些术语时会遵循此定义。
-
-------
-
-与任何其他变量声明一样，此代码实际上并不创建新的`Box`对象。它只是声明`integerBox`将保存对`Integer`的`Box`的引用，这就是`Box <Integer>`的含义。
-
-泛型类型的调用通常称为*参数化类型*。
-
-要实例化这个类，像往常一样使用`new`关键字，但在类名和括号之间放置`<Integer>`：
+为了创建一个参数化类型 `Box<T>`，你给出一个实际的类型参数来取代先前的类型参数 `T`：
 
 ```java
-Box<Integer> integerBox = new Box<Integer>();
+Box<Integer> intBox = new Box<>();
 ```
 
-**菱形表示法**
+如果实际类型参数被忽略，你就会创建一个原始类型 `Box<T>`：
 
-在Java SE 7及更高版本中，只要编译器可以从上下文中确定或推断类型参数，就可以用一组空的类型参数（<>）替换调用泛型类的构造函数所需的类型参数。这对尖括号`<>`非正式地称为*菱形表示法*。例如，您可以使用以下语句创建`Box <Integer>`的实例：
+```java
+Box rawBox = new Box();
+```
 
-````java
-Box<Integer> integerBox = new Box<>();
-````
+也就是说， `Box` 是泛型类型 `Box<T>`的原始类型。不过，一个非泛型类或者接口类型不是原始类型。
 
-有关菱形表示法和类型推断的更多信息，请参阅 [Type Inference](https://docs.oracle.com/javase/tutorial/java/generics/genTypeInference.html) 。
+原始类型出现在遗留代码中，因为大量 API 类，比如`Collections`类，编写的年代还没有引入泛型。当使用原始类型时，你实际上得到的是泛型出现之前的行为 - 一个`Box`会返回给你一个`Object`。为了保持向后兼容性，将一个参数化类型赋值给它的原始类型是允许的：
 
-**多个类型参数**
+```java
+Box<String> stringBox = new Box<>();
+Box rawBox = stringBox;               // OK
+```
 
-如前所述，一个泛型 类型可以拥有多个类型参数，如下面例子：
+但是，如果你赋值一个原始类型给一个参数化类型，你将得到一个警告：
 
-````java
-public interface Pair<K, V> {
-    public K getKey();
-    public V getValue();
+```java
+Box rawBox = new Box();           // rawBox is a raw type of Box<T>
+Box<Integer> intBox = rawBox;     // warning: unchecked conversion
+```
+
+当你使用一个原始类型来调用对应的泛型类型定义的泛型方法是，你也会得到一个警告：
+
+```java
+Box<String> stringBox = new Box<>();
+Box rawBox = stringBox;
+rawBox.set(8);  // warning: unchecked invocation to set(T)
+```
+
+警告表明该原始类型绕过了泛型类型检查，将不安全代码捕获推迟到了运行时。因此，你应该避免使用原始类型。
+
+[类型擦除](https://docs.oracle.com/javase/tutorial/java/generics/erasure.html) 章节包含更多有关 Java 编译器使用原始类型的信息。
+
+**不受检查的错误信息**
+
+如前所述，当混合使用遗留代码和泛型代码时，你可能会遇到类似下面的警告消息：
+
+```shell
+Note: Example.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+```
+
+这些可能发生在使用老的使用原始类型的 API 时，如下面例子所示：
+
+```java
+public class WarningDemo {
+    public static void main(String[] args){
+        Box<Integer> bi;
+        bi = createBox();
+    }
+
+    static Box createBox(){
+        return new Box();
+    }
+}
+```
+
+术语“unchecked”表示编译器没有足够的类型信息来执行确保类型安全所必需的所有类型检查。默认情下，“unchecked”警告被禁用，尽管编译器提供了提示。要查看所有“unchecked”警告，请使用`-Xlint：unchecked`重新编译。
+
+使用`-Xlint：unchecked`重新编译前一个示例会显示以下附加信息：
+
+```shell
+WarningDemo.java:4: warning: [unchecked] unchecked conversion
+found   : Box
+required: Box<java.lang.Integer>
+        bi = createBox();
+                      ^
+1 warning
+```
+
+要完全禁用未检查的警告，请使用`-Xlint：-unchecked`标志。`@SuppressWarnings`（“unchecked”）注解会抑制未经检查的警告。如果您不熟悉`@SuppressWarnings`语法，请参阅 [注解](https://docs.oracle.com/javase/tutorial/java/annotations/index.html) 。
+
+### 泛型方法
+
+*泛型方法*是引入它们自己的类型参数的方法。这类似于声明泛型类型，但类型参数的范围仅限于声明它的方法。允许使用静态和非静态泛型方法，以及泛型类构造函数。
+
+泛型方法的语法包括一个类型参数列表，在尖括号内，它出现在方法的返回类型之前。对于静态泛型方法，类型参数部分必须出现在方法的返回类型之前。
+
+`Util`类包含一个泛型方法`compare`，它比较两个`Pair`对象：
+
+```java
+public class Util {
+    public static <K, V> boolean compare(Pair<K, V> p1, Pair<K, V> p2) {
+        return p1.getKey().equals(p2.getKey()) &&
+               p1.getValue().equals(p2.getValue());
+    }
 }
 
-public class OrderedPair<K, V> implements Pair<K, V> {
+public class Pair<K, V> {
 
     private K key;
     private V value;
 
-    public OrderedPair(K key, V value) {
-	this.key = key;
-	this.value = value;
+    public Pair(K key, V value) {
+        this.key = key;
+        this.value = value;
     }
 
-    public K getKey()	{ return key; }
+    public void setKey(K key) { this.key = key; }
+    public void setValue(V value) { this.value = value; }
+    public K getKey()   { return key; }
     public V getValue() { return value; }
 }
-````
-
-下面的两条语句创建两个`OrderedPair`类对象实例：
-
-````java
-Pair<String, Integer> p1 = new OrderedPair<String, Integer>("Even", 8);
-Pair<String, String>  p2 = new OrderedPair<String, String>("hello", "world");
-````
-
-代码 `new OrderedPair<String, Integer>`，实例化 `K` 作为一个 `String` 对象， `V` 作为一个 `Integer`对象。因此， `OrderedPair`的构造器的参数类型就是 `String` 和 `Integer`。由于 [自动装箱](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html) 机制，传递 `String` 和 `int` 给该类也是合法的。
-
-如 [菱形表示法](https://docs.oracle.com/javase/tutorial/java/generics/types.html#diamond) 中所述，由于 Java 编译器能够从 `OrderedPair<String, Integer>` 声明推断出 `K` 和 `V` 的类型，使用菱形表示法将上述语句简化为：
-
-```java
-OrderedPair<String, Integer> p1 = new OrderedPair<>("Even", 8);
-OrderedPair<String, String>  p2 = new OrderedPair<>("hello", "world");
 ```
 
-创建泛型接口的约定和创建泛型类的约定一样。
-
-**参数化类型**
-
-您还可以用参数化类型（即`List <String>`）替换类型参数（即`K`或`V`）。例如，使用`OrderedPair <K，V>`示例：
+调用该方法的完整语法：
 
 ```java
-OrderedPair<String, Box<Integer>> p = new OrderedPair<>("primes", new Box<Integer>(...));
+Pair<Integer, String> p1 = new Pair<>(1, "apple");
+Pair<Integer, String> p2 = new Pair<>(2, "pear");
+boolean same = Util.<Integer, String>compare(p1, p2);
 ```
+
+代码中已明确提供类型，如粗体所示。通常，这可以省略，编译器将推断所需的类型：
+
+```java
+Pair<Integer, String> p1 = new Pair<>(1, "apple");
+Pair<Integer, String> p2 = new Pair<>(2, "pear");
+boolean same = Util.compare(p1, p2);
+```
+
+此功能称为*类型推断*，允许您将泛型方法作为普通方法调用，而无需在尖括号之间指定类型。本主题将在下一节 [类型推断](https://docs.oracle.com/javase/tutorial/java/generics/genTypeInference.html) 中进一步讨论。
 
