@@ -1,141 +1,118 @@
-#### 原始类型
+### 有界的类型参数
 
-*原始类型*是没有任何类型参数的泛型类或者泛型接口。比如，给定泛型 `Box` 类：
+有时您可能希望限制可用作参数化类型中的类型参数的类型。例如，对数字进行操作的方法可能只想接受`Number`或其子类的实例。这是*有界类型参数*的用途。
+
+要声明有界类型参数，请列出类型参数的名称，后跟`extends`关键字，后跟*上限*，在此示例中为`Number`。注意，在这种情况下，`extends`在一般意义上用于表示“扩展”（如在类中）或“实现”（如在接口中）。
 
 ```java
 public class Box<T> {
-    public void set(T t) { /* ... */ }
+
+    private T t;          
+
+    public void set(T t) {
+        this.t = t;
+    }
+
+    public T get() {
+        return t;
+    }
+
+    public <U extends Number> void inspect(U u){
+        System.out.println("T: " + t.getClass().getName());
+        System.out.println("U: " + u.getClass().getName());
+    }
+
+    public static void main(String[] args) {
+        Box<Integer> integerBox = new Box<Integer>();
+        integerBox.set(new Integer(10));
+        integerBox.inspect("some text"); // error: this is still String!
+    }
+}
+```
+
+通过修改我们的泛型方法来包含这个有界类型参数，编译现在将失败，因为我们调用`inspect`仍然包含一个`String`：
+
+```shell
+Box.java:21: <U>inspect(U) in Box<java.lang.Integer> cannot
+  be applied to (java.lang.String)
+                        integerBox.inspect("10");
+                                  ^
+1 error
+```
+
+除了限制可用于实例化泛型类型的类型之外，有界类型参数还允许您调用边界中定义的方法：
+
+```java
+public class NaturalNumber<T extends Integer> {
+
+    private T n;
+
+    public NaturalNumber(T n)  { this.n = n; }
+
+    public boolean isEven() {
+        return n.intValue() % 2 == 0;
+    }
+
     // ...
 }
 ```
 
-为了创建一个参数化类型 `Box<T>`，你给出一个实际的类型参数来取代先前的类型参数 `T`：
+`isEven`方法通过`n`调用`Integer`类中定义的`intValue`方法。
+
+**多个边界**
+
+前面的示例说明了使用带有单个边界的类型参数，但是类型参数可以具有*多个边界*：
 
 ```java
-Box<Integer> intBox = new Box<>();
+<T extends B1 & B2 & B3>
 ```
 
-如果实际类型参数被忽略，你就会创建一个原始类型 `Box<T>`：
+具有多个边界的类型变量是边界中列出的所有类型的子类型。如果其中一个边界是类，则必须首先指定它。 例如：
 
 ```java
-Box rawBox = new Box();
+Class A { /* ... */ }
+interface B { /* ... */ }
+interface C { /* ... */ }
+
+class D <T extends A & B & C> { /* ... */ }
 ```
 
-也就是说， `Box` 是泛型类型 `Box<T>`的原始类型。不过，一个非泛型类或者接口类型不是原始类型。
-
-原始类型出现在遗留代码中，因为大量 API 类，比如`Collections`类，编写的年代还没有引入泛型。当使用原始类型时，你实际上得到的是泛型出现之前的行为 - 一个`Box`会返回给你一个`Object`。为了保持向后兼容性，将一个参数化类型赋值给它的原始类型是允许的：
+如果未首先指定边界中的`A`，则会出现编译时错误：
 
 ```java
-Box<String> stringBox = new Box<>();
-Box rawBox = stringBox;               // OK
+class D <T extends B & A & C> { /* ... */ }  // compile-time error
 ```
 
-但是，如果你赋值一个原始类型给一个参数化类型，你将得到一个警告：
+#### 泛型方法和有界类型参数
+
+有界类型参数是泛型算法实现的关键。考虑以下方法来计算数组`T[]`中大于指定元素`elem`的元素数。
 
 ```java
-Box rawBox = new Box();           // rawBox is a raw type of Box<T>
-Box<Integer> intBox = rawBox;     // warning: unchecked conversion
-```
-
-当你使用一个原始类型来调用对应的泛型类型定义的泛型方法是，你也会得到一个警告：
-
-```java
-Box<String> stringBox = new Box<>();
-Box rawBox = stringBox;
-rawBox.set(8);  // warning: unchecked invocation to set(T)
-```
-
-警告表明该原始类型绕过了泛型类型检查，将不安全代码捕获推迟到了运行时。因此，你应该避免使用原始类型。
-
-[类型擦除](https://docs.oracle.com/javase/tutorial/java/generics/erasure.html) 章节包含更多有关 Java 编译器使用原始类型的信息。
-
-**不受检查的错误信息**
-
-如前所述，当混合使用遗留代码和泛型代码时，你可能会遇到类似下面的警告消息：
-
-```shell
-Note: Example.java uses unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-```
-
-这些可能发生在使用老的使用原始类型的 API 时，如下面例子所示：
-
-```java
-public class WarningDemo {
-    public static void main(String[] args){
-        Box<Integer> bi;
-        bi = createBox();
-    }
-
-    static Box createBox(){
-        return new Box();
-    }
+public static <T> int countGreaterThan(T[] anArray, T elem) {
+    int count = 0;
+    for (T e : anArray)
+        if (e > elem)  // compiler error
+            ++count;
+    return count;
 }
 ```
 
-术语“unchecked”表示编译器没有足够的类型信息来执行确保类型安全所必需的所有类型检查。默认情下，“unchecked”警告被禁用，尽管编译器提供了提示。要查看所有“unchecked”警告，请使用`-Xlint：unchecked`重新编译。
-
-使用`-Xlint：unchecked`重新编译前一个示例会显示以下附加信息：
-
-```shell
-WarningDemo.java:4: warning: [unchecked] unchecked conversion
-found   : Box
-required: Box<java.lang.Integer>
-        bi = createBox();
-                      ^
-1 warning
-```
-
-要完全禁用未检查的警告，请使用`-Xlint：-unchecked`标志。`@SuppressWarnings`（“unchecked”）注解会抑制未经检查的警告。如果您不熟悉`@SuppressWarnings`语法，请参阅 [注解](https://docs.oracle.com/javase/tutorial/java/annotations/index.html) 。
-
-### 泛型方法
-
-*泛型方法*是引入它们自己的类型参数的方法。这类似于声明泛型类型，但类型参数的范围仅限于声明它的方法。允许使用静态和非静态泛型方法，以及泛型类构造函数。
-
-泛型方法的语法包括一个类型参数列表，在尖括号内，它出现在方法的返回类型之前。对于静态泛型方法，类型参数部分必须出现在方法的返回类型之前。
-
-`Util`类包含一个泛型方法`compare`，它比较两个`Pair`对象：
+该方法的实现很简单，但它不能编译，因为大于运算符（`>`）仅适用于基本数据类型，如`short`，`int`，`double`，`long`，`float`， `byte`和`char`。你不能使用`>`运算符来比较对象。要解决此问题，请使用由`Comparable <T>`接口限定的类型参数：
 
 ```java
-public class Util {
-    public static <K, V> boolean compare(Pair<K, V> p1, Pair<K, V> p2) {
-        return p1.getKey().equals(p2.getKey()) &&
-               p1.getValue().equals(p2.getValue());
-    }
-}
-
-public class Pair<K, V> {
-
-    private K key;
-    private V value;
-
-    public Pair(K key, V value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public void setKey(K key) { this.key = key; }
-    public void setValue(V value) { this.value = value; }
-    public K getKey()   { return key; }
-    public V getValue() { return value; }
+public interface Comparable<T> {
+    public int compareTo(T o);
 }
 ```
 
-调用该方法的完整语法：
+代码的结果将是：
 
 ```java
-Pair<Integer, String> p1 = new Pair<>(1, "apple");
-Pair<Integer, String> p2 = new Pair<>(2, "pear");
-boolean same = Util.<Integer, String>compare(p1, p2);
+public static <T extends Comparable<T>> int countGreaterThan(T[] anArray, T elem) {
+    int count = 0;
+    for (T e : anArray)
+        if (e.compareTo(elem) > 0)
+            ++count;
+    return count;
+}
 ```
-
-代码中已明确提供类型，如粗体所示。通常，这可以省略，编译器将推断所需的类型：
-
-```java
-Pair<Integer, String> p1 = new Pair<>(1, "apple");
-Pair<Integer, String> p2 = new Pair<>(2, "pear");
-boolean same = Util.compare(p1, p2);
-```
-
-此功能称为*类型推断*，允许您将泛型方法作为普通方法调用，而无需在尖括号之间指定类型。本主题将在下一节 [类型推断](https://docs.oracle.com/javase/tutorial/java/generics/genTypeInference.html) 中进一步讨论。
-
