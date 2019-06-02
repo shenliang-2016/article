@@ -1,118 +1,74 @@
-### 有界的类型参数
+### 泛型，继承和子类型
 
-有时您可能希望限制可用作参数化类型中的类型参数的类型。例如，对数字进行操作的方法可能只想接受`Number`或其子类的实例。这是*有界类型参数*的用途。
-
-要声明有界类型参数，请列出类型参数的名称，后跟`extends`关键字，后跟*上限*，在此示例中为`Number`。注意，在这种情况下，`extends`在一般意义上用于表示“扩展”（如在类中）或“实现”（如在接口中）。
+如您所知，只要类型兼容，就可以将一种类型的对象分配给另一种类型的对象。例如，您可以将`Integer`对象分配给`Object`，因为`Object`是`Integer`的超类型之一：
 
 ```java
-public class Box<T> {
+Object someObject = new Object();
+Integer someInteger = new Integer(10);
+someObject = someInteger;   // OK
+```
 
-    private T t;          
+在面向对象的术语中，这被称为“is a”关系。由于`Integer` *是*一种`Object`，因此允许赋值。但是`Integer`也是一种`Number`，所以下面的代码也是有效的：
 
-    public void set(T t) {
-        this.t = t;
-    }
+```java
+public void someMethod(Number n) { /* ... */ }
 
-    public T get() {
-        return t;
-    }
+someMethod(new Integer(10));   // OK
+someMethod(new Double(10.1));   // OK
+```
 
-    public <U extends Number> void inspect(U u){
-        System.out.println("T: " + t.getClass().getName());
-        System.out.println("U: " + u.getClass().getName());
-    }
+泛型也是如此。您可以执行泛型类型调用，将`Number`作为其类型参数传递，如果参数与`Number`兼容，则允许任何后续的`add`调用：
 
-    public static void main(String[] args) {
-        Box<Integer> integerBox = new Box<Integer>();
-        integerBox.set(new Integer(10));
-        integerBox.inspect("some text"); // error: this is still String!
-    }
+```java
+Box<Number> box = new Box<Number>();
+box.add(new Integer(10));   // OK
+box.add(new Double(10.1));  // OK
+```
+
+现在考虑下面的方法：
+
+```java
+public void boxTest(Box<Number> n) { /* ... */ }
+```
+
+它接受什么类型的参数？ 通过查看其签名，您可以看到它接受一个类型为`Box <Number>`的参数。但是，这是什么意思？ 您是否允许传递`Box <Integer>`或`Box <Double>`，如您所料？ 答案是“不”，因为`Box <Integer>`和`Box <Double>`不是`Box <Number>`的子类型。
+
+在使用泛型编程时，这是一个常见的误解，但这是一个需要学习的重要概念。
+
+![diagram showing that Box<Integer> is not a subtype of Box<Number>](https://docs.oracle.com/javase/tutorial/figures/java/generics-subtypeRelationship.gif)
+
+`Box<Integer>` 不是 `Box<Number>` 的子类型，尽管 `Integer` 是 `Number`的子类型。
+
+------
+
+**注意：**给定两个具体类型`A`和`B`（例如，`Number`和`Integer`），`MyClass <A>`与`MyClass <B>`无关，无论`A`和`B`是否相关。`MyClass <A>`和`MyClass <B>`的公共父类是`Object`。
+
+有关如何在类型参数相关时在两个泛型类之间创建类似子类型关系的信息，请参阅 [通配符和子类型](https://docs.oracle.com/javase/tutorial/java/generics/subtyping.html) 。
+
+------
+
+**泛型类和子类化**
+
+您可以通过扩展或实现通用类或接口来对其进行子类型化。一个类或接口的类型参数与另一个类的类型参数之间的关系由`extends`和`implements`子句决定。
+
+使用`Collections`类作为例子，`ArrayList <E>`实现`List <E>`，`List <E>扩展Collection <E>`。 所以`ArrayList <String>`是`List <String>`的子类型，它是`Collection <String>`的子类型。只要不改变类型参数，就会在类型之间保留子类型关系。
+
+![diagram showing a sample collections hierarchy: ArrayList<String> is a subtype of List<String>, which is a subtype of Collection<String>.](https://docs.oracle.com/javase/tutorial/figures/java/generics-sampleHierarchy.gif)
+
+现在假设我们想要定义我们自己的列表接口`PayloadList`，它将泛型类型`P`的可选值与每个元素相关联。它的声明可能如下：
+
+```java
+interface PayloadList<E,P> extends List<E> {
+  void setPayload(int index, P val);
+  ...
 }
 ```
 
-通过修改我们的泛型方法来包含这个有界类型参数，编译现在将失败，因为我们调用`inspect`仍然包含一个`String`：
+`PayloadList`的以下参数化是`List <String>`的子类型：
 
-```shell
-Box.java:21: <U>inspect(U) in Box<java.lang.Integer> cannot
-  be applied to (java.lang.String)
-                        integerBox.inspect("10");
-                                  ^
-1 error
-```
+- `PayloadList<String,String>`
+- `PayloadList<String,Integer>`
+- `PayloadList<String,Exception>`
 
-除了限制可用于实例化泛型类型的类型之外，有界类型参数还允许您调用边界中定义的方法：
+![diagram showing an example PayLoadList hierarchy: PayloadList<String, String> is a subtype of List<String>, which is a subtype of Collection<String>. At the same level of PayloadList<String,String> is PayloadList<String, Integer> and PayloadList<String, Exceptions>.](https://docs.oracle.com/javase/tutorial/figures/java/generics-payloadListHierarchy.gif)
 
-```java
-public class NaturalNumber<T extends Integer> {
-
-    private T n;
-
-    public NaturalNumber(T n)  { this.n = n; }
-
-    public boolean isEven() {
-        return n.intValue() % 2 == 0;
-    }
-
-    // ...
-}
-```
-
-`isEven`方法通过`n`调用`Integer`类中定义的`intValue`方法。
-
-**多个边界**
-
-前面的示例说明了使用带有单个边界的类型参数，但是类型参数可以具有*多个边界*：
-
-```java
-<T extends B1 & B2 & B3>
-```
-
-具有多个边界的类型变量是边界中列出的所有类型的子类型。如果其中一个边界是类，则必须首先指定它。 例如：
-
-```java
-Class A { /* ... */ }
-interface B { /* ... */ }
-interface C { /* ... */ }
-
-class D <T extends A & B & C> { /* ... */ }
-```
-
-如果未首先指定边界中的`A`，则会出现编译时错误：
-
-```java
-class D <T extends B & A & C> { /* ... */ }  // compile-time error
-```
-
-#### 泛型方法和有界类型参数
-
-有界类型参数是泛型算法实现的关键。考虑以下方法来计算数组`T[]`中大于指定元素`elem`的元素数。
-
-```java
-public static <T> int countGreaterThan(T[] anArray, T elem) {
-    int count = 0;
-    for (T e : anArray)
-        if (e > elem)  // compiler error
-            ++count;
-    return count;
-}
-```
-
-该方法的实现很简单，但它不能编译，因为大于运算符（`>`）仅适用于基本数据类型，如`short`，`int`，`double`，`long`，`float`， `byte`和`char`。你不能使用`>`运算符来比较对象。要解决此问题，请使用由`Comparable <T>`接口限定的类型参数：
-
-```java
-public interface Comparable<T> {
-    public int compareTo(T o);
-}
-```
-
-代码的结果将是：
-
-```java
-public static <T extends Comparable<T>> int countGreaterThan(T[] anArray, T elem) {
-    int count = 0;
-    for (T e : anArray)
-        if (e.compareTo(elem) > 0)
-            ++count;
-    return count;
-}
-```
