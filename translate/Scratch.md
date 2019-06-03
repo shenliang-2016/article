@@ -1,74 +1,175 @@
-### 泛型，继承和子类型
+### 类型推断
 
-如您所知，只要类型兼容，就可以将一种类型的对象分配给另一种类型的对象。例如，您可以将`Integer`对象分配给`Object`，因为`Object`是`Integer`的超类型之一：
+类型推断是 Java 编译器的一种能力，通过检查每个方法调用以及相应的方法声明来确定可应用于方法调用的类型参数。该推断算法确定参数的类型，如果可能，结果被赋值的类型，或者返回值类型。最后，类型推断算法尝试找出所有参数的最精确的类型。
+
+下面的例子说明了上面这一点，类型推断确定传递给`pick`方法的第二个参数是`Serializable`类型：
 
 ```java
-Object someObject = new Object();
-Integer someInteger = new Integer(10);
-someObject = someInteger;   // OK
+static <T> T pick(T a1, T a2) { return a2; }
+Serializable s = pick("d", new ArrayList<String>());
 ```
 
-在面向对象的术语中，这被称为“is a”关系。由于`Integer` *是*一种`Object`，因此允许赋值。但是`Integer`也是一种`Number`，所以下面的代码也是有效的：
+**类型推断和泛型方法**
+
+[泛型方法](https://docs.oracle.com/javase/tutorial/java/generics/methods.html) 向你介绍了类型推断，它使得你可以像调用普通方法那样调用泛型方法，而不需要使用尖括号说明类型参数。考虑下面的例子[`BoxDemo`](https://docs.oracle.com/javase/tutorial/java/generics/examples/BoxDemo.java)，需要 [`Box`](https://docs.oracle.com/javase/tutorial/java/generics/examples/Box.java) 类：
 
 ```java
-public void someMethod(Number n) { /* ... */ }
+public class BoxDemo {
 
-someMethod(new Integer(10));   // OK
-someMethod(new Double(10.1));   // OK
-```
+  public static <U> void addBox(U u, 
+      java.util.List<Box<U>> boxes) {
+    Box<U> box = new Box<>();
+    box.set(u);
+    boxes.add(box);
+  }
 
-泛型也是如此。您可以执行泛型类型调用，将`Number`作为其类型参数传递，如果参数与`Number`兼容，则允许任何后续的`add`调用：
+  public static <U> void outputBoxes(java.util.List<Box<U>> boxes) {
+    int counter = 0;
+    for (Box<U> box: boxes) {
+      U boxContents = box.get();
+      System.out.println("Box #" + counter + " contains [" +
+             boxContents.toString() + "]");
+      counter++;
+    }
+  }
 
-```java
-Box<Number> box = new Box<Number>();
-box.add(new Integer(10));   // OK
-box.add(new Double(10.1));  // OK
-```
-
-现在考虑下面的方法：
-
-```java
-public void boxTest(Box<Number> n) { /* ... */ }
-```
-
-它接受什么类型的参数？ 通过查看其签名，您可以看到它接受一个类型为`Box <Number>`的参数。但是，这是什么意思？ 您是否允许传递`Box <Integer>`或`Box <Double>`，如您所料？ 答案是“不”，因为`Box <Integer>`和`Box <Double>`不是`Box <Number>`的子类型。
-
-在使用泛型编程时，这是一个常见的误解，但这是一个需要学习的重要概念。
-
-![diagram showing that Box<Integer> is not a subtype of Box<Number>](https://docs.oracle.com/javase/tutorial/figures/java/generics-subtypeRelationship.gif)
-
-`Box<Integer>` 不是 `Box<Number>` 的子类型，尽管 `Integer` 是 `Number`的子类型。
-
-------
-
-**注意：**给定两个具体类型`A`和`B`（例如，`Number`和`Integer`），`MyClass <A>`与`MyClass <B>`无关，无论`A`和`B`是否相关。`MyClass <A>`和`MyClass <B>`的公共父类是`Object`。
-
-有关如何在类型参数相关时在两个泛型类之间创建类似子类型关系的信息，请参阅 [通配符和子类型](https://docs.oracle.com/javase/tutorial/java/generics/subtyping.html) 。
-
-------
-
-**泛型类和子类化**
-
-您可以通过扩展或实现通用类或接口来对其进行子类型化。一个类或接口的类型参数与另一个类的类型参数之间的关系由`extends`和`implements`子句决定。
-
-使用`Collections`类作为例子，`ArrayList <E>`实现`List <E>`，`List <E>扩展Collection <E>`。 所以`ArrayList <String>`是`List <String>`的子类型，它是`Collection <String>`的子类型。只要不改变类型参数，就会在类型之间保留子类型关系。
-
-![diagram showing a sample collections hierarchy: ArrayList<String> is a subtype of List<String>, which is a subtype of Collection<String>.](https://docs.oracle.com/javase/tutorial/figures/java/generics-sampleHierarchy.gif)
-
-现在假设我们想要定义我们自己的列表接口`PayloadList`，它将泛型类型`P`的可选值与每个元素相关联。它的声明可能如下：
-
-```java
-interface PayloadList<E,P> extends List<E> {
-  void setPayload(int index, P val);
-  ...
+  public static void main(String[] args) {
+    java.util.ArrayList<Box<Integer>> listOfIntegerBoxes =
+      new java.util.ArrayList<>();
+    BoxDemo.<Integer>addBox(Integer.valueOf(10), listOfIntegerBoxes);
+    BoxDemo.addBox(Integer.valueOf(20), listOfIntegerBoxes);
+    BoxDemo.addBox(Integer.valueOf(30), listOfIntegerBoxes);
+    BoxDemo.outputBoxes(listOfIntegerBoxes);
+  }
 }
 ```
 
-`PayloadList`的以下参数化是`List <String>`的子类型：
+程序输出：
 
-- `PayloadList<String,String>`
-- `PayloadList<String,Integer>`
-- `PayloadList<String,Exception>`
+```shell
+Box #0 contains [10]
+Box #1 contains [20]
+Box #2 contains [30]
+```
 
-![diagram showing an example PayLoadList hierarchy: PayloadList<String, String> is a subtype of List<String>, which is a subtype of Collection<String>. At the same level of PayloadList<String,String> is PayloadList<String, Integer> and PayloadList<String, Exceptions>.](https://docs.oracle.com/javase/tutorial/figures/java/generics-payloadListHierarchy.gif)
+泛型方法`addBox`定义了一个名为`u`的类型参数。一般地，Java 编译器可以推断泛型方法调用的类型参数。因此，大部分情况下，你不需要指定它们。比如，为了调用泛型方法`addBox`，你可以随着一个类型*见证者*指定类型参数，如下所示：
 
+```java
+BoxDemo.<Integer>addBox(Integer.valueOf(10), listOfIntegerBoxes);
+```
+
+不过，如果你忽略该类型见证者，Java 编译器将会自动推断出类型参数是`Integer`：
+
+```java
+BoxDemo.addBox(Integer.valueOf(20), listOfIntegerBoxes);
+```
+
+**类型推断和泛型类实例化**
+
+由于编译器可以从上下文中推断出类型参数，你就可以在调用泛型类的构造方法时使用空的类型参数列表 `<>`。这个空的尖括号被称为 [菱形表示法](https://docs.oracle.com/javase/tutorial/java/generics/types.html#diamond) 。
+
+例如，考虑下面的变量声明：
+
+```java
+Map<String, List<String>> myMap = new HashMap<String, List<String>>();
+```
+
+您可以使用一组空的类型参数（<>）替换构造函数的参数化类型：
+
+```java
+Map<String, List<String>> myMap = new HashMap<>();
+```
+
+请注意，要在泛型类实例化期间利用类型推断，必须使用菱形表示法。在以下示例中，编译器生成未经检查的转换警告，因为`HashMap()`构造函数引用`HashMap`原始类型，而不是`Map <String，List <String >>`类型：
+
+```java
+Map<String, List<String>> myMap = new HashMap(); // unchecked conversion warning
+```
+
+**类型推断与泛型类或者非泛型类的泛型构造方法**
+
+请注意，构造函数在泛型和非泛型类中都可以是通用的（换句话说，声明它们自己的形式类型参数）。请考虑以下示例：
+
+```java
+class MyClass<X> {
+  <T> MyClass(T t) {
+    // ...
+  }
+}
+```
+
+考虑下面的`MyClass`类的实例化：
+
+```java
+new MyClass<Integer>("")
+```
+
+此语句创建参数化类型`MyClass <Integer>`的实例；该语句显式指定泛型类`MyClass <X>`的形式类型参数`X`的类型`Integer`。请注意，此泛型类的构造函数包含一个正式的类型参数`T` 。编译器推断出此泛型类的构造函数的形式类型参数`T`的类型`String`（因为此构造函数的实际参数是`String`对象）。
+
+Java SE 7之前版本的编译器能够推断泛型构造函数的实际类型参数，类似于泛型方法。但是，如果使用菱形表示法`<>`，Java SE 7及更高版本中的编译器可以推断出要实例化的泛型类的实际类型参数。请考虑以下示例：
+
+```java
+MyClass<Integer> myObject = new MyClass<>("");
+```
+
+在此示例中，编译器为通用类`MyClass <X>`的形式类型参数`X`推断类型`Integer`。它推断出此泛型类的构造函数的形式类型参数`T`的类型`String`。
+
+------
+
+**注意：** 要注意推理算法仅使用调用参数，目标类型，并且可能使用明显的预期返回类型来推断类型。推理算法不使用程序中稍后的结果。
+
+------
+
+**目标类型**
+
+Java编译器利用目标类型来推断泛型方法调用的类型参数。表达式的目标类型是Java编译器所期望的数据类型，具体取决于表达式的出现位置。考虑方法`Collections.emptyList`，声明如下：
+
+```java
+static <T> List<T> emptyList();
+```
+
+考虑下面的赋值语句：
+
+```java
+List<String> listOne = Collections.emptyList();
+```
+
+此语句需要`List <String>`的实例；此数据类型是目标类型。因为方法`emptyList`返回`List <T>`类型的值，所以编译器推断类型参数`T`必须是`String`值。这适用于Java SE 7和8。或者，您可以使用类型见证并指定`T`的值，如下所示：
+
+```java
+List<String> listOne = Collections.<String>emptyList();
+```
+
+不过，这样做在当前上下文中是不必要的。它在其它上下文中是必要的。考虑如下方法：
+
+```java
+void processStringList(List<String> stringList) {
+    // process stringList
+}
+```
+
+假设您要使用空列表调用方法`processStringList`。 在Java SE 7中，以下语句不能通过编译：
+
+```java
+processStringList(Collections.emptyList());
+```
+
+Java SE 7 编译器产生类似下面的错误信息：
+
+```shell
+List<Object> cannot be converted to List<String>
+```
+
+编译器需要类型参数`T`的值，因此它以`Object`值开头。因此，`Collections.emptyList`的调用返回`List <Object>`类型的值，该值与方法`processStringList`不兼容。因此，在Java SE 7中，您必须指定类型参数，如下所示：
+
+```java
+processStringList(Collections.<String>emptyList());
+```
+
+Java SE 8中不再需要这样。目标类型的概念已经扩展为包含方法参数，例如方法`processStringList`的参数。在这种情况下，`processStringList`需要一个`List <String>`类型的参数。方法`Collections.emptyList`返回`List <T>`的值，因此使用`List <String>`的目标类型，编译器推断类型参数`T`的值为`String`。因此，在Java SE 8中，以下语句可以通过编译：
+
+```java
+processStringList(Collections.emptyList());
+```
+
+参考 [Lambda 表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 中的 [目标类型](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html#target-typing) 获取更多信息。
