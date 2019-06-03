@@ -1,56 +1,44 @@
-### 通配符
+#### 无界通配符
 
-在泛型代码中，问号`?`被称为*通配符*，表示一个未知的类型。通配符能够被用在各种情景中：作为参数、字段或者局部变量的类型，有时候也作为一个返回类型。通配符永远不会被用来作为泛型方法声明、泛型类实例创建的类型参数，或者一个超类型。
+无界通配符类型使用通配符`?`来说明，比如，`List<?>`。这被称为未知类型列表。无界通配符在两种场景下是非常有用的：
 
-接下来的章节详细讨论通配符，包括上界通配符、下界通配符，以及通配符捕获。
+- 如果你正在编写一个方法，该方法可以使用`Object`类中提供的功能实现。
+- 当代码使用泛型类中不依赖类型参数方法时。比如 `List.size` 或者 `List.clear`。事实上，`Class<?>` 是如此常用，因为`Class<?>`中大部分方法都不依赖 `T`。
 
-#### 上界通配符
-
-您可以使用上限通配符来放宽对变量的限制。例如，假设您要编写一个适用于`List <Integer>`，`List <Double>`，*和*`List <Number>`的方法。你可以通过使用上限的通配符来实现这一点。
-
-要声明一个上限通配符，请使用通配符（`?`），后跟`extends`关键字，后跟*上限*。注意，在这种情况下，`extends`在一般意义上用于表示“扩展”（在类中）或“实现”（在接口中）。
-
-要编写适用于`Number`列表和`Number`子类的方法，如`Integer`，`Double`和`Float`，你可以指定`List <？ extends Number>`。术语`List <Number>`比`List <？extends Number>`更具限制性。因为前者只匹配一个类型为`Number`的列表，而后者匹配一个类型为`Number`或其任何子类的列表。
-
-考虑下面的 `process` 方法：
+考虑下面的方法 `printList`：
 
 ```java
-public static void process(List<? extends Foo> list) { /* ... */ }
-```
-
-上界通配符 `<? extends Foo>`，其中的 `Foo` 是任何类型，匹配到 `Foo` 以及 `Foo`的任何子类。 `process` 方法能够处理元素类型为 `Foo`的列表：
-
-```java
-public static void process(List<? extends Foo> list) {
-    for (Foo elem : list) {
-        // ...
-    }
+public static void printList(List<Object> list) {
+    for (Object elem : list)
+        System.out.println(elem + " ");
+    System.out.println();
 }
 ```
 
-在`foreach`子句中，`elem`变量遍历列表中的每个元素。现在可以在`elem`上使用`Foo`类中定义的任何方法。
-
-`sumOfList`方法返回列表中数字的总和：
+`printList`的目标是打印任何类型的列表，但它无法实现该目标 - 它只打印一个`Object`实例列表；它不能打印`List <Integer>`，`List <String>`，`List <Double>`等等，因为它们不是`List <Object>`的子类型。 要编写通用的`printList`方法，请使用`List <？>`：
 
 ```java
-public static double sumOfList(List<? extends Number> list) {
-    double s = 0.0;
-    for (Number n : list)
-        s += n.doubleValue();
-    return s;
+public static void printList(List<?> list) {
+    for (Object elem: list)
+        System.out.print(elem + " ");
+    System.out.println();
 }
 ```
 
-下面的代码，使用 `Integer` 对象列表，打印结果 `sum = 6.0`：
+因为对任何具体的类型 `A`, `List<A>` 都是 `List<?>`的子类，你可以使用 `printList` 来打印任何类型元素的列表：
 
 ```java
 List<Integer> li = Arrays.asList(1, 2, 3);
-System.out.println("sum = " + sumOfList(li));
+List<String>  ls = Arrays.asList("one", "two", "three");
+printList(li);
+printList(ls);
 ```
 
-`Double`值列表可以使用相同的`sumOfList`方法。以下代码打印`sum = 7.0`：
+------
 
-```java
-List<Double> ld = Arrays.asList(1.2, 2.3, 3.5);
-System.out.println("sum = " + sumOfList(ld));
-```
+**注意：**  [`Arrays.asList`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#asList-T...-) 方法被用在本手册中的所有例子中。此静态工厂方法转化给定的数据并且返回一个固定长度的列表。
+
+------
+
+注意`List <Object>`和`List <？>`是不一样的。您可以将`Object`或`Object`的任何子类型插入到`List <Object>`中。但是你只能将`null`插入`List <？>`。[通配符使用指南](https://docs.oracle.com/javase/tutorial/java/generics/wildcardGuidelines.html) 部分提供了有关如何确定特定情况下应使用哪种通配符（如果有）的更多信息。
+
