@@ -1,66 +1,598 @@
-#### 通配符使用向导
+### 类型擦除
 
-学习使用泛型编程时，更令人困惑的一个方面是确定何时使用上界通配符以及何时使用下界通配符。此页面提供了设计代码时要遵循的一些准则。
+泛型被引入到Java语言中，以便在编译时提供更严格的类型检查并支持泛型编程。为了实现泛型，Java编译器将类型擦除应用于：
 
-出于本讨论的目的，将变量视为提供两个函数之一是有帮助的：
+* 如果类型参数是无界的，则将泛型类型中的所有类型参数替换为其边界或`Object`。因此，生成的字节码仅包含普通的类，接口和方法。
+* 如有必要，插入类型转换以保持类型安全。
+* 生成桥接方法以保留扩展泛型类型中的多态性。
 
-- **一个“in”变量**
+类型擦除确保不为参数化类型创建新类：因此，泛型不会产生运行时开销。
 
-  “in”变量向代码提供数据。想象一下带有两个参数的复制方法：`copy(src, dest)`。`src`参数提供要复制的数据，因此它是“in”参数。
+#### 泛型类型擦除
 
-- **一个“out”变量**
+在类型擦除过程中，Java编译器将擦除所有类型参数，并在类型参数有界时将其替换为第一个界，如果类型参数为无界，则替换为`Object`。
 
-  “out”变量保存数据以供其他地方使用。在复制示例中，`copy(src, dest)`，`dest`参数接受数据，因此它是“out”参数。
-
-当然，一些变量既用于“in”又用于“out”目的 - 这种情况也在指南中得到解决。
-
-在决定是否使用通配符以及适合使用哪种类型的通配符时，可以使用“in”和“out”原则。以下列表提供了遵循的准则：
-
-------
-
-通配符指南：
-
- - 使用`extends`关键字定义带有上限通配符的“in”变量。
- - 使用`super`关键字定义带有下限通配符的“out”变量。
- - 如果可以使用`Object`类中定义的方法访问“in”变量，请使用无界通配符。
- - 如果代码需要作为“in”和“out”变量访问变量，请不要使用通配符。
-
-------
-
-这些指南不适用于方法的返回类型。应该避免使用通配符作为返回类型，因为它强制程序员使用代码来处理通配符。
-
- `List<? extends ...>` 可以被非正式地认为是只读的，但这不是一个严格的保证。假设您有以下两个类：
+考虑以下表示单链表中节点的泛型类：
 
 ```java
-class NaturalNumber {
+public class Node<T> {
 
-    private int i;
+    private T data;
+    private Node<T> next;
 
-    public NaturalNumber(int i) { this.i = i; }
-    // ...
-}
+    public Node(T data, Node<T> next) {
+        this.data = data;
+        this.next = next;
+    }
 
-class EvenNumber extends NaturalNumber {
-
-    public EvenNumber(int i) { super(i); }
+    public T getData() { return data; }
     // ...
 }
 ```
 
-考虑如下代码：
+因为类型参数`T`是无界的，所以Java编译器将其替换为`Object`：
 
 ```java
-List<EvenNumber> le = new ArrayList<>();
-List<? extends NaturalNumber> ln = le;
-ln.add(new NaturalNumber(35));  // compile-time error
+public class Node {
+
+    private Object data;
+    private Node next;
+
+    public Node(Object data, Node next) {
+        this.data = data;
+        this.next = next;
+    }
+
+    public Object getData() { return data; }
+    // ...
+}
 ```
 
-因为`List <EvenNumber>`是`List <? extends NaturalNumber>`，你可以将`le`赋给`ln`。但是你不能使用`ln`将自然数添加到偶数列表中。列表中的以下操作是可能的：
+在以下示例中，泛型`Node`类使用有界类型参数：
 
- - 您可以添加`null`。
- - 你可以调用`clear`。
- - 您可以获取迭代器并调用`remove`。
- - 您可以捕获通配符并写入从列表中读取的元素。
+```java
+public class Node<T extends Comparable<T>> {
 
-你可以看到 `List<? extends NaturalNumber>` 在严格意义上不是只读的，但您可能会这样想，因为您无法存储新元素或更改列表中的现有元素。
+    private T data;
+    private Node<T> next;
 
+    public Node(T data, Node<T> next) {
+        this.data = data;
+        this.next = next;
+    }
+
+    public T getData() { return data; }
+    // ...
+}
+```
+
+Java编译器将有界类型参数`T`替换为第一个界限类`Comparable`：
+
+```java
+public class Node {
+
+    private Comparable data;
+    private Node next;
+
+    public Node(Comparable data, Node next) {
+        this.data = data;
+        this.next = next;
+    }
+
+    public Comparable getData() { return data; }
+    // ...
+}
+```
+
+#### 泛型方法擦除
+
+Java 编译器也会擦除泛型方法参数的类型参数。考虑下面的泛型方法：
+
+```java
+// Counts the number of occurrences of elem in anArray.
+//
+public static <T> int count(T[] anArray, T elem) {
+    int cnt = 0;
+    for (T e : anArray)
+        if (e.equals(elem))
+            ++cnt;
+        return cnt;
+}
+```
+
+由于`T`是无界的，Java 编译器将它替换为 `Object`：
+
+```java
+public static int count(Object[] anArray, Object elem) {
+    int cnt = 0;
+    for (Object e : anArray)
+        if (e.equals(elem))
+            ++cnt;
+        return cnt;
+}
+```
+
+假设定义如下的类：
+
+```java
+class Shape { /* ... */ }
+class Circle extends Shape { /* ... */ }
+class Rectangle extends Shape { /* ... */ }
+```
+
+你可以编写一个泛型方法来画出不同的形状：
+
+```java
+public static <T extends Shape> void draw(T shape) { /* ... */ }
+```
+
+Java 编译器将 `T` 替换为 `Shape`：
+
+```java
+public static void draw(Shape shape) { /* ... */ }
+```
+
+#### 类型擦除和桥接方法的影响
+
+有时候类型擦除导致你可能没有候选者的情况。下面的例子展示了这种情况是如何发生的。该例子（在 [桥接方法](https://docs.oracle.com/javase/tutorial/java/generics/bridgeMethods.html#bridgeMethods) 中描述）展示了有时编译器是如何创建一个合成方法，并调用一个桥接方法，作为类型擦除过程的一部分。
+
+给定下面的两个类：
+
+```java
+public class Node<T> {
+
+    public T data;
+
+    public Node(T data) { this.data = data; }
+
+    public void setData(T data) {
+        System.out.println("Node.setData");
+        this.data = data;
+    }
+}
+
+public class MyNode extends Node<Integer> {
+    public MyNode(Integer data) { super(data); }
+
+    public void setData(Integer data) {
+        System.out.println("MyNode.setData");
+        super.setData(data);
+    }
+}
+```
+
+考虑下面的代码：
+
+```java
+MyNode mn = new MyNode(5);
+Node n = mn;            // A raw type - compiler throws an unchecked warning
+n.setData("Hello");     
+Integer x = mn.data;    // Causes a ClassCastException to be thrown.
+```
+
+类型擦除之后，代码变成：
+
+```java
+MyNode mn = new MyNode(5);
+Node n = (MyNode)mn;         // A raw type - compiler throws an unchecked warning
+n.setData("Hello");
+Integer x = (String)mn.data; // Causes a ClassCastException to be thrown.
+```
+
+代码执行时将会发生：
+
+- `n.setData("Hello");` 导致`MyNode`类对象上的方法`setData(Object)` 被执行。(`MyNode` 类从 `Node`类继承`setData(Object)`。)
+- 在`setData(Object)`的方法体中，`n`引用的对象的数据字段被分配给`String`。
+ undefined可以访问通过`mn`引用的同一对象的数据字段，并且期望它是一个整数（因为`mn`是`MyNode`，它是`Node <Integer>`。
+ undefined尝试将`String`分配给`Integer`会导致 Java 编译器在赋值时插入的转换中出现`ClassCastException`。
+
+**桥接方法**
+
+在编译扩展参数化类或实现参数化接口的类或接口时，编译器可能需要创建一个称为桥接方法的合成方法，作为类型擦除过程的一部分。您通常不需要担心桥接方法，但如果出现在堆栈跟踪中，您可能会感到困惑。
+
+在类型擦除之后，`Node`和`MyNode`类变为：
+
+```java
+public class Node {
+
+    public Object data;
+
+    public Node(Object data) { this.data = data; }
+
+    public void setData(Object data) {
+        System.out.println("Node.setData");
+        this.data = data;
+    }
+}
+
+public class MyNode extends Node {
+
+    public MyNode(Integer data) { super(data); }
+
+    public void setData(Integer data) {
+        System.out.println("MyNode.setData");
+        super.setData(data);
+    }
+}
+```
+
+在类型擦除之后，方法签名不匹配。`Node`方法变为`setData(Object)`，`MyNode`方法变为`setData(Integer)`。因此，`MyNode.setData`方法不会覆盖`Node.setData`方法。
+
+为了解决这个问题并在类型擦除后保留泛型类型的多态性，Java编译器会生成一个桥接方法，以确保子类型按预期工作。 对于`MyNode`类，编译器为`setData`生成以下桥接方法：
+
+```java
+class MyNode extends Node {
+
+    // Bridge method generated by the compiler
+    //
+    public void setData(Object data) {
+        setData((Integer) data);
+    }
+
+    public void setData(Integer data) {
+        System.out.println("MyNode.setData");
+        super.setData(data);
+    }
+
+    // ...
+}
+```
+
+如您所见，桥接方法与类型擦除后的`Node`类的`setData`方法具有相同的方法签名，委托给原始的`setData`方法。
+
+#### 不可再生类型
+
+[类型擦除](https://docs.oracle.com/javase/tutorial/java/generics/erasure.html) 部分讨论了编译器删除与类型形式参数和类型实际参数相关的信息的过程。类型擦除具有与可变参数（也称为`varargs`）方法有关的后果，其`varargs`形式参数具有不可再生类型。有关`varargs`方法的更多信息，请参阅 [传递信息给方法或者构造器](https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html) 章节中的 [任意数量参数](https://docs.oracle.com/javase/tutorial/java/javaOO/arguments.html#varargs) 部分。
+
+此页面包含以下主题：
+
+ - [不可再生类型](https://docs.oracle.com/javase/tutorial/java/generics/nonReifiableVarargsType.html#non-reifiable-types)
+ - [堆污染](https://docs.oracle.com/javase/tutorial/java/generics/nonReifiableVarargsType.html#heap_pollution)
+ - [具有不可再生形式参数的`Varargs`方法的潜在漏洞](https://docs.oracle.com/javase/tutorial/java/generics/nonReifiableVarargsType.html#vulnerabilities)
+ - [防止使用不可再生形式参数的`Varargs`方法的警告](https://docs.oracle.com/javase/tutorial/java/generics/nonReifiableVarargsType.html#suppressing)
+
+**不可再生类型**
+
+可再生类型是类型信息在运行时完全可用的类型。这包括基本数据类型，非泛型类型，原始类型和无界通配符的调用。
+
+不可再生类型是在编译时通过类型擦除删除信息的类型 - 未定义为无界通配符的泛型类型的调用。不可重新生成的类型在运行时没有提供所有信息。不可再生类型的示例是`List <String>`和`List <Number>` ；JVM无法在运行时区分这些类型。如 [泛型的局限性](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html) 中所示，在某些情况下，不能使用不可重新生成的类型：例如，在 `instanceof` 表达式中，或作为数组中的元素。
+
+**堆污染**
+
+当参数化类型的变量引用不是该参数化类型的对象时，会发生*堆污染* 。如果程序执行某些操作，在编译时产生未经检查的警告，则会出现这种情况。如果在编译时（在编译时类型检查规则的限制内）或在运行时，生成涉及参数化类型（例如，强制转换或方法调用）的操作的正确性无法验证，则会生成未经检查的警告。例如，在混合原始类型和参数化类型时，或者在执行未经检查的强制转换时，会发生堆污染。
+
+在正常情况下，当所有代码同时编译时，编译器会发出未经检查的警告，以引起您对潜在堆污染的注意。如果单独编译代码的各个部分，则很难检测到堆污染的潜在风险。如果确保代码在没有警告的情况下编译，则不会发生堆污染。
+
+**具有不可再生形式参数的`Varargs`方法的潜在漏洞**
+
+包含可变输入参数的泛型方法可能会导致堆污染。
+
+考虑下面的 `ArrayBuilder` 类：
+
+```java
+public class ArrayBuilder {
+
+  public static <T> void addToList (List<T> listArg, T... elements) {
+    for (T x : elements) {
+      listArg.add(x);
+    }
+  }
+
+  public static void faultyMethod(List<String>... l) {
+    Object[] objectArray = l;     // Valid
+    objectArray[0] = Arrays.asList(42);
+    String s = l[0].get(0);       // ClassCastException thrown here
+  }
+
+}
+```
+
+下面的例子， `HeapPollutionExample` 使用 `ArrayBuiler` 类：
+
+```java
+public class HeapPollutionExample {
+
+  public static void main(String[] args) {
+
+    List<String> stringListA = new ArrayList<String>();
+    List<String> stringListB = new ArrayList<String>();
+
+    ArrayBuilder.addToList(stringListA, "Seven", "Eight", "Nine");
+    ArrayBuilder.addToList(stringListB, "Ten", "Eleven", "Twelve");
+    List<List<String>> listOfStringLists =
+      new ArrayList<List<String>>();
+    ArrayBuilder.addToList(listOfStringLists,
+      stringListA, stringListB);
+
+    ArrayBuilder.faultyMethod(Arrays.asList("Hello!"), Arrays.asList("World!"));
+  }
+}
+```
+
+编译时，`ArrayBuilder.addToList`方法的定义产生以下警告：
+
+```shell
+warning: [varargs] Possible heap pollution from parameterized vararg type T
+```
+
+当编译器遇到`varargs`方法时，它会将`varargs`形式参数转换为数组。但是，Java编程语言不允许创建参数化类型的数组。在方法`ArrayBuilder.addToList`中，编译器将`varargs`形式参数`T...`元素转换为形式参数`T[]`元素，即数组。但是，由于类型擦除，编译器会将`varargs`形式参数转换为`Object[]`元素。因此，存在堆污染的可能性。
+
+以下语句将`varargs`形式参数`l`分配给`Object`数组`objectArgs`：
+
+```java
+Object[] objectArray = l;
+```
+
+以上语句可能会引入堆污染。与`varargs`形式参数`l`的参数化类型匹配的值可以分配给变量`objectArray`，因此可以分配给`l`。但是，编译器不会在此语句中生成未经检查的警告。编译器在将`varargs`形式参数`List <String> ... `l转换为形式参数`List []`l时已生成警告。以上语句有效：变量`l`的类型为`List []`，它是`Object []`的子类型。
+
+因此，如果将任何类型的`List`对象分配给`objectArray`数组的任何数组组件，编译器不会发出警告或错误，如下所示：
+
+```java
+objectArray[0] = Arrays.asList(42);
+```
+
+此语句将包含一个`Integer`类型的对象的`List`对象分配给`objectArray`数组的第一个数组元素。
+
+假设您使用以下语句调用`ArrayBuilder.faultyMethod`：
+
+```java
+ArrayBuilder.faultyMethod(Arrays.asList("Hello!"), Arrays.asList("World!"));
+```
+
+运行时，JVM 对下面的语句抛出一个 `ClassCastException` ：
+
+```java
+// ClassCastException thrown here
+String s = l[0].get(0);
+```
+
+存储在变量`l`的第一个数组元素中的对象具有`List <Integer>`类型，但此语句需要一个`List <String>`类型的对象。
+
+**防止使用不可再生形式参数的`Varargs`方法的警告**
+
+如果声明具有参数化类型参数的`varargs`方法，并确保方法体不会因`varargs`形式参数处理不当而抛出`ClassCastException`或其他类似异常，则可以通过向静态和非构造方法声明添加以下注解来防止编译器为这些类型的varargs方法生成警告：
+
+```java
+@SafeVarargs
+```
+
+`@SafeVarargs`注解是方法契约的文档部分；这个注解断言该方法的实现不会不正确地处理`varargs`形式参数。
+
+尽管不太可取，但通过在方法声明中添加以下内容来抑制此类警告也是可能的：
+
+```java
+@SuppressWarnings({"unchecked", "varargs"})
+```
+
+但是，此方法不会抑制从方法的调用生成的警告。如果您不熟悉`@SuppressWarnings`语法，请参阅 [注解](https://docs.oracle.com/javase/tutorial/java/annotations/index.html) 。
+
+### 泛型的局限性
+
+为了有效使用 Java 泛型，你必须了解以下限制：
+
+- [不能用基本数据类型实例化泛型类型](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#instantiate)
+- [不能创建类型参数的实例](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#createObjects)
+- [不能声明类型为类型参数的静态字段](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#createStatic)
+- [不能对参数化类型使用类型转换或者`instanceof`](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#cannotCast)
+- [不能创建参数化类型数组](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#createArrays)
+- [不能创建、捕获或者抛出参数化类型对象](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#cannotCatch)
+- [无法重载每个重载的形式参数类型擦除到相同原始类型的方法](https://docs.oracle.com/javase/tutorial/java/generics/restrictions.html#cannotOverload)
+
+**不能用基本数据类型实例化泛型类型**
+
+考虑下面的参数化类型：
+
+```java
+class Pair<K, V> {
+
+    private K key;
+    private V value;
+
+    public Pair(K key, V value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    // ...
+}
+```
+
+创建`Pair`对象时，不能用基本类型替换类型参数`K`或`V`：
+
+```java
+Pair<int, char> p = new Pair<>(8, 'a');  // compile-time error
+```
+
+你只能使用非基本数据类型来替换类型参数 `K` 和 `V` ：
+
+```java
+Pair<Integer, Character> p = new Pair<>(8, 'a');
+```
+
+注意，编译器会自动装箱 `8` 为 `Integer.valueOf(8)` 同时 '`a`' 装箱为 `Character('a')`：
+
+```java
+Pair<Integer, Character> p = new Pair<>(Integer.valueOf(8), new Character('a'));
+```
+
+有关自动装箱的更多信息，参考 [自动装箱和拆箱](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html) 。
+
+**不能创建类型参数的实例**
+
+您无法创建类型参数的实例。例如，以下代码导致编译时错误：
+
+```java
+public static <E> void append(List<E> list) {
+    E elem = new E();  // compile-time error
+    list.add(elem);
+}
+```
+
+作为权宜之计，您可以通过反射创建类型参数的对象：
+
+```java
+public static <E> void append(List<E> list, Class<E> cls) throws Exception {
+    E elem = cls.newInstance();   // OK
+    list.add(elem);
+}
+```
+
+你可以调用 `append` 方法如下：
+
+```java
+List<String> ls = new ArrayList<>();
+append(ls, String.class);
+```
+
+**不能声明类型为类型参数的静态字段**
+
+A class's static field is a class-level variable shared by all non-static objects of the class. Hence, static fields of type parameters are not allowed. Consider the following class:
+
+```
+public class MobileDevice<T> {
+    private static T os;
+
+    // ...
+}
+
+```
+
+If static fields of type parameters were allowed, then the following code would be confused:
+
+```
+MobileDevice<Smartphone> phone = new MobileDevice<>();
+MobileDevice<Pager> pager = new MobileDevice<>();
+MobileDevice<TabletPC> pc = new MobileDevice<>();
+
+```
+
+Because the static field `os` is shared by `phone`, `pager`, and `pc`, what is the actual type of `os`? It cannot be `Smartphone`, `Pager`, and `TabletPC` at the same time. You cannot, therefore, create static fields of type parameters.
+
+## [Cannot Use Casts or `instanceof` with Parameterized Types]()
+
+Because the Java compiler erases all type parameters in generic code, you cannot verify which parameterized type for a generic type is being used at runtime:
+
+```
+public static <E> void rtti(List<E> list) {
+    if (list instanceof ArrayList<Integer>) {  // compile-time error
+        // ...
+    }
+}
+
+```
+
+The set of parameterized types passed to the `rtti` method is:
+
+```
+S = { ArrayList<Integer>, ArrayList<String> LinkedList<Character>, ... }
+
+```
+
+The runtime does not keep track of type parameters, so it cannot tell the difference between an `ArrayList<Integer>` and an `ArrayList<String>`. The most you can do is to use an unbounded wildcard to verify that the list is an `ArrayList`:
+
+```
+public static void rtti(List<?> list) {
+    if (list instanceof ArrayList<?>) {  // OK; instanceof requires a reifiable type
+        // ...
+    }
+}
+
+```
+
+Typically, you cannot cast to a parameterized type unless it is parameterized by unbounded wildcards. For example:
+
+```
+List<Integer> li = new ArrayList<>();
+List<Number>  ln = (List<Number>) li;  // compile-time error
+
+```
+
+However, in some cases the compiler knows that a type parameter is always valid and allows the cast. For example:
+
+```
+List<String> l1 = ...;
+ArrayList<String> l2 = (ArrayList<String>)l1;  // OK
+
+```
+
+## [Cannot Create Arrays of Parameterized Types]()
+
+You cannot create arrays of parameterized types. For example, the following code does not compile:
+
+```
+List<Integer>[] arrayOfLists = new List<Integer>[2];  // compile-time error
+
+```
+
+The following code illustrates what happens when different types are inserted into an array:
+
+```
+Object[] strings = new String[2];
+strings[0] = "hi";   // OK
+strings[1] = 100;    // An ArrayStoreException is thrown.
+
+```
+
+If you try the same thing with a generic list, there would be a problem:
+
+```
+Object[] stringLists = new List<String>[];  // compiler error, but pretend it's allowed
+stringLists[0] = new ArrayList<String>();   // OK
+stringLists[1] = new ArrayList<Integer>();  // An ArrayStoreException should be thrown,
+                                            // but the runtime can't detect it.
+
+```
+
+If arrays of parameterized lists were allowed, the previous code would fail to throw the desired `ArrayStoreException`.
+
+## [Cannot Create, Catch, or Throw Objects of Parameterized Types]()
+
+A generic class cannot extend the `Throwable` class directly or indirectly. For example, the following classes will not compile:
+
+```
+// Extends Throwable indirectly
+class MathException<T> extends Exception { /* ... */ }    // compile-time error
+
+// Extends Throwable directly
+class QueueFullException<T> extends Throwable { /* ... */ // compile-time error
+
+```
+
+A method cannot catch an instance of a type parameter:
+
+```
+public static <T extends Exception, J> void execute(List<J> jobs) {
+    try {
+        for (J job : jobs)
+            // ...
+    } catch (T e) {   // compile-time error
+        // ...
+    }
+}
+
+```
+
+You can, however, use a type parameter in a `throws` clause:
+
+```
+class Parser<T extends Exception> {
+    public void parse(File file) throws T {     // OK
+        // ...
+    }
+}
+
+```
+
+## [Cannot Overload a Method Where the Formal Parameter Types of Each Overload Erase to the Same Raw Type]()
+
+A class cannot have two overloaded methods that will have the same signature after type erasure.
+
+```
+public class Example {
+    public void print(Set<String> strSet) { }
+    public void print(Set<Integer> intSet) { }
+}
+
+```
+
+The overloads would all share the same classfile representation and will generate a compile-time error.
