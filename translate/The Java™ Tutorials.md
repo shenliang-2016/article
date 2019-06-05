@@ -9956,9 +9956,291 @@ Java语言本身的包以`java.`或`javax.`开头
 
 在某些情况下，互联网域名可能不是有效的包名。如果域名包含连字符或其他特殊字符，如果包名称以数字或其他非法用作Java名称开头的字符开头，或者包名称包含保留的Java关键字，则会发生这种情况，例如`int`。在这种情况下，建议添加下划线。例如：
 
-| 域名                          | 包名前缀                      |
+| 域名                            | 包名前缀                          |
 | ----------------------------- | ----------------------------- |
 | `hyphenated-name.example.org` | `org.example.hyphenated_name` |
 | `example.int`                 | `int_.example`                |
 | `123name.example.com`         | `com.example._123name`        |
+
+#### 使用包成员
+
+组成包的类型称为包成员。
+
+要从其包外部使用公共包成员，您必须执行以下操作之一：
+
+- 通过其完全限定名称引用该成员
+- 导入包成员
+- 导入成员所在的整个包
+
+每种情况都适用于不同的情况，如以下各节所述。
+
+**通过其完全限定名称引用该成员**
+
+到目前为止，本教程中的大多数示例都通过简单名称引用类型，例如`Rectangle`和`StackOfInts`。如果您编写的代码与该成员位于同一个包中，或者已导入该成员，则可以使用包成员的简单名称。
+
+但是，如果您尝试使用其他程序包中的成员并且尚未导入该程序包，则必须使用该成员的完全限定名称，该名称包括程序包名称。这是上一个示例中 `graphics` 包中声明的`Rectangle`类的完全限定名称。
+
+```java
+graphics.Rectangle
+```
+
+你也可以使用全限定名类创建实例 `graphics.Rectangle` ：
+
+```java
+graphics.Rectangle myRect = new graphics.Rectangle();
+```
+
+全限定名称可以不经常使用。但是，当重复使用名称时，重复键入名称会变得乏味，并且代码变得难以阅读。作为替代方法，您可以导入成员或其包，然后使用其简单名称。
+
+**导入包成员**
+
+要将特定成员导入当前文件，请在任何类型定义之前在文件开头放置`import`语句，但在`package`语句之后（如果有）。以下是从上一节中创建的 `graphics` 包导入`Rectangle`类的方法。
+
+```java
+import graphics.Rectangle;
+```
+
+现在您可以通过简单名称引用`Rectangle`类。
+
+```java
+Rectangle myRectangle = new Rectangle();
+```
+
+如果您只使用 `graphics` 包中的一些成员，这种方法很有效。但是如果从包中使用许多类型，则应导入整个包。
+
+**导入整个包**
+
+为了导入特定包中的所有类型，使用 `import` 语句和星号 (`*`) 通配符。
+
+```java
+import graphics.*;
+```
+
+接下来你就可以使用包内的类的简单名称引用它们：
+
+```java
+Circle myCircle = new Circle();
+Rectangle myRectangle = new Rectangle();
+```
+
+`import`语句中的星号只能用于指定包中的所有类，如此处所示。它不能用于匹配包中类的子集。例如，以下内容与 `graphics` 包中以`A`开头的所有类都不匹配。
+
+```java
+// does not work
+import graphics.A*;
+```
+
+相反，它会生成编译错误。使用`import`语句，通常只导入单个包成员或整个包。
+
+------
+
+注意：另一种不太常见的导入形式允许您导入包含特定类的公共嵌套类。例如，如果`graphics.Rectangle`类包含有用的嵌套类（如`Rectangle.DoubleWide`和`Rectangle.Square`），则可以使用以下两个语句导入`Rectangle`及其嵌套类。
+
+```java
+import graphics.Rectangle;
+import graphics.Rectangle.*;
+```
+
+请注意，第二个`import`语句不会导入`Rectangle`。
+
+另一种不常见的导入形式是*静态*导入语句，将在本节末尾讨论。
+
+------
+
+为方便起见，Java编译器自动为每个源文件导入两个完整的包：（1）`java.lang`包和（2）当前包（当前文件的包）。
+
+**名称混淆**
+
+如果一个包中的成员与另一个包中的成员共享其名称并且两个包都已导入，则必须通过其限定名称引用每个成员。例如， `graphics` 包定义了一个名为`Rectangle`的类。`java.awt`包还包含一个`Rectangle`类。如果已导入 `graphics` 和`java.awt` 包，则以下内容不明确。
+
+```java
+Rectangle rect;
+```
+
+在这种情况下，您必须使用成员的完全限定名称来准确指出您想要的`Rectangle`类。例如，
+
+```java
+graphics.Rectangle rect;
+```
+
+**静态导入语句**
+
+在某些情况下，您需要经常访问`static final`字段（常量）和来自一个或两个类的`static`方法。反复对这些类的名称进行前缀可能会导致代码混乱。静态`import`语句为您提供了一种导入要使用的常量和静态方法的方法，这样您就不需要为其类的名称添加前缀。
+
+`java.lang.Math`类定义`PI`常量和许多静态方法，包括计算正弦，余弦，切线，平方根，最大值，最小值，指数等的方法。 例如：
+
+```java
+public static final double PI 
+    = 3.141592653589793;
+public static double cos(double a)
+{
+    ...
+}
+```
+
+通常，要从其他类使用这些对象，请在类名前加上前缀，如下所示。
+
+```java
+double r = Math.cos(Math.PI * theta);
+```
+
+您可以使用`static import`语句导入`java.lang.Math`的静态成员，这样就不需要为类名称添加前缀`Math`。`Math`的静态成员可以单独导入：
+
+```java
+import static java.lang.Math.PI;
+```
+
+或者作为一个组：
+
+```java
+import static java.lang.Math.*;
+```
+
+导入后，可以无限制地使用静态成员。例如，之前的代码段将变为：
+
+```java
+double r = cos(PI * theta);
+```
+
+显然，您可以编写自己的类，其中包含您经常使用的常量和静态方法，然后使用静态`import`语句。例如：
+
+```java
+import static mypackage.MyConstants.*;
+```
+
+------
+
+**注意：** 要非常谨慎地使用静态导入。过度使用静态导入会导致代码难以阅读和维护，因为代码的读者不知道哪个类定义了特定的静态对象。正确使用静态导入可以通过删除类名重复使代码更具可读性。
+
+------
+
+#### 管理源代码和类文件
+
+Java平台的许多实现依赖于分层文件系统来管理源文件和类文件，尽管Java语言规范不要求这样做。 策略如下。
+
+将类，接口，枚举或注解类型的源代码放在文本文件中，该文件的名称是类型的简单名称，扩展名为`.java`。 例如：
+
+```java
+//in the Rectangle.java file 
+package graphics;
+public class Rectangle {
+   ... 
+}
+```
+
+然后，将源文件放在一个目录中，该目录的名称反映了该类型所属的包的名称：
+
+```java
+.....\graphics\Rectangle.java
+```
+
+假定 Microsoft Windows 文件名分隔符反斜杠（对于UNIX，使用正斜杠），包成员的限定名称和文件的路径名是并行的。
+
+- **类名** -  `graphics.Rectangle`
+- **文件路径名** -  `graphics\Rectangle.java`
+
+您应该记得，按照惯例，公司使用其反向的互联网域名作为其包名。示例公司的 Internet 域名是`example.com`，它的所有包名都在`com.example`之前。包名称的每个组件对应一个子目录。因此，如果 Example 公司有一个包含`Rectangle.java`源文件的c`om.example.graphics`包，它将包含在一系列子目录中，如下所示：
+
+```java
+....\com\example\graphics\Rectangle.java
+```
+
+编译源文件时，编译器会为其中定义的每种类型创建不同的输出文件。输出文件的基本名称是类型的名称，其扩展名为`.class`。例如，如果源文件是这样的：
+
+```java
+//in the Rectangle.java file
+package com.example.graphics;
+public class Rectangle {
+      . . . 
+}
+
+class Helper{
+      . . . 
+}
+```
+
+则编译之后生成的文件位于：
+
+```
+<path to the parent directory of the output files>\com\example\graphics\Rectangle.class
+<path to the parent directory of the output files>\com\example\graphics\Helper.class
+```
+
+与`.java`源文件一样，已编译的`.class`文件应位于一系列反映包名称的目录中。但是，`.class`文件的路径不必与`.java`源文件的路径相同。您可以分开放置源文件和类目录，如下所示：
+
+```
+<path_one>\sources\com\example\graphics\Rectangle.java
+<path_two>\classes\com\example\graphics\Rectangle.class
+```
+
+通过这样做，您可以将`classes`目录提供给其他程序员而不会泄露您的源文件。您还需要以这种方式管理源文件和类文件，以便编译器和Java虚拟机（JVM）可以找到程序使用的所有类型。
+
+`classes`目录的完整路径`<path_two> \ classes`称为类路径，并使用`CLASSPATH`系统变量进行设置。编译器和JVM都通过将包名称添加到类路径来构造`.class`文件的路径。例如，如果
+
+```
+<path_two>\classes
+```
+
+是你的类路径，而包名是：
+
+```
+com.example.graphics,
+```
+
+则编译器和 JVM 在下面的路径寻找 `.class ` 文件：
+
+```
+<path_two>\classes\com\example\graphics.
+```
+
+类路径可能包含多个路径，由分号（Windows）或冒号（UNIX）分隔。默认情况下，编译器和JVM搜索当前目录和包含Java平台类的JAR文件，以便这些目录自动位于类路径中。
+
+**设置`CLASSPATH`系统变量**
+
+要显示当前的`CLASSPATH`变量，请在 Windows 和 UNIX（Bourne shell）中使用以下命令：
+
+```
+In Windows:   C:\> set CLASSPATH
+In UNIX:      % echo $CLASSPATH
+```
+
+要删除`CLASSPATH`变量的当前内容，请使用以下命令：
+
+```
+In Windows:   C:\> set CLASSPATH=
+In UNIX:      % unset CLASSPATH; export CLASSPATH
+```
+
+设置 `CLASSPATH` 变量，使用下面的命令：
+
+```
+In Windows:   C:\> set CLASSPATH=C:\users\george\java\classes
+In UNIX:      % CLASSPATH=/home/george/java/classes; export CLASSPATH
+```
+
+#### 创建和使用包小结
+
+要为类型创建包，请将`package`语句作为源文件中包含类型（类，接口，枚举或注解类型）的第一个语句。
+
+要使用不同包中的公共类型，您有三种选择：（1）使用类型的完全限定名称，（2）导入类型，或（3）导入类型为成员的整个包。
+
+包的源文件和类文件的路径名称反映了包的名称。
+
+您可能必须设置`CLASSPATH`，以便编译器和JVM可以找到类型的`.class`文件。
+
+# 必要的类
+
+本章节讨论了Java平台中对大多数程序员来说必不可少的类。
+
+[![Trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**异常**](https://docs.oracle.com/javase/tutorial/essential/exceptions/index.html) 解释了异常机制以及它如何用于处理错误和其他异常情况。本课程描述了异常是什么，如何抛出和捕获异常，一旦捕获异常后如何处理异常，以及如何使用异常类层次结构。
+
+[![Trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**基本 I/O**](https://docs.oracle.com/javase/tutorial/essential/io/index.html) 涵盖用于基本输入和输出的Java平台类。它主要关注I / O流，这是一个强大的概念，可以大大简化I / O操作。本课程还介绍了序列化，它允许程序将整个对象写入流并再次读回。然后，本课程将介绍一些文件系统操作，包括随机访问文件。最后，它简要介绍了新I / O API的高级功能。
+
+[![Trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**并发**](https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html) 解释了如何编写同时执行多个任务的应用程序。Java平台的设计初衷是为了支持并发编程，在Java编程语言和Java类库中提供基本的并发支持。从5.0版开始，Java平台还包含高级并发API。本课程介绍了平台的基本并发支持，并总结了`java.util.concurrent`包中的一些高级API。
+
+[![Trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**平台环境**](https://docs.oracle.com/javase/tutorial/essential/environment/index.html) 由启动应用程序时提供的底层操作系统，Java虚拟机，类库和各种配置数据定义。本课程描述了应用程序用于检查和配置其平台环境的一些API。
+
+[![Trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**正则表达式**](https://docs.oracle.com/javase/tutorial/essential/regex/index.html) 是一种基于集合中每个字符串共享的共同特征来描述一组字符串的方法。它们可用于搜索，编辑或操作文本和数据。正则表达式的复杂程度各不相同，但是一旦理解了它们的构造基础，您就能够解密（或创建）任何正则表达式。本课程讲授`java.util.regex` API支持的正则表达式语法，并提供了几个示例来说明各种对象如何交互。
+
+## 异常
 
