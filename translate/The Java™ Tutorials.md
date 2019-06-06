@@ -9886,7 +9886,7 @@ public class Line extends Graphic
 
 ------
 
-**注意：**如果在单个源文件中放置多个类型，则只有一个可以是`public`的，并且它必须与源文件具有相同的名称。例如，您可以在文件`Circle.java`中定义`public class Circle`，在文件`Draggable.java`中定义`public interface Draggable`，在`Day.java`文件中定义`public enum Day`， 等等。
+**注意：** 如果在单个源文件中放置多个类型，则只有一个可以是`public`的，并且它必须与源文件具有相同的名称。例如，您可以在文件`Circle.java`中定义`public class Circle`，在文件`Draggable.java`中定义`public interface Draggable`，在`Day.java`文件中定义`public enum Day`， 等等。
 
 您可以将非公共类型与公共类型包含在同一文件中（强烈建议不要这样做，除非非公共类型很小且与公共类型密切相关），但只有公共类型可以从公共类型所在的包外部访问。所有顶级非公开类型都将是*package private*的。
 
@@ -10278,7 +10278,7 @@ Java 编程语言使用*exceptions*处理错误和其他意外事件。本章节
 
 ------
 
-**定义：**异常是一个事件，在程序执行过程中产生，打乱程序指令的正常执行流程。
+**定义：** 异常是一个事件，在程序执行过程中产生，打乱程序指令的正常执行流程。
 
 ------
 
