@@ -1,120 +1,107 @@
-#### `try`语句块
+#### `try-with-resources` 语句
 
-构造异常处理器的第一步是把可能抛出异常的代码放进`try`语句块中。通常，一个`try`语句块如下：
+`try-with-resources`语句是一个声明一个或多个资源的`try`语句。*资源*是一个在程序完成后必须关闭的对象。`try-with-resources`语句确保在语句结束时关闭每个资源。任何实现`java.lang.AutoCloseable`的对象（包括实现`java.io.Closeable`的所有对象）都可以用作资源。
 
-```
-try {
-    code
-}
-catch and finally blocks . . .
-```
-
-示例中标记为*code*的段包含一个或多个可能引发异常的合法代码行。 （`catch`和`finally`块将在接下来的两个小节中解释。）
-
-要从`ListOfNumbers`类构造`writeList`方法的异常处理程序，请将`tryList`方法的异常抛出语句包含在`tryblock`中。有不止一种方法可以做到这一点。您可以将可能引发异常的每行代码放在其单独的`try`块中，并为每个代码提供单独的异常处理程序。或者，您可以将所有`writeList`代码放在一个`try`块中，并将多个处理程序与它相关联。以下列表对整个方法使用一个`try`块，因为所讨论的代码非常短。
+以下示例从文件中读取第一行。它使用`BufferedReader`实例从文件中读取数据。`BufferedReader`是一个在程序完成后必须关闭的资源：
 
 ```java
-private List<Integer> list;
-private static final int SIZE = 10;
+static String readFirstLineFromFile(String path) throws IOException {
+    try (BufferedReader br =
+                   new BufferedReader(new FileReader(path))) {
+        return br.readLine();
+    }
+}
+```
 
-public void writeList() {
-    PrintWriter out = null;
+在此示例中，在`try-with-resources`语句中声明的资源是`BufferedReader`。声明语句出现在`try`关键字后面的括号内。Java SE 7及更高版本中的类`BufferedReader`实现了接口`java.lang.AutoCloseable`。因为`BufferedReader`实例是在`try-with-resource`语句中声明的，所以无论`try`语句是正常还是意外结束（由于方法`BufferedReader.readLine`抛出一个异常`IOException`），它都会被关闭。
+
+在Java SE 7之前，您可以使用`finally`块来确保资源被关闭，无论`try` 语句是正常还是意外结束。以下示例使用`finally`块而不是`try-with-resources`语句：
+
+```java
+static String readFirstLineFromFileWithFinallyBlock(String path)
+                                                     throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(path));
     try {
-        System.out.println("Entered try statement");
-        out = new PrintWriter(new FileWriter("OutFile.txt"));
-        for (int i = 0; i < SIZE; i++) {
-            out.println("Value at: " + i + " = " + list.get(i));
+        return br.readLine();
+    } finally {
+        if (br != null) br.close();
+    }
+}
+```
+
+但是，在这个例子中，如果方法`readLine`和`close`都抛出异常，那么方法`readFirstLineFromFileWithFinallyBlock`会抛出`finally`块抛出的异常；而从`try`块抛出的异常被抑制。相反，在示例`readFirstLineFromFile`中，如果从`try`块和`try-with-resources`语句抛出异常，则方法`readFirstLineFromFile`抛出从`try`块抛出的异常；而从`try-with-resources`块抛出的异常被抑制。在Java SE 7及更高版本中，您可以检索已抑制的异常。有关详细信息，请参阅 [Suppressed Exceptions](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html#suppressed-exceptions) 部分。
+
+您可以在`try-with-resources`语句中声明一个或多个资源。以下示例检索`zip`文件`zipFileName`中打包的文件的名称，并创建包含这些文件名称的文本文件：
+
+```java
+public static void writeToFileZipFileContents(String zipFileName,
+                                           String outputFileName)
+                                           throws java.io.IOException {
+
+    java.nio.charset.Charset charset =
+         java.nio.charset.StandardCharsets.US_ASCII;
+    java.nio.file.Path outputFilePath =
+         java.nio.file.Paths.get(outputFileName);
+
+    // Open zip file and create output file with 
+    // try-with-resources statement
+
+    try (
+        java.util.zip.ZipFile zf =
+             new java.util.zip.ZipFile(zipFileName);
+        java.io.BufferedWriter writer = 
+            java.nio.file.Files.newBufferedWriter(outputFilePath, charset)
+    ) {
+        // Enumerate each entry
+        for (java.util.Enumeration entries =
+                                zf.entries(); entries.hasMoreElements();) {
+            // Get the entry name and write it to the output file
+            String newLine = System.getProperty("line.separator");
+            String zipEntryName =
+                 ((java.util.zip.ZipEntry)entries.nextElement()).getName() +
+                 newLine;
+            writer.write(zipEntryName, 0, zipEntryName.length());
         }
     }
-    catch and finally blocks  . . .
 }
 ```
 
-如果`try`块中的代码发生异常，则该异常就会被与之相关联的异常处理器处理。为了将异常处理器关联到`try`块，你必须将一个`catch`块放在其后。下一节 [`catch` 块](https://docs.oracle.com/javase/tutorial/essential/exceptions/catch.html) 中详细介绍。
+在这个例子中，`try-with-resources`语句包含两个由分号分隔的声明：`ZipFile`和`BufferedWriter`。当直接跟随它的代码块正常或由于异常而终止时，`BufferedWriter`和`ZipFile`对象的`close`方法将按此顺序自动调用。请注意，资源的“close”方法是在它们创建的*相反*顺序中调用的。
 
-#### `catch`语句块
-
-通过在`try`块之后直接提供一个或多个`catch`块，可以将异常处理程序与`try`块关联。`try`块的末尾和第一个`catch`块的开头之间没有代码。
+以下示例使用`try-with-resources`语句自动关闭`java.sql.Statement`对象：
 
 ```java
-try {
+public static void viewTable(Connection con) throws SQLException {
 
-} catch (ExceptionType name) {
+    String query = "select COF_NAME, SUP_ID, PRICE, SALES, TOTAL from COFFEES";
 
-} catch (ExceptionType name) {
+    try (Statement stmt = con.createStatement()) {
+        ResultSet rs = stmt.executeQuery(query);
 
+        while (rs.next()) {
+            String coffeeName = rs.getString("COF_NAME");
+            int supplierID = rs.getInt("SUP_ID");
+            float price = rs.getFloat("PRICE");
+            int sales = rs.getInt("SALES");
+            int total = rs.getInt("TOTAL");
+
+            System.out.println(coffeeName + ", " + supplierID + ", " + 
+                               price + ", " + sales + ", " + total);
+        }
+    } catch (SQLException e) {
+        JDBCTutorialUtilities.printSQLException(e);
+    }
 }
 ```
 
-每个`catch`块都是一个异常处理程序，它处理由其参数指示的异常类型。参数类型*ExceptionType*声明了处理程序可以处理的异常类型，并且必须是从`Throwable`类继承的类的名称。处理程序可以使用*name*引用异常。
+此示例中使用的资源`java.sql.Statement`是 JDBC 4.1 及更高版本 API 的一部分。
 
-`catch`块包含在调用异常处理程序时执行的代码。当处理程序是调用堆栈中的第一个处理程序时，运行时系统调用异常处理程序，其中*ExceptionType*与抛出的异常的类型匹配。如果抛出的对象可以合法地分配给异常处理程序的参数，则系统认为它是匹配的。
+**注意：** `try-with-resources`语句可以像普通的`try`语句一样使用`catch`和`finally`块。在`try-with-resources`语句中，任何`catch`或`finally`块在声明的资源关闭后运行。
 
-以下是`writeList`方法的两个异常处理程序：
+**被抑制的异常**
 
-```java
-try {
+可以从与`try-with-resources`语句关联的代码块中抛出异常。在示例`writeToFileZipFileContents`中，可以从`try`块抛出异常，当`try-with-resources`语句尝试关闭`ZipFile`和`BufferedWriter`时，最多可以抛出两个异常对象。 如果从`try`块抛出异常并且从`try-with-resources`语句抛出一个或多个异常，那么从`try-with-resources`语句抛出的那些异常将被抑制，并抛由`writeToFileZipFileContents`方法中的异常代码块抛出的异常。您可以通过从`try`块抛出的异常中调用`Throwable.getSuppressed`方法来检索这些被抑制的异常。
 
-} catch (IndexOutOfBoundsException e) {
-    System.err.println("IndexOutOfBoundsException: " + e.getMessage());
-} catch (IOException e) {
-    System.err.println("Caught IOException: " + e.getMessage());
-}
-```
+**实现`AutoCloseable`或`Closeable`接口的类**
 
-异常处理程序不仅可以打印错误消息或停止程序，它们还可以执行错误恢复，提示用户做出决定，或使用链式异常将错误传播到更高级别的处理程序，如 [链式异常](https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html) 部分所述。
-
-**一个异常处理器捕获多个类型的异常**
-
-在Java SE 7及更高版本中，单个`catch`块可以处理多种类型的异常。此功能可以减少代码重复并减少捕获过于宽泛的异常的诱惑。
-
-在`catch`子句中，指定块可以处理的异常类型，并使用竖线`|`分隔每个异常类型：
-
-```java
-catch (IOException|SQLException ex) {
-    logger.log(ex);
-    throw ex;
-}
-```
-
-**注意：**如果`catch`块处理多个异常类型，则`catch`参数隐式为`final`的。在此示例中，`catch`参数`ex`是`final`的，因此您无法在`catch`块中为其分配任何值。
-
-#### `final` 语句块
-
-当`try`块退出时，`finally`块总是执行。这确保即使发生意外异常也会执行`finally`块。但最终不仅仅是异常处理有用 - 它允许程序员避免因返回，继续或中断而意外绕过清理代码。将清理代码放在`finally`块中始终是一种很好的做法，即使没有预期的例外情况也是如此。
-
-------
-
-**注意：**如果在执行`try`或`catch`代码时 JVM 退出，则`finally`块可能无法执行。同样，如果执行`try`或`catch`代码的线程被中断或终止，则即使应用程序作为一个整体继续，`finally`块也可能不会执行。
-
-------
-
-您在此处使用的`writeList`方法的`try`块打开了`PrintWriter`。程序应该在退出`writeList`方法之前关闭该流。这带来了一个有点复杂的问题，因为`writeList`的`try`块可以以三种方式之一退出。
-
-1. `new FileWriter`语句失败并抛出`IOException`。
-2. `list.get(i)`语句失败并抛出`IndexOutOfBoundsException`。
-3. 一切都成功，`try`块正常退出。
-
-无论`try`块中发生了什么，运行时系统总是执行`finally`块中的语句。所以这是进行清理的最佳位置。
-
-下面的`writeList`方法的`finally`块清理然后关闭`PrintWriter`。
-
-```java
-finally {
-    if (out != null) { 
-        System.out.println("Closing PrintWriter");
-        out.close(); 
-    } else { 
-        System.out.println("PrintWriter not open");
-    } 
-}
-```
-
-------
-
-**重要提示：**`finally`块是防止资源泄漏的关键工具。关闭文件或以其他方式恢复资源时，将代码放在`finally`块中以确保始终恢复资源。
-
-请考虑在这些情况下使用`try-with-resources`语句，这会在不再需要时自动释放系统资源。[try-with-resources](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html) 语句部分提供了更多信息。
-
-------
-
+请参阅[`AutoCloseable`](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) 和 [`Closeable`](https:// docs.oracle.com/javase/8/docs/api/java/io/Closeable.html) 接口的Javadoc，其中包含实现这些接口之一的类列表。`Closeable`接口扩展了`AutoCloseable`接口。 `Closeable` 接口的`close`方法抛出类型为`IOException`的异常，而`AutoCloseable`接口的`close`方法抛出类型为`Exception`的异常。因此，`AutoCloseable`接口的子类可以覆盖`close`方法的这种行为，以抛出专门的异常，例如`IOException`，或者根本没有异常。
