@@ -10731,3 +10731,159 @@ public void writeList() {
     }
 }
 ```
+
+### 指定方法产生的异常
+
+上一节展示了如何在`ListOfNumbers`类中为`writeList`方法编写异常处理程序。有时，代码可以捕获可能在其中发生的异常。但是，在其他情况下，最好让调用堆栈中的方法进一步处理异常。例如，如果您将`ListOfNumbers`类作为类包的一部分提供，则可能无法预测包的所有用户的需求。在这种情况下，最好不要捕获异常而使允许进一步调用堆栈的方法来处理它。
+
+如果`writeList`方法没有捕获可能在其中发生的受检查异常，则`writeList`方法必须指定它可以抛出这些异常。让我们修改原始的`writeList`方法来指定它可以抛出的异常。提醒您，这是不能编译的`writeList`方法的原始版本。
+
+```java
+public void writeList() {
+    PrintWriter out = new PrintWriter(new FileWriter("OutFile.txt"));
+    for (int i = 0; i < SIZE; i++) {
+        out.println("Value at: " + i + " = " + list.get(i));
+    }
+    out.close();
+}
+```
+
+要指定`writeList`可以抛出两个异常，请将`throws`子句添加到`writeList`方法的方法声明中。 `throws`子句包含`throws`关键字，后跟逗号分隔的该方法抛出的所有异常列表。该子句在方法名称和参数列表之后以及定义方法主体的大括号之前。下面是一个例子。
+
+```java
+public void writeList() throws IOException, IndexOutOfBoundsException {
+```
+
+请记住，`IndexOutOfBoundsException`是一个不受检查的异常；在`throws`子句中包含它不是强制性的。你可以写下面的内容。
+
+```java
+public void writeList() throws IOException {
+```
+
+### 如何抛出异常
+
+在捕获异常之前，某些代码必须抛出一个异常。任何代码都可以抛出异常：您的代码，来自其他人编写的包中的代码，例如Java平台附带的包或Java运行时环境。无论什么抛出异常，它总是通过`throw`语句抛出。
+
+您可能已经注意到，Java平台提供了许多异常类。所有类都是[`Throwable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html) 类的后代，所有类都允许程序区分各种类在程序执行期间可能发生的异常类型。
+
+您还可以创建自己的异常类来表示您编写的类中可能出现的问题。实际上，如果您是程序包开发人员，则可能必须创建自己的一组异常类，以允许用户将程序包中可能发生的错误与Java平台或其他程序包中发生的错误区分开来。
+
+您还可以创建*链式*异常。有关更多信息，请参阅 [链式异常](https://docs.oracle.com/javase/tutorial/essential/exceptions/chained.html) 部分。
+
+**`throw` 语句**
+
+所有方法都使用`throw`语句来抛出异常。 `throw`语句需要一个参数：一个throwable对象。 Throwable对象是`Throwable`类的任何子类的实例。 这是一个`throw`语句的例子：
+
+```java
+throw someThrowableObject;
+```
+
+让我们看一下上下文中的`throw`语句。以下`pop`方法取自实现公共堆栈对象的类。该方法从堆栈中删除顶部元素并返回该对象。
+
+```java
+public Object pop() {
+    Object obj;
+
+    if (size == 0) {
+        throw new EmptyStackException();
+    }
+
+    obj = objectAt(size - 1);
+    setObjectAt(size - 1, null);
+    size--;
+    return obj;
+}
+```
+
+`pop`方法检查堆栈中是否有任何元素。如果堆栈为空（其大小等于`0`），则`pop`实例化一个新的`EmptyStackException`对象（`java.util`的成员）并抛出它。本章中的 [创建异常类](https://docs.oracle.com/javase/tutorial/essential/exceptions/creating.html) 部分介绍了如何创建自己的异常类。现在，您需要记住的是，您只能抛出从`java.lang.Throwable`类继承的对象。
+
+请注意，`pop`方法的声明不包含`throws`子句。 `EmptyStackException`不是一个受检查的异常，因此不需要`pop`来声明它可能发生。
+
+**可抛出的类及其子类**
+
+从`Throwable`类继承的对象包括直接后代（直接从`Throwable`类继承的对象）和间接后代（从`Throwable`类的子孙继承的对象）。下图说明了`Throwable`类的类层次结构及其最重要的子类。正如你所看到的，`Throwable`有两个直接的后代：[`Error`](https://docs.oracle.com/javase/8/docs/api/java/lang/Error.html) 和 [`Exception`](https://docs.oracle.com/javase/8/docs/api/java/lang/Exception.html) 
+
+![The Throwable class and its most significant subclasses.](https://docs.oracle.com/javase/tutorial/figures/essential/exceptions-throwable.gif)
+
+可抛出类
+
+**`Error` 类**
+
+当发生 Java 虚拟机的动态链接故障或其他硬故障时，虚拟机会抛出 `Error` 。 简单的程序通常会*不*捕获或抛出`Error` 。
+
+**`Exception` 类**
+
+大多数程序抛出并捕获派生自`Exception`类的对象。`Exception` 表示发生了问题，但这不是一个严重的系统问题。你编写的大多数程序都会抛出并捕获`Exception` 而不是`Error` 。
+
+Java平台定义了`Exception`类的许多后代。这些后代表示可能发生的各种类型的异常。例如，`IllegalAccessException`表示无法找到特定方法，而`NegativeArraySizeException`表示程序试图创建一个负大小的数组。
+
+一个`Exception`子类，`RuntimeException`，保留用于指示错误使用API的异常。运行时异常的一个示例是`NullPointerException` ，当方法尝试通过`null`引用访问对象的成员时发生。 [不受检查的异常－争议](https://docs.oracle.com/javase/tutorial/essential/exceptions/runtime.html) 部分讨论了为什么大多数应用程序不应抛出运行时异常或子类`RuntimeException`。
+
+#### 链式异常
+
+应用程序通常会通过抛出另一个异常来响应异常。实际上，第一个异常*导致*第二个异常。知道一个异常何时导致另一个异常非常有用。*链接异常*帮助程序员执行此操作。
+
+以下是`Throwable`中支持链式异常的方法和构造函数。
+
+```java
+Throwable getCause()
+Throwable initCause(Throwable)
+Throwable(String, Throwable)
+Throwable(Throwable)
+```
+
+`initCause`和`Throwable`构造函数的`Throwable`参数是导致当前异常的异常。 `getCause`返回导致当前异常的异常，`initCause`设置当前异常的原因。
+
+以下示例显示如何使用链式异常。
+
+```java
+try {
+
+} catch (IOException e) {
+    throw new SampleException("Other IOException", e);
+}
+```
+
+在此示例中，当捕获`IOException`时，将创建一个新的`SampleException`异常，并附加原始原因，并将异常链抛出到下一个更高级别的异常处理程序。
+
+**访问堆栈轨迹信息**
+
+现在让我们假设更高级别的异常处理程序想要以自己的格式转储堆栈跟踪信息。
+
+------
+
+**定义：** 堆栈跟踪提供有关当前线程的执行历史记录的信息，并列出在发生异常时调用的类和方法的名称。堆栈跟踪是一种有用的调试工具，通常在抛出异常时可以利用它。
+
+------
+
+以下代码显示如何在异常对象上调用`getStackTrace`方法。
+
+```java
+catch (Exception cause) {
+    StackTraceElement elements[] = cause.getStackTrace();
+    for (int i = 0, n = elements.length; i < n; i++) {       
+        System.err.println(elements[i].getFileName()
+            + ":" + elements[i].getLineNumber() 
+            + ">> "
+            + elements[i].getMethodName() + "()");
+    }
+}
+```
+
+**日志 API**
+
+下一个代码片段记录了`catch`块中发生异常的位置。但是，它不是手动解析堆栈跟踪并将输出发送到`System.err()`，而是使用[`java.util.logging`](https：// docs .oracle.com / javase / 8 / docs / api / java / util / logging / package-summary.html) 包中的日志工具将输出发送到文件。
+
+```java
+try {
+    Handler handler = new FileHandler("OutFile.log");
+    Logger.getLogger("").addHandler(handler);
+    
+} catch (IOException e) {
+    Logger logger = Logger.getLogger("package.name"); 
+    StackTraceElement elements[] = e.getStackTrace();
+    for (int i = 0, n = elements.length; i < n; i++) {
+        logger.log(Level.WARNING, elements[i].getMethodName());
+    }
+}
+```
