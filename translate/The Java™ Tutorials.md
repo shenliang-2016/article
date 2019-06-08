@@ -11159,3 +11159,50 @@ catch (Exception e) {
 
 异常对象的类指示抛出的异常类型。异常对象可以包含有关错误的更多信息，包括错误消息。使用异常链时，异常可以指向导致异常的异常，异常又可以指向导致它的异常，依此类推。
 
+## 基本I/O
+
+本课程介绍用于基本I/O的Java平台类。它首先关注*I/O Streams*，这是一个强大的概念，可以大大简化I/O操作。本课程还介绍了序列化，它允许程序将整个对象写入流并再次读取它们。然后，本课将介绍文件I/O和文件系统操作，包括随机访问文件。
+
+`I/O Streams`部分中涵盖的大多数类都在`java.io`包中。`File I/O`部分中涵盖的大多数类都在`java.nio.file`包中。
+
+**[I/O Streams](https://docs.oracle.com/javase/tutorial/essential/io/streams.html)**
+
+- [Byte Streams](https://docs.oracle.com/javase/tutorial/essential/io/bytestreams.html) 处理原始二进制数据的 I/O。
+- [Character Streams](https://docs.oracle.com/javase/tutorial/essential/io/charstreams.html) 处理字符数据的I/O，自动处理与本地字符集的转换。
+- [Buffered Streams](https://docs.oracle.com/javase/tutorial/essential/io/buffers.html) 通过减少对本机API的调用次数来优化输入和输出。
+- [Scanning and Formatting](https://docs.oracle.com/javase/tutorial/essential/io/scanfor.html) 允许程序读取和写入格式化文本。
+- [I/O from the Command Line](https://docs.oracle.com/javase/tutorial/essential/io/cl.html) 描述标准流和控制台对象。
+- [Data Streams](https://docs.oracle.com/javase/tutorial/essential/io/datastreams.html) 处理原始数据类型的二进制I/O和`String`值。
+- [Object Streams](https://docs.oracle.com/javase/tutorial/essential/io/objectstreams.html) 处理对象的二进制I/O。
+
+**[File I/O (Featuring NIO.2)](https://docs.oracle.com/javase/tutorial/essential/io/fileio.html)**
+
+- [What is a Path?](https://docs.oracle.com/javase/tutorial/essential/io/path.html) 检查文件系统中的文件路径的概念。
+- [The Path Class](https://docs.oracle.com/javase/tutorial/essential/io/pathClass.html) 介绍了`java.nio.file`包的基石类。
+- [Path Operations](https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html) 查看`Path`类中处理语法操作的方法。
+- [File Operations](https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html) 介绍了许多文件I/O方法的共同概念。
+- [Checking a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/check.html) 演示了如何检查文件的存在及其可访问性级别。
+- [Deleting a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/delete.html).
+- [Copying a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/copy.html).
+- [Moving a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/move.html).
+- [Managing Metadata](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html) 解释如何读取和设置文件属性。
+- [Reading, Writing and Creating Files](https://docs.oracle.com/javase/tutorial/essential/io/file.html) 显示用于读取和写入文件的流和通道方法。
+- [Random Access Files](https://docs.oracle.com/javase/tutorial/essential/io/rafs.html) 演示了如何以非顺序方式读取或写入文件。
+- [Creating and Reading Directories](https://docs.oracle.com/javase/tutorial/essential/io/dirs.html) 涵盖了特定于目录的API，例如如何列出目录的内容。
+- [Links, Symbolic or Otherwise](https://docs.oracle.com/javase/tutorial/essential/io/links.html) 涵盖了特定于符号和硬链接的问题。
+- [Walking the File Tree](https://docs.oracle.com/javase/tutorial/essential/io/walk.html) 演示了如何递归访问文件树中的每个文件和目录。
+- [Finding Files](https://docs.oracle.com/javase/tutorial/essential/io/find.html) 显示如何使用模式匹配搜索文件。
+- [Watching a Directory for Changes](https://docs.oracle.com/javase/tutorial/essential/io/notification.html) 显示如何使用监视服务来检测在一个或多个目录中添加，删除或更新的文件。
+- [Other Useful Methods](https://docs.oracle.com/javase/tutorial/essential/io/misc.html) 涵盖了本课程其他部分不适用的重要API。
+- [Legacy File I/O Code](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html) 展示了如果使用`java.io.File`类的旧代码，如何利用`Path`功能。提供了将`java.io.File` API映射到`java.nio.file` API的表。
+
+**I/O 类实战**
+
+ [自定义网络](https://docs.oracle.com/javase/tutorial/networking/index.html) 中的许多示例使用本课程中描述的I/O流来通过网络连接读取和写入数据。
+
+------
+
+**安全考虑：** 某些I/O操作需要得到当前安全经理的批准。 这些课程中包含的示例程序是独立应用程序，默认情况下没有安全管理器。要在`applet`中工作，大多数这些示例都必须进行修改。有关安装在`applet`上的安全限制的信息，请参阅 [哪些Applet可以执行](https://docs.oracle.com/javase/tutorial/deployment/applet/security.html) 。
+
+------
+
