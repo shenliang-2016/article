@@ -9,28 +9,26 @@
 
 **例子**
 
-Suppose you are writing a linked list class. The class supports the following methods, among others:
+假设您正在编写链表类。该类支持以下方法，其中包括：
 
-- **objectAt(int n)** — Returns the object in the `n`th position in the list. Throws an exception if the argument is less than 0 or more than the number of objects currently in the list.
-- **firstObject()** — Returns the first object in the list. Throws an exception if the list contains no objects.
-- **indexOf(Object o)** — Searches the list for the specified `Object` and returns its position in the list. Throws an exception if the object passed into the method is not in the list.
+ -  **objectAt (int n)**  - 返回列表中第n个位置的对象。如果参数小于0或大于列表中当前对象的数量，则引发异常。
+ -  **firstObject ()**  - 返回列表中的第一个对象。如果列表不包含任何对象，则抛出异常。
+ -  **indexOf (Object o)**  - 在列表中搜索指定的`Object`并返回其在列表中的位置。如果传递给方法的对象不在列表中，则抛出异常。
 
-The linked list class can throw multiple exceptions, and it would be convenient to be able to catch all exceptions thrown by the linked list with one exception handler. Also, if you plan to distribute your linked list in a package, all related code should be packaged together. Thus, the linked list should provide its own set of exception classes.
+链表类可以抛出多个异常，并且能够通过一个异常处理程序捕获链表所引发的所有异常是很方便的。此外，如果您计划在包中分发链接列表，则应将所有相关代码打包在一起。因此，链表应该提供自己的一组异常类。
 
-The next figure illustrates one possible class hierarchy for the exceptions thrown by the linked list.
+下图说明了链接列表抛出的异常的一个可能的类层次结构。
 
 ![A possible class hierarchy for the exceptions thrown by a linked list.](https://docs.oracle.com/javase/tutorial/figures/essential/exceptions-hierarchy.gif)
 
-Example exception class hierarchy.
-
 **选择一个超类**
 
-Any `Exception` subclass can be used as the parent class of `LinkedListException`. However, a quick perusal of those subclasses shows that they are inappropriate because they are either too specialized or completely unrelated to `LinkedListException`. Therefore, the parent class of `LinkedListException` should be `Exception`.
+任何`Exception`子类都可以用作`LinkedListException`的父类。但是，快速浏览这些子类表明它们不合适，因为它们太专用或者与`LinkedListException`完全无关。因此，`LinkedListException`的父类应该是`Exception`。
 
-Most applets and applications you write will throw objects that are `Exception`s. `Error`s are normally used for serious, hard errors in the system, such as those that prevent the JVM from running.
+您编写的大多数`applet`和应用程序都会抛出`Exception`的对象。`Error`通常用于系统中严重的硬错误，例如阻止JVM运行的错误。
 
 ------
 
-**Note:** For readable code, it's good practice to append the string `Exception` to the names of all classes that inherit (directly or indirectly) from the `Exception` class.
+**注意：** 对于可读代码，最好将字符串`Exception`附加到从`Exception`类继承（直接或间接）的所有类的名称中。
 
 ------
