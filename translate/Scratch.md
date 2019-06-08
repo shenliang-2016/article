@@ -1,34 +1,47 @@
-#### 创建异常类
+## 基本I/O
 
-当面对选择要抛出的异常类型时，您可以使用其他人编写的异常 -  Java平台提供了许多可以使用的异常类 - 或者您可以编写自己的异常类。如果您对以下任何问题的回答是肯定的，您应该编写自己的异常类；否则，你可能会使用别人的。
+This lesson covers the Java platform classes used for basic I/O. It first focuses on *I/O Streams*, a powerful concept that greatly simplifies I/O operations. The lesson also looks at serialization, which lets a program write whole objects out to streams and read them back again. Then the lesson looks at file I/O and file system operations, including random access files.
 
- - 您是否需要Java平台中未提供的异常类型？
- - 它是否可以帮助用户将他们的异常与其他供应商编写的类别所引发的异常区分开来？
- - 您的代码是否会抛出多个相关异常？
- - 如果您使用其他人的异常，用户是否可以访问这些异常？ 一个类似的问题是，你的包是否是独立且自包含的？
+Most of the classes covered in the `I/O Streams` section are in the `java.io` package. Most of the classes covered in the `File I/O` section are in the `java.nio.file` package.
 
-**例子**
+## [I/O Streams](https://docs.oracle.com/javase/tutorial/essential/io/streams.html)
 
-假设您正在编写链表类。该类支持以下方法，其中包括：
+- [Byte Streams](https://docs.oracle.com/javase/tutorial/essential/io/bytestreams.html) handle I/O of raw binary data.
+- [Character Streams](https://docs.oracle.com/javase/tutorial/essential/io/charstreams.html) handle I/O of character data, automatically handling translation to and from the local character set.
+- [Buffered Streams](https://docs.oracle.com/javase/tutorial/essential/io/buffers.html) optimize input and output by reducing the number of calls to the native API.
+- [Scanning and Formatting](https://docs.oracle.com/javase/tutorial/essential/io/scanfor.html) allows a program to read and write formatted text.
+- [I/O from the Command Line](https://docs.oracle.com/javase/tutorial/essential/io/cl.html) describes the Standard Streams and the Console object.
+- [Data Streams](https://docs.oracle.com/javase/tutorial/essential/io/datastreams.html) handle binary I/O of primitive data type and `String` values.
+- [Object Streams](https://docs.oracle.com/javase/tutorial/essential/io/objectstreams.html) handle binary I/O of objects.
 
- -  **objectAt (int n)**  - 返回列表中第n个位置的对象。如果参数小于0或大于列表中当前对象的数量，则引发异常。
- -  **firstObject ()**  - 返回列表中的第一个对象。如果列表不包含任何对象，则抛出异常。
- -  **indexOf (Object o)**  - 在列表中搜索指定的`Object`并返回其在列表中的位置。如果传递给方法的对象不在列表中，则抛出异常。
+## [File I/O (Featuring NIO.2)](https://docs.oracle.com/javase/tutorial/essential/io/fileio.html)
 
-链表类可以抛出多个异常，并且能够通过一个异常处理程序捕获链表所引发的所有异常是很方便的。此外，如果您计划在包中分发链接列表，则应将所有相关代码打包在一起。因此，链表应该提供自己的一组异常类。
+- [What is a Path?](https://docs.oracle.com/javase/tutorial/essential/io/path.html) examines the concept of a path on a file system.
+- [The Path Class](https://docs.oracle.com/javase/tutorial/essential/io/pathClass.html) introduces the cornerstone class of the `java.nio.file` package.
+- [Path Operations](https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html) looks at methods in the `Path` class that deal with syntactic operations.
+- [File Operations](https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html) introduces concepts common to many of the file I/O methods.
+- [Checking a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/check.html) shows how to check a file's existence and its level of accessibility.
+- [Deleting a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/delete.html).
+- [Copying a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/copy.html).
+- [Moving a File or Directory](https://docs.oracle.com/javase/tutorial/essential/io/move.html).
+- [Managing Metadata](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html) explains how to read and set file attributes.
+- [Reading, Writing and Creating Files](https://docs.oracle.com/javase/tutorial/essential/io/file.html) shows the stream and channel methods for reading and writing files.
+- [Random Access Files](https://docs.oracle.com/javase/tutorial/essential/io/rafs.html) shows how to read or write files in a non-sequentially manner.
+- [Creating and Reading Directories](https://docs.oracle.com/javase/tutorial/essential/io/dirs.html) covers API specific to directories, such as how to list a directory's contents.
+- [Links, Symbolic or Otherwise](https://docs.oracle.com/javase/tutorial/essential/io/links.html) covers issues specific to symbolic and hard links.
+- [Walking the File Tree](https://docs.oracle.com/javase/tutorial/essential/io/walk.html) demonstrates how to recursively visit each file and directory in a file tree.
+- [Finding Files](https://docs.oracle.com/javase/tutorial/essential/io/find.html) shows how to search for files using pattern matching.
+- [Watching a Directory for Changes](https://docs.oracle.com/javase/tutorial/essential/io/notification.html) shows how to use the watch service to detect files that are added, removed or updated in one or more directories.
+- [Other Useful Methods](https://docs.oracle.com/javase/tutorial/essential/io/misc.html) covers important API that didn't fit elsewhere in the lesson.
+- [Legacy File I/O Code](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html) shows how to leverage `Path` functionality if you have older code using the `java.io.File`class. A table mapping `java.io.File` API to `java.nio.file` API is provided.
 
-下图说明了链接列表抛出的异常的一个可能的类层次结构。
+## The I/O Classes in Action
 
-![A possible class hierarchy for the exceptions thrown by a linked list.](https://docs.oracle.com/javase/tutorial/figures/essential/exceptions-hierarchy.gif)
-
-**选择一个超类**
-
-任何`Exception`子类都可以用作`LinkedListException`的父类。但是，快速浏览这些子类表明它们不合适，因为它们太专用或者与`LinkedListException`完全无关。因此，`LinkedListException`的父类应该是`Exception`。
-
-您编写的大多数`applet`和应用程序都会抛出`Exception`的对象。`Error`通常用于系统中严重的硬错误，例如阻止JVM运行的错误。
+Many of the examples in the next trail, [Custom Networking](https://docs.oracle.com/javase/tutorial/networking/index.html) use the I/O streams described in this lesson to read from and write to network connections.
 
 ------
 
-**注意：** 对于可读代码，最好将字符串`Exception`附加到从`Exception`类继承（直接或间接）的所有类的名称中。
+**Security consideration:** Some I/O operations are subject to approval by the current security manager. The example programs contained in these lessons are standalone applications, which by default have no security manager. To work in an applet, most of these examples would have to be modified. See [What Applets Can and Cannot Do](https://docs.oracle.com/javase/tutorial/deployment/applet/security.html) for information about the security restrictions placed on applets.
 
 ------
+
