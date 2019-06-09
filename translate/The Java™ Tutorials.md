@@ -11206,3 +11206,34 @@ catch (Exception e) {
 
 ------
 
+### I/O Streams
+
+*I/O流*表示输入源或输出目的地。流可以表示许多不同类型的源和目标，包括磁盘文件，设备，其他程序和内存数组。
+
+流支持许多不同类型的数据，包括简单字节，原始数据类型，本地化字符和对象。有些流只是简单地传递数据，其他流则以有用的方式操纵和转换数据。
+
+无论它们在内部如何工作，所有流都为使用它们的程序提供相同的简单模型：流是一系列数据。程序使用*输入流*从源读取数据，一次读取一个元素：
+
+![Reading information into a program.](https://docs.oracle.com/javase/tutorial/figures/essential/io-ins.gif)
+
+读取信息到程序中。
+
+程序使用*输出流*将数据写入目标，一次一个元素：
+
+![Writing information from a program.](https://docs.oracle.com/javase/tutorial/figures/essential/io-outs.gif)
+
+从程序写出信息。
+
+在本节中，我们将看到可以处理各种数据的流，从原始值到高级对象。
+
+上图所示的数据源和数据目的地可以是保存，生成或使用数据的任何东西。显然这包括磁盘文件，但源或目标也可以是另一个程序，外围设备，网络套接字或数组对象。
+
+在下一节中，我们将使用最基本的流类型字节流来演示流I/O的常见操作。对于示例输入，我们将使用示例文件 [`xanadu.txt`](https://docs.oracle.com/javase/tutorial/essential/io/examples/xanadu.txt) ，其中包含以下内容：
+
+```
+In Xanadu did Kubla Khan
+A stately pleasure-dome decree:
+Where Alph, the sacred river, ran
+Through caverns measureless to man
+Down to a sunless sea.
+```
