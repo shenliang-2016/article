@@ -1,14 +1,14 @@
 #### Byte Streams
 
-Programs use *byte streams* to perform input and output of 8-bit bytes. All byte stream classes are descended from[`InputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) and [`OutputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html).
+程序使用*字节流*来执行8位字节的输入和输出。所有字节流类都来自[`InputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html) 和 [`OutputStream`](https：//docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html) 。
 
-There are many byte stream classes. To demonstrate how byte streams work, we'll focus on the file I/O byte streams,[`FileInputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/FileInputStream.html) and [`FileOutputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/FileOutputStream.html). Other kinds of byte streams are used in much the same way; they differ mainly in the way they are constructed.
+有许多字节流类。为了演示字节流的工作原理，我们将重点关注文件I/O字节流，[`FileInputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/FileInputStream.html) 和 [`FileOutputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/FileOutputStream.html) 。其他种类的字节流的使用方式大致相同；它们的不同之处主要在于它们的构造方式。
 
 **使用 Byte Streams**
 
-We'll explore `FileInputStream` and `FileOutputStream` by examining an example program named [`CopyBytes`](https://docs.oracle.com/javase/tutorial/essential/io/examples/CopyBytes.java), which uses byte streams to copy `xanadu.txt`, one byte at a time.
+我们将通过检查一个名为[`CopyBytes`](https://docs.oracle.com/javase/tutorial/essential/io/examples/CopyBytes.java) 的示例程序来探索`FileInputStream`和`FileOutputStream`。字节流复制`xanadu.txt`，一次一个字节。
 
-```
+```java
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,20 +39,21 @@ public class CopyBytes {
 }
 ```
 
-`CopyBytes` spends most of its time in a simple loop that reads the input stream and writes the output stream, one byte at a time, as shown in the following figure.
+`CopyBytes`大部分时间都消耗在一个简单的循环中，它读取输入流并一次写入一个字节的输出流，如下图所示。
 
 ![Simple byte stream input and output.](https://docs.oracle.com/javase/tutorial/figures/essential/byteStream.gif)
 
-Simple byte stream input and output.
+简单字节流输入输出。
 
 **永远记住要关闭流**
 
-Closing a stream when it's no longer needed is very important — so important that `CopyBytes` uses a `finally` block to guarantee that both streams will be closed even if an error occurs. This practice helps avoid serious resource leaks.
+在不再需要流时关闭流非常重要 - 同样重要的是`CopyBytes`使用`finally`块来保证即使发生错误也会关闭两个流。这种做法有助于避免严重的资源泄漏。
 
-One possible error is that `CopyBytes` was unable to open one or both files. When that happens, the stream variable corresponding to the file never changes from its initial `null` value. That's why `CopyBytes` makes sure that each stream variable contains an object reference before invoking `close`.
+一个可能的错误是`CopyBytes`无法打开一个或两个文件。当发生这种情况时，对应于该文件的流变量永远不会从其初始的`null`值改变。这就是为什么`CopyBytes`在调用`close`之前需要确保每个流变量都包含一个对象引用。
 
 **何时不使用字节流**
 
-`CopyBytes` seems like a normal program, but it actually represents a kind of low-level I/O that you should avoid. Since `xanadu.txt` contains character data, the best approach is to use [character streams](https://docs.oracle.com/javase/tutorial/essential/io/charstreams.html), as discussed in the next section. There are also streams for more complicated data types. Byte streams should only be used for the most primitive I/O.
+`CopyBytes`看起来像一个普通的程序，但它实际上代表了一种你应该避免的低级I/O. 由于`xanadu.txt`包含字符数据，最好的方法是使用[字符流](https://docs.oracle.com/javase/tutorial/essential/io/charstreams.html) ，如下一节所述。还有用于更复杂数据类型的流。字节流应仅用于最原始的I/O。
 
-So why talk about byte streams? Because all other stream types are built on byte streams.
+那么为什么要谈论字节流呢？因为所有其他流类型都是基于字节流构建的。
+
