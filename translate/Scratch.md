@@ -1,228 +1,220 @@
-#### Character Streams
+##### 格式化
 
-Java平台使用Unicode编码存储字符值。字符流I/O自动将此内部格式转换为本地字符集。在西文语言环境中，本地字符集通常是ASCII码的8位超集。
+实现格式化的流对象是 [`PrintWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/PrintWriter.html)（字符流类）或 [`PrintStream`](https://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html)（字节流类）的实例。
 
-对于大多数应用程序，使用字符流的I/O并不比使用字节流的I/O复杂。使用流类完成的输入和输出会自动转换为本地字符集和从本地字符集转换。使用字符流代替字节流的程序会自动适应本地字符集，并且可以进行国际化 - 所有这些都不需要程序员的额外工作。
+------
 
-如果国际化不是优先考虑事项，您可以简单地使用字符流类而不必过多关注字符集问题。之后，如果国际化成为优先事项，您的程序可以进行调整而无需进行大量重新编码。更多信息，请参阅 [国际化](https://docs.oracle.com/javase/tutorial/i18n/index.html) 。
+**注意：** 您可能需要的唯一`PrintStream`对象是 [`System.out`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#out) 和 [`System.err`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#err)。（有关这些对象的更多信息，请参阅 [命令行中的 I/O](https://docs.oracle.com/javase/tutorial/essential/io/cl.html) ）当您需要创建格式化的输出流时，请实例化`PrintWriter`，而不是`PrintStream`。
 
-**使用 Character Streams**
+------
 
-所有字符流类都来自 [`Reader`](https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html) 和 [`Writer`](https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html) 。 与字节流一样，还有专门用于文件I/O的字符流类： [`FileReader`](https://docs.oracle.com/javase/8/docs/api/java/io/FileReader.html) 和 [`FileWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/FileWriter.html) 。  [`CopyCharacters`](https://docs.oracle.com/javase/tutorial/essential/io/examples/CopyCharacters.java) 示例说明了这些类。
+与所有字节流和字符流对象一样，`PrintStream`和`PrintWriter`的实例实现了一组标准的写入方法，用于简单的字节和字符输出。此外，`PrintStream`和`PrintWriter`都实现了将内部数据转换为格式化输出的同一组方法。提供两个级别的格式：
+
+ - 以标准方式`print`和`println`格式化各个值。
+ - `format`基于格式字符串格式化几乎任意数量的值，具有许多用于精确格式化的选项。
+
+**`print` 和 `println` 方法**
+
+在使用适当的`toString`方法转换值后，调用`print`或`println`输出单个值。我们可以在 [`Root`](https://docs.oracle.com/javase/tutorial/essential/io/examples/Root.java) 示例中看到这一点：
 
 ```java
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+public class Root {
+    public static void main(String[] args) {
+        int i = 2;
+        double r = Math.sqrt(i);
+        
+        System.out.print("The square root of ");
+        System.out.print(i);
+        System.out.print(" is ");
+        System.out.print(r);
+        System.out.println(".");
 
-public class CopyCharacters {
-    public static void main(String[] args) throws IOException {
-
-        FileReader inputStream = null;
-        FileWriter outputStream = null;
-
-        try {
-            inputStream = new FileReader("xanadu.txt");
-            outputStream = new FileWriter("characteroutput.txt");
-
-            int c;
-            while ((c = inputStream.read()) != -1) {
-                outputStream.write(c);
-            }
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (outputStream != null) {
-                outputStream.close();
-            }
-        }
+        i = 5;
+        r = Math.sqrt(i);
+        System.out.println("The square root of " + i + " is " + r + ".");
     }
 }
 ```
 
-`CopyCharacters`与`CopyBytes`非常相似。最重要的区别是`CopyCharacters`使用`FileReader`和`FileWriter`来代替`FileInputStream`和`FileOutputStream`进行输入和输出。请注意，`CopyBytes`和`CopyCharacters`都使用`int`变量来读取和写入。但是，在`CopyCharacters`中，`int`变量在其最后16位中保存一个字符值；在`CopyBytes`中，`int`变量在其最后8位中保存一个字节值。
+`Root` 的输出：
 
-**使用字节流的字符流**
+```
+The square root of 2 is 1.4142135623730951.
+The square root of 5 is 2.23606797749979.
+```
 
-字符流通常是字节流的“包装器”。字符流使用字节流来执行物理I/O，而字符流处理字符和字节之间的转换。例如，`FileReader`使用`FileInputStream`，而`FileWriter`使用`FileOutputStream`。
+`i`和`r`变量被格式化两次：第一次在`print`的重载中使用代码，第二次由Java编译器自动生成的转换代码，也使用`toString`。您可以通过这种方式格式化任何值，但是您无法控制结果。
 
-有两个通用的字节到字符“桥接”流：[`InputStreamReader`](https://docs.oracle.com/javase/8/docs/api/java/io/InputStreamReader.html) 和 [`OutputStreamWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStreamWriter.html)。当没有符合您需求的预打包字符流类时，使用它们来创建字符流。 [网络课程](https://docs.oracle.com/javase/tutorial/networking/index.html) 中的 [sockets](https://docs.oracle.com/javase/tutorial/networking/sockets/readingWriting.html) 显示了如何从套接字类提供的字节流创建字符流。
+**`format` 方法**
 
-**面向行的 I/O **
+`format`方法根据*格式字符串*格式化多个参数。格式字符串由嵌入*格式说明符*的静态文本组成；除格式说明符外，格式字符串输出不变。
 
-字符I/O通常以比单个字符更大的单位出现。 一个常见的单位是行：一串字符，末尾有一个行终止符。行终止符可以是回车/换行序列（`\r\n`），单个回车符（`\r`）或单个换行符（`\n`）。支持所有可能的行终止符允许程序读取在任何广泛使用的操作系统上创建的文本文件。
+格式字符串支持许多功能。在本教程中，我们将介绍一些基础知识。完整说明，请参阅API规范中的[`格式化字符串语法`](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html#syntax) 。
 
-让我们修改`CopyCharacters`示例以使用面向行的I/O。为此，我们必须使用两个我们以前从未见过的类， [`BufferedReader`](https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html) 和 [`PrintWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/PrintWriter.html)。我们将在 [Buffered I/O](https://docs.oracle.com/javase/tutorial/essential/io/buffers.html) 和 [Formatting](https://docs.oracle.com/javase/tutorial/essential/io/formatting.html) 中更深入地探索这些类。现在，我们只对他们对面向行的I/O的支持感兴趣。
-
-`CopyLines`示例调用`BufferedReader.readLine`和`PrintWriter.println`来一次输入和输出一行。
+`Root2`示例使用单个`format`调用格式化两个值：
 
 ```java
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.IOException;
-
-public class CopyLines {
-    public static void main(String[] args) throws IOException {
-
-        BufferedReader inputStream = null;
-        PrintWriter outputStream = null;
-
-        try {
-            inputStream = new BufferedReader(new FileReader("xanadu.txt"));
-            outputStream = new PrintWriter(new FileWriter("characteroutput.txt"));
-
-            String l;
-            while ((l = inputStream.readLine()) != null) {
-                outputStream.println(l);
-            }
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (outputStream != null) {
-                outputStream.close();
-            }
-        }
+public class Root2 {
+    public static void main(String[] args) {
+        int i = 2;
+        double r = Math.sqrt(i);
+        
+        System.out.format("The square root of %d is %f.%n", i, r);
     }
 }
 ```
 
-调用`readLine`会返回一行文本。`CopyLines`使用`println`输出每一行，`println`附加当前操作系统的行终止符。这可能与输入文件中使用的行终止符不同。
+输出：
 
-构造文本输入和输出的方法有很多种，不仅限于字符和行。有关更多信息，请参阅 [扫描和格式化](https://docs.oracle.com/javase/tutorial/essential/io/scanfor.html) 。
-
-#### Buffered Streams
-
-到目前为止，我们看到的大多数示例都使用无缓冲的I/O，这意味着每个读取或写入请求都由底层操作系统直接处理。这可以使程序效率低得多，因为每个这样的请求经常触发磁盘访问，网络活动或一些相对昂贵的其他操作。
-
-为了减少这种开销，Java平台实现了带缓冲的I/O流。缓冲输入流从称为缓冲区的存储区读取数据；仅当缓冲区为空时才调用本机输入API。类似地，缓冲输出流将数据写入缓冲区，并且仅在缓冲区已满时才调用本机输出API。
-
-程序可以使用我们现在多次使用的包装习惯用法将无缓冲的流转换为缓冲流，其中无缓冲的流对象被传递给缓冲流类的构造函数。 以下是如何修改`CopyCharacters`示例中的构造函数调用以使用缓冲I/O：
-
-```java
-inputStream = new BufferedReader(new FileReader("xanadu.txt"));
-outputStream = new BufferedWriter(new FileWriter("characteroutput.txt"));
+```
+The square root of 2 is 1.414214.
 ```
 
-有四个用于包装无缓冲流的缓冲流类： [`BufferedInputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/BufferedInputStream.html) 和 [`BufferedOutputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/BufferedOutputStream.html) 创建缓冲字节流，[`BufferedReader`](https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html) 和 [`BufferedWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/BufferedWriter.html) 创建缓冲字符流。
+与本示例中使用的三个一样，所有格式说明符都以`％`开头，并以1或2个字符的*转换*结尾，指定生成的格式化输出的类型。这里使用的三个转换是：
 
-**刷新 Buffered Streams**
+ -  `d`将整数值格式化为十进制值。
+ -  `f`将浮点值格式化为十进制值。
+ -  `n`输出特定于平台的行终结符。
 
-在关键时刻从缓冲区提取数据通常是有意义的，而无需等待它填充满。这称为刷新缓冲区。
+以下是其他一些转换：
 
-一些缓冲的输出类支持`autoflush`，由可选的构造函数参数指定。启用`autoflush`时，某些关键事件会导致刷新缓冲区。例如，自动刷新的`PrintWriter`对象在每次调用`println`或`format`时刷新缓冲区。有关这些方法的更多信息，请参阅 [Formatting](https://docs.oracle.com/javase/tutorial/essential/io/formatting.html) 。
+ -  `x`将整数格式化为十六进制值。
+ -  `s`将任何值格式化为字符串。
+ -  `tB`将整数格式化为特定于语言环境的月份名称。
 
-要手动刷新流，请调用其`flush`方法。`flush`方法在任何输出流上都有效，但除非缓冲流，否则无效。
+还有很多其他转换。
 
-#### 扫描和格式化
+------
 
-程序I/O通常涉及到人们喜欢使用的整齐格式化数据的转换。为了帮助您完成这些杂务，Java平台提供了两个API。 [scanner](https://docs.oracle.com/javase/tutorial/essential/io/scanning.html) API将输入分解为与数据位相关联的各个符号。 [formatting](https://docs.oracle.com/javase/tutorial/essential/io/formatting.html) API将数据组装成格式良好，人类可读的形式。
+**注意：** 
 
-##### 扫描
+除`%%`和`％n`外，所有格式说明符必须与参数匹配。如果不这样做，则会抛出异常。
 
-[`Scanner`](https://docs.oracle.com/javase/8/docs/api/java/util/Scanner.html) 类型的对象非常有用，它可以将格式化的输入拆分为单个符号并按照符号各自的数据类型转换它们。
+在Java编程语言中，`\n`转义符始终生成换行符（`\u000A`）。除非您特别需要换行符，否则请勿使用`\n`。要获取本地平台的换行符，请使用`％n`。
 
-**将输入拆分为符号**
+------
 
-默认情况下，扫描程序使用空格分隔符号。（空格字符包括空格，制表符和行终止符。其完整列表，请参阅文档 [`Character.isWhitespace`](https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html#isWhitespace-char-) ）要查看扫描的工作原理，让我们看看 [`ScanXan`](https://docs.oracle.com/javase/tutorial/essential/io/examples/ScanXan.java) ，这是一个读取`xanadu.txt`中单个单词的程序。将它们打印出来，每行一个。
+除了转换之外，格式说明符还可以包含几个其他元素，以进一步自定义格式化输出。这是一个使用每种可能元素的示例 [`Format`](https://docs.oracle.com/javase/tutorial/essential/io/examples/Format.java)。
 
 ```java
-import java.io.*;
-import java.util.Scanner;
-
-public class ScanXan {
-    public static void main(String[] args) throws IOException {
-
-        Scanner s = null;
-
-        try {
-            s = new Scanner(new BufferedReader(new FileReader("xanadu.txt")));
-
-            while (s.hasNext()) {
-                System.out.println(s.next());
-            }
-        } finally {
-            if (s != null) {
-                s.close();
-            }
-        }
+public class Format {
+    public static void main(String[] args) {
+        System.out.format("%f, %1$+020.10f %n", Math.PI);
     }
 }
 ```
 
-请注意，`ScanXan`在使用`Scanner`对象完成后会调用`Scanner`的`close`方法。即使`Scanner`不是流，您也需要将其关闭以指示您已完成对其基础流的处理。
-
-`ScanXan`的输出如下所示：
+输出：
 
 ```
-In
-Xanadu
-did
-Kubla
-Khan
-A
-stately
-pleasure-dome
-...
+3.141593, +00000003.1415926536
 ```
 
-要使用不同的符号分隔符，请调用`useDelimiter()`，指定正则表达式。例如，假设您希望符号分隔符为逗号，可选地后跟空格。你可以调用：
+附加元素都是可选的。下图显示了较长的格式说明符如何分解为单个元素。
+
+![Elements of a format specifier](https://docs.oracle.com/javase/tutorial/figures/essential/io-spec.gif)
+
+格式说明符的元素。
+
+元素必须按所示顺序出现。从右侧开始，可选元素是：
+
+ - **精度** - 对于浮点值，这是格式化值的数学精度。对于s和其他常规转换，这是格式化值的最大宽度;如有必要，该值将被截断。
+ - **宽度** - 格式化值的最小宽度；必要时填充该值。默认情况下，该值使用空白填充。
+ - **标志** - 指定其他格式选项。在`Format`示例中，`+`标志指定应始终将数值格式化为带符号数字，`0`标志指定`0`是填充字符。其他标志包括`-`（右侧的填充）和`,`（具有特定于语言环境的千位分隔符的格式号）。请注意，某些标志不能与某些其他标志一起使用或与某些转换一起使用。
+ - **参数索引** - 允许您显式匹配指定的参数。您还可以指定`<`以匹配与前一个说明符相同的参数。因此该示例可以说写成：`System.out.format()"％f，％<+ 020.10f％n"，Math.PI)` 。
+
+#### 命令行中的 I/O
+
+程序经常从命令行运行，并在命令行环境中与用户交互。Java平台以两种方式支持这种交互：通过标准流和通过控制台。
+
+## Standard Streams
+
+Standard Streams are a feature of many operating systems. By default, they read input from the keyboard and write output to the display. They also support I/O on files and between programs, but that feature is controlled by the command line interpreter, not the program.
+
+The Java platform supports three Standard Streams: *Standard Input*, accessed through `System.in`; *Standard Output*, accessed through `System.out`; and *Standard Error*, accessed through `System.err`. These objects are defined automatically and do not need to be opened. Standard Output and Standard Error are both for output; having error output separately allows the user to divert regular output to a file and still be able to read error messages. For more information, refer to the documentation for your command line interpreter.
+
+You might expect the Standard Streams to be character streams, but, for historical reasons, they are byte streams. `System.out` and `System.err` are defined as [`PrintStream`](https://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html)objects. Although it is technically a byte stream, `PrintStream` utilizes an internal character stream object to emulate many of the features of character streams.
+
+By contrast, `System.in` is a byte stream with no character stream features. To use Standard Input as a character stream, wrap `System.in` in `InputStreamReader`.
 
 ```java
-s.useDelimiter(",\\s*");
+InputStreamReader cin = new InputStreamReader(System.in);
 ```
 
-**转换单个符号**
+## The Console
 
-`ScanXan`示例将所有输入符号视为简单的`String`值。`Scanner`还支持所有Java语言的原始类型（`char`除外）的符号，以及`BigInteger`和`BigDecimal`。此外，数值可以使用千位分隔符。因此，在美国语言环境中，`Scanner`正确读取字符串`32,767`表示整数值。
+A more advanced alternative to the Standard Streams is the Console. This is a single, predefined object of type [`Console`](https://docs.oracle.com/javase/8/docs/api/java/io/Console.html) that has most of the features provided by the Standard Streams, and others besides. The Console is particularly useful for secure password entry. The Console object also provides input and output streams that are true character streams, through its `reader` and `writer` methods.
 
-我们必须提到语言环境，因为千位分隔符和小数符号是特定于语言环境的。因此，如果我们未指定`Scanner`应使用美国语言环境，则以下示例将无法在所有语言环境中正常运行。这通常不必担心，因为您的输入数据通常来自使用相同语言环境的源。但是这个例子是Java Tutorial的一部分，并且分发到世界各地。
+Before a program can use the Console, it must attempt to retrieve the Console object by invoking `System.console()`. If the Console object is available, this method returns it. If `System.console` returns `NULL`, then Console operations are not permitted, either because the OS doesn't support them or because the program was launched in a noninteractive environment.
 
-`ScanSum`示例读取双精度值列表并将其相加。代码如下：
+The Console object supports secure password entry through its `readPassword` method. This method helps secure password entry in two ways. First, it suppresses echoing, so the password is not visible on the user's screen. Second, `readPassword` returns a character array, not a `String`, so the password can be overwritten, removing it from memory as soon as it is no longer needed.
+
+The [`Password`](https://docs.oracle.com/javase/tutorial/essential/io/examples/Password.java) example is a prototype program for changing a user's password. It demonstrates several `Console` methods.
 
 ```java
-import java.io.FileReader;
-import java.io.BufferedReader;
+import java.io.Console;
+import java.util.Arrays;
 import java.io.IOException;
-import java.util.Scanner;
-import java.util.Locale;
 
-public class ScanSum {
-    public static void main(String[] args) throws IOException {
+public class Password {
+    
+    public static void main (String args[]) throws IOException {
 
-        Scanner s = null;
-        double sum = 0;
+        Console c = System.console();
+        if (c == null) {
+            System.err.println("No console.");
+            System.exit(1);
+        }
 
-        try {
-            s = new Scanner(new BufferedReader(new FileReader("usnumbers.txt")));
-            s.useLocale(Locale.US);
+        String login = c.readLine("Enter your login: ");
+        char [] oldPassword = c.readPassword("Enter your old password: ");
 
-            while (s.hasNext()) {
-                if (s.hasNextDouble()) {
-                    sum += s.nextDouble();
+        if (verify(login, oldPassword)) {
+            boolean noMatch;
+            do {
+                char [] newPassword1 = c.readPassword("Enter your new password: ");
+                char [] newPassword2 = c.readPassword("Enter new password again: ");
+                noMatch = ! Arrays.equals(newPassword1, newPassword2);
+                if (noMatch) {
+                    c.format("Passwords don't match. Try again.%n");
                 } else {
-                    s.next();
-                }   
-            }
-        } finally {
-            s.close();
+                    change(login, newPassword1);
+                    c.format("Password for %s changed.%n", login);
+                }
+                Arrays.fill(newPassword1, ' ');
+                Arrays.fill(newPassword2, ' ');
+            } while (noMatch);
         }
 
-        System.out.println(sum);
+        Arrays.fill(oldPassword, ' ');
+    }
+    
+    // Dummy change method.
+    static boolean verify(String login, char[] password) {
+        // This method always returns
+        // true in this example.
+        // Modify this method to verify
+        // password according to your rules.
+        return true;
+    }
+
+    // Dummy change method.
+    static void change(String login, char[] password) {
+        // Modify this method to change
+        // password according to your rules.
     }
 }
 ```
 
-下面是样本输入文件 [`usnumbers.txt`](https://docs.oracle.com/javase/tutorial/essential/io/examples/usnumbers.txt) ：
+The `Password` class follows these steps:
 
-```
-8.5
-32,767
-3.14159
-1,000,000.1
-```
+1. Attempt to retrieve the Console object. If the object is not available, abort.
+2. Invoke `Console.readLine` to prompt for and read the user's login name.
+3. Invoke `Console.readPassword` to prompt for and read the user's existing password.
+4. Invoke `verify` to confirm that the user is authorized to change the password. (In this example, `verify` is a dummy method that always returns `true`.)
+5. Repeat the following steps until the user enters the same password twice:
+   1. Invoke `Console.readPassword` twice to prompt for and read a new password.
+   2. If the user entered the same password both times, invoke `change` to change it. (Again, `change` is a dummy method.)
+   3. Overwrite both passwords with blanks.
+6. Overwrite the old password with blanks.
 
-输出字符串是`1032778.74159`。在某些语言环境中，句点将是不同的字符，因为`System.out`是`PrintStream`对象，并且该类不提供覆盖默认语言环境的方法。我们可以覆盖整个程序的语言环境 - 或者我们可以只使用格式化，如下一个主题 [Formatting](https://docs.oracle.com/javase/tutorial/essential/io/formatting.html) 中所述。
