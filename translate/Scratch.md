@@ -1,82 +1,76 @@
-#### 数据流
+### 文件 I/O
 
-数据流支持原始数据类型值（`boolean`，`char`，`byte`，`short`，`int`，`long`，`float`和`double`）以及`String`值的二进制 I/O 。所有数据流都实现`DataInput`接口或`DataOutput`接口。本节重点介绍这些接口最广泛使用的实现 [`DataInputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/DataInputStream.html) 和 [`DataOutputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/DataOutputStream.html) 。
+----
 
- [`DataStreams`](https://docs.oracle.com/javase/tutorial/essential/io/examples/DataStreams.java) 示例通过写出一组数据记录然后再次读取它们来演示数据流。每条记录包含三个与发票上的项目相关的值，如下表所示：
+**注意：**  本教程介绍的文件 I/O 机制包含在 JDK 7 发布版本中。Java SE 6 版本中的文件 I/O 教程非常简短，不过你仍然可以下载 [Java SE Tutorial 2008-03-14](http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-tutorials-419421.html#tutorial-2008_03_14-oth-JPR) 版本的教程，其中包含早期版本的文件 I/O 内容。
 
-| Order in record | Data type | Data description | Output Method                  | Input Method                 | Sample Value     |
-| --------------- | --------- | ---------------- | ------------------------------ | ---------------------------- | ---------------- |
-| 1               | `double`  | Item price       | `DataOutputStream.writeDouble` | `DataInputStream.readDouble` | `19.99`          |
-| 2               | `int`     | Unit count       | `DataOutputStream.writeInt`    | `DataInputStream.readInt`    | `12`             |
-| 3               | `String`  | Item description | `DataOutputStream.writeUTF`    | `DataInputStream.readUTF`    | `"Java T-Shirt"` |
+----
 
-我们来看看`DataStreams`中的关键代码。首先，程序定义了一些常量，包含数据文件的名称和将写入的数据：
+`java.nio.file` 包以及它的相关包，`java.nio.file.attribute`，提供对文件 I/O 的完善支持，用来访问默认文件系统。尽管该 API 包含许多类，你只需要关注少量几个入口点。你将发现这些 API 非常直观而且容易使用。
 
-```java
-static final String dataFile = "invoicedata";
+本教程以一个问题 [path 是什么?](https://docs.oracle.com/javase/tutorial/essential/io/path.html) 开始，然后，介绍 [Path 类](https://docs.oracle.com/javase/tutorial/essential/io/pathClass.html) ，包的主要入口点。接下来解释了`Path` 类中的方法相关的 [语法操作](https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html) 。本教程随后转向包中的其他主要的类，`Files` 类，其中包含文件操作方法。首先介绍许多 [文件操作](https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html) 通用的概念。然后介绍用于文件 [检查](https://docs.oracle.com/javase/tutorial/essential/io/check.html), [删除](https://docs.oracle.com/javase/tutorial/essential/io/delete.html), [拷贝](https://docs.oracle.com/javase/tutorial/essential/io/copy.html), 以及 [移动](https://docs.oracle.com/javase/tutorial/essential/io/move.html) 的方法。
 
-static final double[] prices = { 19.99, 9.99, 15.99, 3.99, 4.99 };
-static final int[] units = { 12, 8, 13, 29, 50 };
-static final String[] descs = {
-    "Java T-shirt",
-    "Java Mug",
-    "Duke Juggling Dolls",
-    "Java Pin",
-    "Java Key Chain"
-};
+本教程介绍了如何管理 [元数据](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html) ，在继续介绍 [文件I/O](https://docs.oracle.com/javase/tutorial/essential/io/file.html) 和 [目录I/O](https://docs.oracle.com/javase/tutorial/essential/io/dirs.html) 之前。[随机访问文件](https://docs.oracle.com/javase/tutorial/essential/io/rafs.html) 解释了 [符号和硬链接](https://docs.oracle.com/javase/tutorial/essential/io/links.html) 特定的问题。 
+
+接下来，介绍一些非常强大但更高级的主题。首先，演示了 [递归遍历文件树](https://docs.oracle.com/javase/tutorial/essential/io/walk.html) ，然后是有关如何 [使用通配符搜索文件的信息](https://docs.oracle.com/javase/tutorial/essential/io/find.html) 。接下来，将解释和演示如何 [查看更改目录](https://docs.oracle.com/javase/tutorial/essential/io/notification.html) 。然后，对 [不适合其他地方的方法](https://docs.oracle.com/javase/tutorial/essential/io/misc.html) 进行了一些介绍。
+
+最后，如果您在 Java SE 7 发行版之前编写了文件 I/O代码，则会有[从旧API到新API的映射](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html#mapping) ，以及关于`File.toPath`方法的重要信息，供希望 [利用新API而不重写现有代码](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html#interop) 的开发人员使用。
+
+#### 什么是 Path?（其他文件系统事实）
+
+文件系统以某种形式存储和组织某些形式的媒体上的文件，通常是一个或多个硬盘驱动器，以便可以容易地检索它们。目前使用的大多数文件系统都以树（或*hierarchical*）结构存储文件。在树的顶部是一个（或多个）根节点。在根节点下，有文件和目录（Microsoft Windows中的*文件夹*）。每个目录都可以包含文件和子目录，而这些文件和子目录又可以包含文件和子目录，等等，可能达到几乎无限的深度。
+
+本章节涵盖以下内容：
+
+- [什么是 Path?](https://docs.oracle.com/javase/tutorial/essential/io/path.html#path)
+- [相对还是绝对?](https://docs.oracle.com/javase/tutorial/essential/io/path.html#relative)
+- [符号链接](https://docs.oracle.com/javase/tutorial/essential/io/path.html#symlink)
+
+**什么是 Path?**
+
+下图显示了包含单个根节点的示例目录树。Microsoft Windows支持多个根节点。每个根节点都映射到一个卷，例如`C:\`或`D:\`。Solaris OS支持单个根节点，用斜杠字符`/`表示。
+
+![Sample directory structure](https://docs.oracle.com/javase/tutorial/figures/essential/io-dirStructure.gif)
+
+目录结构示例
+
+从根节点开始，文件通过文件系统的路径标识。例如，上图中的`statusReport`文件在Solaris OS中由以下表示法描述：
+
+```
+/home/sally/statusReport
 ```
 
-然后`DataStreams`打开输出流。由于`DataOutputStream`只能作为现有字节流对象的包装器创建，因此`DataStreams`提供带缓冲的文件输出字节流。
+在Microsoft Windows中，`statusReport`由以下表示法描述：
 
-```java
-out = new DataOutputStream(new BufferedOutputStream(
-              new FileOutputStream(dataFile)));
+```
+C:\home\sally\statusReport
 ```
 
-`DataStreams`写出记录并关闭输出流。
+用于分隔目录名称的字符（也称为*分隔符*）特定于文件系统：Solaris OS使用正斜杠（`/`），Microsoft Windows使用反斜杠斜杠（`\`）。
 
-```java
-for (int i = 0; i < prices.length; i ++) {
-    out.writeDouble(prices[i]);
-    out.writeInt(units[i]);
-    out.writeUTF(descs[i]);
-}
-```
+**相对还是绝对？**
 
-`writeUTF`方法以`UTF-8`的改进形式写出`String`值。这是一个可变宽度的字符编码，只需要一个字节表示常见的西方字符。
+路径是 *relative* 或 *absolute* 的。绝对路径始终包含查找文件所需的根元素和完整目录列表。例如，`/home/sally/statusReport`是绝对路径。查找文件所需的所有信息都包含在路径字符串中。
 
-现在，`DataStreams`再次读回数据。首先，它必须提供输入流和变量来保存输入数据。与`DataOutputStream`一样，`DataInputStream`必须构造为字节流的包装器。
+相对路径需要与另一个路径组合才能访问文件。例如，`joe/foo`是一个相对路径。没有更多信息，程序无法可靠地找到文件系统中的`joe/foo`目录。
 
-```java
-in = new DataInputStream(new
-            BufferedInputStream(new FileInputStream(dataFile)));
+**符号链接**
 
-double price;
-int unit;
-String desc;
-double total = 0.0;
-```
+文件系统对象通常是目录或文件。每个人都熟悉这些对象。但是一些文件系统也支持符号链接的概念。符号链接也称为*符号链接*或*软链接*。
 
-现在，`DataStreams`可以读取流中的每条记录，报告它遇到的数据。
+*符号链接*是一个特殊文件，用作对另一个文件的引用。在大多数情况下，符号链接对应用程序是透明的，符号链接上的操作会自动重定向到链接的目标。（指向的文件或目录称为链接的*target*。）例外情况是删除或重命名符号链接，在这种情况下链接本身被删除或重命名，而不是链接的目标。
 
-```java
-try {
-    while (true) {
-        price = in.readDouble();
-        unit = in.readInt();
-        desc = in.readUTF();
-        System.out.format("You ordered %d" + " units of %s at $%.2f%n",
-            unit, desc, price);
-        total += unit * price;
-    }
-} catch (EOFException e) {
-}
-```
+在下图中，`logFile`似乎是用户的常规文件，但它实际上是指向`dir/logs/HomeLogFile`的符号链接。`HomeLogFile`是链接的目标。
 
-请注意，`DataStreams`通过捕获 [`EOFException`](https://docs.oracle.com/javase/8/docs/api/java/io/EOFException.html)来检测文件结束条件，而不是测试无效的返回值。`DataInput`方法的所有实现都使用`EOFException`而不是返回值。
+![Sample symbolic link](https://docs.oracle.com/javase/tutorial/figures/essential/io-symlink.gif)
 
-另请注意，`DataStream`中的每个特定`write`都与相应的特定`read`完全匹配。程序员需要确保输出类型和输入类型以这种方式匹配：输入流由简单的二进制数据组成，没有任何内容可以指示单个值的类型，或者它们在流中开始的位置。
+符号链接示例。
 
-`DataStreams`使用一种非常糟糕的编程技术：它使用浮点数来表示货币值。通常，浮点对于精确值是不利的。对于小数分数尤其不好，因为常见的数值（例如`0.1`）没有二进制表示。
+符号链接通常对用户是透明的。读取或写入符号链接与读取或写入任何其他文件或目录相同。
 
-表示货币值的正确类型是`java.math.BigDecimal`。不幸的是，`BigDecimal`是一种对象类型，因此它不适用于数据流。但是，`BigDecimal`将使用对象流，这将在下一节中介绍。
+短语*解析链接*意味着用文件系统中的实际位置替换符号链接。在示例中，解析`logFile`会产生`dir/logs/HomeLogFile`。
+
+在实际场景中，大多数文件系统都可以自由使用符号链接。偶尔，粗心创建的符号链接可能会导致循环引用。当链接的目标指向原始链接时，会发生循环引用。循环引用可能是间接引用：目录`a`指向目录`b`，而目录`b`指向目录`c`，目录`c`中包含一个指向目录`a`的子目录。当程序递归地遍历目录结构时，循环引用可能会导致严重破坏。但是，此问题已被考虑到，并且不会导致程序无限循环。
+
+下一章节将讨论Java编程语言中文件 I/O 支持的核心，即`Path`类。
+

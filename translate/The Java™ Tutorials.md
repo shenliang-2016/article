@@ -11837,3 +11837,117 @@ try {
 `DataStreams`使用一种非常糟糕的编程技术：它使用浮点数来表示货币值。通常，浮点对于精确值是不利的。对于小数分数尤其不好，因为常见的数值（例如`0.1`）没有二进制表示。
 
 表示货币值的正确类型是`java.math.BigDecimal`。不幸的是，`BigDecimal`是一种对象类型，因此它不适用于数据流。但是，`BigDecimal`将使用对象流，这将在下一节中介绍。
+
+#### 对象流
+
+正如数据流支持原始数据类型的 I/O 一样，对象流也支持对象的 I/O 。大多数（但不是全部）标准类支持其对象的序列化。因为它们确实实现了标记接口[`Serializable`](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html) 。
+
+对象流类是[`ObjectInputStream`](https://docs.oracle.com/javase/8/docs/api/java/io/ObjectInputStream.html)和[`ObjectOutputStream`](https：// docs.oracle.com/javase/8/docs/api/java/io/ObjectOutputStream.html) 。这些类实现[`ObjectInput`](https://docs.oracle.com/javase/8/docs/api/java/io/ObjectInput.html) 和 [`ObjectOutput`](https://docs.oracle.com/javase/8/docs/api/java/io/ObjectOutput.html) ，它们是`DataInput`和`DataOutput`的子接口。这意味着 [数据流](https://docs.oracle.com/javase/tutorial/essential/io/datastreams.html) 中涵盖的所有原始数据 I/O 方法也在对象流中实现。因此，对象流可以包含原始值和对象值的混合。 [`ObjectStreams`](https://docs.oracle.com/javase/tutorial/essential/io/examples/ObjectStreams.java) 示例说明了这一点。 `ObjectStreams`创建了与`DataStreams`相同的应用程序，并进行了一些更改。首先，价格现在是[`BigDecimal`](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html)对象，以更好地表示小数值。其次，将[`Calendar`](https://docs.oracle.com/javase/8/docs/api/java/util/Calendar.html)对象写入数据文件，表示发票日期。
+
+如果`readObject()`没有返回预期的对象类型，试图将它强制转换为正确的类型可能抛出 [`ClassNotFoundException`](https://docs.oracle.com/javase/8/docs/api/java/lang/ClassNotFoundException.html) 。在这个简单的例子中，这不可能发生，因此我们不会尝试捕获异常。相反，我们通过在`main`方法的`throws`子句中添加`ClassNotFoundException`来通知编译器我们已经意识到了这个问题。
+
+**复杂对象的输入输出**
+
+`writeObject`和`readObject`方法使用起来很简单，但它们包含一些非常复杂的对象管理逻辑。这对像`Calendar`这样的类来说并不重要，它只封装了原始数据类型值。但是许多对象包含对其他对象的引用。如果`readObject`是从流中重构一个对象，它必须能够重建原始对象所引用的所有对象。这些附加对象可能有自己的引用，依此类推。在这种情况下，`writeObject`遍历整个对象引用网络，并将该网络中的所有对象写入流。因此，单次调用`writeObject`会导致大量对象被写入流。
+
+下图中进行了演示，其中调用`writeObject`来写名为**a**的单个对象。该对象包含对象**b**和**c**的引用，而**b**包含对**d**和**e**的引用。调用`writeobject(a)`不仅会写**a **，而且还会写重建**a**所需的所有对象，因此此类依赖网络中的其他四个对象也会被写入。当**a**被`readObject`读回时，其他四个对象也被回读，并保留所有原始对象引用。
+
+![I/O of multiple referred-to objects](https://docs.oracle.com/javase/tutorial/figures/essential/io-trav.gif)
+
+多个引用对象的 I/O 。
+
+您可能想知道如果同一个流上的两个对象都包含对某个对象的引用会发生什么。当他们回读时，他们都会引用一个对象吗？ 答案是肯定的。 流只能包含一个对象的副本，尽管它可以包含任意数量的对象。因此，如果您明确地将对象写入流两次，那么您实际上只写入了两次引用。例如，如果以下代码将对象`ob`两次写入流：
+
+```java
+Object ob = new Object();
+out.writeObject(ob);
+out.writeObject(ob);
+```
+
+每个`writeObject`必须与`readObject`匹配，因此读回流的代码将如下所示：
+
+```java
+Object ob1 = in.readObject();
+Object ob2 = in.readObject();
+```
+
+这产生两个变量，`ob1`和`ob2`，它们是对同一个对象的引用。
+
+但是，如果将单个对象写入两个不同的流，则它实际上是被复制的 - 读取两个流的单个程序将看到两个不同的对象。
+
+### 文件 I/O
+
+------
+
+**注意：**  本教程介绍的文件 I/O 机制包含在 JDK 7 发布版本中。Java SE 6 版本中的文件 I/O 教程非常简短，不过你仍然可以下载 [Java SE Tutorial 2008-03-14](http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-tutorials-419421.html#tutorial-2008_03_14-oth-JPR) 版本的教程，其中包含早期版本的文件 I/O 内容。
+
+------
+
+`java.nio.file` 包以及它的相关包，`java.nio.file.attribute`，提供对文件 I/O 的完善支持，用来访问默认文件系统。尽管该 API 包含许多类，你只需要关注少量几个入口点。你将发现这些 API 非常直观而且容易使用。
+
+本教程以一个问题 [path 是什么?](https://docs.oracle.com/javase/tutorial/essential/io/path.html) 开始，然后，介绍 [Path 类](https://docs.oracle.com/javase/tutorial/essential/io/pathClass.html) ，包的主要入口点。接下来解释了`Path` 类中的方法相关的 [语法操作](https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html) 。本教程随后转向包中的其他主要的类，`Files` 类，其中包含文件操作方法。首先介绍许多 [文件操作](https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html) 通用的概念。然后介绍用于文件 [检查](https://docs.oracle.com/javase/tutorial/essential/io/check.html), [删除](https://docs.oracle.com/javase/tutorial/essential/io/delete.html), [拷贝](https://docs.oracle.com/javase/tutorial/essential/io/copy.html), 以及 [移动](https://docs.oracle.com/javase/tutorial/essential/io/move.html) 的方法。
+
+本教程介绍了如何管理 [元数据](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html) ，在继续介绍 [文件I/O](https://docs.oracle.com/javase/tutorial/essential/io/file.html) 和 [目录I/O](https://docs.oracle.com/javase/tutorial/essential/io/dirs.html) 之前。[随机访问文件](https://docs.oracle.com/javase/tutorial/essential/io/rafs.html) 解释了 [符号和硬链接](https://docs.oracle.com/javase/tutorial/essential/io/links.html) 特定的问题。 
+
+接下来，介绍一些非常强大但更高级的主题。首先，演示了 [递归遍历文件树](https://docs.oracle.com/javase/tutorial/essential/io/walk.html) ，然后是有关如何 [使用通配符搜索文件的信息](https://docs.oracle.com/javase/tutorial/essential/io/find.html) 。接下来，将解释和演示如何 [查看更改目录](https://docs.oracle.com/javase/tutorial/essential/io/notification.html) 。然后，对 [不适合其他地方的方法](https://docs.oracle.com/javase/tutorial/essential/io/misc.html) 进行了一些介绍。
+
+最后，如果您在 Java SE 7 发行版之前编写了文件 I/O代码，则会有[从旧API到新API的映射](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html#mapping) ，以及关于`File.toPath`方法的重要信息，供希望 [利用新API而不重写现有代码](https://docs.oracle.com/javase/tutorial/essential/io/legacy.html#interop) 的开发人员使用。
+
+#### 什么是 Path?（其他文件系统事实）
+
+文件系统以某种形式存储和组织某些形式的媒体上的文件，通常是一个或多个硬盘驱动器，以便可以容易地检索它们。目前使用的大多数文件系统都以树（或*hierarchical*）结构存储文件。在树的顶部是一个（或多个）根节点。在根节点下，有文件和目录（Microsoft Windows中的*文件夹*）。每个目录都可以包含文件和子目录，而这些文件和子目录又可以包含文件和子目录，等等，可能达到几乎无限的深度。
+
+本章节涵盖以下内容：
+
+- [什么是 Path?](https://docs.oracle.com/javase/tutorial/essential/io/path.html#path)
+- [相对还是绝对?](https://docs.oracle.com/javase/tutorial/essential/io/path.html#relative)
+- [符号链接](https://docs.oracle.com/javase/tutorial/essential/io/path.html#symlink)
+
+**什么是 Path?**
+
+下图显示了包含单个根节点的示例目录树。Microsoft Windows支持多个根节点。每个根节点都映射到一个卷，例如`C:\`或`D:\`。Solaris OS支持单个根节点，用斜杠字符`/`表示。
+
+![Sample directory structure](https://docs.oracle.com/javase/tutorial/figures/essential/io-dirStructure.gif)
+
+目录结构示例
+
+从根节点开始，文件通过文件系统的路径标识。例如，上图中的`statusReport`文件在Solaris OS中由以下表示法描述：
+
+```
+/home/sally/statusReport
+```
+
+在Microsoft Windows中，`statusReport`由以下表示法描述：
+
+```
+C:\home\sally\statusReport
+```
+
+用于分隔目录名称的字符（也称为*分隔符*）特定于文件系统：Solaris OS使用正斜杠（`/`），Microsoft Windows使用反斜杠斜杠（`\`）。
+
+**相对还是绝对？**
+
+路径是 *relative* 或 *absolute* 的。绝对路径始终包含查找文件所需的根元素和完整目录列表。例如，`/home/sally/statusReport`是绝对路径。查找文件所需的所有信息都包含在路径字符串中。
+
+相对路径需要与另一个路径组合才能访问文件。例如，`joe/foo`是一个相对路径。没有更多信息，程序无法可靠地找到文件系统中的`joe/foo`目录。
+
+**符号链接**
+
+文件系统对象通常是目录或文件。每个人都熟悉这些对象。但是一些文件系统也支持符号链接的概念。符号链接也称为*符号链接*或*软链接*。
+
+*符号链接*是一个特殊文件，用作对另一个文件的引用。在大多数情况下，符号链接对应用程序是透明的，符号链接上的操作会自动重定向到链接的目标。（指向的文件或目录称为链接的*target*。）例外情况是删除或重命名符号链接，在这种情况下链接本身被删除或重命名，而不是链接的目标。
+
+在下图中，`logFile`似乎是用户的常规文件，但它实际上是指向`dir/logs/HomeLogFile`的符号链接。`HomeLogFile`是链接的目标。
+
+![Sample symbolic link](https://docs.oracle.com/javase/tutorial/figures/essential/io-symlink.gif)
+
+符号链接示例。
+
+符号链接通常对用户是透明的。读取或写入符号链接与读取或写入任何其他文件或目录相同。
+
+短语*解析链接*意味着用文件系统中的实际位置替换符号链接。在示例中，解析`logFile`会产生`dir/logs/HomeLogFile`。
+
+在实际场景中，大多数文件系统都可以自由使用符号链接。偶尔，粗心创建的符号链接可能会导致循环引用。当链接的目标指向原始链接时，会发生循环引用。循环引用可能是间接引用：目录`a`指向目录`b`，而目录`b`指向目录`c`，目录`c`中包含一个指向目录`a`的子目录。当程序递归地遍历目录结构时，循环引用可能会导致严重破坏。但是，此问题已被考虑到，并且不会导致程序无限循环。
+
+下一章节将讨论Java编程语言中文件 I/O 支持的核心，即`Path`类。
+
