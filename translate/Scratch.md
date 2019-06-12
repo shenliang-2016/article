@@ -64,11 +64,11 @@ Path p5 = Paths.get(System.getProperty("user.home"),"logs", "foo.log");
 
 ![Sample directory structure](https://docs.oracle.com/javase/tutorial/figures/essential/io-dirStructure.gif)
 
-Sample Directory Structure
+示例目录结构。
 
-The following code snippet defines a `Path` instance and then invokes several methods to obtain information about the path:
+以下代码片段定义了`Path`实例，然后调用了几个方法来获取有关路径的信息：
 
-```
+```java
 // None of these methods requires that the file corresponding
 // to the Path exists.
 // Microsoft Windows syntax
@@ -86,19 +86,19 @@ System.out.format("getParent: %s%n", path.getParent());
 System.out.format("getRoot: %s%n", path.getRoot());
 ```
 
-Here is the output for both Windows and the Solaris OS:
+以下是Windows和Solaris OS的输出：
 
-| Method Invoked | Returns in the Solaris OS | Returns in Microsoft Windows | Comment                                  |
-| -------------- | ------------------------- | ---------------------------- | ---------------------------------------- |
-| `toString`     | `/home/joe/foo`           | `C:\home\joe\foo`            | Returns the string representation of the `Path`. If the path was created using `Filesystems.getDefault().getPath(String)` or `Paths.get` (the latter is a convenience method for `getPath`), the method performs minor syntactic cleanup. For example, in a UNIX operating system, it will correct the input string `//home/joe/foo` to `/home/joe/foo`. |
-| `getFileName`  | `foo`                     | `foo`                        | Returns the file name or the last element of the sequence of name elements. |
-| `getName(0)`   | `home`                    | `home`                       | Returns the path element corresponding to the specified index. The 0th element is the path element closest to the root. |
-| `getNameCount` | `3`                       | `3`                          | Returns the number of elements in the path. |
-| `subpath(0,2)` | `home/joe`                | `home\joe`                   | Returns the subsequence of the `Path` (not including a root element) as specified by the beginning and ending indexes. |
-| `getParent`    | `/home/joe`               | `\home\joe`                  | Returns the path of the parent directory. |
-| `getRoot`      | `/`                       | `C:\`                        | Returns the root of the path.            |
+| Returns in the Solaris OS | Method Invoked | Returns in Microsoft Windows | Comment                                  |
+| ------------------------- | -------------- | ---------------------------- | ---------------------------------------- |
+| `/home/joe/foo`           | `toString`     | `C:\home\joe\foo`            | 返回`Path`的字符串表示形式。如果路径是使用`Filesystems.getDefault().getPath(String)`或`Paths.get`（后者是`getPath`的便捷方法）创建的，则该方法执行次要的语法清理。例如，在UNIX操作系统中，它会将输入字符串`//home/joe/foo`更正为`/home/joe/foo`。 |
+| `foo`                     | `getFileName`  | `foo`                        | 返回文件名或名称元素序列的最后一个元素。                     |
+| `home`                    | `getName(0)`   | `home`                       | 返回与指定索引对应的路径元素。第`0`个元素是最靠近根的路径元素。        |
+| `3`                       | `getNameCount` | `3`                          | 返回路径中元素的个数。                              |
+| `home/joe`                | `subpath(0,2)` | `home\joe`                   | 返回由开始和结束索引指定的`Path`（不包括根元素）的子序列。         |
+| `/home/joe`               | `getParent`    | `\home\joe`                  | 返回上级文件夹路径。                               |
+| `/`                       | `getRoot`      | `C:\`                        | 返回路径的根目录。                                |
 
-The previous example shows the output for an absolute path. In the following example, a relative path is specified:
+前面的示例显示了绝对路径的输出。在以下示例中，指定了相对路径：
 
 ```
 // Solaris syntax
@@ -108,7 +108,7 @@ or
 Path path = Paths.get("sally\\bar");
 ```
 
-Here is the output for Windows and the Solaris OS:
+以下是Windows和Solaris OS的输出：
 
 | Method Invoked | Returns in the Solaris OS | Returns in Microsoft Windows |
 | -------------- | ------------------------- | ---------------------------- |
