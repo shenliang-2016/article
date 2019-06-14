@@ -12266,7 +12266,7 @@ for (Path name: path) {
 
 **释放系统资源**
 
-此API中使用的许多资源（如流或通道）实现或扩展[`java.io.Closeable`](https://docs.oracle.com/javase/8/docs/api/java /io/Closeable.html)接口。`Closeable`资源意味着是必须调用`close`方法以在不再需要时释放资源。忽略关闭资源可能会对应用程序的性能产生负面影响。下一节中描述的`try-with-resources`语句为您处理此步骤。
+此API中使用的许多资源（如流或通道）实现或扩展 [`java.io.Closeable`](https://docs.oracle.com/javase/8/docs/api/java /io/Closeable.html) 接口。`Closeable`资源意味着是必须调用`close`方法以在不再需要时释放资源。忽略关闭资源可能会对应用程序的性能产生负面影响。下一节中描述的`try-with-resources`语句为您处理此步骤。
 
 **捕获异常**
 
@@ -12418,7 +12418,7 @@ glob语法功能强大且易于使用。但是，如果它不足以满足您的�
 
 **校验文件或者目录的存在性**
 
-`Path`类中的方法是语法意义上的，这意味着它们在`Path`实例上运行。但最终您必须访问文件系统以验证特定的`Path`是否存在。您可以使用[`exists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#exists-java.nio.file.Path-java.nio.file.LinkOption ...-) 和 [`notExists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html＃notExists-java.nio.file.Path-java.nio.file.LinkOption ...-) 方法。注意`!Files.exists(path)`不等同于`Files.notExists(path)`。当您测试文件存在时，可能会有三个结果：
+`Path`类中的方法是语法意义上的，这意味着它们在`Path`实例上运行。但最终您必须访问文件系统以验证特定的`Path`是否存在。您可以使用 [`exists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#exists-java.nio.file.Path-java.nio.file.LinkOption ...-) 和 [`notExists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#notExists-java.nio.file.Path-java.nio.file.LinkOption ...-) 方法。注意`!Files.exists(path)`不等同于`Files.notExists(path)`。当您测试文件存在时，可能会有三个结果：
 
 - 验证文件存在。
 - 验证文件不存在。
