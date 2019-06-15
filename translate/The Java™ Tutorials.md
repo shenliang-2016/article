@@ -12266,7 +12266,7 @@ for (Path name: path) {
 
 **释放系统资源**
 
-此API中使用的许多资源（如流或通道）实现或扩展 [`java.io.Closeable`](https://docs.oracle.com/javase/8/docs/api/java /io/Closeable.html) 接口。`Closeable`资源意味着是必须调用`close`方法以在不再需要时释放资源。忽略关闭资源可能会对应用程序的性能产生负面影响。下一节中描述的`try-with-resources`语句为您处理此步骤。
+此API中使用的许多资源（如流或通道）实现或扩展 [`java.io.Closeable`](https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html) 接口。`Closeable`资源意味着是必须调用`close`方法以在不再需要时释放资源。忽略关闭资源可能会对应用程序的性能产生负面影响。下一节中描述的`try-with-resources`语句为您处理此步骤。
 
 **捕获异常**
 
@@ -12418,7 +12418,7 @@ glob语法功能强大且易于使用。但是，如果它不足以满足您的�
 
 **校验文件或者目录的存在性**
 
-`Path`类中的方法是语法意义上的，这意味着它们在`Path`实例上运行。但最终您必须访问文件系统以验证特定的`Path`是否存在。您可以使用 [`exists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#exists-java.nio.file.Path-java.nio.file.LinkOption ...-) 和 [`notExists(Path，LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#notExists-java.nio.file.Path-java.nio.file.LinkOption ...-) 方法。注意`!Files.exists(path)`不等同于`Files.notExists(path)`。当您测试文件存在时，可能会有三个结果：
+`Path`类中的方法是语法意义上的，这意味着它们在`Path`实例上运行。但最终您必须访问文件系统以验证特定的`Path`是否存在。您可以使用 [`exists(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#exists-java.nio.file.Path-java.nio.file.LinkOption...-) 和 [`notExists(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#notExists-java.nio.file.Path-java.nio.file.LinkOption...-) 方法。注意`!Files.exists(path)`不等同于`Files.notExists(path)`。当您测试文件存在时，可能会有三个结果：
 
 - 验证文件存在。
 - 验证文件不存在。
@@ -12446,7 +12446,7 @@ boolean isRegularExecutableFile = Files.isRegularFile(file) &
 
 **检查两个路径是否定位同一个文件**
 
-当您有一个使用符号链接的文件系统时，可能有两个不同的路径来定位同一个文件。[`isSameFile(Path，Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isSameFile-java.nio.file.Path- java.nio.file.Path-) 方法比较两个路径以确定它们是否在文件系统上找到相同的文件。例如：
+当您有一个使用符号链接的文件系统时，可能有两个不同的路径来定位同一个文件。 [`isSameFile(Path, Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isSameFile-java.nio.file.Path-java.nio.file.Path-) 方法比较两个路径以确定它们是否在文件系统上找到相同的文件。例如：
 
 ```java
 Path p1 = ...;
@@ -12510,7 +12510,7 @@ Files.copy(source, target, REPLACE_EXISTING);
 
 #### 移动文件或者目录
 
-您可以使用[`move(Path, Path, CopyOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption ...-) 方法移动文件或目录。如果目标文件存在，则移动失败，除非指定了`REPLACE_EXISTING`选项。
+您可以使用 [`move(Path, Path, CopyOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#move-java.nio.file.Path-java.nio.file.Path-java.nio.file.CopyOption...-) 方法移动文件或目录。如果目标文件存在，则移动失败，除非指定了`REPLACE_EXISTING`选项。
 
 可以移动空目录。如果目录不为空，则在不移动该目录内容的情况下移动目录时允许移动。在UNIX系统上，移动同一分区中的目录通常包括重命名目录。在这种情况下，即使目录包含文件，此方法也可以工作。
 
@@ -12567,7 +12567,7 @@ Files.move(source, target, REPLACE_EXISTING);
 
 特定文件系统实现可能仅支持基本文件属性视图，或者它可能支持其中几个文件属性视图。文件系统实现可能支持此API中未包含的其他属性视图。
 
-在大多数情况下，您不必直接处理任何`FileAttributeView`接口。（如果你确实需要直接使用`FileAttributeView`，你可以通过[`getFileAttributeView(Path, Class, LinkOption ...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getFileAttributeView-java.nio.file.Path-java.lang.Class-java.nio.file.LinkOption ...-) 方法来访问它。）
+在大多数情况下，您不必直接处理任何`FileAttributeView`接口。（如果你确实需要直接使用`FileAttributeView`，你可以通过 [`getFileAttributeView(Path, Class, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getFileAttributeView-java.nio.file.Path-java.lang.Class-java.nio.file.LinkOption...-) 方法来访问它。）
 
 `readAttributes`方法使用泛型，可用于读取任何文件属性视图的属性。本节其余部分的示例使用`readAttributes`方法。
 
@@ -12651,12 +12651,6 @@ Files.setAttribute(file, "dos:hidden", true);
 ```
 
 **POSIX 文件权限**
-
-*POSIX* is an acronym for Portable Operating System Interface for UNIX and is a set of IEEE and ISO standards designed to ensure interoperability among different flavors of UNIX. If a program conforms to these POSIX standards, it should be easily ported to other POSIX-compliant operating systems.
-
-Besides file owner and group owner, POSIX supports nine file permissions: read, write, and execute permissions for the file owner, members of the same group, and "everyone else."
-
-The following code snippet reads the POSIX file attributes for a given file and prints them to standard output. The code uses the methods in the [`PosixFileAttributes`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/attribute/PosixFileAttributes.html) class.
 
 *POSIX*是用于UNIX的可移植操作系统接口的首字母缩写，是一组 IEEE 和 ISO 标准，旨在确保不同版本的 UNIX 之间的互操作性。如果程序符合这些 POSIX 标准，则应该可以轻松移植到其他符合 POSIX 标准的操作系统。
 
