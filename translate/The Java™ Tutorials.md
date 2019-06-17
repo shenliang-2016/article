@@ -12535,23 +12535,23 @@ Files.move(source, target, REPLACE_EXISTING);
 
 文件系统的元数据通常称为其*文件属性*。`Files`类包括可用于获取文件的单个属性或设置属性的方法。
 
-| 方法                                                         | 说明                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`size(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#size-java.nio.file.Path-) | 返回给定文件的字节尺寸。                                     |
-| [`isDirectory(Path, LinkOption)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isDirectory-java.nio.file.Path-java.nio.file.LinkOption...-) | 如果给定的`Path`定位到一个目录时返回`true`。                 |
-| [`isRegularFile(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isRegularFile-java.nio.file.Path-java.nio.file.LinkOption...-) | 如果给定的`Path`定位到一个常规文件时返回`true`。             |
-| [`isSymbolicLink(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isSymbolicLink-java.nio.file.Path-) | 如果给定的`Path`定位到一个符号链接时返回`true`。             |
+| 方法                                       | 说明                                   |
+| ---------------------------------------- | ------------------------------------ |
+| [`size(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#size-java.nio.file.Path-) | 返回给定文件的字节尺寸。                         |
+| [`isDirectory(Path, LinkOption)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isDirectory-java.nio.file.Path-java.nio.file.LinkOption...-) | 如果给定的`Path`定位到一个目录时返回`true`。         |
+| [`isRegularFile(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isRegularFile-java.nio.file.Path-java.nio.file.LinkOption...-) | 如果给定的`Path`定位到一个常规文件时返回`true`。       |
+| [`isSymbolicLink(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isSymbolicLink-java.nio.file.Path-) | 如果给定的`Path`定位到一个符号链接时返回`true`。       |
 | [`isHidden(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isHidden-java.nio.file.Path-) | 如果给定的`Path`定位到一个文件系统中的隐藏文件时返回`true`。 |
-| [`getLastModifiedTime(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getLastModifiedTime-java.nio.file.Path-java.nio.file.LinkOption...-) [`setLastModifiedTime(Path, FileTime)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setLastModifiedTime-java.nio.file.Path-java.nio.file.attribute.FileTime-) | 返回或者设置给定文件的最后修改时间。                         |
-| [`getOwner(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getOwner-java.nio.file.Path-java.nio.file.LinkOption...-) [`setOwner(Path, UserPrincipal)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setOwner-java.nio.file.Path-java.nio.file.attribute.UserPrincipal-) | 返回或者设置文件所有者。                                     |
-| [`getPosixFilePermissions(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getPosixFilePermissions-java.nio.file.Path-java.nio.file.LinkOption...-) [`setPosixFilePermissions(Path, Set)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setPosixFilePermissions-java.nio.file.Path-java.util.Set-) | 返回或者设置文件的 POSIX 文件权限。                          |
-| [`getAttribute(Path, String, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getAttribute-java.nio.file.Path-java.lang.String-java.nio.file.LinkOption...-) [`setAttribute(Path, String, Object, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setAttribute-java.nio.file.Path-java.lang.String-java.lang.Object-java.nio.file.LinkOption...-) | 返回或者设置一个文件属性的值。                               |
+| [`getLastModifiedTime(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getLastModifiedTime-java.nio.file.Path-java.nio.file.LinkOption...-) [`setLastModifiedTime(Path, FileTime)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setLastModifiedTime-java.nio.file.Path-java.nio.file.attribute.FileTime-) | 返回或者设置给定文件的最后修改时间。                   |
+| [`getOwner(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getOwner-java.nio.file.Path-java.nio.file.LinkOption...-) [`setOwner(Path, UserPrincipal)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setOwner-java.nio.file.Path-java.nio.file.attribute.UserPrincipal-) | 返回或者设置文件所有者。                         |
+| [`getPosixFilePermissions(Path, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getPosixFilePermissions-java.nio.file.Path-java.nio.file.LinkOption...-) [`setPosixFilePermissions(Path, Set)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setPosixFilePermissions-java.nio.file.Path-java.util.Set-) | 返回或者设置文件的 POSIX 文件权限。                |
+| [`getAttribute(Path, String, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#getAttribute-java.nio.file.Path-java.lang.String-java.nio.file.LinkOption...-) [`setAttribute(Path, String, Object, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#setAttribute-java.nio.file.Path-java.lang.String-java.lang.Object-java.nio.file.LinkOption...-) | 返回或者设置一个文件属性的值。                      |
 
 如果程序在同一时间需要多个文件属性，则使用检索单个属性的方法可能效率低下。重复访问文件系统以检索单个属性可能会对性能产生负面影响。因此，`Files`类提供了两个`readAttributes`方法，用于在一次批量操作中获取文件的属性。
 
-| 方法                                                         | 说明                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`readAttributes(Path, String, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#readAttributes-java.nio.file.Path-java.lang.String-java.nio.file.LinkOption...-) | 批量读取文件属性，其中的`String`参数指定需要读取的属性。     |
+| 方法                                       | 说明                                       |
+| ---------------------------------------- | ---------------------------------------- |
+| [`readAttributes(Path, String, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#readAttributes-java.nio.file.Path-java.lang.String-java.nio.file.LinkOption...-) | 批量读取文件属性，其中的`String`参数指定需要读取的属性。         |
 | [`readAttributes(Path, Class, LinkOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#readAttributes-java.nio.file.Path-java.lang.Class-java.nio.file.LinkOption...-) | 批量读取文件属性。 `Class <A>`参数是请求的属性类型，该方法返回该类的对象。 |
 
 在展示`readAttributes`方法的示例之前，应该指出不同的文件系统对于应该跟踪哪些属性有不同的概念。因此，相关文件属性被组合在一起成为视图。*视图*映射到特定的文件系统实现，例如 POSIX 或 DOS，或者映射到常用功能，例如文件所有权。
@@ -12855,3 +12855,236 @@ Path file = ...;
 byte[] buf = ...;
 Files.write(file, buf);
 ```
+**文本文件使用的带缓冲的I/O方法**
+
+`java.nio.file`包支持通道 I/O，它在缓冲区中移动数据，绕过一些可能阻塞流 I/O 的层。
+
+使用带缓冲的流 I/O 读取文件
+
+ [`newBufferedReader(Path, Charset)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newBufferedReader-java.nio.file.Path-java.nio.charset.Charset-) 方法打开一个文件进行读取，返回一个`BufferedReader`，可用于以高效的方式从文件中读取文本。
+
+以下代码段显示了如何使用`newBufferedReader`方法从文件中读取。该文件以“US-ASCII”编码。
+
+```java
+Charset charset = Charset.forName("US-ASCII");
+try (BufferedReader reader = Files.newBufferedReader(file, charset)) {
+    String line = null;
+    while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+    }
+} catch (IOException x) {
+    System.err.format("IOException: %s%n", x);
+}
+```
+
+使用带缓冲的流 I/O 写入文件
+
+您可以使用 [`newBufferedWriter(Path, Charset, OpenOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newBufferedWriter-java.nio.file.Path-java.nio.charset.Charset-java.nio.file.OpenOption...-) 方法使用`BufferedWriter`写入文件。
+
+以下代码段显示了如何使用此方法创建以“US-ASCII”编码的文件：
+
+```java
+Charset charset = Charset.forName("US-ASCII");
+String s = ...;
+try (BufferedWriter writer = Files.newBufferedWriter(file, charset)) {
+    writer.write(s, 0, s.length());
+} catch (IOException x) {
+    System.err.format("IOException: %s%n", x);
+}
+```
+
+**无缓冲流的方法和可与java.io API互操作的方法**
+
+使用流 I/O 读取文件
+
+要打开文件进行读取，可以使用 [`newInputStream(Path, OpenOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newInputStream-java.nio.file.Path-java.nio.file.OpenOption...-) 方法。此方法返回一个无缓冲的输入流，用于从文件中读取字节。
+
+```java
+Path file = ...;
+try (InputStream in = Files.newInputStream(file);
+    BufferedReader reader =
+      new BufferedReader(new InputStreamReader(in))) {
+    String line = null;
+    while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+    }
+} catch (IOException x) {
+    System.err.println(x);
+}
+```
+
+使用流 I/O 创建并写入文件
+
+您可以使用 [`newOutputStream(Path, OpenOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newOutputStream-java.nio.file.Path-java.nio.file.OpenOption...-) 方法创建文件，附加到文件或写入文件。此方法打开或创建用于写入字节的文件，并返回无缓冲的输出流。
+
+该方法采用可选的`OpenOption`参数。如果未指定打开选项，并且该文件不存在，则会创建一个新文件。如果文件存在，则会被截断。此选项等效于使用`CREATE和TRUNCATE_EXISTING`选项调用该方法。
+
+以下示例打开一个日志文件。如果该文件不存在，则创建该文件。如果该文件存在，则打开该文件以进行追加。
+
+```java
+import static java.nio.file.StandardOpenOption.*;
+import java.nio.file.*;
+import java.io.*;
+
+public class LogFileTest {
+
+  public static void main(String[] args) {
+
+    // Convert the string to a
+    // byte array.
+    String s = "Hello World! ";
+    byte data[] = s.getBytes();
+    Path p = Paths.get("./logfile.txt");
+
+    try (OutputStream out = new BufferedOutputStream(
+      Files.newOutputStream(p, CREATE, APPEND))) {
+      out.write(data, 0, data.length);
+    } catch (IOException x) {
+      System.err.println(x);
+    }
+  }
+}
+```
+
+**Channels和ByteBuffers的方法**
+
+使用通道I / O读取和写入文件
+
+当流 I/O 一次读取一个字符时，通道 I/O 一次读取一个缓冲区。 [`ByteChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/ByteChannel.html) 接口提供基本的读写功能。  [`SeekableByteChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/SeekableByteChannel.html) 是一个`ByteChannel`，它能够维持通道中的位置并改变该位置。`SeekableByteChannel`还支持截断与通道关联的文件并查询文件的大小。
+
+移动到文件中的不同点然后从该位置读取或写入的能力使得可以随机访问文件。有关更多信息，请参阅 [Random Access Files](https://docs.oracle.com/javase/tutorial/essential/io/rafs.html) 。
+
+下面是两个读写通道 I/O 的方法：
+
+- [`newByteChannel(Path, OpenOption...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newByteChannel-java.nio.file.Path-java.nio.file.OpenOption...-)
+- [`newByteChannel(Path, Set, FileAttribute...)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#newByteChannel-java.nio.file.Path-java.util.Set-java.nio.file.attribute.FileAttribute...-)
+
+------
+
+**注意：** `newByteChannel`方法返回`SeekableByteChannel`的实例。使用默认文件系统，您可以将此可搜索字节通道转换为 [`FileChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/FileChannel.html) ，从而提供对更高级功能的访问，例如将文件区域直接映射到内存中以便更快地访问，锁定文件的某个区域以便其他进程无法访问它，或者从绝对位置读取和写入字节而不影响通道的当前位置。
+
+------
+
+两种`newByteChannel`方法都允许您指定`OpenOption`选项列表。 除了支持`newOutputStream`方法使用的相同 [open options](https://docs.oracle.com/javase/tutorial/essential/io/file.html#openOptions) ，还有一个选项：需要`READ`，因为`SeekableByteChannel`支持读取和写入。
+
+指定`READ`将打开要读取的通道。指定`WRITE`或`APPEND`会打开要写入的通道。如果未指定这些选项，则打开通道进行读取。
+
+以下代码段读取文件并将其打印到标准输出：
+
+```java
+// Defaults to READ
+try (SeekableByteChannel sbc = Files.newByteChannel(file)) {
+    ByteBuffer buf = ByteBuffer.allocate(10);
+
+    // Read the bytes with the proper encoding for this platform.  If
+    // you skip this step, you might see something that looks like
+    // Chinese characters when you expect Latin-style characters.
+    String encoding = System.getProperty("file.encoding");
+    while (sbc.read(buf) > 0) {
+        buf.rewind();
+        System.out.print(Charset.forName(encoding).decode(buf));
+        buf.flip();
+    }
+} catch (IOException x) {
+    System.out.println("caught exception: " + x);
+}
+```
+
+以下示例是为 UNIX 和其他 POSIX 文件系统编写的，它创建了一个具有一组特定文件权限的日志文件。此代码创建日志文件或附加到日志文件（如果已存在）。创建日志文件时，所有者具有读/写权限，组具有只读权限。
+
+```java
+import static java.nio.file.StandardOpenOption.*;
+import java.nio.*;
+import java.nio.channels.*;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.io.*;
+import java.util.*;
+
+public class LogFilePermissionsTest {
+
+  public static void main(String[] args) {
+  
+    // Create the set of options for appending to the file.
+    Set<OpenOption> options = new HashSet<OpenOption>();
+    options.add(APPEND);
+    options.add(CREATE);
+
+    // Create the custom permissions attribute.
+    Set<PosixFilePermission> perms =
+      PosixFilePermissions.fromString("rw-r-----");
+    FileAttribute<Set<PosixFilePermission>> attr =
+      PosixFilePermissions.asFileAttribute(perms);
+
+    // Convert the string to a ByteBuffer.
+    String s = "Hello World! ";
+    byte data[] = s.getBytes();
+    ByteBuffer bb = ByteBuffer.wrap(data);
+    
+    Path file = Paths.get("./permissions.log");
+
+    try (SeekableByteChannel sbc =
+      Files.newByteChannel(file, options, attr)) {
+      sbc.write(bb);
+    } catch (IOException x) {
+      System.out.println("Exception thrown: " + x);
+    }
+  }
+}
+```
+
+**创建常规文件和临时文件的方法**
+
+创建文件
+
+您可以使用 [`createFile(Path, FileAttribute)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#createFile-java.nio.file.Path-java.nio.file.attribute.FileAttribute...-) 方法创建具有初始属性集的空文件。例如，如果在创建时希望文件具有特定的文件权限集，请使用`createFile`方法执行此操作。如果未指定任何属性，则使用默认属性创建文件。如果该文件已存在，则`createFile`将抛出异常。
+
+在单个原子操作中，`createFile`方法检查文件是否存在，并使用指定的属性创建该文件，这使得该过程对恶意代码更安全。
+
+以下代码段创建一个具有默认属性的文件：
+
+```java
+Path file = ...;
+try {
+    // Create the empty file with default permissions, etc.
+    Files.createFile(file);
+} catch (FileAlreadyExistsException x) {
+    System.err.format("file named %s" +
+        " already exists%n", file);
+} catch (IOException x) {
+    // Some other sort of failure, such as permissions.
+    System.err.format("createFile error: %s%n", x);
+}
+```
+
+[POSIX文件权限](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html#posix) 有一个示例，它使用 `createFile(Path, FileAttribute<?>)` 来创建具有预设权限的文件。
+
+您还可以使用`newOutputStream`方法创建新文件，如 [使用流 I/O 创建和写入文件](https://docs.oracle.com/javase/tutorial/essential/io/file.html#createStream) 中所述。如果打开新输出流并立即关闭它，则会创建一个空文件。
+
+创建临时文件
+
+您可以使用以下`createTempFile`方法之一创建临时文件：
+
+- [`createTempFile(Path, String, String, FileAttribute)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#createTempFile-java.nio.file.Path-java.lang.String-java.lang.String-java.nio.file.attribute.FileAttribute...-)
+- [`createTempFile(String, String, FileAttribute)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#createTempFile-java.lang.String-java.lang.String-java.nio.file.attribute.FileAttribute...-)
+
+第一种方法允许代码指定临时文件的目录，第二种方法在默认临时文件目录中创建新文件。这两种方法都允许您为文件名指定后缀，第一种方法允许您指定前缀。以下代码段给出了第二种方法的示例：
+
+```java
+try {
+    Path tempFile = Files.createTempFile(null, ".myapp");
+    System.out.format("The temporary file" +
+        " has been created: %s%n", tempFile)
+;
+} catch (IOException x) {
+    System.err.format("IOException: %s%n", x);
+}
+```
+
+运行此文件的结果如下所示：
+
+```
+The temporary file has been created: /tmp/509668702974537184.myapp
+```
+
+临时文件名的特定格式是特定于平台的。
