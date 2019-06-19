@@ -13292,3 +13292,90 @@ try (DirectoryStream<Path>
 
 此方法仅用于过滤单个目录。但是，如果要查找文件树中的所有子目录，可以使用 [遍历文件树](https://docs.oracle.com/javase/tutorial/essential/io/walk.html) 机制。
 
+#### 符号链接或其它链接
+
+如前所述，`java.nio.file`包，特别是`Path`类，是“链接感知”的。每个`Path`方法都会检测遇到符号链接时要执行的操作，或者它提供了一个选项，使您可以在遇到符号链接时配置行为。
+
+到目前为止的讨论是关于 [符号或软链接](https://docs.oracle.com/javase/tutorial/essential/io/path.html#symlink) ，但一些文件系统也支持硬链接。*硬链接*比符号链接更具限制性，如下所示：
+
+- 链接的目标必须存在。
+- 目录上通常不允许使用硬链接。
+- 不允许硬链接跨越分区或卷。因此，它们不能跨文件系统存在。
+- 硬链接的样子和行为像普通文件一样，因此很难分辨它们。
+- 对于所有意图和目的，硬链接是与原始文件相同的实体。它们具有相同的文件权限，时间戳等。所有属性都相同。
+
+由于这些限制，硬链接不像符号链接那样频繁使用，但`Path`方法与硬链接无缝协作。
+
+有几种方法专门处理链接，并在以下部分中介绍：
+
+- [创建符号链接](https://docs.oracle.com/javase/tutorial/essential/io/links.html#symLink)
+- [创建硬链接](https://docs.oracle.com/javase/tutorial/essential/io/links.html#hardLink)
+- [删除符号链接](https://docs.oracle.com/javase/tutorial/essential/io/links.html#detect)
+- [寻找链接的目标](https://docs.oracle.com/javase/tutorial/essential/io/links.html#read)
+
+**创建符号链接**
+
+如果文件系统支持，则可以使用 [`createSymbolicLink(Path, Path, FileAttribute)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#createSymbolicLink-java.nio.file.Path-java.nio.file.Path-java.nio.file.attribute.FileAttribute...-) 方法创建符号链接。第二个`Path`参数表示目标文件或目录，可能存在也可能不存在。以下代码段创建了具有默认权限的符号链接：
+
+```java
+Path newLink = ...;
+Path target = ...;
+try {
+    Files.createSymbolicLink(newLink, target);
+} catch (IOException x) {
+    System.err.println(x);
+} catch (UnsupportedOperationException x) {
+    // Some file systems do not support symbolic links.
+    System.err.println(x);
+}
+```
+
+`FileAttributes` 可变参数使您可以指定在创建链接时以原子方式设置的初始文件属性。但是，此参数仅供将来使用，目前尚未实现。
+
+**创建硬链接**
+
+您可以使用 [`createLink(Path, Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#createLink-java.nio.file.Path-java.nio.file.Path-) 方法创建指向现有文件的硬（或常规）链接。第二个`Path`参数定位现有文件，它必须存在或抛出`NoSuchFileException`。以下代码段显示了如何创建链接：
+
+```java
+Path newLink = ...;
+Path existingFile = ...;
+try {
+    Files.createLink(newLink, existingFile);
+} catch (IOException x) {
+    System.err.println(x);
+} catch (UnsupportedOperationException x) {
+    // Some file systems do not
+    // support adding an existing
+    // file to a directory.
+    System.err.println(x);
+}
+```
+
+**删除符号链接**
+
+要确定`Path`实例是否为符号链接，可以使用 [`isSymbolicLink(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#isSymbolicLink-java.nio.file.Path-) 方法。以下代码段显示了如何使用：
+
+```java
+Path file = ...;
+boolean isSymbolicLink =
+    Files.isSymbolicLink(file);
+```
+
+更多信息，参考 [管理元数据](https://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html).
+
+**寻找链接的目标**
+
+您可以使用 [`readSymbolicLink(Path)`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#readSymbolicLink-java.nio.file.Path-) 方法获取符号链接的目标，如下所示：
+
+```java
+Path link = ...;
+try {
+    System.out.format("Target of link" +
+        " '%s' is '%s'%n", link,
+        Files.readSymbolicLink(link));
+} catch (IOException x) {
+    System.err.println(x);
+}
+```
+
+如果`Path`不是符号链接，则此方法将抛出`NotLinkException`。
