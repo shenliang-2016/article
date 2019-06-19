@@ -1,29 +1,51 @@
-## 并发
+### `Thread`对象
 
-计算机用户理所当然地认为他们的系统一次可以做多件事。他们假设他们可以继续在文字处理器中工作，而其他应用程序则下载文件，管理打印队列和流式传输音频。即使是单个应用程序通常也希望一次完成多个任务。例如，流式音频应用程序必须同时从网络读取数字音频，解压缩，管理播放和更新其显示。即使文字处理器应始终准备好响应键盘和鼠标事件，无论重新格式化文本或更新显示有多繁忙。可以执行此类操作的软件称为并发软件。
+每个线程都与`Thread`类的实例相关联。使用`Thread`对象创建并发应用程序有两种基本策略。
 
-Java平台的设计初衷是为了支持并发编程，在Java编程语言和Java类库中提供基本的并发支持。从5.0版开始，Java平台还包含高级并发API。本课程介绍了平台的基本并发支持，并总结了`java.util.concurrent`包中的一些高级API。
+- 要直接控制线程创建和管理，只需在每次应用程序需要启动异步任务时实例化`Thread`。
+- 要从应用程序的其余部分抽象线程管理，请将应用程序的任务传递给*执行器*。
 
-### 进程和线程
+本节介绍`Thread`对象的使用。执行器与其他 [高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 共同讨论。
 
-在并发编程中，有两个基本的执行单元：进程和线程。在Java编程语言中，并发编程主要涉及线程。但是，进程也很重要。
+#### 创建和启动线程
 
-计算机系统通常具有许多活动进程和线程。即使在只有一个执行核心的系统中也是如此，只不过在任何给定时刻只有一个线程实际执行。通过称为时间切片的OS功能，在进程和线程之间共享单个核的处理时间。
+创建`Thread`实例的应用程序必须提供将在该线程中运行的代码。有两种方法可以做到这一点：
 
-对于具有多个处理器或具有多个执行核心的处理器的计算机系统来说，并发极大地增强了系统并发执行进程和线程的能力 - 但即使在没有多个处理器或执行核心的简单系统上也可以实现并发。
+- *提供一个Runnable对象* [`Runnable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html) 接口定义了一个单独的方法`run`， 意味着包含在线程中执行的代码。 `Runnable`对象传递给`Thread`constructor，如 [`HelloRunnable`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloRunnable.java) 示例：
 
-**进程**
+  ```java
+  public class HelloRunnable implements Runnable {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new Thread(new HelloRunnable())).start();
+      }
+  
+  }
+  ```
 
-进程具有自包含的执行环境。进程通常具有完整的私有基本运行时资源集：特别是，每个进程都有自己的内存空间。
+- *Thread 的子类* `Thread`类本身实现`Runnable`，尽管它的`run`方法什么都不做。应用程序可以子类化`Thread`，提供自己的`run`实现，如 [`HelloRunnable`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloRunnable.java) 示例。
 
-进程通常被视为程序或应用程序的同义词。但是，用户看到的单个应用程序实际上可能是一组协作进程。为了促进进程之间的通信，大多数操作系统都支持进程间通信（IPC）资源，例如管道和套接字。IPC不仅用于同一系统上的进程之间的通信，而且还用于不同系统上的进程。
+  ```java
+  public class HelloThread extends Thread {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new HelloThread()).start();
+      }
+  
+  }
+  ```
 
-Java虚拟机的大多数实现都作为单个进程运行。Java应用程序可以使用`ProcessBuilder`对象创建其他进程。多进程应用程序超出了本课程的范围。
+请注意，两个示例都调用`Thread.start`以启动新线程。
 
-**线程**
+你应该使用哪个方法？使用`Runnable`对象是更通用的，因为`Runnable`对象可以子类化除了`Thread`之外的类。第二个习惯用法在简单的应用程序中更容易使用，但受限于你的任务类必须是`Thread`的子类。本课重点介绍第一种方法，它将`Runnable`任务与执行任务的`Thread`对象分开。这种方法不仅更灵活，而且适用于后面介绍的高级线程管理API。
 
-线程有时被称为轻量级进程。进程和线程都提供执行环境，但创建新线程所需的资源比创建新进程要少。
+`Thread`类定义了许多对线程管理有用的方法。这些包括`static`方法，它们提供有关调用方法的线程的信息或影响其状态。从管理线程和`Thread`对象所涉及的其他线程调用其他方法。我们将在以下部分中研究其中一些方法。
 
-线程存在于进程中 - 每个进程至少有一个线程。线程共享进程的资源，包括内存和打开文件。这使得有效但可能有问题的通信成为可能。
-
-多线程执行是Java平台的基本特性。每个应用程序至少有一个线程 - 或几个，如果你算上所谓的“系统”线程，它们执行内存管理和信号处理等操作。但是从应用程序员的角度来看，你只从一个线程开始，称为主线程。该线程具有创建其他线程的能力，我们将在下一节中进行演示。
