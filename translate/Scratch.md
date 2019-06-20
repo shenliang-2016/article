@@ -1,92 +1,103 @@
-### 同步
+#### 同步方法
 
-线程主要通过共享对字段的访问和字段表示的对象引用进行通信。这种通信形式非常有效，但可能会出现两种错误：*线程干扰*和*内存一致性错误*。防止这些错误所需的工具是*同步*。
+Java编程语言提供了两种基本的同步习惯用法：*synchronized方法*和*synchronized语句*。两者中更复杂的是同步语句，将在下一章节中介绍。本节介绍同步方法。
 
-但是，同步可能会引入*线程争用*，当两个或多个线程同时尝试访问同一资源，并导致Java运行时更慢地执行一个或多个线程，甚至暂停执行时，就会发生这种情况。[饥饿和活锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html) 是线程争用的形式。有关更多信息，请参阅 [Liveness](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 部分。
-
-本章节包含以下主题：
-
-- [线程干扰](https://docs.oracle.com/javase/tutorial/essential/concurrency/interfere.html) 描述了当多个线程访问共享数据时错误如何产生。
-- [内存一致性错误](https://docs.oracle.com/javase/tutorial/essential/concurrency/memconsist.html) 描述由共享内存的不一致视图导致的错误。
-- [同步方法](https://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html) 描述了一个简单的惯用方法，可以有效解决线程干扰和内存一致性错误。
-- [隐式锁和同步](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) 描述了更通用的同步习惯用法，并描述了基于隐式锁的同步方式。
-- [原子访问](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html) 讨论了不会被其它线程干扰的操作的一般概念。
-
-#### 线程干扰
-
-考虑下面的简单的类 [`Counter`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/Counter.java)
+要使方法同步，只需将`synchronized`关键字添加到其声明：
 
 ```java
-class Counter {
+public class SynchronizedCounter {
     private int c = 0;
 
-    public void increment() {
+    public synchronized void increment() {
         c++;
     }
 
-    public void decrement() {
+    public synchronized void decrement() {
         c--;
     }
 
-    public int value() {
+    public synchronized int value() {
         return c;
     }
-
 }
 ```
 
-`Counter` 的设计使得每次调用`increment` 都会将`c`加1，每次调用`decrement` 都会从`c`中减去1。但是，如果从多个线程引用`Counter`对象，则线程之间的干扰可能会阻止这种情况按预期发生。
+如果`count` 是一个 `SynchronizedCounter`实例，则使得这些方法同步会有两方面影响：
 
-当两个操作在不同的线程中运行但作用于相同的数据时，会发生干扰。这意味着这两个操作由多个步骤组成，并且步骤序列重叠。
+ - 首先，对同一对象的两个同步方法的调用不可能交错。当一个线程正在为对象执行同步方法时，所有其他线程调用同一对象的同步方法阻塞（暂停执行）直到第一个线程完成对象上的执行。
+ - 其次，当同步方法退出时，它会自动与同一对象的同步方法的任何后续调用建立*happens-before*关系。 这可以保证对所有线程都可以看到对象状态的更改。
 
-对于`Counter`实例的操作似乎不可能发生交错，因为对`c`的两个操作都是单个简单的语句。但是，即使是简单的语句也可以由虚拟机转换为多个步骤。我们不会检查虚拟机采取的具体步骤 - 足以知道单个表达式`c++`可以分解为三个步骤：
+请注意，构造函数无法同步 - 将`synchronized`关键字与构造函数一起使用是一种语法错误。同步构造函数没有意义，因为只有创建对象的线程在构造时才能访问它。
 
-1. 获取 `c`的当前值。
-2. 将获取的值加1。
-3. 将增加之后的值存储到变量 `c` 中。
+----
 
-表达式`c--`可以以相同的方式分解，除了第二步是减少而不是增量。
+**警告：** 构造将在线程之间共享的对象时，要非常小心，保证对象的引用不会过早“泄漏”。例如，假设您要维护一个包含每个类实例的名为`instances`的`List`。您可能想要将以下行添加到构造函数中：
 
-假设线程A在大约同一时间调用 `increment` ，线程B调用 `decrement`。如果`c`的初始值为0，则它们的交错操作可能遵循以下顺序：
+````java
+instances.add(this);
+````
 
-1. 线程A：检索`c`。
-2. 线程B：检索`c`。
-3. 线程A：增加检索值；结果是1。
-4. 线程B：减少检索值；结果是-1。
-5. 线程A：将结果存储在`c`中；`c`现在是1。
-6. 线程B：将结果存储在`c`中；`c`现在是-1。
+但是其他线程可以在构造对象完成之前使用`instances`来访问对象。
 
-线程A的结果丢失，被线程B覆盖。这种特殊的交错只是一种可能性。在不同情况下，可能是线程B的结果丢失，或者根本没有错误。因为它们是不可预测的，所以难以检测和修复线程干扰错误。
+----
 
-#### 内存一致性错误
+同步方法启用了一种简单的策略来防止线程干扰和内存一致性错误：如果一个对象对多个线程可见，则对该对象变量的所有读取或写入都是通过同步方法完成的。（一个重要的例外：构造对象后无法修改`final`字段，一旦构造了对象，就可以通过非同步方法安全地读取）这种策略是有效的，但是可能会带来 [liveness](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 问题，就像我们稍后将看到的那样。
 
-当不同的线程具有应该是相同数据的不一致视图时，会发生内存一致性错误。内存一致性错误的原因很复杂，超出了本教程的范围。幸运的是，程序员不需要详细了解这些原因。所需要的只是避免它们的策略。
+#### 内在锁和同步
 
-避免内存一致性错误的关键是理解 *happens-before* 关系。这种关系只是简单地保证一个特定语句的内存写入对另一个特定语句可见。要查看此内容，请考虑以下示例。假设定义并初始化了一个简单的`int`字段：
+同步是围绕被称为*内部锁*或*监视器锁*的内部实体构建的。（API规范通常将此实体简称为“监视器”。）内部锁在同步的两个方面都发挥作用：强制对对象状态进行独占访问，并建立对可见性至关重要的*happens-before*关系。
 
+每个对象都有一个与之关联的内在锁。按照惯例，需要对对象字段进行独占和一致访问的线程必须在访问对象之前*获取*对象的内部锁，然后在完成它们时*释放*内部锁。一个线程在获得锁定和释放锁定之间被称为*拥有*内在锁。只要一个线程拥有一个内部锁，没有其他线程可以获得相同的锁。另一个线程在尝试获取锁时将阻塞。
+
+当线程释放内部锁时，在该操作与同一锁的任何后续*获取*之间建立*happens-before*关系。
+
+**同步方法中的锁**
+
+当线程调用`synchronized`方法时，它会自动获取该方法对象的内部锁，并在方法返回时释放它。即使返回是由未捕获的异常引起的，也会发生锁定释放。
+
+您可能想知道在调用静态同步方法时会发生什么，因为静态方法与类相关联，而不是与对象相关联。在这种情况下，线程获取与该类关联的`Class`对象的内部锁。因此，对类的静态字段的访问由与该类的任何实例的锁不同的锁控制。
+
+**同步语句**
+
+创建同步代码的另一种方法是使用`synchronized`语句。与`synchronized`方法不同，`synchronized`语句必须指定提供内部锁的对象：
+
+```java
+public void addName(String name) {
+    synchronized(this) {
+        lastName = name;
+        nameCount++;
+    }
+    nameList.add(name);
+}
 ```
-int counter = 0;
+
+在此示例中，`addName`方法需要将更改同步到`lastName`和`nameCount`，但还需要避免同步其他对象方法的调用。（从同步代码调用其他对象的方法可能会产生在 [Liveness](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 部分中描述的问题。）如果没有`synchronized`语句，则必须有一个单独的，不同步的方法，其唯一目的是调用`nameList.add`。
+
+同步语句对于通过细粒度同步提高并发性也很有用。例如，假设类`MsLunch`有两个从不一起使用的实例字段`c1`和`c2`。必须同步这些字段的所有更新，但没有理由阻止`c1`的更新与`c2`的更新交错 - 这样做会通过创建不必要的阻塞来降低并发性。我们创建两个对象仅用于提供锁，而不是使用同步方法或以其他方式使用与`this`关联的锁。
+
+```java
+public class MsLunch {
+    private long c1 = 0;
+    private long c2 = 0;
+    private Object lock1 = new Object();
+    private Object lock2 = new Object();
+
+    public void inc1() {
+        synchronized(lock1) {
+            c1++;
+        }
+    }
+
+    public void inc2() {
+        synchronized(lock2) {
+            c2++;
+        }
+    }
+}
 ```
 
- `counter` 字段在两个线程A和B之间共享。假设线程A递增 `counter` ：
+谨慎使用此方式。您必须绝对确保对受影响字段的访问交替进行是否安全。
 
-```
-counter++;
-```
+**可重入同步**
 
-然后，不久之后，线程B打印出 `counter`：
-
-```
-System.out.println(counter);
-```
-
-如果两个语句已在同一个线程中执行，则可以安全地假设打印出的值为“1”。但是如果这两个语句是在不同的线程中执行的，那么打印出的值可能是“0”，因为不能保证线程A对计数器的更改对于线程B是可见的 - 除非程序员已经在这两个语句之间建立了*happens-before*关系。
-
-有几种行为可以建立*happens-before*关系。其中之一是同步，我们将在以下部分中看到。
-
-我们已经看到了两种建立*happens-before*关系的行为。
-
- - 当一个语句调用`Thread.start`时，与该语句具有*happens-before*关系的每个语句也与新线程执行的每个语句都有一个*happens-before*关系。 新线程可以看到导致创建新线程的代码的影响。
- - 当一个线程终止并导致另一个线程中的`Thread.join`返回时，终止线程执行的所有语句与成功`join`后的所有语句都有一个*happens-before*关系。现在，执行`join`的线程可以看到线程中代码的效果。
-
-可以创建*happens-before*关系的行为列表，参考 [ `java.util.concurrent` 包的摘要页面。](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility)
+回想一下，线程无法获取另一个线程拥有的锁。但是一个线程可以获得它已经拥有的锁。允许线程多次获取相同的锁可启用*可重入同步*。这描述了一种情况，其中同步代码直接或间接地调用也包含同步代码的方法，并且两组代码使用相同的锁。在没有可重入同步的情况下，同步代码必须采取许多额外的预防措施，以避免线程导致自身阻塞。
