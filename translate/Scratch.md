@@ -1,184 +1,125 @@
-### 高级同步对象
+##### Fork/Join
 
-到目前为止，本课程重点关注从一开始就是Java平台一部分的低级API。这些API适用于非常基本的任务，但更高级的任务需要更高级别的构建块。对于充分利用当今多处理器和多核系统的大规模并发应用程序来说尤其如此。
+fork/join框架是`ExecutorService`接口的一个实现，可帮助您利用多个处理器。它专为可以递归分解成小块的工作而设计。 目标是使用所有可用的处理能力来提高应用程序的性能。
 
-在本节中，我们将介绍Java平台5.0版中引入的一些高级并发功能。大多数这些功能都在新的`java.util.concurrent`包中实现。Java Collections Framework中还有新的并发数据结构。
+与任何`ExecutorService`实现一样，fork/join框架将任务分配给线程池中的工作线程。fork/join框架是独特的，因为它使用了 *work-stealing* 算法。用完成任务的工作线程可以从仍然忙碌的其他线程中窃取任务。
 
-- [锁对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/newlocks.html) 支持锁定习惯用语并简化许多并发程序。
-- [执行器](https://docs.oracle.com/javase/tutorial/essential/concurrency/executors.html) 定义用于启动和管理线程的高级API。`java.util.concurrent`提供的执行器实现提供适用于大规模应用程序的线程池管理。
-- [并发集合](https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html) 使管理大量数据更容易，并可以大大减少同步需求。
-- [原子变量](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomicvars.html) 具有最小化同步和帮助避免内存一致性错误的功能。
-- [`ThreadLocalRandom`](https://docs.oracle.com/javase/tutorial/essential/concurrency/threadlocalrandom.html) (in JDK 7) 提供从多个线程有效生成伪随机数功能。
+fork/join框架的中心是 [`ForkJoinPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html) 类，它是`AbstractExecutorService`类的扩展。`ForkJoinPool`实现了核心工作窃取算法，可以执行 [`ForkJoinTask`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinTask.html) 进程。
 
-#### 锁对象
+**基本使用**
 
-同步代码依赖于简单的可重入锁。这种锁易于使用，但有许多限制。[`java.util.concurrent.locks`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/package-summary.html) 包支持更复杂的锁定习语。我们不会详细介绍这个包，而是将重点放在其最基本的接口 [`Lock`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Lock.html) 上。
+使用fork/join框架的第一步是编写执行一部分工作的代码。您的代码应类似于以下伪代码：
 
-`Lock`对象非常类似于同步代码使用的隐式锁。与隐式锁一样，一次只有一个线程可以拥有一个`Lock`对象。锁对象还通过其关联的 [`Condition`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/Condition.html) 对象支持 `wait/notify` 机制。
+```
+if (my portion of the work is small enough)
+  do the work directly
+else
+  split my work into two pieces
+  invoke the two pieces and wait for the results
+```
 
-`Lock`对象优于隐式锁的最大优点是它们能够退出获取锁的尝试。如果锁定立即不可用或超时（如果指定），则`tryLock`方法退出。如果另一个线程在获取锁之前发送中断，则`lockInterruptibly`方法将退出。
+将此代码包装在`ForkJoinTask`子类中，通常使用其更专业的类型之一， [`RecursiveTask`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveTask.html) （可以返回结果）或 [`RecursiveAction`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html) 。
 
-让我们使用`Lock`对象来解决我们在 [Liveness](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 中看到的死锁问题。当朋友即将鞠躬时，Alphonse 和 Gaston 已经训练自己能够注意到对方何时也会鞠躬。我们通过要求`Friend`对象必须在继续执行鞠躬之前获取两个参与者的锁来对此进行建模。以下是改进模型`Safelock`的源代码。为了证明这个习语的多样性，我们假设 Alphonse 和 Gaston 如此迷恋他们新发现的安全鞠躬能力，他们不停相互鞠躬：
+在`ForkJoinTask`子类准备就绪后，创建表示要完成的所有工作的对象，并将其传递给`ForkJoinPool`实例的`invoke()`方法。
+
+## Blurring for Clarity
+
+To help you understand how the fork/join framework works, consider the following example. Suppose that you want to blur an image. The original *source* image is represented by an array of integers, where each integer contains the color values for a single pixel. The blurred *destination* image is also represented by an integer array with the same size as the source.
+
+Performing the blur is accomplished by working through the source array one pixel at a time. Each pixel is averaged with its surrounding pixels (the red, green, and blue components are averaged), and the result is placed in the destination array. Since an image is a large array, this process can take a long time. You can take advantage of concurrent processing on multiprocessor systems by implementing the algorithm using the fork/join framework. Here is one possible implementation:
 
 ```java
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.Random;
-
-public class Safelock {
-    static class Friend {
-        private final String name;
-        private final Lock lock = new ReentrantLock();
-
-        public Friend(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public boolean impendingBow(Friend bower) {
-            Boolean myLock = false;
-            Boolean yourLock = false;
-            try {
-                myLock = lock.tryLock();
-                yourLock = bower.lock.tryLock();
-            } finally {
-                if (! (myLock && yourLock)) {
-                    if (myLock) {
-                        lock.unlock();
-                    }
-                    if (yourLock) {
-                        bower.lock.unlock();
-                    }
-                }
-            }
-            return myLock && yourLock;
-        }
-            
-        public void bow(Friend bower) {
-            if (impendingBow(bower)) {
-                try {
-                    System.out.format("%s: %s has"
-                        + " bowed to me!%n", 
-                        this.name, bower.getName());
-                    bower.bowBack(this);
-                } finally {
-                    lock.unlock();
-                    bower.lock.unlock();
-                }
-            } else {
-                System.out.format("%s: %s started"
-                    + " to bow to me, but saw that"
-                    + " I was already bowing to"
-                    + " him.%n",
-                    this.name, bower.getName());
-            }
-        }
-
-        public void bowBack(Friend bower) {
-            System.out.format("%s: %s has" +
-                " bowed back to me!%n",
-                this.name, bower.getName());
-        }
+public class ForkBlur extends RecursiveAction {
+    private int[] mSource;
+    private int mStart;
+    private int mLength;
+    private int[] mDestination;
+  
+    // Processing window size; should be odd.
+    private int mBlurWidth = 15;
+  
+    public ForkBlur(int[] src, int start, int length, int[] dst) {
+        mSource = src;
+        mStart = start;
+        mLength = length;
+        mDestination = dst;
     }
 
-    static class BowLoop implements Runnable {
-        private Friend bower;
-        private Friend bowee;
-
-        public BowLoop(Friend bower, Friend bowee) {
-            this.bower = bower;
-            this.bowee = bowee;
+    protected void computeDirectly() {
+        int sidePixels = (mBlurWidth - 1) / 2;
+        for (int index = mStart; index < mStart + mLength; index++) {
+            // Calculate average.
+            float rt = 0, gt = 0, bt = 0;
+            for (int mi = -sidePixels; mi <= sidePixels; mi++) {
+                int mindex = Math.min(Math.max(mi + index, 0),
+                                    mSource.length - 1);
+                int pixel = mSource[mindex];
+                rt += (float)((pixel & 0x00ff0000) >> 16)
+                      / mBlurWidth;
+                gt += (float)((pixel & 0x0000ff00) >>  8)
+                      / mBlurWidth;
+                bt += (float)((pixel & 0x000000ff) >>  0)
+                      / mBlurWidth;
+            }
+          
+            // Reassemble destination pixel.
+            int dpixel = (0xff000000     ) |
+                   (((int)rt) << 16) |
+                   (((int)gt) <<  8) |
+                   (((int)bt) <<  0);
+            mDestination[index] = dpixel;
         }
+    }
+  
+  ...
+
+```
+
+Now you implement the abstract `compute()` method, which either performs the blur directly or splits it into two smaller tasks. A simple array length threshold helps determine whether the work is performed or split.
+
+```java
+protected static int sThreshold = 100000;
+
+protected void compute() {
+    if (mLength < sThreshold) {
+        computeDirectly();
+        return;
+    }
     
-        public void run() {
-            Random random = new Random();
-            for (;;) {
-                try {
-                    Thread.sleep(random.nextInt(10));
-                } catch (InterruptedException e) {}
-                bowee.bow(bower);
-            }
-        }
-    }
-            
-
-    public static void main(String[] args) {
-        final Friend alphonse =
-            new Friend("Alphonse");
-        final Friend gaston =
-            new Friend("Gaston");
-        new Thread(new BowLoop(alphonse, gaston)).start();
-        new Thread(new BowLoop(gaston, alphonse)).start();
-    }
+    int split = mLength / 2;
+    
+    invokeAll(new ForkBlur(mSource, mStart, split, mDestination),
+              new ForkBlur(mSource, mStart + split, mLength - split,
+                           mDestination));
 }
 ```
 
-#### 执行器
+If the previous methods are in a subclass of the `RecursiveAction` class, then setting up the task to run in a `ForkJoinPool` is straightforward, and involves the following steps:
 
-在前面的所有示例中，由新的线程（由其`Runnable`对象定义）和线程本身（由`Thread`对象定义）完成的任务之间存在紧密的联系。这适用于小型应用程序，但在大型应用程序中，将线程管理和创建与应用程序的其余部分分开是有意义的。封装这些函数的对象称为执行器。以下小节详细描述了执行器。
+1. Create a task that represents all of the work to be done.
 
-- [执行器接口](https://docs.oracle.com/javase/tutorial/essential/concurrency/exinter.html) 定义三个执行器对象类型。
-- [线程池](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html) 是最常见的执行器实现类型。
-- [Fork/Join](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) 是一个利用多个处理器的框架（JDK 7中的新增功能）。
+   ```java
+   // source image pixels are in src
+   // destination image pixels are in dst
+   ForkBlur fb = new ForkBlur(src, 0, src.length, dst);
+   ```
 
-##### 执行器接口
+2. Create the `ForkJoinPool` that will run the task.
 
-`java.util.concurrent` 包定义了三个执行器接口：
+   ```java
+   ForkJoinPool pool = new ForkJoinPool();
+   ```
 
-- `Executor`，支持启动新任务的简单接口。
-- `ExecutorService` ，`Executor` 的子接口，添加了生命周期管理的特性，管理单个任务和执行器本身。
-- `ScheduledExecutorService` ，`ExecutorService` 的子接口，支持 `Futrue` 和/或任务的周期性执行。
+3. Run the task.
 
-通常，引用执行器对象的变量被声明为这三种接口类型之一，而不是执行器类类型。
+   ```java
+   pool.invoke(fb);
+   ```
 
-**`Executor` 接口**
+For the full source code, including some extra code that creates the destination image file, see the [`ForkBlur`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/ForkBlur.java) example.
 
-[`Executor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html) 接口提供单个方法`execute`，旨在成为常见线程创建习惯用语的替代方法。如果`r`是`Runnable`对象，并且`e`是`Executor`对象，则可以替换
+## Standard Implementations
 
-The [`Executor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html) interface provides a single method, `execute`, designed to be a drop-in replacement for a common thread-creation idiom. If `r` is a `Runnable` object, and `e` is an `Executor` object you can replace
+Besides using the fork/join framework to implement custom algorithms for tasks to be performed concurrently on a multiprocessor system (such as the `ForkBlur.java` example in the previous section), there are some generally useful features in Java SE which are already implemented using the fork/join framework. One such implementation, introduced in Java SE 8, is used by the [`java.util.Arrays`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) class for its `parallelSort()` methods. These methods are similar to `sort()`, but leverage concurrency via the fork/join framework. Parallel sorting of large arrays is faster than sequential sorting when run on multiprocessor systems. However, how exactly the fork/join framework is leveraged by these methods is outside the scope of the Java Tutorials. For this information, see the Java API documentation.
 
-```java
-(new Thread(r)).start();
-```
-
-为
-
-```java
-e.execute(r);
-```
-
-但是， `execute` 的定义不太具体。低级习语创建一个新线程并立即启动它。根据`Executor`实现，`execute`可以执行相同的操作，但更有可能使用现有的工作线程来运行`r`，或者将`r`放在队列中以等待工作线程变为可用。（我们将在 [线程池](https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html) 部分中描述工作线程。）
-
-`java.util.concurrent`中的执行器实现旨在充分利用更高级的`ExecutorService`和`ScheduledExecutorService`接口，尽管它们也可以与基本`Executor`接口一起使用。
-
-**`ExecutorService` 接口**
-
-[`ExecutorService`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html) 接口使用类似但更通用的 `submit` 方法补充 `execute` 。与`execute`一样，`submit`接受`Runnable`对象，但也接受 [`Callable`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html) 对象，这些对象允许任务返回一个值。`submit`方法返回一个`Future`对象，该对象用于检索`Callable`返回值并管理`Callable`和`Runnable`任务的状态。
-
-`ExecutorService`还提供了提交大量`Callable`对象的方法。最后，`ExecutorService`提供了许多用于管理执行器关闭的方法。为了支持立即关闭，任务应该正确处理 [中断](https://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html)  。
-
-**`ScheduledExecutorService` 接口**
-
-[`ScheduledExecutorService`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html) i接口使用`schedule`补充其父`ExecutorService`的方法，该方法在指定的延迟后执行`Runnable`或`Callable`任务。此外，接口定义了`scheduleAtFixedRate`和`scheduleWithFixedDelay`，它们以定义的间隔重复执行指定的任务。
-
-##### 线程池
-
-`java.util.concurrent`中的大多数执行器实现都使用由工作线程组成的线程池。这种线程与它执行的`Runnable`和`Callable`任务分开存在，通常用于执行多个任务。
-
-使用工作线程可以最大限度地减少由于线程创建而产生线程对象使用大量内存，而在大型应用程序中，分配和释放许多线程对象会产生大量的内存管理开销。
-
-一种常见类型的线程池是固定大小线程池。这种类型的池始终具有指定数量的线程运行；如果某个线程仍在使用时以某种方式终止，它将自动替换为新线程。任务通过内部队列提交到线程池中，只要有多个活动任务而不是线程，该队列就会保存额外的任务。
-
-固定大小线程池的一个重要优点是使用它的应用程序可以优雅地降级。要理解这一点，请考虑一个Web服务器应用程序，其中每个HTTP请求都由一个单独的线程处理。如果应用程序只是为每个新的HTTP请求创建一个新线程，并且系统接收的请求数超过它可以立即处理的数量，那么当所有这些线程的开销超过系统容量时，应用程序将突然停止响应所有请求。使用固定大小的线程池，由于可以创建的线程数量有限制，应用程序不会像请求进入时那样快速地为HTTP请求提供服务，但它将在系统可以维持的时间内尽快为它们提供服务。
-
-创建使用固定大小线程池的执行器的一种简单方法是在 [`java.util.concurrent.Executors`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html) 中调用[`newFixedThreadPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newFixedThreadPool-int-) 工厂方法。此类还提供以下工厂方法：
-
- -  [`newCachedThreadPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool-int-) 方法使用可扩展线程池创建执行器。此执行器适用于启动许多短期任务的应用程序。
- -  [`newSingleThreadExecutor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newSingleThreadExecutor-int-) 方法创建一次执行单个任务的执行器。
- -  几个工厂方法是上述执行器的`ScheduledExecutorService`版本。
-
-如果上述工厂方法提供的执行器都不满足您的需要，则构造 [`java.util.concurrent.ThreadPoolExecutor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadPoolExecutor.html) 或者 [`java.util.concurrent.ScheduledThreadPoolExecutor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html) 的实例将为您提供其他选项。
-
+Another implementation of the fork/join framework is used by methods in the `java.util.streams` package, which is part of [Project Lambda](http://openjdk.java.net/projects/lambda/) scheduled for the Java SE 8 release. For more information, see the [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) section.
