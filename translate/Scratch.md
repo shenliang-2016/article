@@ -1,19 +1,58 @@
-#### 原子操作
+#### 死锁
 
-在编程中，原子操作是一次有效发生的动作。原子操作不能在中间停止：它要么完全发生，要么根本不发生。在操作完成之前，原子操作的副作用是不可见的。
+*死锁*描述了两个或多个线程永远被阻塞，等待彼此的情况。这是一个例子。
 
-我们已经看到增量表达式（例如`c++`）没有描述原子操作。即使非常简单的表达式也可以定义可以分解为其他操作的复杂操作。但是，您可以指定原子操作：
+Alphonse 和 Gaston 是朋友，也很有礼貌的信徒。严格的礼貌规则是，当你向朋友鞠躬时，你必须保持鞠躬，直到你的朋友有机会还礼。不幸的是，这条规则没有考虑到两个朋友可能同时互相鞠躬的可能性。这个示例应用程序`Deadlock`模拟了这种可能性：
 
- - 读取和写入对于引用变量和大多数基本数据类型变量（除`long`和`double`之外的所有类型）都是原子的。
- - 对于声明为`volatile`的所有变量（包括`long`和`double`变量），读取和写入都是原子的。
+```java
+public class Deadlock {
+    static class Friend {
+        private final String name;
+        public Friend(String name) {
+            this.name = name;
+        }
+        public String getName() {
+            return this.name;
+        }
+        public synchronized void bow(Friend bower) {
+            System.out.format("%s: %s"
+                + "  has bowed to me!%n", 
+                this.name, bower.getName());
+            bower.bowBack(this);
+        }
+        public synchronized void bowBack(Friend bower) {
+            System.out.format("%s: %s"
+                + " has bowed back to me!%n",
+                this.name, bower.getName());
+        }
+    }
 
-原子操作不能交错，因此可以使用它们而不必担心线程干扰。但是，这并不能消除所有同步原子操作的需要，因为仍然可能存在内存一致性错误。使用`volatile`变量可降低内存一致性错误的风险，因为对`volatile`变量的任何写入都会建立与之后读取同一变量的*happens-before*关系。这意味着对`volatile`变量的更改始终对其他线程可见。更重要的是，它还意味着当线程读取`volatile`变量时，它不仅会看到`volatile`的最新更改，还会看到导致更改的代码的副作用。
+    public static void main(String[] args) {
+        final Friend alphonse =
+            new Friend("Alphonse");
+        final Friend gaston =
+            new Friend("Gaston");
+        new Thread(new Runnable() {
+            public void run() { alphonse.bow(gaston); }
+        }).start();
+        new Thread(new Runnable() {
+            public void run() { gaston.bow(alphonse); }
+        }).start();
+    }
+}
+```
 
-使用简单的原子变量访问比通过同步代码访问这些变量更有效，但程序员需要更加小心以避免内存一致性错误。额外的努力是否值得取决于应用程序的大小和复杂性。
+当`Deadlock`运行时，两个线程在尝试调用`bowBack`时极有可能会阻塞。两个块都不会结束，因为每个线程都在等待另一个线程退出 `bow`。
 
- [`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)包中的某些类提供了不依赖于同步的原子方法。我们将在 [高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一节中讨论它们。
+#### 饥饿和活锁
 
-### 活性
+与死锁相比，饥饿和活锁不是常见的问题，但仍然是并发软件的每个设计者都可能遇到的问题。
 
-并发应用程序及时执行的能力被称为其*活性*。本节描述了最常见的活性问题，即 [死锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/deadlock.html) ，并继续简要描述其他两个活动问题，[饥饿和活锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html) 。
+**饥饿**
+
+*Starvation*描述了一种情况，即线程无法获得对共享资源的正常访问，并且无法继续运行。当“贪婪”线程使共享资源长时间不可用时，就会发生这种情况。例如，假设一个对象提供了一个通常需要很长时间才能返回的同步方法。如果一个线程经常调用此方法，则需要对同一对象进行频繁同步访问的其他线程就会经常被阻塞。
+
+**活锁**
+
+线程通常用于响应另一个线程的操作。如果另一个线程的操作也是对另一个线程的操作的响应，则可能导致活锁。与死锁一样，活锁线程无法继续运行。但是，线程没有被阻塞 - 他们只是太忙于相互回应以恢复工作。这相当于两个试图在走廊里互相通过的人：Alphonse向左移动让Gaston通过，而Gaston向右移动让Alphonse通过。看到他们仍然互相阻挡，Alphone向右移动，而Gaston向左移动。他们还在互相阻挡，所以......
 
