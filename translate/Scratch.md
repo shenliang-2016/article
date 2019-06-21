@@ -22,11 +22,11 @@ else
 
 在`ForkJoinTask`子类准备就绪后，创建表示要完成的所有工作的对象，并将其传递给`ForkJoinPool`实例的`invoke()`方法。
 
-## Blurring for Clarity
+**图片模糊示例**
 
-To help you understand how the fork/join framework works, consider the following example. Suppose that you want to blur an image. The original *source* image is represented by an array of integers, where each integer contains the color values for a single pixel. The blurred *destination* image is also represented by an integer array with the same size as the source.
+为了帮助您了解fork/join框架的工作原理，请考虑以下示例。假设您想模糊图像。原始源图像由整数数组表示，其中每个整数包含单个像素的颜色值。模糊的目标图像也由与源相同大小的整数数组表示。
 
-Performing the blur is accomplished by working through the source array one pixel at a time. Each pixel is averaged with its surrounding pixels (the red, green, and blue components are averaged), and the result is placed in the destination array. Since an image is a large array, this process can take a long time. You can take advantage of concurrent processing on multiprocessor systems by implementing the algorithm using the fork/join framework. Here is one possible implementation:
+通过一次一个像素地处理源阵列来完成模糊。每个像素的平均周围像素（红色，绿色和蓝色分量被平均），结果放在目标数组中。由于图像是大型数组，因此此过程可能需要很长时间。通过使用fork/join框架实现算法，您可以利用多处理器系统上的并发处理。 这是一个可能的实现：
 
 ```java
 public class ForkBlur extends RecursiveAction {
@@ -75,7 +75,7 @@ public class ForkBlur extends RecursiveAction {
 
 ```
 
-Now you implement the abstract `compute()` method, which either performs the blur directly or splits it into two smaller tasks. A simple array length threshold helps determine whether the work is performed or split.
+现在，您实现了抽象的`compute()`方法，该方法可以直接执行模糊或将其拆分为两个较小的任务。简单的数组长度阈值有助于确定是执行模糊还是拆分工作。
 
 ```java
 protected static int sThreshold = 100000;
@@ -94,9 +94,9 @@ protected void compute() {
 }
 ```
 
-If the previous methods are in a subclass of the `RecursiveAction` class, then setting up the task to run in a `ForkJoinPool` is straightforward, and involves the following steps:
+如果以前的方法在`RecursiveAction`类的子类中，那么将任务设置为在`ForkJoinPool`中运行是很简单的，并涉及以下步骤：
 
-1. Create a task that represents all of the work to be done.
+1. 创建一个代表要完成的所有工作的任务。
 
    ```java
    // source image pixels are in src
@@ -104,22 +104,23 @@ If the previous methods are in a subclass of the `RecursiveAction` class, then s
    ForkBlur fb = new ForkBlur(src, 0, src.length, dst);
    ```
 
-2. Create the `ForkJoinPool` that will run the task.
+2. 创建将运行任务的`ForkJoinPool`。
 
    ```java
    ForkJoinPool pool = new ForkJoinPool();
    ```
 
-3. Run the task.
+3. 执行任务。
 
    ```java
    pool.invoke(fb);
    ```
 
-For the full source code, including some extra code that creates the destination image file, see the [`ForkBlur`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/ForkBlur.java) example.
+有关完整源代码（包括创建目标图像文件的一些额外代码），请参阅 [`ForkBlur`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/ForkBlur.java) 示例。
 
-## Standard Implementations
+**标准实现**
 
-Besides using the fork/join framework to implement custom algorithms for tasks to be performed concurrently on a multiprocessor system (such as the `ForkBlur.java` example in the previous section), there are some generally useful features in Java SE which are already implemented using the fork/join framework. One such implementation, introduced in Java SE 8, is used by the [`java.util.Arrays`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) class for its `parallelSort()` methods. These methods are similar to `sort()`, but leverage concurrency via the fork/join framework. Parallel sorting of large arrays is faster than sequential sorting when run on multiprocessor systems. However, how exactly the fork/join framework is leveraged by these methods is outside the scope of the Java Tutorials. For this information, see the Java API documentation.
+除了使用fork/join框架来实现在多处理器系统上同时执行的任务的自定义算法（例如上一节中的`ForkBlur.java`示例）之外，Java SE中的一些通用的功能已经使用 fork/join框架。Java SE 8中引入的一个这样的实现由 [`java.util.Arrays`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 类用于其`parallelSort()`方法。这些方法类似于`sort()`，但通过fork/join框架利用并发性。 在多处理器系统上运行时，大型数组的并行排序比顺序排序更快。但是，这些方法如何利用fork/join框架超出了Java Tutorials的范围。有关此信息，请参阅Java API文档。
 
-Another implementation of the fork/join framework is used by methods in the `java.util.streams` package, which is part of [Project Lambda](http://openjdk.java.net/projects/lambda/) scheduled for the Java SE 8 release. For more information, see the [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) section.
+fork/join框架的另一个实现由`java.util.streams`包中的方法使用，该包是为Java SE 8发行版规划的 [Project Lambda](http://openjdk.java.net/projects/lambda/) 的一部分。 有关更多信息，请参阅 [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 部分。
+
