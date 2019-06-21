@@ -1,126 +1,99 @@
-##### Fork/Join
+#### 并发集合
 
-fork/join框架是`ExecutorService`接口的一个实现，可帮助您利用多个处理器。它专为可以递归分解成小块的工作而设计。 目标是使用所有可用的处理能力来提高应用程序的性能。
+`java.util.concurrent`包中包含许多Java Collections Framework的附加内容。很容易通过提供的集合接口进行分类：
 
-与任何`ExecutorService`实现一样，fork/join框架将任务分配给线程池中的工作线程。fork/join框架是独特的，因为它使用了 *work-stealing* 算法。用完成任务的工作线程可以从仍然忙碌的其他线程中窃取任务。
+- [`BlockingQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 定义先进先出数据结构，当您尝试添加元素到满队列或从空队列中检索时，该数据结构会阻塞或超时。
+- [`ConcurrentMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 是`java.util.Map`的子接口，它定义了有用的原子操作。仅当键存在时，这些操作才会删除或替换键值对，或仅在键不存在时才添加键值对。这些操作原子化有助于避免同步。`ConcurrentMap`的标准通用实现是 [`ConcurrentHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html) ，它是 [`HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html) 的并发模拟。
+- [`ConcurrentNavigableMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentNavigableMap.html) 是`ConcurrentMap`的子接口，支持近似匹配。`ConcurrentNavigableMap`的标准通用实现是 [`ConcurrentSkipListMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentSkipListMap.html) ，它是 [`TreeMap`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeMap.html) 的并发模拟。
 
-fork/join框架的中心是 [`ForkJoinPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html) 类，它是`AbstractExecutorService`类的扩展。`ForkJoinPool`实现了核心工作窃取算法，可以执行 [`ForkJoinTask`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinTask.html) 进程。
+所有这些集合通过定义将对象添加到集合的操作与访问或删除该对象的后续操作之间的*happens-before*关系来帮助避免[内存一致性错误](https://docs.oracle.com/javase/tutorial/essential/concurrency/memconsist.html) 。
 
-**基本使用**
+#### 原子变量
 
-使用fork/join框架的第一步是编写执行一部分工作的代码。您的代码应类似于以下伪代码：
+[`java.util.concurrent.atomic`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html) 包定义了支持单个变量的原子操作的类。所有类都有`get`和`set`方法，类似于对`volatile`变量的读写操作。也就是说，一个`set`与相关变量的任何后续`get`具有*happens-before*关系。原子`compareAndSet`方法也具有这些内存一致性功能，适用于整数原子变量的简单原子算法也是如此。
 
-```
-if (my portion of the work is small enough)
-  do the work directly
-else
-  split my work into two pieces
-  invoke the two pieces and wait for the results
-```
-
-将此代码包装在`ForkJoinTask`子类中，通常使用其更专业的类型之一， [`RecursiveTask`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveTask.html) （可以返回结果）或 [`RecursiveAction`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html) 。
-
-在`ForkJoinTask`子类准备就绪后，创建表示要完成的所有工作的对象，并将其传递给`ForkJoinPool`实例的`invoke()`方法。
-
-**图片模糊示例**
-
-为了帮助您了解fork/join框架的工作原理，请考虑以下示例。假设您想模糊图像。原始源图像由整数数组表示，其中每个整数包含单个像素的颜色值。模糊的目标图像也由与源相同大小的整数数组表示。
-
-通过一次一个像素地处理源阵列来完成模糊。每个像素的平均周围像素（红色，绿色和蓝色分量被平均），结果放在目标数组中。由于图像是大型数组，因此此过程可能需要很长时间。通过使用fork/join框架实现算法，您可以利用多处理器系统上的并发处理。 这是一个可能的实现：
+要查看如何使用此包，让我们返回我们最初用于演示线程干扰的 [`Counter`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/Counter.java) 类：
 
 ```java
-public class ForkBlur extends RecursiveAction {
-    private int[] mSource;
-    private int mStart;
-    private int mLength;
-    private int[] mDestination;
-  
-    // Processing window size; should be odd.
-    private int mBlurWidth = 15;
-  
-    public ForkBlur(int[] src, int start, int length, int[] dst) {
-        mSource = src;
-        mStart = start;
-        mLength = length;
-        mDestination = dst;
+class Counter {
+    private int c = 0;
+
+    public void increment() {
+        c++;
     }
 
-    protected void computeDirectly() {
-        int sidePixels = (mBlurWidth - 1) / 2;
-        for (int index = mStart; index < mStart + mLength; index++) {
-            // Calculate average.
-            float rt = 0, gt = 0, bt = 0;
-            for (int mi = -sidePixels; mi <= sidePixels; mi++) {
-                int mindex = Math.min(Math.max(mi + index, 0),
-                                    mSource.length - 1);
-                int pixel = mSource[mindex];
-                rt += (float)((pixel & 0x00ff0000) >> 16)
-                      / mBlurWidth;
-                gt += (float)((pixel & 0x0000ff00) >>  8)
-                      / mBlurWidth;
-                bt += (float)((pixel & 0x000000ff) >>  0)
-                      / mBlurWidth;
-            }
-          
-            // Reassemble destination pixel.
-            int dpixel = (0xff000000     ) |
-                   (((int)rt) << 16) |
-                   (((int)gt) <<  8) |
-                   (((int)bt) <<  0);
-            mDestination[index] = dpixel;
-        }
+    public void decrement() {
+        c--;
     }
-  
-  ...
 
-```
-
-现在，您实现了抽象的`compute()`方法，该方法可以直接执行模糊或将其拆分为两个较小的任务。简单的数组长度阈值有助于确定是执行模糊还是拆分工作。
-
-```java
-protected static int sThreshold = 100000;
-
-protected void compute() {
-    if (mLength < sThreshold) {
-        computeDirectly();
-        return;
+    public int value() {
+        return c;
     }
-    
-    int split = mLength / 2;
-    
-    invokeAll(new ForkBlur(mSource, mStart, split, mDestination),
-              new ForkBlur(mSource, mStart + split, mLength - split,
-                           mDestination));
+
 }
 ```
 
-如果以前的方法在`RecursiveAction`类的子类中，那么将任务设置为在`ForkJoinPool`中运行是很简单的，并涉及以下步骤：
+使计数器免受线程干扰的一种方法是使其方法同步，如在 [`SynchronizedCounter`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SynchronizedCounter.java) 中：
 
-1. 创建一个代表要完成的所有工作的任务。
+```java
+class SynchronizedCounter {
+    private int c = 0;
 
-   ```java
-   // source image pixels are in src
-   // destination image pixels are in dst
-   ForkBlur fb = new ForkBlur(src, 0, src.length, dst);
-   ```
+    public synchronized void increment() {
+        c++;
+    }
 
-2. 创建将运行任务的`ForkJoinPool`。
+    public synchronized void decrement() {
+        c--;
+    }
 
-   ```java
-   ForkJoinPool pool = new ForkJoinPool();
-   ```
+    public synchronized int value() {
+        return c;
+    }
 
-3. 执行任务。
+}
+```
 
-   ```java
-   pool.invoke(fb);
-   ```
+对于这个简单的类，同步是可接受的解决方案。但对于更复杂的类，我们可能希望避免不必要的同步对活动的影响。使用`AtomicInteger`替换`int`字段允许我们在不使用同步的情况下防止线程干扰，如在 [`AtomicCounter`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/AtomicCounter.java) 中：
 
-有关完整源代码（包括创建目标图像文件的一些额外代码），请参阅 [`ForkBlur`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/ForkBlur.java) 示例。
+```java
+import java.util.concurrent.atomic.AtomicInteger;
 
-**标准实现**
+class AtomicCounter {
+    private AtomicInteger c = new AtomicInteger(0);
 
-除了使用fork/join框架来实现在多处理器系统上同时执行的任务的自定义算法（例如上一节中的`ForkBlur.java`示例）之外，Java SE中的一些通用的功能已经使用 fork/join框架。Java SE 8中引入的一个这样的实现由 [`java.util.Arrays`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html) 类用于其`parallelSort()`方法。这些方法类似于`sort()`，但通过fork/join框架利用并发性。 在多处理器系统上运行时，大型数组的并行排序比顺序排序更快。但是，这些方法如何利用fork/join框架超出了Java Tutorials的范围。有关此信息，请参阅Java API文档。
+    public void increment() {
+        c.incrementAndGet();
+    }
 
-fork/join框架的另一个实现由`java.util.streams`包中的方法使用，该包是为Java SE 8发行版规划的 [Project Lambda](http://openjdk.java.net/projects/lambda/) 的一部分。 有关更多信息，请参阅 [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 部分。
+    public void decrement() {
+        c.decrementAndGet();
+    }
+
+    public int value() {
+        return c.get();
+    }
+
+}
+```
+
+#### 并发随机数
+
+在JDK 7中，[`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html) 包含一个类 [`ThreadLocalRandom`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ThreadLocalRandom.html) ，用于期望使用来自多个线程或`ForkJoinTasks`的随机数的应用程序。
+
+对于并发访问，使用`ThreadLocalRandom`而不是`Math.random()`可以减少争用，并最终提高性能。
+
+您需要做的就是调用`ThreadLocalRandom.current()`，然后调用其中一个方法来检索随机数。 这是一个例子：
+
+```java
+int r = ThreadLocalRandom.current() .nextInt(4, 77);
+```
+
+### 扩展阅读
+
+- *Concurrent Programming in Java: Design Principles and Pattern (2nd Edition)* by Doug Lea. A comprehensive work by a leading expert, who's also the architect of the Java platform's concurrency framework.
+- *Java Concurrency in Practice* by Brian Goetz, Tim Peierls, Joshua Bloch, Joseph Bowbeer, David Holmes, and Doug Lea. A practical guide designed to be accessible to the novice.
+- *Effective Java Programming Language Guide (2nd Edition)* by Joshua Bloch. Though this is a general programming guide, its chapter on threads contains essential "best practices" for concurrent programming.
+- *Concurrency: State Models & Java Programs (2nd Edition)*, by Jeff Magee and Jeff Kramer. An introduction to concurrent programming through a combination of modeling and practical examples.
+- *Java Concurrent Animated:* Animations that show usage of concurrency features.
 
