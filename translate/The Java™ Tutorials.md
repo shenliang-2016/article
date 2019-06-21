@@ -14554,3 +14554,23 @@ public class MsLunch {
 **可重入同步**
 
 回想一下，线程无法获取另一个线程拥有的锁。但是一个线程可以获得它已经拥有的锁。允许线程多次获取相同的锁可启用*可重入同步*。这描述了一种情况，其中同步代码直接或间接地调用也包含同步代码的方法，并且两组代码使用相同的锁。在没有可重入同步的情况下，同步代码必须采取许多额外的预防措施，以避免线程导致自身阻塞。
+
+#### 原子操作
+
+在编程中，原子操作是一次有效发生的动作。原子操作不能在中间停止：它要么完全发生，要么根本不发生。在操作完成之前，原子操作的副作用是不可见的。
+
+我们已经看到增量表达式（例如`c++`）没有描述原子操作。即使非常简单的表达式也可以定义可以分解为其他操作的复杂操作。但是，您可以指定原子操作：
+
+- 读取和写入对于引用变量和大多数基本数据类型变量（除`long`和`double`之外的所有类型）都是原子的。
+- 对于声明为`volatile`的所有变量（包括`long`和`double`变量），读取和写入都是原子的。
+
+原子操作不能交错，因此可以使用它们而不必担心线程干扰。但是，这并不能消除所有同步原子操作的需要，因为仍然可能存在内存一致性错误。使用`volatile`变量可降低内存一致性错误的风险，因为对`volatile`变量的任何写入都会建立与之后读取同一变量的*happens-before*关系。这意味着对`volatile`变量的更改始终对其他线程可见。更重要的是，它还意味着当线程读取`volatile`变量时，它不仅会看到`volatile`的最新更改，还会看到导致更改的代码的副作用。
+
+使用简单的原子变量访问比通过同步代码访问这些变量更有效，但程序员需要更加小心以避免内存一致性错误。额外的努力是否值得取决于应用程序的大小和复杂性。
+
+ [`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)包中的某些类提供了不依赖于同步的原子方法。我们将在 [高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一节中讨论它们。
+
+### 活性
+
+并发应用程序及时执行的能力被称为其*活性*。本节描述了最常见的活性问题，即 [死锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/deadlock.html) ，并继续简要描述其他两个活动问题，[饥饿和活锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html) 。
+
