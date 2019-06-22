@@ -1,20 +1,20 @@
 #### 命令行参数
 
-A Java application can accept any number of arguments from the command line. This allows the user to specify configuration information when the application is launched.
+Java应用程序可以从命令行接受任意数量的参数。这允许用户在启动应用程序时指定配置信息。
 
-The user enters command-line arguments when invoking the application and specifies them after the name of the class to be run. For example, suppose a Java application called `Sort` sorts lines in a file. To sort the data in a file named `friends.txt`, a user would enter:
+用户在调用应用程序时输入命令行参数，并在要运行的类的名称后指定它们。例如，假设一个名为`Sort`的Java应用程序对文件中的行进行排序。要对名为`friends.txt`的文件中的数据进行排序，用户将输入：
 
 ```
 java Sort friends.txt
 ```
 
-When an application is launched, the runtime system passes the command-line arguments to the application's main method via an array of `String`s. In the previous example, the command-line arguments passed to the `Sort` application in an array that contains a single `String`: `"friends.txt"`.
+启动应用程序时，运行时系统通过`String`数组将命令行参数传递给应用程序的`main`方法。在前面的示例中，命令行参数传递给包含单个`String`：`“friends.txt”`的数组给`Sort`程序。
 
-## Echoing Command-Line Arguments
+**回显命令行参数**
 
-The [`Echo`](https://docs.oracle.com/javase/tutorial/essential/environment/examples/Echo.java) example displays each of its command-line arguments on a line by itself:
+[`Echo`](https://docs.oracle.com/javase/tutorial/essential/environment/examples/Echo.java) 示例将命令行参数打印到控制台：
 
-```
+```java
 public class Echo {
     public static void main (String[] args) {
         for (String s: args) {
@@ -24,7 +24,7 @@ public class Echo {
 }
 ```
 
-The following example shows how a user might run `Echo`. User input is in italics.
+以下示例显示用户如何运行`Echo`。用户输入以斜体显示。
 
 ```
 java Echo Drink Hot Java
@@ -33,18 +33,18 @@ Hot
 Java
 ```
 
-Note that the application displays each word — `Drink`, `Hot`, and `Java` — on a line by itself. This is because the space character separates command-line arguments. To have `Drink`, `Hot`, and `Java` interpreted as a single argument, the user would join them by enclosing them within quotation marks.
+请注意，应用程序单独显示每个单词 - `Drink`，`Hot`和`Java`。这是因为空格字符分隔了命令行参数。要将`Drink`，`Hot`和`Java`解释为单个参数，用户可以通过将它们括在引号内来加入它们。
 
 ```
 java Echo "Drink Hot Java"
 Drink Hot Java
 ```
 
-## Parsing Numeric Command-Line Arguments
+**转化数字命令行参数**
 
-If an application needs to support a numeric command-line argument, it must convert a `String` argument that represents a number, such as "34", to a numeric value. Here is a code snippet that converts a command-line argument to an `int`:
+如果应用程序需要支持数字命令行参数，则它必须将表示数字的`String`参数（例如“34”）转换为数字值。这是一个将命令行参数转换为`int`的代码片段：
 
-```
+```java
 int firstArg;
 if (args.length > 0) {
     try {
@@ -56,4 +56,5 @@ if (args.length > 0) {
 }
 ```
 
-`parseInt` throws a `NumberFormatException` if the format of `args[0]` isn't valid. All of the `Number` classes — `Integer`, `Float`, `Double`, and so on — have `parseXXX` methods that convert a `String` representing a number to an object of their type.
+如果`args[0]`的格式无效，`parseInt`会抛出`NumberFormatException`。所有的`Number`类 - `Integer`，`Float`，`Double`等等 - 都有`parseXXX`方法，它们将表示数字的`String`转换为它们类型的对象。
+
