@@ -15403,3 +15403,121 @@ int r = ThreadLocalRandom.current() .nextInt(4, 77);
 
 #### 属性
 
+*属性*是作为*键/值对*管理的配置值。在每个键值对中，键和值都是 `String` 值。键并用于检索值，就像变量名用于检索变量的值一样。例如，能够下载文件的应用程序可能使用名为“download.lastDirectory”的属性来跟踪上次下载使用的目录。
+
+为了管理属性，可以创建 [`java.util.Properties`](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html) 实例。这个类提供了如下方法：
+
+- 从数据流中加载键值对到 `Properties` 对象中。
+- 根据键检索一个值。
+- 列出所有的键和它们对应的值。
+- 枚举所有的键。
+- 保存属性到数据流中。
+
+有关数据流的介绍，参考 [Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/index.html) 课程中的 [I/O Streams](https://docs.oracle.com/javase/tutorial/essential/io/streams.html) 章节。
+
+`Properties` 扩展了 [`java.util.Hashtable`](https://docs.oracle.com/javase/8/docs/api/java/util/Hashtable.html) 。从 `Hashtable` 继承来的一些方法支持如下行为：
+
+- 检测特定的键或者值是否在 `Properties` 对象中。
+- 获取当前的键值对数量。
+- 删除一个键和它对应的值。
+- 添加一个键值对到 `Properties` 列表中。
+- 枚举所有的值或者他们的键。
+- 通过键检索一个值。
+- 检测 `Properties` 对象是否为空。
+
+------
+
+**安全注意事项：** 访问属性需要获得当前安全经理的批准。假定本节中的示例代码段位于独立应用程序中，默认情况下，它们没有安全管理器。applet 中的相同代码可能无法运行，具体取决于运行它的浏览器。有关applet安全性限制的信息，请参阅 [Java Applets](https://docs.oracle.com/javase/tutorial/deployment/applet/index.html) 课程中 [可以做什么和不能做什么](https://docs.oracle.com/javase/tutorial/deployment/applet/security.html) 。
+
+------
+
+`System`类维护一个`Properties`对象，该对象定义当前工作环境的配置。有关这些属性的更多信息，请参阅 [系统属性](https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html) 。 本节的其余部分介绍了如何使用属性来管理应用程序配置。
+
+**应用生命周期中的属性**
+
+下图说明了典型应用程序如何在执行过程中使用`Properties`对象管理其配置数据。
+
+![Possible lifecycle of a Properties object](https://docs.oracle.com/javase/tutorial/figures/essential/environment-1loads.gif)
+
+- `Starting Up`
+  前三个框中给出的操作在应用程序启动时发生。首先，应用程序将默认属性从一个众所周知的位置加载到`Properties`对象中。通常，默认属性与应用程序的`.class`和其他资源文件一起存储在磁盘上的文件中。
+  接下来，应用程序创建另一个`Properties`对象，并加载从上次运行应用程序时保存的属性。许多应用程序基于每个用户存储属性，因此在此步骤中加载的属性通常位于此应用程序在用户主目录中维护的特定目录中的特定文件中。最后，应用程序使用默认和记住的属性来初始化自身。
+  这里的关键是一致性。应用程序必须始终将属性加载并保存到同一位置，以便下次执行时可以找到它们。
+- `Running`
+  在执行应用程序期间，用户可能会在“首选项”窗口中更改某些设置，并更新 `Properties` 对象以反映这些更改。如果要在将来的会话中记住用户更改，则必须保存它们。
+- `Exiting`
+  退出时，应用程序将属性保存到其已知位置，以便在下次启动应用程序时再次加载。
+
+**设置属性对象**
+
+以下Java代码执行上一节中描述的前两个步骤：加载默认属性并加载记住的属性：
+
+```java
+. . .
+// create and load default properties
+Properties defaultProps = new Properties();
+FileInputStream in = new FileInputStream("defaultProperties");
+defaultProps.load(in);
+in.close();
+
+// create application properties with default
+Properties applicationProps = new Properties(defaultProps);
+
+// now load properties 
+// from last invocation
+in = new FileInputStream("appProperties");
+applicationProps.load(in);
+in.close();
+. . .
+```
+
+首先，应用程序设置默认的`Properties`对象。如果未在其他位置显式设置值，则此对象包含要使用的属性集。然后，load方法从名为`defaultProperties`的磁盘上的文件中读取默认值。
+
+接下来，应用程序使用不同的构造函数来创建第二个`Properties`对象，`applicationProps`，其默认值包含在`defaultProps`中。在检索属性时，默认值开始起作用。如果在`applicationProps`中找不到该属性，则搜索其默认列表。
+
+最后，代码从名为`appProperties`的文件中将一组属性加载到`applicationProps`中。此文件中的属性是上次调用时从应用程序保存的属性，如下一节中所述。
+
+**保存属性**
+
+以下示例使用`Properties.store`写出上一个示例中的应用程序属性。每次都不需要保存默认属性，因为它们永远不会更改。
+
+```java
+FileOutputStream out = new FileOutputStream("appProperties");
+applicationProps.store(out, "---No Comment---");
+out.close();
+```
+
+`store`方法需要一个流来写入，以及一个字符串，它在输出的头部用作注释。
+
+**获取属性信息**
+
+一旦应用程序设置了它的`Properties`对象，就可以查询对象以获取有关它包含的各种键和值的信息。应用程序在启动后从`Properties`对象获取信息，以便它可以根据用户做出的选择进行初始化。`Properties`类有几种获取属性信息的方法：
+
+- `contains(Object value)` 和 `containsKey(Object key)`
+  如果值或键在`Properties`对象中，则返回`true`。`Properties`从`Hashtable`继承了这些方法。因此，它们接受`Object`参数，但只应使用`String`值。
+- `getProperty(String key)` 和 `getProperty(String key, String default)`
+  返回指定属性的值。第二个版本提供默认值。如果未找到键，则返回默认值。
+- `list(PrintStream s)` 和 `list(PrintWriter w)`
+  将所有属性写入指定的流或编写器。这对调试很有用。
+- `elements()`, `keys()`, 和 `propertyNames()`
+  返回一个`Enumeration`，它包含`Properties`对象中包含的键或值（由方法名称表示）。`keys`方法只返回对象本身的键；`propertyNames`方法也返回默认属性的键。
+- `stringPropertyNames()`
+  与`propertyNames`类似，但返回一个`Set<String>`，并且只返回其中键和值都是字符串的属性名称。请注意，`Set`对象不支持`Properties`对象，因此一个对象的更改不会影响另一个。
+- `size()`
+  返回当前键/值对的数量。
+
+**设置属性**
+
+用户在执行期间与应用程序的交互可能会影响属性设置。这些更改应该反映在`Properties`对象中，以便在应用程序退出时保存它们（并调用`store`方法）。以下方法更改`Properties`对象中的属性：
+
+- `setProperty(String key, String value)`
+  将键/值对放在`Properties`对象中。
+- `remove(Object key)`
+  删除与键关联的键/值对。
+
+------
+
+**注意：** 上面描述的一些方法在`Hashtable`中定义，因此接受除`String`以外的键和值参数类型。始终使用`String`表示键和值，即使该方法允许其他类型。也不要在`Properties`对象上调用`Hashtable.set`或`Hastable.setAll`；总是使用`Properties.setProperty`。
+
+------
+
