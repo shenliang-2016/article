@@ -15781,3 +15781,210 @@ Exception in thread "AWT-EventQueue-1" java.security.AccessControlException: acc
 
  [`exit`](https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#exit-int-) 方法使Java虚拟机关闭，并使用参数指定的整数退出状态码。退出状态码可用于启动应用程序的进程。按照惯例，退出状态码为`0`表示应用程序正常终止，而任何其他值都是错误代码。
 
+### PATH 和 CLASSPATH
+
+本节介绍如何在Microsoft Windows，Solaris和Linux上使用`PATH`和`CLASSPATH`环境变量。有关最新信息，请参阅安装Java Development Kit（JDK）软件包中随附的安装说明。
+
+安装软件后，JDK目录将具有如下所示的结构。
+
+![JDK directory structure](https://docs.oracle.com/javase/tutorial/figures/essential/environment-directories.gif)
+
+`bin`目录包含编译器和启动器。
+
+**更新 PATH 环境变量 (Microsoft Windows)**
+
+您可以在不设置`PATH`环境变量的情况下正常运行Java应用程序。或者为了方便，您可以选择设置该变量值。
+
+如果希望能够从任何目录方便地运行可执行文件（`javac.exe`，`java.exe`，`javadoc.exe`等）而无需键入命令的完整路径，请设置`PATH`环境变量。如果未设置`PATH`变量，则需要在每次运行时指定可执行文件的完整路径，例如：
+
+```
+C:\Java\jdk1.7.0\bin\javac MyClass.java
+```
+
+`PATH`环境变量是由分号`;`分隔的一系列目录。Microsoft Windows从左到右依次查找`PATH`目录中的程序。一次只能在路径中为JDK创建一个`bin`目录（第一个后面的那些目录被忽略），因此如果已存在一个，则可以更新该特定条目。
+
+以下是`PATH`环境变量的示例：
+
+```
+C:\Java\jdk1.7.0\bin;C:\Windows\System32\;C:\Windows\;C:\Windows\System32\Wbem
+```
+
+永久设置`PATH`环境变量非常有用，因为在重新启动后它将保持不变。要永久更改`PATH`变量，请使用“控制面板”中的“系统”图标。具体过程因Windows版本而异：
+
+Windows XP
+
+1. 选择开始，选择控制面板。双击“系统”，然后选择“高级”选项卡。
+2. 单击“环境变量”。在“系统变量”中，找到`PATH`环境变量并选择它。单击编辑。如果`PATH`环境变量不存在，请单击“新建”。
+3. 在“编辑系统变量”（或“新建系统变量”）窗口中，指定`PATH`环境变量的值。单击确定。单击“确定”关闭所有剩余窗口。
+
+Windows Vista:
+
+1. 在桌面上，右键单击“我的电脑”图标。
+2. 从上下文菜单中选择“属性”。
+3. 单击“高级”选项卡（Vista中的“高级系统设置”链接）。
+4. 单击“环境变量”。在“系统变量”中，找到`PATH`环境变量并选择它。单击编辑。如果`PATH`环境变量不存在，请单击“新建”。
+5. 在“编辑系统变量”（或“新建系统变量”）窗口中，指定PATH环境变量的值。单击确定。单击“确定”关闭所有剩余窗口。
+
+Windows 7:
+
+1. 在桌面上，右键单击“计算机”图标。
+2. 从上下文菜单中选择“属性”。
+3. 单击“高级系统设置”链接。
+4. 单击“环境变量”。在“系统变量”中，找到`PATH`环境变量并选择它。单击编辑。如果`PATH`环境变量不存在，请单击“新建”。
+5. 在“编辑系统变量”（或“新建系统变量”）窗口中，指定`PATH`环境变量的值。单击确定。单击“确定”关闭所有剩余窗口。
+
+------
+
+**注意：** 从控制面板编辑时，您可能会看到与以下内容类似的`PATH`环境变量：
+
+```
+%JAVA_HOME%\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem
+```
+
+以百分号`％`括起来的变量是现有的环境变量。如果其中一个变量在“控制面板”的“环境变量”窗口中列出（例如 `JAVA_HOME`），则可以编辑其值。如果没有出现，那么它是操作系统定义的特殊环境变量。例如，`SystemRoot`是Microsoft Windows系统文件夹的位置。要获取环境变量的值，请在命令提示符处输入以下内容。（此示例获取`SystemRoot`环境变量的值）：
+
+```
+echo％SystemRoot％
+```
+
+------
+
+**更新 PATH 变量(Solaris and Linux)**
+
+您可以在不设置`PATH`变量的情况下运行JDK，也可以为了方便选择设置它。但是，如果希望能够从任何目录运行可执行文件（`javac`，`java`，`javadoc`等）而不必键入命令的完整路径，则应设置路径变量。如果未设置`PATH`变量，则需要在每次运行时指定可执行文件的完整路径，例如：
+
+```
+% /usr/local/jdk1.7.0/bin/javac MyClass.java
+```
+
+要确定`path`是否正确设置，请执行：
+
+```
+% java -version
+```
+
+这将打印java工具的版本，如果它可以找到它。如果版本较旧或者您收到错误 **java：Command not found** ，则说明 `path` 未正确设置。
+
+要永久设置 `path` ，请在启动文件中设置路径。
+
+对 C shell (`csh`)，编辑启动文件 `(~/.cshrc`)：
+
+```
+set path=(/usr/local/jdk1.7.0/bin $path)
+```
+
+对 `bash`，编辑启动文件 (`~/.bashrc`)：
+
+```
+PATH=/usr/local/jdk1.7.0/bin:$PATH
+export PATH
+```
+
+对 `ksh` ，启动文件由环境变量命名，`ENV`，为了设置 `path` ：
+
+```
+PATH=/usr/local/jdk1.7.0/bin:$PATH
+export PATH
+```
+
+对 `sh`，编辑配置文件 (`~/.profile`)：
+
+```
+PATH=/usr/local/jdk1.7.0/bin:$PATH
+export PATH
+```
+
+然后加载启动文件并通过重复调用`java`命令验证路径是否已设置：
+
+对 C shell (`csh`)：
+
+```
+% source ~/.cshrc
+% java -version
+```
+
+对 `ksh`, `bash`, 或者 `sh` ：
+
+```
+% . /.profile
+% java -version
+```
+
+**检查 CLASSPATH 变量（所有平台）**
+
+`CLASSPATH`变量是告诉应用程序（包括JDK工具）查找用户类的一种方法。（属于JRE，JDK平台和扩展的类应该通过其他方式定义，例如引导类路径或扩展目录。）
+
+指定类路径的首选方法是使用`-cp`命令行开关。这允许为每个应用程序单独设置`CLASSPATH`，而不会影响其他应用程序。设置`CLASSPATH`可能很棘手，应谨慎执行。
+
+类路径的默认值为“.”，表示仅搜索当前目录。指定`CLASSPATH`变量或`-cp`命令行开关会覆盖此值。
+
+要检查是否在Microsoft Windows NT/2000/XP上设置`CLASSPATH`，请执行以下命令：
+
+```
+C:> echo %CLASSPATH%
+```
+
+在 Solaris 或者 Linux 上，执行：
+
+```
+% echo $CLASSPATH
+```
+
+如果 `CLASSPATH` 没有设置，你将得到一个 **CLASSPATH: Undefined variable** 错误 (Solaris 或者 Linux) 或者是简单的 **%CLASSPATH%** (Microsoft Windows NT/2000/XP)。
+
+要修改`CLASSPATH`，请使用与`PATH`变量相同的过程。
+
+类路径通配符允许您在类路径中包含`.jar`文件的整个目录，而无需单独指定它们。有关更多信息（包括类路径通配符的说明）以及有关如何清理CLASSPATH环境变量的详细说明，请参阅 [Setting the Class Path](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/classpath.html) 技术说明。
+
+## 正则表达式
+
+本课程介绍如何使用`java.util.regex` API与正则表达式进行模式匹配。虽然此包接受的语法类似于 [Perl](http://www.perl.com/) 编程语言，但 Perl 的知识不是先决条件。本课程从基础知识开始，逐步构建以涵盖更高级的技术。
+
+- [介绍](https://docs.oracle.com/javase/tutorial/essential/regex/intro.html)
+
+  提供正则表达式的一般概述。它还介绍了构成此API的核心类。
+
+- [测试套件](https://docs.oracle.com/javase/tutorial/essential/regex/test_harness.html)
+
+  定义用于测试与正则表达式匹配的模式的简单应用程序。
+
+- [字符串字面值](https://docs.oracle.com/javase/tutorial/essential/regex/literals.html)
+
+  介绍基本模式匹配，元字符和引用。
+
+- [Character 类](https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html)
+
+  描述简单的字符类，否定，范围，联合，交叉和减法。
+
+- [预定义 Character 类](https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html)
+
+  描述空白，字和数字字符等基本预定义字符类。
+
+- [Quantifiers](https://docs.oracle.com/javase/tutorial/essential/regex/quant.html)
+
+  解释贪婪，不情愿和占有量词用于匹配指定表达式`x`次。
+
+- [Capturing Groups](https://docs.oracle.com/javase/tutorial/essential/regex/groups.html)
+
+  说明如何将多个字符视为一个单元。
+
+- [Boundary Matchers](https://docs.oracle.com/javase/tutorial/essential/regex/bounds.html)
+
+  描述线，字和输入边界。
+
+- [Pattern 类方法](https://docs.oracle.com/javase/tutorial/essential/regex/pattern.html)
+
+  检查`Pattern`类的其他有用方法，并探索高级功能，例如使用标志进行编译和使用嵌入式标志表达式。
+
+- [Matcher 类方法](https://docs.oracle.com/javase/tutorial/essential/regex/matcher.html)
+
+  描述了`Matcher`类的常用方法。
+
+- [PatternSyntaxException 类方法](https://docs.oracle.com/javase/tutorial/essential/regex/pse.html) 
+
+  描述如何检查`PatternSyntaxException`。
+
+- [附加资源](https://docs.oracle.com/javase/tutorial/essential/regex/resources.html)
+
+  要阅读有关正则表达式的更多信息，请参阅本节以获取其他资源
+
