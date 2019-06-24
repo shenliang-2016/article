@@ -1,222 +1,100 @@
-### 字符类
+### 预定义字符类
 
-如果浏览 [`Pattern`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) 类规范，您将看到总结支持的正则表达式构造的表。在“字符类”部分中，您将找到以下内容：
+[`Pattern`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) API 包含若干有用的*预定义字符类*，它们提供了使用正则表达式的简便方法：
 
-| Construct       | Description                              |
-| --------------- | ---------------------------------------- |
-| `[abc]`         | a, b, or c (simple class)                |
-| `[^abc]`        | Any character except a, b, or c (negation) |
-| `[a-zA-Z]`      | a through z, or A through Z, inclusive (range) |
-| `[a-d[m-p]]`    | a through d, or m through p: [a-dm-p] (union) |
-| `[a-z&&[def]]`  | d, e, or f (intersection)                |
-| `[a-z&&[^bc]]`  | a through z, except for b and c: [ad-z] (subtraction) |
-| `[a-z&&[^m-p]]` | a through z, and not m through p: [a-lq-z] (subtraction) |
+| Construct | Description                              |
+| --------- | ---------------------------------------- |
+| `.`       | Any character (may or may not match line terminators) |
+| `\d`      | A digit: `[0-9]`                         |
+| `\D`      | A non-digit: `[^0-9]`                    |
+| `\s`      | A whitespace character: `[ \t\n\x0B\f\r]` |
+| `\S`      | A non-whitespace character: `[^\s]`      |
+| `\w`      | A word character: `[a-zA-Z_0-9]`         |
+| `\W`      | A non-word character: `[^\w]`            |
 
-左侧列指定正则表达式构造，而右侧列描述每个构造将匹配的条件。
+在上表中，左侧列中的每个构造都是右侧列中字符类的简写。例如，`\d`表示数字范围（0-9），`\w`表示单词字符（任何小写字母，任何大写字母，下划线字符或任何数字）。尽可能使用预定义的类。它们使您的代码更易于阅读，并消除格式错误的字符类引入的错误。
 
-----
-
-**注意：** 短语“character class”中的“class”一词不是指`.class`文件。在正则表达式的上下文中，*字符类*是括在方括号内的一组字符。它指定将成功匹配给定输入字符串中的单个字符的字符。
-
-----
-
-**简单类**
-
-字符类的最基本形式是简单地将一组字符并排放在方括号内。例如，正则表达式`[bcr]at`将匹配单词“bat”，“cat”或“rat”，因为它定义了一个字符类（接受“b”，“c”或“r”）作为其第一个字符。
+以反斜杠开头的构造称为转义构造。我们在 [String Literals](https://docs.oracle.com/javase/tutorial/essential/regex/literals.html) 部分中预览了转义结构，其中我们提到使用反斜杠和`\Q`和`\E`作为引用。如果在字符串字面量中使用转义构造，则必须在反斜杠前面加上另一个反斜杠，以便编译字符串。 例如：
 
 ```
-Enter your regex: [bcr]at
-Enter input string to search: bat
-I found the text "bat" starting at index 0 and ending at index 3.
-
-Enter your regex: [bcr]at
-Enter input string to search: cat
-I found the text "cat" starting at index 0 and ending at index 3.
-
-Enter your regex: [bcr]at
-Enter input string to search: rat
-I found the text "rat" starting at index 0 and ending at index 3.
-
-Enter your regex: [bcr]at
-Enter input string to search: hat
-No match found.
+private final String REGEX = "\\d"; // a single digit
 ```
 
-在上面的示例中，只有当第一个字母与字符类定义的字符之一匹配时，整体匹配才会成功。
+在这个例子中`\d`是正则表达式；编译代码需要额外的反斜杠。测试工具直接从控制台读取表达式，因此不需要额外的反斜杠。
 
-**Negation**
-
-要匹配除列出的字符以外的所有字符，请在字符类的开头插入“`^`”元字符。这种技术称为*否定*。
+以下示例演示了预定义字符类的使用。
 
 ```
-Enter your regex: [^bcr]at
-Enter input string to search: bat
-No match found.
+Enter your regex: .
+Enter input string to search: @
+I found the text "@" starting at index 0 and ending at index 1.
 
-Enter your regex: [^bcr]at
-Enter input string to search: cat
-No match found.
+Enter your regex: . 
+Enter input string to search: 1
+I found the text "1" starting at index 0 and ending at index 1.
 
-Enter your regex: [^bcr]at
-Enter input string to search: rat
-No match found.
-
-Enter your regex: [^bcr]at
-Enter input string to search: hat
-I found the text "hat" starting at index 0 and ending at index 3.
-```
-
-仅当输入字符串的第一个字符不包含字符类定义的任何字符时，匹配才会成功。
-
-**Ranges**
-
-有时您需要定义一个包含一系列值的字符类，例如字母“a到h”或数字“1到5”。要指定范围，只需在要匹配的第一个和最后一个字符之间插入“ - ”元字符，例如`[1-5]`或`[a-h]`。您还可以在类中将不同的范围放在彼此旁边，以进一步扩展匹配的可能性。例如，`[a-zA-Z]`将匹配字母表中的任何字母：a到z（小写）或A到Z（大写）。
-
-以下是范围和否定的一些示例：
-
-```
-Enter your regex: [a-c]
+Enter your regex: .
 Enter input string to search: a
 I found the text "a" starting at index 0 and ending at index 1.
 
-Enter your regex: [a-c]
-Enter input string to search: b
-I found the text "b" starting at index 0 and ending at index 1.
+Enter your regex: \d
+Enter input string to search: 1
+I found the text "1" starting at index 0 and ending at index 1.
 
-Enter your regex: [a-c]
-Enter input string to search: c
-I found the text "c" starting at index 0 and ending at index 1.
-
-Enter your regex: [a-c]
-Enter input string to search: d
+Enter your regex: \d
+Enter input string to search: a
 No match found.
 
-Enter your regex: foo[1-5]
-Enter input string to search: foo1
-I found the text "foo1" starting at index 0 and ending at index 4.
-
-Enter your regex: foo[1-5]
-Enter input string to search: foo5
-I found the text "foo5" starting at index 0 and ending at index 4.
-
-Enter your regex: foo[1-5]
-Enter input string to search: foo6
+Enter your regex: \D
+Enter input string to search: 1
 No match found.
 
-Enter your regex: foo[^1-5]
-Enter input string to search: foo1
+Enter your regex: \D
+Enter input string to search: a
+I found the text "a" starting at index 0 and ending at index 1.
+
+Enter your regex: \s
+Enter input string to search:  
+I found the text " " starting at index 0 and ending at index 1.
+
+Enter your regex: \s
+Enter input string to search: a
 No match found.
 
-Enter your regex: foo[^1-5]
-Enter input string to search: foo6
-I found the text "foo6" starting at index 0 and ending at index 4.
+Enter your regex: \S
+Enter input string to search:  
+No match found.
+
+Enter your regex: \S
+Enter input string to search: a
+I found the text "a" starting at index 0 and ending at index 1.
+
+Enter your regex: \w
+Enter input string to search: a
+I found the text "a" starting at index 0 and ending at index 1.
+
+Enter your regex: \w
+Enter input string to search: !
+No match found.
+
+Enter your regex: \W
+Enter input string to search: a
+No match found.
+
+Enter your regex: \W
+Enter input string to search: !
+I found the text "!" starting at index 0 and ending at index 1.
+
 ```
 
-**Unions**
+在前三个例子中，正则表达式很简单。（“点”元字符）表示“任何字符”。因此，在所有三种情况下（随机选择的`@`字符，数字和字母）匹配成功。其余示例均使用 [Predefined Character Classes table](https://docs.oracle.com/javase/tutorial/essential/regex/pre_char_classes.html#CHART) 表中的单个正则表达式构造。您可以参考此表来确定每个匹配背后的逻辑：
 
-您还可以使用联合创建由两个或多个单独的字符类组成的单个字符类。要创建联合，只需将一个类嵌套在另一个类中，例如`[0-4 [6-8]]`。此特定联合创建一个与数字0,1,2,3,4,6,7和8匹配的单个字符类。
+- `\d` 匹配所有数字
+- `\s` 匹配空格
+- `\w` 匹配单词字符
 
-```
-Enter your regex: [0-4[6-8]]
-Enter input string to search: 0
-I found the text "0" starting at index 0 and ending at index 1.
+或者，大写字母意思相反：
 
-Enter your regex: [0-4[6-8]]
-Enter input string to search: 5
-No match found.
-
-Enter your regex: [0-4[6-8]]
-Enter input string to search: 6
-I found the text "6" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-4[6-8]]
-Enter input string to search: 8
-I found the text "8" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-4[6-8]]
-Enter input string to search: 9
-No match found.
-```
-
-**Intersections**
-
-要创建仅匹配其所有嵌套类共有的字符的单个字符类，请使用`&&`，如`[0-9&&[345]]`中所示。此特定交集创建单个字符类，仅匹配两个字符类共有的数字：3,4和5。
-
-```
-Enter your regex: [0-9&&[345]]
-Enter input string to search: 3
-I found the text "3" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-9&&[345]]
-Enter input string to search: 4
-I found the text "4" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-9&&[345]]
-Enter input string to search: 5
-I found the text "5" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-9&&[345]]
-Enter input string to search: 2
-No match found.
-
-Enter your regex: [0-9&&[345]]
-Enter input string to search: 6
-No match found.
-```
-
-这是一个显示两个范围交集的示例：
-
-```
-Enter your regex: [2-8&&[4-6]]
-Enter input string to search: 3
-No match found.
-
-Enter your regex: [2-8&&[4-6]]
-Enter input string to search: 4
-I found the text "4" starting at index 0 and ending at index 1.
-
-Enter your regex: [2-8&&[4-6]]
-Enter input string to search: 5
-I found the text "5" starting at index 0 and ending at index 1.
-
-Enter your regex: [2-8&&[4-6]]
-Enter input string to search: 6
-I found the text "6" starting at index 0 and ending at index 1.
-
-Enter your regex: [2-8&&[4-6]]
-Enter input string to search: 7
-No match found.
-```
-
-**Subtraction**
-
-最后，您可以使用减法来否定一个或多个嵌套字符类，例如`[0-9&&[^345]]`。此示例创建一个匹配0到9之间的所有字符类，但数字3,4和5除外。
-
-```
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 2
-I found the text "2" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 3
-No match found.
-
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 4
-No match found.
-
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 5
-No match found.
-
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 6
-I found the text "6" starting at index 0 and ending at index 1.
-
-Enter your regex: [0-9&&[^345]]
-Enter input string to search: 9
-I found the text "9" starting at index 0 and ending at index 1.
-```
-
-现在我们已经介绍了如何创建字符类，您可能需要在继续下一部分之前查看 [Character Classes table](https://docs.oracle.com/javase/tutorial/essential/regex/char_classes.html#CHART) 。
-
+- `\D` 匹配非数字
+- `\S` 匹配非空格
+- `\W` 匹配非单词字符
