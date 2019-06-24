@@ -1,47 +1,80 @@
-### 捕获组
+### 边界匹配
 
-在上一节中，我们看到了量词如何附加到一个字符，字符类或捕获组。但到目前为止，我们还没有详细讨论过捕获组的概念。
+到目前为止，我们只关心在特定输入字符串中的某个位置是否找到匹配项。我们从不关心匹配发生在输入字符串的哪个位置。
 
-捕获组是将多个字符视为一个单元的一种方法。它们是通过将要分组的字符放在一组括号中来创建的。例如，正则表达式`(dog)`创建一个包含字母“d”“o”和“g”的组。与捕获组匹配的输入字符串部分将保存在内存中，以便以后通过反向引用进行调用（如下面的 [反向引用](https://docs.oracle.com/javase/tutorial/essential/regex/groups.html#backref) 一节中所述）。
+通过使用边界匹配器指定此类信息，可以使模式匹配更精确。例如，您可能对查找特定单词感兴趣，但前提是它出现在行的开头或结尾。或者您可能想知道匹配是在单词边界上还是在上一次匹配结束时发生。
 
-**编号**
+下表列出并解释了所有边界匹配器。
 
-如 [`Pattern`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)  API中所述，捕获组通过从左到右计算它们的左括号来编号。例如，在表达式 `((A)(B(C)))`中，有四个这样的组：
+| Boundary Construct | Description                              |
+| ------------------ | ---------------------------------------- |
+| `^`                | The beginning of a line                  |
+| `$`                | The end of a line                        |
+| `\b`               | A word boundary                          |
+| `\B`               | A non-word boundary                      |
+| `\A`               | The beginning of the input               |
+| `\G`               | The end of the previous match            |
+| `\Z`               | The end of the input but for the final terminator, if any |
+| `\z`               | The end of the input                     |
 
-1. `((A)(B(C)))`
-2. `(A)`
-3. `(B(C))`
-4. `(C)`
-
-要查找表达式中存在多少个组，请在匹配器对象上调用`groupCount`方法。`groupCount`方法返回一个`int`，显示匹配器模式中存在的捕获组数。在此示例中，`groupCount`将返回数字`4`，表示该模式包含4个捕获组。
-
-还有一个特殊组，即组0，它始终代表整个表达式。该组未包含在`groupCount`报告的总数中。以 `(?`开头的组是纯粹的非捕获组，不捕获文本而不计入组总数。（稍后将在 [Methods of the Pattern Class](https://docs.oracle.com/javase/tutorial/essential/regex/pattern.html) 部分中看到非捕获组的示例。）
-
-了解组的编号很重要，因为一些`Matcher`方法接受一个`int`，指定一个特定的组号作为参数：
-
-- [`public int start(int group)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#start-int-): 返回在上一个匹配操作期间由给定组捕获的子序列的起始索引。
-- [`public int end (int group)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#end-int-): 返回在上一个匹配操作期间由给定组捕获的子序列的最后一个字符的索引加1。
-- [`public String group (int group)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#group-int-): 返回在上一个匹配操作期间由给定组捕获的输入子序列。
-
-**反向引用**
-
-与捕获组匹配的输入字符串部分保存在内存中，以便以后通过反向引用进行调用。在正则表达式中将反向引用指定为反斜杠（`\`），后跟一个数字，指示要调用的组的编号。例如，表达式（`\d\d`）定义了一个匹配行中两个数字的捕获组，可以通过反向引用`\1`在表达式中稍后调用。
-
-要匹配任何2位数字，后跟完全相同的两位数字，您可以使用`(\d\d)\1`作为正则表达式：
+以下示例演示了边界匹配器`^`和`$`的使用。如上所述，`^`匹配行的开头，`$`匹配结束。
 
 ```
-Enter your regex: (\d\d)\1
-Enter input string to search: 1212
-I found the text "1212" starting at index 0 and ending at index 4.
+Enter your regex: ^dog$
+Enter input string to search: dog
+I found the text "dog" starting at index 0 and ending at index 3.
+
+Enter your regex: ^dog$
+Enter input string to search:       dog
+No match found.
+
+Enter your regex: \s*dog$
+Enter input string to search:             dog
+I found the text "            dog" starting at index 0 and ending at index 15.
+
+Enter your regex: ^dog\w*
+Enter input string to search: dogblahblah
+I found the text "dogblahblah" starting at index 0 and ending at index 11.
 ```
 
-如果更改最后两位数，则匹配将失败：
+第一个示例是成功的，因为模式占用整个输入字符串。第二个示例失败，因为输入字符串在开头包含额外的空格。第三个示例指定一个表达式，该表达式允许无限制的空格，后面是行尾的“dog”。第四个例子要求“dog”出现在一行的开头，后跟无限数量的单词字符。
+
+要检查模式是否在单词边界上开始和结束（与较长字符串中的子字符串相对），可在任一侧使用`\b`；例如，`\bdog\b` 。
 
 ```
-Enter your regex: (\d\d)\1
-Enter input string to search: 1234
+Enter your regex: \bdog\b
+Enter input string to search: The dog plays in the yard.
+I found the text "dog" starting at index 4 and ending at index 7.
+
+Enter your regex: \bdog\b
+Enter input string to search: The doggie plays in the yard.
 No match found.
 ```
 
-对于嵌套捕获组，反向引用的工作方式完全相同：指定反斜杠后跟要调用的组的编号。
+要匹配非单词边界上的表达式，请使用`\B`代替：
+
+```
+Enter your regex: \bdog\B
+Enter input string to search: The dog plays in the yard.
+No match found.
+
+Enter your regex: \bdog\B
+Enter input string to search: The doggie plays in the yard.
+I found the text "dog" starting at index 4 and ending at index 7.
+```
+
+要求匹配仅在上一个匹配结束时发生，请使用`\G`：
+
+```
+Enter your regex: dog 
+Enter input string to search: dog dog
+I found the text "dog" starting at index 0 and ending at index 3.
+I found the text "dog" starting at index 4 and ending at index 7.
+
+Enter your regex: \Gdog 
+Enter input string to search: dog dog
+I found the text "dog" starting at index 0 and ending at index 3.
+```
+
+这里第二个例子只找到一个匹配，因为第二次出现的“dog”不会在上一个匹配结束时开始。
 
