@@ -1,170 +1,221 @@
-### Pattern 类的方法
+### Matcher 类的方法
 
-到目前为止，我们只使用测试工具以最基本的形式创建`Pattern`对象。本节探讨高级技术，例如使用标志创建模式和使用嵌入式标志表达式。它还探讨了我们尚未讨论的一些其他有用的方法。
+本节介绍`Matcher`类的一些有用的附加方法。为方便起见，下面列出的方法根据功能进行分组。
 
-**使用标志创建 Pattern**
+**Index 方法**
 
-`Pattern`类定义了一个备用 `compile` 方法，它接受一组影响模式匹配方式的标志。 `flags`参数是一个位掩码，可能包含以下任何公共静态字段：
+*Index 方法* 提供有用的索引值，精确显示在输入字符串中找到匹配的位置：
 
-- [`Pattern.CANON_EQ`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#CANON_EQ) 启用规范等效。指定此标志时，当且仅当它们的完整规范分解匹配时，才认为两个字符匹配。例如，当指定此标志时，表达式 `"a\u030A"`将匹配字符串 `"\u00E5"` 。默认情况下，匹配不会将规范等效考虑在内。 指定此标志可能会导致性能下降。
-- [`Pattern.CASE_INSENSITIVE`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#CASE_INSENSITIVE) 启用不区分大小写的匹配。默认情况下，不区分大小写的匹配假定只匹配 US-ASCII 字符集中的字符。通过将 UNICODE_CASE 标志与此标志一起指定，可以启用 Unicode 感知的不区分大小写的匹配。也可以通过嵌入式标志表达式 `(?i)` 启用不区分大小写的匹配。指定此标志可能会略微降低性能。
-- [`Pattern.COMMENTS`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#COMMENTS) 允许模式中的空格和注释。在此模式下，将忽略空格，并忽略以`＃`开头的嵌入式注释，直到行结束。也可以通过嵌入式标志表达式 `(?x)` 启用注释模式。
-- [`Pattern.DOTALL`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#DOTALL) 启用 dotall 模式。在 dotall 模式中，表达式`.`匹配任何字符，包括行终止符。默认情况下，此表达式与行终止符不匹配。也可以通过嵌入式标志表达式`(?s)`启用 dotall 模式。（s是“单行”模式的助记符，这是在Perl中的叫法。）
-- [`Pattern.LITERAL`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#LITERAL) 启用模式的文字解析。指定此标志后，指定模式的输入字符串将被视为文字字符序列。输入序列中的元字符或转义序列将没有特殊含义。当与此标志一起使用时，标志`CASE_INSENSITIVE`和`UNICODE_CASE`保持对匹配的影响。其他标志变得多余。没有用于启用文字解析的嵌入标志字符。
-- [`Pattern.MULTILINE`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#MULTILINE) 启用多行模式。 在多行模式中，表达式`^`和`$`分别在行终止符之后或输入序列的末尾之前匹配。默认情况下，这些表达式仅在整个输入序列的开头和结尾处匹配。也可以通过嵌入式标志表达式 `(?m)` 启用多行模式。
-- [`Pattern.UNICODE_CASE`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#UNICODE_CASE) 启用支持 Unicode 的大小写折叠。指定此标志后，由`CASE_INSENSITIVE`标志启用时，不区分大小写的匹配将以与 Unicode 标准一致的方式完成。默认情况下，不区分大小写的匹配假定只匹配 US-ASCII 字符集中的字符。也可以通过嵌入式标志表达式 `(?u)` 启用支持 Unicode 的大小写折叠。指定此标志可能会导致性能下降。
-- [`Pattern.UNIX_LINES`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#UNIX_LINES) 启用 UNIX 行模式。在此模式下，只有'\n'行终止符在`.`，`^`和`$`的行为中被识别。UNIX 行模式也可以通过嵌入式标志表达式 `(?d)` 启用。
+- [`public int start()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#start--): 返回上一个匹配的起始索引。
+- [`public int start(int group)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#start-int-): 返回在上一个匹配操作期间由给定组捕获的子序列的起始索引。
+- [`public int end()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#end--): 返回最后一个字符匹配后的偏移量。
+- [`public int end(int group)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#end-int-): 返回在上一个匹配操作期间由给定组捕获的子序列的最后一个字符之后的偏移量。
 
-在以下步骤中，我们将修改测试工具[`RegexTestHarness.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/RegexTestHarness.java) 以创建具有不区分大小写匹配的模式。
+**Study 方法**
 
-首先，修改代码以调用`compile`的备用版本：
+*Study 方法* 检查输入字符串并返回一个布尔值，指示是否找到该模式。
 
-```
-Pattern pattern = 
-Pattern.compile(console.readLine("%nEnter your regex: "),
-Pattern.CASE_INSENSITIVE);
-```
+- [`public boolean lookingAt()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#lookingAt--): 尝试将输入序列（从区域的开头开始）与模式匹配。
+- [`public boolean find()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#find--): 尝试查找与模式匹配的输入序列的下一个子序列。
+- [`public boolean find(int start)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#find-int-): 重置此匹配器，然后尝试从指定的索引处开始查找与模式匹配的输入序列的下一个子序列。
+- [`public boolean matches()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#matches--): 尝试将整个区域与模式匹配。
 
-然后编译并运行测试工具以获得以下结果：
+**替换方法**
 
-```
-Enter your regex: dog
-Enter input string to search: DoGDOg
-I found the text "DoG" starting at index 0 and ending at index 3.
-I found the text "DOg" starting at index 3 and ending at index 6.
-```
+*Replacement 方法* 用来替换输入字符串中的字符很有用。
 
-正如您所看到的，字符串文字“dog”匹配两种情况，无论是否大小写。要编译具有多个标志的模式，请使用按位 OR 运算符“`|`”分隔要包含的标志。为清楚起见，以下代码示例对正则表达式进行硬编码，而不是从控制台中读取它：
+- [`public Matcher appendReplacement(StringBuffer sb, String replacement)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#appendReplacement-java.lang.StringBuffer-java.lang.String-): 实现非尾部的附加和替换步骤。
+- [`public StringBuffer appendTail(StringBuffer sb)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#appendTail-java.lang.StringBuffer-): 实现尾部追加和替换步骤。
+- [`public String replaceAll(String replacement)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#replaceAll-java.lang.String-): 将具有给定替换字符串的模式匹配的输入序列的每个子序列替换。
+- [`public String replaceFirst(String replacement)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#replaceFirst-java.lang.String-): 将具有给定替换字符串的模式匹配的输入序列的第一个子序列替换。
+- [`public static String quoteReplacement(String s)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html#quoteReplacement-java.lang.String-): 返回指定`String`的文字替换`String`。此方法生成一个`String`，它将作为`Matcher`类的`appendReplacement`方法中的文字替换。生成的字符串将匹配`s`中作为文字序列处理的字符序列。斜杠（`'\'`）和美元符号（`'$'`）将没有特殊含义。
 
-```
-pattern = Pattern.compile("[az]$", Pattern.MULTILINE | Pattern.UNIX_LINES);
-```
+**使用 `start` 和 `end` 方法**
 
-您也可以指定一个`int`变量：
+下面是一个示例 [`MatcherDemo.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/MatcherDemo.java) ，它计算输入字符串中“dog”一词出现的次数。
 
-```
-final int flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
-Pattern pattern = Pattern.compile("aa", flags);
-```
-
-**内嵌标志表达式**
-
-也可以使用*嵌入的标志表达式*启用各种标志。嵌入式标志表达式是`compile`方法的双参数版本的替代，并且在正则表达式本身中指定。以下示例使用原始测试工具 [`RegexTestHarness.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/RegexTestHarness.java) 和嵌入式标志表达式 `(?i)` 来启用不区分大小写的匹配。
-
-```
-Enter your regex: (?i)foo
-Enter input string to search: FOOfooFoOfoO
-I found the text "FOO" starting at index 0 and ending at index 3.
-I found the text "foo" starting at index 3 and ending at index 6.
-I found the text "FoO" starting at index 6 and ending at index 9.
-I found the text "foO" starting at index 9 and ending at index 12.
-```
-
-无论大小写，所有匹配再次成功。
-
-与`Pattern`的可公开访问字段对应的嵌入式标志表达式如下表所示：
-
-| Constant                   | Equivalent Embedded Flag Expression |
-| -------------------------- | ----------------------------------- |
-| `Pattern.CANON_EQ`         | None                                |
-| `Pattern.CASE_INSENSITIVE` | `(?i)`                              |
-| `Pattern.COMMENTS`         | `(?x)`                              |
-| `Pattern.MULTILINE`        | `(?m)`                              |
-| `Pattern.DOTALL`           | `(?s)`                              |
-| `Pattern.LITERAL`          | None                                |
-| `Pattern.UNICODE_CASE`     | `(?u)`                              |
-| `Pattern.UNIX_LINES`       | `(?d)`                              |
-
-**使用`matches(String,CharSequence) `方法**
-
-`Pattern`类定义了一个方便的 [`matches`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#matches-java.lang.String-java.lang.CharSequence-) 方法，允许您快速检查给定输入字符串中是否存在模式。与所有公共静态方法一样，您应该通过其类名调用 `matches` ，例如`Pattern.matches("\\d","1");` 。在此示例中，该方法返回`true`，因为数字“1”与正则表达式`\d`匹配。
-
-**使用`split(String)`方法**
-
- [`split`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#split-java.lang.CharSequence-) 方法是一个很好的工具，用于收集位于匹配模式两侧的文本。如下面 [`SplitDemo.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/SplitDemo.java) 中所示， `split` 方法可以从字符串`one:two:three:four:five`中提取单词`one two three four five`：
-
-```
+```java
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class SplitDemo {
+public class MatcherDemo {
 
-    private static final String REGEX = ":";
+    private static final String REGEX =
+        "\\bdog\\b";
     private static final String INPUT =
-        "one:two:three:four:five";
-    
-    public static void main(String[] args) {
-        Pattern p = Pattern.compile(REGEX);
-        String[] items = p.split(INPUT);
-        for(String s : items) {
-            System.out.println(s);
-        }
-    }
-}
+        "dog dog dog doggie dogg";
 
+    public static void main(String[] args) {
+       Pattern p = Pattern.compile(REGEX);
+       //  get a matcher object
+       Matcher m = p.matcher(INPUT);
+       int count = 0;
+       while(m.find()) {
+           count++;
+           System.out.println("Match number "
+                              + count);
+           System.out.println("start(): "
+                              + m.start());
+           System.out.println("end(): "
+                              + m.end());
+      }
+   }
+}
 ```
 
 ```
 OUTPUT:
 
-one
-two
-three
-four
-five
-
+Match number 1
+start(): 0
+end(): 3
+Match number 2
+start(): 4
+end(): 7
+Match number 3
+start(): 8
+end(): 11
 ```
 
-为简单起见，我们匹配了字符串字面值冒号（`:`)而不是复杂的正则表达式。由于我们仍在使用`Pattern`和`Matcher`对象，因此您可以使用`split`来获取位于任何正则表达式两侧的文本。这是一个相同的例子， [`SplitDemo2.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/SplitDemo2.java) ，修改为在数字上拆分：
+您可以看到此示例使用单词边界来确保字母`“d” “o” “g”`不仅仅是较长单词中的子字符串。它还提供了有关输入字符串中匹配发生位置的一些有用信息。`start`方法返回上一个匹配操作期间给定组捕获的子序列的起始索引，`end`返回匹配的最后一个字符的索引加1。
 
-```
+**使用 `matches` 和 `lookingAt` 方法**
+
+`matches`和`lookingAt`方法都尝试将输入序列与模式匹配。然而，不同之处在于`matches`需要匹配整个输入序列，而`lookingAt`则不需要。两种方法总是从输入字符串的开头开始。这是完整的代码， [`MatchesLooking.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/MatchesLooking.java)：
+
+```java
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-public class SplitDemo2 {
+public class MatchesLooking {
 
-    private static final String REGEX = "\\d";
+    private static final String REGEX = "foo";
     private static final String INPUT =
-        "one9two4three7four1five";
+        "fooooooooooooooooo";
+    private static Pattern pattern;
+    private static Matcher matcher;
 
     public static void main(String[] args) {
-        Pattern p = Pattern.compile(REGEX);
-        String[] items = p.split(INPUT);
-        for(String s : items) {
-            System.out.println(s);
-        }
+   
+        // Initialize
+        pattern = Pattern.compile(REGEX);
+        matcher = pattern.matcher(INPUT);
+
+        System.out.println("Current REGEX is: "
+                           + REGEX);
+        System.out.println("Current INPUT is: "
+                           + INPUT);
+
+        System.out.println("lookingAt(): "
+            + matcher.lookingAt());
+        System.out.println("matches(): "
+            + matcher.matches());
     }
 }
-
-OUTPUT:
-
-one
-two
-three
-four
-five
 ```
 
-**其它有用方法**
+```
+Current REGEX is: foo
+Current INPUT is: fooooooooooooooooo
+lookingAt(): true
+matches(): false
+```
 
-您可能会发现以下方法也有一些用处：
+**使用 `replaceFirst(String)` 和 `replaceAll(String)`**
 
-- [`public static String quote(String s)`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#quote-java.lang.String-) 返回指定`String`的文字模式`String`。此方法生成一个`String`，可用于创建一个与`String`匹配的`Pattern`，就像它是一个文字模式一样。输入序列中的元字符或转义序列将没有特殊含义。
-- [`public String toString()`](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#toString--) 返回此模式的`String`表示形式。这是编译此模式的正则表达式。
+`replaceFirst`和`replaceAll`方法替换与给定正则表达式匹配的文本。正如其名称所示，`replaceFirst`替换第一次出现，`replaceAll`替换所有出现。这是 [`ReplaceDemo.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/ReplaceDemo.java) 代码：
 
-**`java.lang.String`中的模式方法等价物**
+```java
+import java.util.regex.Pattern; 
+import java.util.regex.Matcher;
 
-`java.lang.String`中也存在正则表达式支持，它们是几种模仿`java.util.regex.Pattern`行为的方法。为方便起见，下面介绍了API的主要摘录。
+public class ReplaceDemo {
+ 
+    private static String REGEX = "dog";
+    private static String INPUT =
+        "The dog says meow. All dogs say meow.";
+    private static String REPLACE = "cat";
+ 
+    public static void main(String[] args) {
+        Pattern p = Pattern.compile(REGEX);
+        // get a matcher object
+        Matcher m = p.matcher(INPUT);
+        INPUT = m.replaceAll(REPLACE);
+        System.out.println(INPUT);
+    }
+}
+```
 
-- [`public boolean matches(String regex)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#matches-java.lang.String-): 判断此字符串是否与给定的正则表达式匹配。调用`*str*.matches(*regex*)`
+```
+OUTPUT: The cat says meow. All cats say meow.
+```
 
-  方法会产生与表达式`Pattern.matches(*regex*, *str*)`完全相同的结果。
+在第一个版本中，所有出现的`dog`都被`cat`取代。但为何停在这里？您可以替换匹配任何正则表达式的文本，而不是替换像`dog`一样的简单文字。此方法的API声明“给定正则表达式 `a*b`，输入`aabfooaabfooabfoob`和替换字符串 `-`，在该表达式的匹配器上调用此方法将产生字符串`-foo-foo-foo-`。
 
-- [`public String[] split(String regex, int limit)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#split-java.lang.String-int-): 将字符串拆分为给定正则表达式的匹配项。调用 方法 `*str*.split(*regex*, *n*)` 会得到与 `Pattern.compile(*regex*).split(*str*, *n*)` 一样的结果。
+[`ReplaceDemo2.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/ReplaceDemo2.java) ：
 
-- [`public String[] split(String regex)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#split-java.lang.String-): 将此字符串拆分为给定正则表达式的匹配项。 此方法与调用具有给定表达式且limit参数为零的双参数split方法的方法相同。结果数组中不包括尾随空字符串。
+```java
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+ 
+public class ReplaceDemo2 {
+ 
+    private static String REGEX = "a*b";
+    private static String INPUT =
+        "aabfooaabfooabfoob";
+    private static String REPLACE = "-";
+ 
+    public static void main(String[] args) {
+        Pattern p = Pattern.compile(REGEX);
+        // get a matcher object
+        Matcher m = p.matcher(INPUT);
+        INPUT = m.replaceAll(REPLACE);
+        System.out.println(INPUT);
+    }
+}
+```
 
-还有一个替换方法，用一个`CharSequence`替换另一个：
+```
+OUTPUT: -foo-foo-foo-
+```
 
-- [`public String replace(CharSequence target,CharSequence replacement)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#replace-java.lang.CharSequence-java.lang.CharSequence-): 将与该文字目标序列匹配的此字符串的每个子字符串替换为指定的文字替换序列。替换从字符串的开头到结尾，例如，在字符串“aaa”中将“aa”替换为“b”将导致“ba”而不是“ab”。
+要仅替换模式的第一个匹配项，只需调用`replaceFirst`而不是`replaceAll`。它接受相同的参数。
+
+**使用`appendReplacement(StringBuffer,String)` 和 `appendTail(StringBuffer)`**
+
+`Matcher`类还提供了`appendReplacement`和`appendTail`方法来替换文本。以下示例 [`RegexDemo.java`](https://docs.oracle.com/javase/tutorial/essential/regex/examples/RegexDemo.java) 使用这两种方法来实现与`replaceAll`相同的效果。
+
+```java
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+public class RegexDemo {
+ 
+    private static String REGEX = "a*b";
+    private static String INPUT = "aabfooaabfooabfoob";
+    private static String REPLACE = "-";
+ 
+    public static void main(String[] args) {
+        Pattern p = Pattern.compile(REGEX);
+        Matcher m = p.matcher(INPUT); // get a matcher object
+        StringBuffer sb = new StringBuffer();
+        while(m.find()){
+            m.appendReplacement(sb,REPLACE);
+        }
+        m.appendTail(sb);
+        System.out.println(sb.toString());
+    }
+}
+```
+
+```
+OUTPUT: -foo-foo-foo- 
+```
+
+**`java.lang.String` 中 Matcher 类方法的等效方法**
+
+为方便起见，`String`类也模仿了几个`Matcher`方法：
+
+- [`public String replaceFirst(String regex, String replacement)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#replaceFirst-java.lang.String-java.lang.String-): 将此字符串匹配到给定正则表达式的第一个子串替换为给定替换字符串。调用 `*str*.replaceFirst(*regex*, *repl*)` 将得到与表达式`Pattern.compile(*regex*).matcher(*str*).replaceFirst(*repl*)` 相同的结果。
+- [`public String replaceAll(String regex, String replacement)`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#replaceAll-java.lang.String-java.lang.String-): 将此字符串匹配到给定正则表达式的所有子串替换为给定替换字符串。调用 `*str*.replaceAll(*regex*, *repl*)` 将得到与表达式 `Pattern.compile(*regex*).matcher(*str*).replaceAll(*repl*)` 相同的结果。
 
