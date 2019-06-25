@@ -136,3 +136,154 @@ public interface Collection<E>...
 
 ### Collection 接口
 
+`Collection`表示一组称为其元素的对象。`Collection`接口用于传递需要最大通用性的对象集合。例如，按照惯例，所有通用集合实现都有一个带有`Collection`参数的构造函数。此构造函数（称为*转换构造函数*）初始化新集合以包含指定集合中的所有元素，无论给定集合的子接口或实现类型如何。换句话说，它允许您转换集合的类型。
+
+例如，假设您有一个`Collection<String> c`，它可以是`List`，`Set`或其他类型的`Collection`。这个习惯用法创建一个新的`ArrayList`（`List`接口的一个实现），初始包含`c`中的所有元素。
+
+```java
+List<String> list = new ArrayList<String>(c);
+```
+
+或者 - 如果您使用的是JDK 7或更高版本 - 您可以使用菱形运算符：
+
+```java
+List<String> list = new ArrayList<>(c);
+```
+
+`Collection`接口包含执行基本操作的方法，例如`int size()`，`boolean isEmpty()`，`boolean contains(Object element)`，`boolean add(E element)`，`boolean remove(Object element)`和`Iterator <E> iterator()`。
+
+它还包含对整个集合进行操作的方法，例如`boolean containsAll(Collection <?> c)`，`boolean addAll(Collection <? extends E> c)`，`boolean removeAll(Collection <?> c)`，`boolean retainAll(Collection <?> c)`，和`void clear()`。
+
+还存在用于数组操作的附加方法（诸如`Object [] toArray()`和`<T> T [] toArray(T [] a)`。
+
+在JDK 8及更高版本中，`Collection`接口还公开方法`Stream <E> stream()`和`Stream <E> parallelStream()`，以从底层集合中获取顺序或并行流。（有关使用流的更多信息，请参阅标题为 [聚合操作](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 的课程。）
+
+如果给定`Collection`表示一组对象，`Collection`接口会执行您期望的操作。它有方法告诉你集合中有多少元素（`size`，`isEmpty`），检查给定对象是否在集合中的方法（`contains`），从集合中添加和删除元素的方法（`add`, `remove`）， 和在集合（`iterator`）上提供迭代器的方法。
+
+`add`方法通常定义得足够通用，因此对于允许重复的集合以及不重复的集合都有意义。它保证`Collection`在调用完成后将包含指定的元素，并且如果`Collection`因调用而更改，则返回`true`。类似地，`remove`方法旨在从`Collection`中删除指定元素的单个实例，假设它包含给定的元素，并且如果`Collection`被修改则返回`true`。
+
+**遍历集合**
+
+有三种遍历集合的方法：（1）使用聚合操作；（2）和for-each构造；（3）使用迭代器。
+
+**聚合操作**
+
+在JDK 8及更高版本中，迭代集合的首选方法是获取流并对其执行聚合操作。聚合操作通常与lambda表达式结合使用，以使用较少的代码行使编程更具表现力。以下代码按顺序遍历一组形状并打印出红色对象：
+
+```java
+myShapesCollection.stream()
+.filter(e -> e.getColor() == Color.RED)
+.forEach(e -> System.out.println(e.getName()));
+```
+
+同样，您可以轻松地请求并行流，如果集合足够大并且您的计算机具有足够的核心，这可能是有意义的：
+
+```java
+myShapesCollection.parallelStream()
+.filter(e -> e.getColor() == Color.RED)
+.forEach(e -> System.out.println(e.getName()));
+```
+
+使用此API收集数据的方法有很多种。例如，您可能希望将`Collection`的元素转换为`String`对象，然后将它们连接起来，用逗号分隔：
+
+```java
+    String joined = elements.stream()
+    .map(Object::toString)
+    .collect(Collectors.joining(", "));
+```
+
+或者总计一下所有员工的工资：
+
+```java
+int total = employees.stream()
+.collect(Collectors.summingInt(Employee::getSalary)));
+```
+
+这些只是您可以使用流和聚合操作执行的一些示例。有关更多信息和示例，请参阅标题为 [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 的课程。
+
+`Collections`框架一直提供许多所谓的“批量操作”作为其API的一部分。这些方法包括对整个集合进行操作的方法，例如`containsAll`，`addAll`，`removeAll`等。不要将这些方法与JDK 8中引入的聚合操作混淆。新聚合操作与现有批量操作之间的主要区别（`containsAll`，`addAll`等）是旧版本都是*mutative*的，这意味着它们都修改了底层集合。相反，新的聚合操作不会修改基础集合。使用新的聚合操作和lambda表达式时，必须注意避免修改集合，以免将来引入问题，如果您的代码稍后从并行流运行。
+
+**for-each 结构**
+
+`for-each`构造允许您使用`for`循环简明地遍历集合或数组 - 请参阅 [The for Statement](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html) 。 以下代码使用`for-each`构造在单独的行上打印出集合的每个元素。
+
+```java
+for (Object o : collection)
+    System.out.println(o);
+```
+
+**迭代器**
+
+如果需要，`Iterator`是一个对象，使您可以遍历集合并有选择地从集合中删除元素。通过调用`iterator`方法获得集合的`Iterator`。以下是`Iterator`接口。
+
+```java
+public interface Iterator<E> {
+    boolean hasNext();
+    E next();
+    void remove(); //optional
+}
+```
+
+如果迭代具有更多元素，则`hasNext`方法返回`true`，并且 `next` 方法返回迭代中的下一个元素。`remove`方法从基础`Collection`中删除`next`返回的最后一个元素。每次调用next时，只能调用一次`remove`方法，如果违反此规则，则抛出异常。
+
+请注意，`Iterator.remove`是在迭代期间修改集合的唯一安全方法；如果在迭代进行过程中以任何其他方式修改基础集合，则程序行为结果未指定。
+
+当需要进行如下操作时，使用`Iterator`而不是`for-each`构造：
+
+- 删除当前元素。`for-each`构造隐藏了迭代器，因此您无法调用`remove`。因此，`for-each`构造不可用于过滤。
+- 并行迭代多个集合。
+
+以下方法说明如何使用`Iterator`过滤任意`Collection`  - 即遍历删除特定元素的集合。
+
+```java
+static void filter(Collection<?> c) {
+    for (Iterator<?> it = c.iterator(); it.hasNext(); )
+        if (!cond(it.next()))
+            it.remove();
+}
+```
+
+这段简单的代码是多态的，这意味着它适用于任何`Collection`，无论何种集合具体实现。此示例演示了使用Java Collections Framework编写多态算法是多么容易。
+
+**集合接口批量操作**
+
+批量操作对整个集合执行操作。您可以使用基本操作实现这些批量操作，但在大多数情况下，此类实现效率较低。以下是批量操作：
+
+ -  `containsAll` - 如果目标`Collection`包含指定`Collection`中的所有元素，则返回`true`。
+ -  `addAll` - 将指定`Collection`中的所有元素添加到目标`Collection`中。
+ -  `removeAll` - 从目标`Collection`中删除也包含在指定`Collection`中的所有元素。
+ -  `retainAll` - 从目标`Collection`中删除所有未包含在指定`Collection`中的元素。也就是说，它仅保留目标`Collection`中也包含在指定`Collection`中的那些元素。
+ -  `clear` - 从`Collection`中删除所有元素。
+
+如果在执行操作的过程中修改了目标`Collection`，则`addAll`，`removeAll`和`retainAll`方法都返回`true`。
+
+作为批量操作功能的一个简单示例，请考虑以下习惯用法，下面例子从`Collection` `c`中删除指定元素的所有实例`e`。
+
+```java
+c.removeAll(Collections.singleton(e));
+```
+
+更具体地说，假设您要从`Collection`中删除所有`null`元素。
+
+```java
+c.removeAll(Collections.singleton(null));
+```
+
+这个习惯用法使用`Collections.singleton`，这是一个静态工厂方法，它返回一个只包含指定元素的不可变`Set`。
+
+**集合接口数组操作**
+
+`toArray`方法是作为集合和旧API之间的桥梁提供的，这些API期望输入是数组。数组操作允许将`Collection`的内容转换为数组。没有参数的简单形式创建一个新的`Object`数组。更复杂的形式允许调用者提供数组或选择输出数组的运行时类型。
+
+例如，假设`c`是`Collection`。以下代码段将`c`的内容转储到新分配的`Object`数组中，该数组的长度与`c`中的元素数相同。
+
+```java
+Object[] a = c.toArray();
+```
+
+假设已知`c`只包含字符串（可能因为`c`的类型为`Collection<String>`）。以下代码段将`c`的内容转储到新分配的`String`数组中，该数组的长度与`c`中的元素数相同。
+
+```java
+String[] a = c.toArray(new String[0]);
+```
+
