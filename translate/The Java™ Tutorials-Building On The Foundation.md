@@ -850,3 +850,337 @@ deque是双端队列，通常发音为deck。双端队列是元素的线性集�
 
 除了插入，删除和检查`Deque`实例的这些基本方法之外，`Deque`接口还有一些预定义的方法。其中之一是`removeFirstOccurence`，如果指定元素存在于`Deque`实例中，则此方法将删除指定元素的第一次出现。如果该元素不存在，则`Deque`实例保持不变。 另一种类似的方法是`removeLastOccurence`；此方法删除`Deque`实例中指定元素的最后一次出现。这些方法的返回类型是`boolean`，如果元素存在于`Deque`实例中，它们将返回`true`。
 
+### Map 接口
+
+`Map`是将键映射到值的对象。map不能包含重复键：每个键最多可映射一个值。它模拟数学*函数*抽象。`Map`接口包括基本操作的方法（如`put`，`get`，`remove`，`containsKey`，`containsValue`，`size`和`empty`），批量操作（如`putAll`和`clear`）和集合视图（如`keySet`，`entrySet`和`values`）。
+
+Java平台包含三个通用的`Map`实现： [`HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html), [`TreeMap`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeMap.html), 和 [`LinkedHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html)。它们的行为和性能完全类似于`HashSet`，`TreeSet`和`LinkedHashSet`，如 [The Set Interface](https://docs.oracle.com/javase/tutorial/collections/interfaces/set.html) 部分所述。
+
+本页的其余部分详细讨论了`Map`接口。但首先，这里有一些使用JDK 8聚合操作收集数据到`Map`的示例。对现实世界对象进行建模是面向对象编程中的常见任务，因此可以合理地认为某些程序可能会按部门对员工进行分组：
+
+```java
+// Group employees by department
+Map<Department, List<Employee>> byDept = employees.stream()
+.collect(Collectors.groupingBy(Employee::getDepartment));
+```
+
+或者计算部门员工的薪资总额：
+
+```java
+// Compute sum of salaries by department
+Map<Department, Integer> totalByDept = employees.stream()
+.collect(Collectors.groupingBy(Employee::getDepartment,
+Collectors.summingInt(Employee::getSalary)));
+```
+
+或者根据是否及格对学生进行分组：
+
+```java
+// Partition students into passing and failing
+Map<Boolean, List<Student>> passingFailing = students.stream()
+.collect(Collectors.partitioningBy(s -> s.getGrade()>= PASS_THRESHOLD)); 
+```
+
+你也可以按照城市对人进行分组：
+
+```java
+// Classify Person objects by city
+Map<String, List<Person>> peopleByCity
+         = personStream.collect(Collectors.groupingBy(Person::getCity));
+```
+
+或者甚至级联两个收集器按州和城市对人进行分类：
+
+```java
+// Cascade Collectors 
+Map<String, Map<String, List<Person>>> peopleByStateAndCity
+  = personStream.collect(Collectors.groupingBy(Person::getState,
+  Collectors.groupingBy(Person::getCity)))
+```
+
+同样，这些只是如何使用新JDK 8 API的几个示例。有关lambda表达式和聚合操作的深入介绍，请参阅标题为 [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 的课程。
+
+**Map 接口基本操作**
+
+`Map`的基本操作（`put`，`get`，`containsKey`，`containsValue`，`size`和`isEmpty`）与`Hashtable`中的对应操作完全相同。以下程序生成其参数列表中找到的单词的频率表。频率表将每个单词映射到它在参数列表中出现的次数。
+
+```java
+import java.util.*;
+
+public class Freq {
+    public static void main(String[] args) {
+        Map<String, Integer> m = new HashMap<String, Integer>();
+
+        // Initialize frequency table from command line
+        for (String a : args) {
+            Integer freq = m.get(a);
+            m.put(a, (freq == null) ? 1 : freq + 1);
+        }
+
+        System.out.println(m.size() + " distinct words:");
+        System.out.println(m);
+    }
+}
+```
+
+The only tricky thing about this program is the second argument of the `put` statement. That argument is a conditional expression that has the effect of setting the frequency to one if the word has never been seen before or one more than its current value if the word has already been seen. Try running this program with the command:
+
+```
+java Freq if it is to be it is up to me to delegate
+```
+
+The program yields the following output.
+
+```
+8 distinct words:
+{to=3, delegate=1, be=1, it=2, up=1, if=1, me=1, is=2}
+```
+
+Suppose you'd prefer to see the frequency table in alphabetical order. All you have to do is change the implementation type of the `Map` from `HashMap` to `TreeMap`. Making this four-character change causes the program to generate the following output from the same command line.
+
+```
+8 distinct words:
+{be=1, delegate=1, if=1, is=2, it=2, me=1, to=3, up=1}
+```
+
+Similarly, you could make the program print the frequency table in the order the words first appear on the command line simply by changing the implementation type of the map to `LinkedHashMap`. Doing so results in the following output.
+
+```
+8 distinct words:
+{if=1, it=2, is=2, to=3, be=1, up=1, me=1, delegate=1}
+```
+
+This flexibility provides a potent illustration of the power of an interface-based framework.
+
+Like the [`Set`](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html)and [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html)interfaces, `Map` strengthens the requirements on the `equals` and `hashCode` methods so that two `Map` objects can be compared for logical equality without regard to their implementation types. Two `Map` instances are equal if they represent the same key-value mappings.
+
+By convention, all general-purpose `Map` implementations provide constructors that take a `Map` object and initialize the new `Map` to contain all the key-value mappings in the specified `Map`. This standard `Map` conversion constructor is entirely analogous to the standard `Collection` constructor: It allows the caller to create a `Map` of a desired implementation type that initially contains all of the mappings in another `Map`, regardless of the other `Map`'s implementation type. For example, suppose you have a `Map`, named `m`. The following one-liner creates a new `HashMap` initially containing all of the same key-value mappings as `m`.
+
+```java
+Map<K, V> copy = new HashMap<K, V>(m);
+```
+
+**Map 接口批量操作**
+
+The `clear` operation does exactly what you would think it could do: It removes all the mappings from the `Map`. The `putAll` operation is the `Map` analogue of the `Collection`interface's `addAll` operation. In addition to its obvious use of dumping one `Map` into another, it has a second, more subtle use. Suppose a `Map` is used to represent a collection of attribute-value pairs; the `putAll` operation, in combination with the `Map` conversion constructor, provides a neat way to implement attribute map creation with default values. The following is a static factory method that demonstrates this technique.
+
+```java
+static <K, V> Map<K, V> newAttributeMap(Map<K, V>defaults, Map<K, V> overrides) {
+    Map<K, V> result = new HashMap<K, V>(defaults);
+    result.putAll(overrides);
+    return result;
+}
+```
+
+**集合视图**
+
+The `Collection` view methods allow a `Map` to be viewed as a `Collection` in these three ways:
+
+- `keySet` — the `Set` of keys contained in the `Map`.
+- `values` — The `Collection` of values contained in the `Map`. This `Collection` is not a `Set`, because multiple keys can map to the same value.
+- `entrySet` — the `Set` of key-value pairs contained in the `Map`. The `Map` interface provides a small nested interface called `Map.Entry`, the type of the elements in this `Set`.
+
+The `Collection` views provide the *only* means to iterate over a `Map`. This example illustrates the standard idiom for iterating over the keys in a `Map` with a `for-each` construct:
+
+```java
+for (KeyType key : m.keySet())
+    System.out.println(key);
+```
+
+and with an `iterator`:
+
+```java
+// Filter a map based on some 
+// property of its keys.
+for (Iterator<Type> it = m.keySet().iterator(); it.hasNext(); )
+    if (it.next().isBogus())
+        it.remove();
+```
+
+The idiom for iterating over values is analogous. Following is the idiom for iterating over key-value pairs.
+
+```java
+for (Map.Entry<KeyType, ValType> e : m.entrySet())
+    System.out.println(e.getKey() + ": " + e.getValue());
+```
+
+At first, many people worry that these idioms may be slow because the `Map` has to create a new `Collection` instance each time a `Collection` view operation is called. Rest easy: There's no reason that a `Map` cannot always return the same object each time it is asked for a given `Collection` view. This is precisely what all the `Map` implementations in `java.util` do.
+
+With all three `Collection` views, calling an `Iterator`'s `remove` operation removes the associated entry from the backing `Map`, assuming that the backing `Map` supports element removal to begin with. This is illustrated by the preceding filtering idiom.
+
+With the `entrySet` view, it is also possible to change the value associated with a key by calling a `Map.Entry`'s `setValue` method during iteration (again, assuming the `Map`supports value modification to begin with). Note that these are the *only* safe ways to modify a `Map` during iteration; the behavior is unspecified if the underlying `Map` is modified in any other way while the iteration is in progress.
+
+The `Collection` views support element removal in all its many forms — `remove`, `removeAll`, `retainAll`, and `clear` operations, as well as the `Iterator.remove` operation. (Yet again, this assumes that the backing `Map` supports element removal.)
+
+The `Collection` views *do not* support element addition under any circumstances. It would make no sense for the `keySet` and `values` views, and it's unnecessary for the `entrySet` view, because the backing `Map`'s `put` and `putAll` methods provide the same functionality.
+
+**集合视图的奇技淫巧：Map 代数**
+
+When applied to the `Collection` views, bulk operations (`containsAll`, `removeAll`, and `retainAll`) are surprisingly potent tools. For starters, suppose you want to know whether one `Map` is a submap of another — that is, whether the first `Map` contains all the key-value mappings in the second. The following idiom does the trick.
+
+```java
+if (m1.entrySet().containsAll(m2.entrySet())) {
+    ...
+}
+```
+
+Along similar lines, suppose you want to know whether two `Map` objects contain mappings for all of the same keys.
+
+```java
+if (m1.keySet().equals(m2.keySet())) {
+    ...
+}
+```
+
+Suppose you have a `Map` that represents a collection of attribute-value pairs, and two `Set`s representing required attributes and permissible attributes. (The permissible attributes include the required attributes.) The following snippet determines whether the attribute map conforms to these constraints and prints a detailed error message if it doesn't.
+
+```java
+static <K, V> boolean validate(Map<K, V> attrMap, Set<K> requiredAttrs, Set<K>permittedAttrs) {
+    boolean valid = true;
+    Set<K> attrs = attrMap.keySet();
+
+    if (! attrs.containsAll(requiredAttrs)) {
+        Set<K> missing = new HashSet<K>(requiredAttrs);
+        missing.removeAll(attrs);
+        System.out.println("Missing attributes: " + missing);
+        valid = false;
+    }
+    if (! permittedAttrs.containsAll(attrs)) {
+        Set<K> illegal = new HashSet<K>(attrs);
+        illegal.removeAll(permittedAttrs);
+        System.out.println("Illegal attributes: " + illegal);
+        valid = false;
+    }
+    return valid;
+}
+```
+
+Suppose you want to know all the keys common to two `Map` objects.
+
+```java
+Set<KeyType>commonKeys = new HashSet<KeyType>(m1.keySet());
+commonKeys.retainAll(m2.keySet());
+```
+
+A similar idiom gets you the common values.
+
+All the idioms presented thus far have been nondestructive; that is, they don't modify the backing `Map`. Here are a few that do. Suppose you want to remove all of the key-value pairs that one `Map` has in common with another.
+
+```java
+m1.entrySet().removeAll(m2.entrySet());
+```
+
+Suppose you want to remove from one `Map` all of the keys that have mappings in another.
+
+```java
+m1.keySet().removeAll(m2.keySet());
+```
+
+What happens when you start mixing keys and values in the same bulk operation? Suppose you have a `Map`, `managers`, that maps each employee in a company to the employee's manager. We'll be deliberately vague about the types of the key and the value objects. It doesn't matter, as long as they're the same. Now suppose you want to know who all the "individual contributors" (or nonmanagers) are. The following snippet tells you exactly what you want to know.
+
+```java
+Set<Employee> individualContributors = new HashSet<Employee>(managers.keySet());
+individualContributors.removeAll(managers.values());
+```
+
+Suppose you want to fire all the employees who report directly to some manager, Simon.
+
+```java
+Employee simon = ... ;
+managers.values().removeAll(Collections.singleton(simon));
+```
+
+Note that this idiom makes use of `Collections.singleton`, a static factory method that returns an immutable `Set` with the single, specified element.
+
+Once you've done this, you may have a bunch of employees whose managers no longer work for the company (if any of Simon's direct-reports were themselves managers). The following code will tell you which employees have managers who no longer works for the company.
+
+```java
+Map<Employee, Employee> m = new HashMap<Employee, Employee>(managers);
+m.values().removeAll(managers.keySet());
+Set<Employee> slackers = m.keySet();
+```
+
+This example is a bit tricky. First, it makes a temporary copy of the `Map`, and it removes from the temporary copy all entries whose (manager) value is a key in the original `Map`. Remember that the original `Map` has an entry for each employee. Thus, the remaining entries in the temporary `Map` comprise all the entries from the original `Map` whose (manager) values are no longer employees. The keys in the temporary copy, then, represent precisely the employees that we're looking for.
+
+There are many more idioms like the ones contained in this section, but it would be impractical and tedious to list them all. Once you get the hang of it, it's not that difficult to come up with the right one when you need it.
+
+**多值映射**
+
+A *multimap* is like a `Map` but it can map each key to multiple values. The Java Collections Framework doesn't include an interface for multimaps because they aren't used all that commonly. It's a fairly simple matter to use a `Map` whose values are `List` instances as a multimap. This technique is demonstrated in the next code example, which reads a word list containing one word per line (all lowercase) and prints out all the anagram groups that meet a size criterion. An *anagram group* is a bunch of words, all of which contain exactly the same letters but in a different order. The program takes two arguments on the command line: (1) the name of the dictionary file and (2) the minimum size of anagram group to print out. Anagram groups containing fewer words than the specified minimum are not printed.
+
+There is a standard trick for finding anagram groups: For each word in the dictionary, alphabetize the letters in the word (that is, reorder the word's letters into alphabetical order) and put an entry into a multimap, mapping the alphabetized word to the original word. For example, the word *bad* causes an entry mapping *abd* into *bad* to be put into the multimap. A moment's reflection will show that all the words to which any given key maps form an anagram group. It's a simple matter to iterate over the keys in the multimap, printing out each anagram group that meets the size constraint.
+
+[`The following program`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/Anagrams.java) is a straightforward implementation of this technique.
+
+```java
+import java.util.*;
+import java.io.*;
+
+public class Anagrams {
+    public static void main(String[] args) {
+        int minGroupSize = Integer.parseInt(args[1]);
+
+        // Read words from file and put into a simulated multimap
+        Map<String, List<String>> m = new HashMap<String, List<String>>();
+
+        try {
+            Scanner s = new Scanner(new File(args[0]));
+            while (s.hasNext()) {
+                String word = s.next();
+                String alpha = alphabetize(word);
+                List<String> l = m.get(alpha);
+                if (l == null)
+                    m.put(alpha, l=new ArrayList<String>());
+                l.add(word);
+            }
+        } catch (IOException e) {
+            System.err.println(e);
+            System.exit(1);
+        }
+
+        // Print all permutation groups above size threshold
+        for (List<String> l : m.values())
+            if (l.size() >= minGroupSize)
+                System.out.println(l.size() + ": " + l);
+    }
+
+    private static String alphabetize(String s) {
+        char[] a = s.toCharArray();
+        Arrays.sort(a);
+        return new String(a);
+    }
+}
+```
+
+Running this program on a 173,000-word dictionary file with a minimum anagram group size of eight produces the following output.
+
+```
+9: [estrin, inerts, insert, inters, niters, nitres, sinter,
+     triens, trines]
+8: [lapse, leaps, pales, peals, pleas, salep, sepal, spale]
+8: [aspers, parses, passer, prases, repass, spares, sparse,
+     spears]
+10: [least, setal, slate, stale, steal, stela, taels, tales,
+      teals, tesla]
+8: [enters, nester, renest, rentes, resent, tenser, ternes,
+     treens]
+8: [arles, earls, lares, laser, lears, rales, reals, seral]
+8: [earings, erasing, gainers, reagins, regains, reginas,
+     searing, seringa]
+8: [peris, piers, pries, prise, ripes, speir, spier, spire]
+12: [apers, apres, asper, pares, parse, pears, prase, presa,
+      rapes, reaps, spare, spear]
+11: [alerts, alters, artels, estral, laster, ratels, salter,
+      slater, staler, stelar, talers]
+9: [capers, crapes, escarp, pacers, parsec, recaps, scrape,
+     secpar, spacer]
+9: [palest, palets, pastel, petals, plates, pleats, septal,
+     staple, tepals]
+9: [anestri, antsier, nastier, ratines, retains, retinas,
+     retsina, stainer, stearin]
+8: [ates, east, eats, etas, sate, seat, seta, teas]
+8: [carets, cartes, caster, caters, crates, reacts, recast,
+     traces]
+```
+
+Many of these words seem a bit bogus, but that's not the program's fault; they're in the dictionary file. Here's the [`dictionary file`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/dictionary.txt) we used. It was derived from the Public Domain ENABLE benchmark reference word list.
