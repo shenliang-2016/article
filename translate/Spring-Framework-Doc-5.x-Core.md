@@ -2335,3 +2335,11 @@ org.springframework.scripting.groovy.GroovyMessenger@272961
 
 将回调接口或注解与自定义`BeanPostProcessor`实现结合使用是扩展Spring IoC容器的常用方法。一个例子是Spring的`RequiredAnnotationBeanPostProcessor`  - 一个随Spring发行版一起提供的`BeanPostProcessor`实现，它确保用（任意）注解标记的bean上的 Java Bean 属性确实（配置为）依赖注入一个值。
 
+#### 1.8.2 使用`BeanFactoryPostProcessor`自定义配置元数据
+
+我们寻找的下一个扩展点是`org.springframework.beans.factory.config.BeanFactoryPostProcessor`。这个接口的语义类似于`BeanPostProcessor`。不过有个主要的不同：`BeanFactoryPostProcessor`操作 bean 配置元数据。也就是说，Spring IoC 容器允许`BeanFactoryPostProcessor`读取配置元数据并能够在容器实例化除`BeanFactoryPostProcessor`实例之外任何实例之前修改配置元数据。
+
+你可以配置多个`BeanFactoryPostProcessor`实例，并且还可以通过设定`order`属性来控制这些`BeanFactoryPostProcessor`实例的运行顺序。不过，只有`BeanFactoryPostProcessor`实现了`Ordered`接口时你才能这么做。如果你编写自己的`BeanFactoryPostProcessor`，你也应该考虑实现`Ordered`接口。参考文档 [`BeanFactoryPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/config/BeanFactoryPostProcessor.html) 和 [`Ordered`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/core/Ordered.html) 获取更多信息。
+
+> 如果你想要改变实际的 bean 实例（根据配置元数据创建而来的对象），你就需要借助 `BeanPostProcessor`（前文 [Customizing Beans by Using a `BeanPostProcessor`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp) 中描述过 ）。尽管在 `BeanFactoryPostProcessor` 中操作 bean 实例在技术上是可能的（比如，通过使用 `BeanFactory.getBean()`），这么做会导致过早的 bean 实例化，因而违反了标准的容器生命周期管理规则。这可能会导致负面影响，比如可能会跳过 bean 后处理过程。同时，`BeanFactoryPostProcessor` 实例的作用域是容器范围。仅当您使用容器层次结构时，这才有意义。如果在一个容器中定义`BeanFactoryPostProcessor`，它只应用于该容器中的bean定义。一个容器中的Bean定义不会被另一个容器中的`BeanFactoryPostProcessor`实例进行后处理，即使两个容器都是同一层次结构的一部分。
+
