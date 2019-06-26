@@ -749,3 +749,76 @@ Most polymorphic algorithms in the `Collections` class apply specifically to `Li
 - `indexOfSubList` — 返回一个`List`的第一个等于另一个子列表的子列表索引。
 - `lastIndexOfSubList` — 返回一个`List`的最后一个等于另一个子列表的子列表索引。
 
+### Queue 接口
+
+ [`Queue`](https://docs.oracle.com/javase/8/docs/api/java/util/Queue.html) 是在处理之前保存元素的集合。除了基本的`Collection`操作外，队列还提供额外的插入，删除和检查操作。 `Queue`接口如下。
+
+```java
+public interface Queue<E> extends Collection<E> {
+    E element();
+    boolean offer(E e);
+    E peek();
+    E poll();
+    E remove();
+}
+```
+
+每个`Queue`方法以两种形式存在：（1）如果操作失败，则抛出异常;（2）如果操作失败，则返回特殊值（`null`或`false`，具体取决于操作）。接口的常规结构如下表所示。
+
+| Type of Operation | Throws exception | Returns special value |
+| ----------------- | ---------------- | --------------------- |
+| Insert            | `add(e)`         | `offer(e)`            |
+| Remove            | `remove()`       | `poll()`              |
+| Examine           | `element()`      | `peek()`              |
+
+队列通常（但不一定）以FIFO（先进先出）方式对元素进行排序。优先级队列除外，它们根据元素的值对元素进行排序 - 有关详细信息，请参阅 [Object Ordering](https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html) 部分。无论使用什么排序，队列的头部都是通过调用 `remove` 或 `poll` 删除的元素。在FIFO队列中，所有新元素都插入队列的尾部。其他类型的队列可能使用不同的放置规则。每个`Queue`实现都必须指定其排序属性。
+
+`Queue`实现可以限制它拥有的元素数量：这样的队列被称为有界队列。`java.util.concurrent`中的某些`Queue`实现是有界的，但`java.util`中的实现不是。
+
+`Queue`从`Collection`继承的`add`方法插入一个元素，除非它违反了队列的容量限制，在这种情况下它会抛出`IllegalStateException`。`offer`方法仅用于有界队列，与`add`的不同之处仅在于它通过返回false来表示无法插入元素。
+
+`remove`和`poll`方法都删除并返回队列的头部元素。确切地删除哪个元素是队列的排序策略的功能。仅当队列为空时，`remove`和`poll`方法的行为才有所不同。在这些情况下，`remove` 抛出`NoSuchElementException`，而`poll`返回`null`。
+
+ `element` 和`peek`方法返回但不删除队列的头部元素。它们以与`remove`和`poll`完全相同的方式彼此不同：如果队列为空，则 `element` 抛出`NoSuchElementException`，而`peek`返回`null`。
+
+`Queue` 实现通常不允许插入`null`元素。为实现`Queue`而进行了改进的`LinkedList`实现是一个例外。由于历史原因，它允许`null`元素，但是你应该避免利用它，因为`null`被`poll`和`peek`方法用作特殊的返回值。
+
+队列实现通常不定义`equals`和`hashCode`方法的基于元素的版本，而是从Object继承基于`id`的版本。
+
+Queue接口不定义阻塞队列方法，这在并发编程中很常见。这些等待元素出现或空间可用的方法在 [`java.util.concurrent.BlockingQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html) 接口中定义，该接口扩展了`Queue`。
+
+在以下示例程序中，队列用于实现倒数计时器。队列预先加载了从命令行上指定的数字到0的所有索引位置上的整数值，按降序排列。然后，从队列中删除值并以一秒的间隔打印。该程序是刻意而为的，因为在不使用队列的情况下执行相同的操作会更自然，但它说明了在后续处理之前使用队列来存储元素。
+
+```java
+import java.util.*;
+
+public class Countdown {
+    public static void main(String[] args) throws InterruptedException {
+        int time = Integer.parseInt(args[0]);
+        Queue<Integer> queue = new LinkedList<Integer>();
+
+        for (int i = time; i >= 0; i--)
+            queue.add(i);
+
+        while (!queue.isEmpty()) {
+            System.out.println(queue.remove());
+            Thread.sleep(1000);
+        }
+    }
+}
+```
+
+在以下示例中，优先级队列用于对元素集合进行排序。同样，这个程序是刻意而为的，因为没有理由使用它来支持`Collections`中提供的 `sort` 方法，但它说明了优先级队列的行为。
+
+```java
+static <E> List<E> heapSort(Collection<E> c) {
+    Queue<E> queue = new PriorityQueue<E>(c);
+    List<E> result = new ArrayList<E>();
+
+    while (!queue.isEmpty())
+        result.add(queue.remove());
+
+    return result;
+}
+```
+
