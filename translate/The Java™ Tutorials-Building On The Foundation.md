@@ -822,3 +822,31 @@ static <E> List<E> heapSort(Collection<E> c) {
 }
 ```
 
+### Deque 接口
+
+deque是双端队列，通常发音为deck。双端队列是元素的线性集合，支持在两个端点处插入和移除元素。`Deque`接口是比`Stack`和`Queue`更强大的抽象数据类型，因为它同时实现堆栈和队列。[`Deque`](https://docs.oracle.com/javase/8/docs/api/java/util/Deque.html) 接口定义了访问`Deque`实例两端元素的方法。提供了插入，移除和检查元素的方法。预定义的类（如[`ArrayDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayDeque.html) 和 [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html) ）实现了`Deque`接口。
+
+请注意，`Deque`接口既可以用作后进先出堆栈，也可以用作先进先出队列。`Deque`接口中给出的方法分为三个部分：
+
+**Insert**
+
+`addfirst`和`offerFirst`方法在`Deque`实例的开头插入元素。方法`addLast`和`offerLast`插入元素在`Deque`实例的末尾。当`Deque`实例的容量受到限制时，首选方法是`offerFirst`和`offerLast`，因为如果`Deque`实例已满，则`addFirst`可能无法插入元素而抛出异常。
+
+**Remove**
+
+`removeFirst`和`pollFirst`方法从`Deque`实例的开头删除元素。`removeLast`和`pollLast`方法从末尾删除元素。如果`Deque`为空，则方法`pollFirst`和`pollLast`返回`null`，而如果`Deque`实例为空，则方法`removeFirst`和`removeLast`会抛出异常。
+
+**Retrieve**
+
+方法`getFirst`和`peekFirst`检索`Deque`实例的第一个元素。这些方法不会从`Deque`实例中删除该值。同样，方法`getLast`和`peekLast`检索最后一个元素。如果`deque`实例为空，则方法`getFirst`和`getLast`会抛出异常，而方法`peekFirst`和`peekLast`将返回`null`。
+
+插入，删除和检索`Deque`元素的12种方法总结在下表中：
+
+| Type of Operation | First Element (Beginning of the `Deque` instance) | Last Element (End of the `Deque` instance) |
+| ----------------- | ---------------------------------------- | ---------------------------------------- |
+| **Insert**        | `addFirst(e)``offerFirst(e)`             | `addLast(e)``offerLast(e)`               |
+| **Remove**        | `removeFirst()``pollFirst()`             | `removeLast()``pollLast()`               |
+| **Examine**       | `getFirst()``peekFirst()`                | `getLast()``peekLast()`                  |
+
+除了插入，删除和检查`Deque`实例的这些基本方法之外，`Deque`接口还有一些预定义的方法。其中之一是`removeFirstOccurence`，如果指定元素存在于`Deque`实例中，则此方法将删除指定元素的第一次出现。如果该元素不存在，则`Deque`实例保持不变。 另一种类似的方法是`removeLastOccurence`；此方法删除`Deque`实例中指定元素的最后一次出现。这些方法的返回类型是`boolean`，如果元素存在于`Deque`实例中，它们将返回`true`。
+
