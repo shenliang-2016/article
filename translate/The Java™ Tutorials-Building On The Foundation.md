@@ -1270,19 +1270,19 @@ public class Name implements Comparable<Name> {
 
 为了保持例子简短，这个类有点额外的局限性：它不支持中间名，它既需要名字也需要姓，并且不以任何方式国际化。尽管如此，它还是说明了以下要点：
 
-- `Name` objects are *immutable*. All other things being equal, immutable types are the way to go, especially for objects that will be used as elements in `Set`s or as keys in `Map`s. These collections will break if you modify their elements or keys while they're in the collection.
-- The constructor checks its arguments for `null`. This ensures that all `Name` objects are well formed so that none of the other methods will ever throw a `NullPointerException`.
-- The `hashCode` method is redefined. This is essential for any class that redefines the `equals` method. (Equal objects must have equal hash codes.)
-- The `equals` method returns `false` if the specified object is `null` or of an inappropriate type. The `compareTo` method throws a runtime exception under these circumstances. Both of these behaviors are required by the general contracts of the respective methods.
-- The `toString` method has been redefined so it prints the `Name` in human-readable form. This is always a good idea, especially for objects that are going to get put into collections. The various collection types' `toString` methods depend on the `toString` methods of their elements, keys, and values.
+ - `Name` 对象是*不可变的*。在所有其他条件相同的情况下，不可变类型是可行的方法，特别是对于将在`Set`中用作元素或在`Map`中用作键的对象。如果您在集合中修改元素或键，这些集合将会中断。
+ - 构造函数检查其参数是否为`null`。这可以确保所有`Name`对象都格式正确，这样其他任何方法都不会抛出`NullPointerException`。
+ - 重新定义了`hashCode`方法。这对于重新定义`equals`方法的任何类都是必不可少的。（相等对象必须具有相同的哈希码。）
+ - 如果指定的对象为`null`或类型不合适，则`equals`方法返回`false`。`compareTo`方法在这些情况下抛出运行时异常。这些行为都是各方法的通用契约所要求的。
+ - 重新定义了toString方法，因此它以人类可读的形式打印`Name`。这总是一个好主意，特别是对于要放入集合的对象。各种集合类型的`toString`方法依赖于其元素，键和值的`toString`方法。
 
-Since this section is about element ordering, let's talk a bit more about `Name`'s `compareTo` method. It implements the standard name-ordering algorithm, where last names take precedence over first names. This is exactly what you want in a natural ordering. It would be very confusing indeed if the natural ordering were unnatural!
+由于本节是关于元素排序的，让我们再谈谈`Name`的`compareTo`方法。它实现了标准的名称排序算法，其中姓氏优先于名字，这正是您想要的自然顺序。如果自然顺序不自然，那将会非常令人困惑啊！
 
-Take a look at how `compareTo` is implemented, because it's quite typical. First, you compare the most significant part of the object (in this case, the last name). Often, you can just use the natural ordering of the part's type. In this case, the part is a `String` and the natural (lexicographic) ordering is exactly what's called for. If the comparison results in anything other than zero, which represents equality, you're done: You just return the result. If the most significant parts are equal, you go on to compare the next most-significant parts. In this case, there are only two parts — first name and last name. If there were more parts, you'd proceed in the obvious fashion, comparing parts until you found two that weren't equal or you were comparing the least-significant parts, at which point you'd return the result of the comparison.
+看看`compareTo`是如何实现的，因为它非常典型。首先，比较对象的最重要部分（在本例中为姓氏）。通常，您可以使用该部分类型的自然顺序。在这种情况下，该部分是一个 `String` ，自然（词典）排序正是所要求的。如果比较结果为零，表示相等，那么您就完成了：您只需返回结果。如果最重要的部分相同，则继续比较下一个最重要的部分。在这种情况下，只有两个部分 - 名字和姓氏。如果有更多的部分，你会以更明显的方式进行，比较部分，直到你发现两个不相等或你正在比较最不重要的部分，此时你将返回比较的结果。
 
-Just to show that it all works, here's [`a program that builds a list of names and sorts them`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/NameSort.java).
+下面这个例子只是为了表明一切都能如期工作，它建立一个名单列表并对它们进行排序。
 
-```
+```java
 import java.util.*;
 
 public class NameSort {
@@ -1301,31 +1301,31 @@ public class NameSort {
 }
 ```
 
-If you run this program, here's what it prints.
+程序输出：
 
 ```
 [Karl Ng, Tom Rich, Jeff Smith, John Smith]
 ```
 
-There are four restrictions on the behavior of the `compareTo` method, which we won't go into now because they're fairly technical and boring and are better left in the API documentation. It's really important that all classes that implement `Comparable` obey these restrictions, so read the documentation for `Comparable` if you're writing a class that implements it. Attempting to sort a list of objects that violate the restrictions has undefined behavior. Technically speaking, these restrictions ensure that the natural ordering is a *total order* on the objects of a class that implements it; this is necessary to ensure that sorting is well defined.
+`compareTo`方法的行为有四个限制，我们现在不会讨论它们，因为它们技术性很差，很无聊，最好留在API文档中。实现`Comparable`的所有类都遵守这些限制非常重要，因此如果您正在编写实现它的类，请阅读`Comparable`的文档。尝试对违反限制的对象列表进行排序是未定义的行为。从技术上讲，这些限制确保了自然顺序是实现它的类的对象的总顺序；这对于确保明确定义排序是必要的。
 
-## Comparators
+**Comparators**
 
 What if you want to sort some objects in an order other than their natural ordering? Or what if you want to sort some objects that don't implement `Comparable`? To do either of these things, you'll need to provide a [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) — an object that encapsulates an ordering. Like the `Comparable` interface, the `Comparator` interface consists of a single method.
 
-```
+```java
 public interface Comparator<T> {
     int compare(T o1, T o2);
 }
 ```
 
-The `compare` method compares its two arguments, returning a negative integer, 0, or a positive integer depending on whether the first argument is less than, equal to, or greater than the second. If either of the arguments has an inappropriate type for the `Comparator`, the `compare` method throws a `ClassCastException`.
+`compare`方法比较其两个参数，返回负整数，0或正整数，具体取决于第一个参数是小于，等于还是大于第二个参数。如果其中一个参数不是`Comparator`类型，则`compare`方法将抛出`ClassCastException`。
 
-Much of what was said about `Comparable` applies to `Comparator` as well. Writing a `compare` method is nearly identical to writing a `compareTo` method, except that the former gets both objects passed in as arguments. The `compare` method has to obey the same four technical restrictions as `Comparable`'s `compareTo` method for the same reason — a `Comparator` must induce a total order on the objects it compares.
+关于`Comparable`的大部分内容也适用于 `Comparator` 。编写`compare`方法与编写`compareTo`方法几乎完全相同，只是前者将两个对象作为参数传入。由于同样的原因， `compare` 方法必须遵守与`Comparable`的`compareTo`方法相同的四个技术限制 - `Comparator` 必须为它所比较的对象产生总顺序。
 
-Suppose you have a class called `Employee`, as follows.
+假设您有一个名为`Employee`的类，如下所示。
 
-```
+```java
 public class Employee implements Comparable<Employee> {
     public Name name()     { ... }
     public int number()    { ... }
@@ -1334,9 +1334,9 @@ public class Employee implements Comparable<Employee> {
 }
 ```
 
-Let's assume that the natural ordering of `Employee` instances is `Name` ordering (as defined in the previous example) on employee name. Unfortunately, the boss has asked for a list of employees in order of seniority. This means we have to do some work, but not much. The following program will produce the required list.
+让我们假设`Employee`实例的自然顺序是员工姓名上的名称排序（如前面的例子中所定义）。不幸的是，老板要求按照资历顺序列出员工名单。这意味着我们必须做一些工作，但并不多。以下程序将生成所需的列表。
 
-```
+```java
 import java.util.*;
 public class EmpSort {
     static final Comparator<Employee> SENIORITY_ORDER = 
@@ -1357,24 +1357,24 @@ public class EmpSort {
 }
 ```
 
-The `Comparator` in the program is reasonably straightforward. It relies on the natural ordering of `Date` applied to the values returned by the `hireDate` accessor method. Note that the `Comparator` passes the hire date of its second argument to its first rather than vice versa. The reason is that the employee who was hired most recently is the least senior; sorting in the order of hire date would put the list in reverse seniority order. Another technique people sometimes use to achieve this effect is to maintain the argument order but to negate the result of the comparison.
+该程序中的 `Comparator` 相当简单。它依赖于应用于`hireDate`访问器方法返回的值的`Date`的自然顺序。请注意， `Comparator` 将其第二个参数雇用日期传递给第一个参数，而不是相反。原因是最近雇用的员工是最不高级的；按雇用日期顺序排序会使列表按反向资历顺序排列。人们有时用来实现这种效果的另一种技术是维持参数顺序但是将比较的结果取反。
 
-```
+```java
 // Don't do this!!
 return -r1.hireDate().compareTo(r2.hireDate());
 ```
 
-You should always use the former technique in favor of the latter because the latter is not guaranteed to work. The reason for this is that the `compareTo` method can return any negative `int` if its argument is less than the object on which it is invoked. There is one negative `int` that remains negative when negated, strange as it may seem.
+你应该总是使用前一种技术来支持后者，因为后者不能保证始终工作。原因是`compareTo`方法如果其参数小于调用它的对象，则可返回任何负整数。有一个负整数在取反时仍然是负的，看起来很奇怪。
 
 ```
 -Integer.MIN_VALUE == Integer.MIN_VALUE
 ```
 
-The `Comparator` in the preceding program works fine for sorting a `List`, but it does have one deficiency: It cannot be used to order a sorted collection, such as `TreeSet`, because it generates an ordering that is *not compatible with* equals. This means that this `Comparator` equates objects that the `equals` method does not. In particular, any two employees who were hired on the same date will compare as equal. When you're sorting a `List`, this doesn't matter; but when you're using the `Comparator` to order a sorted collection, it's fatal. If you use this `Comparator` to insert multiple employees hired on the same date into a `TreeSet`, only the first one will be added to the set; the second will be seen as a duplicate element and will be ignored.
+前面程序中的`Comparator`适用于对`List`进行排序，但它确实有一个缺陷：它不能用于排序已排序的集合，例如`TreeSet`，因为它生成的顺序与`equals`不兼容。这意味着此`Comparator`会将`equals`方法判定为不相等的对象判定为相等。特别是，在同一天雇佣的任何两名员工将相同。当你对`List`进行排序时，这并不重要。但是当你使用 `Comparator` 来排序一个已排序的集合时，它是致命的。如果您使用此 `Comparator` 将在同一日期雇用的多名员工插入到`TreeSet`中，则只会将第一个员工添加到该集合中；第二个将被视为重复元素，将被忽略。
 
-To fix this problem, simply tweak the `Comparator` so that it produces an ordering that *is compatible with* `equals`. In other words, tweak it so that the only elements seen as equal when using `compare` are those that are also seen as equal when compared using `equals`. The way to do this is to perform a two-part comparison (as for `Name`), where the first part is the one we're interested in — in this case, the hire date — and the second part is an attribute that uniquely identifies the object. Here the employee number is the obvious attribute. This is the `Comparator` that results.
+要解决此问题，只需调整`Comparator`，以便生成与`equals`兼容的排序。换句话说，调整它以便在使用`compare`时看到相同的元素是那些在使用`equals`进行比较时也被视为相等的元素。执行此操作的方法是执行两部分比较（对于 `Name`），其中第一部分是我们感兴趣的部分 - 在这种情况下，是雇用日期 - 第二部分是唯一标识对象的属性，显然是员工编号。这是 `Comparator` 的结果。
 
-```
+```java
 static final Comparator<Employee> SENIORITY_ORDER = 
                                         new Comparator<Employee>() {
     public int compare(Employee e1, Employee e2) {
@@ -1388,10 +1388,11 @@ static final Comparator<Employee> SENIORITY_ORDER =
 };
 ```
 
-One last note: You might be tempted to replace the final `return` statement in the `Comparator` with the simpler:
+最后一点说明：您可能想要用更简单的方法替换`Comparator`中的最终`return`语句：
 
-```
+```java
 return e1.number() - e2.number();
 ```
 
-Don't do it unless you're *absolutely sure* no one will ever have a negative employee number! This trick does not work in general because the signed integer type is not big enough to represent the difference of two arbitrary signed integers. If `i` is a large positive integer and `j` is a large negative integer, `i - j` will overflow and will return a negative integer. The resulting `comparator` violates one of the four technical restrictions we keep talking about (transitivity) and produces horrible, subtle bugs. This is not a purely theoretical concern; people get burned by it.
+除非你绝对确定没有人会有负数的员工编号，否则不要这样做！这个技巧一般不起作用，因为有符号整数类型不足以表示两个任意有符号整数的差异。如果`i`是一个大的正整数且`j`是一个大的负整数，`i-j`将溢出并返回一个负整数。由此产生的 `comparator` 违反了我们一直在讨论的四个技术限制之一（传递性）并产生可怕的，微妙的错误。这不是纯粹的理论问题，人们被它坑了。
+
