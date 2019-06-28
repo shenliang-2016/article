@@ -1679,3 +1679,22 @@ double average = roster
 
 ### Reduction
 
+The section [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) describes the following pipeline of operations, which calculates the average age of all male members in the collection `roster`:
+
+```
+double average = roster
+    .stream()
+    .filter(p -> p.getGender() == Person.Sex.MALE)
+    .mapToInt(Person::getAge)
+    .average()
+    .getAsDouble();
+```
+
+The JDK contains many terminal operations (such as [`average`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#average--java/lang/reflect/Executable.html), [`sum`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#sum--), [`min`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#min-java.util.Comparator-), [`max`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#max-java.util.Comparator-), and [`count`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#count--)) that return one value by combining the contents of a stream. These operations are called *reduction operations*. The JDK also contains reduction operations that return a collection instead of a single value. Many reduction operations perform a specific task, such as finding the average of values or grouping elements into categories. However, the JDK provides you with the general-purpose reduction operations [`reduce`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-) and [`collect`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.function.Supplier-java.util.function.BiConsumer-java.util.function.BiConsumer-), which this section describes in detail.
+
+This section covers the following topics:
+
+- [The Stream.reduce Method](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#reduce)
+- [The Stream.collect Method](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#collect)
+
+You can find the code excerpts described in this section in the example [`ReductionExamples`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/ReductionExamples.java).
