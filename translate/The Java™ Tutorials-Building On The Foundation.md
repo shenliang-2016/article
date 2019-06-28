@@ -1542,3 +1542,21 @@ public interface SortedMap<K, V> extends Map<K, V>{
 
 因为此接口是`SortedSet`的精确`Map`模拟，所以 [The SortedSet Interface](https://docs.oracle.com/javase/tutorial/collections/interfaces/sorted-set.html) 部分中的所有习语和代码示例都适用于`SortedMap`，只需进行一些简单的修改。
 
+### 接口小结
+
+核心集合接口是Java集合框架的基础。
+
+Java Collections Framework层次结构由两个不同的接口树组成：
+
+* 第一棵树以`Collection`接口开始，它提供了所有集合使用的基本功能，例如`add`和`remove`方法。它的子接口--`Set`，`List`和`Queue`--提供更专业的集合。
+* `Set`接口不允许重复元素。这对于存储诸如一副纸牌或学生记录之类的集合非常有用。`Set`接口有一个子接口`SortedSet`，它提供了集合中元素的排序。
+* `List`接口提供有序集合，适用于需要精确控制每个元素插入位置的情况。您可以按照其确切位置从`List`中检索元素。
+* `Queue`接口支持附加的插入，提取和检查操作。`Queue`中的元素通常以FIFO为基础进行排序。
+* `Deque`接口可在两端进行插入，删除和检查操作。`Deque`中的元素可采用LIFO和FIFO。
+
+第二棵树以`Map`接口开始，它建立键和值的映射关系，类似于`Hashtable`。
+
+* `Map`的子接口`SortedMap`按升序或按`Comparator`指定的顺序维护其键值对。
+
+这些接口允许独立于其表示的细节来操纵集合。
+
