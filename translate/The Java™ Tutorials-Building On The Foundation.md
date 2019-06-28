@@ -1560,3 +1560,122 @@ Java Collections Framework层次结构由两个不同的接口树组成：
 
 这些接口允许独立于其表示的细节来操纵集合。
 
+## 聚合操作
+
+**注意**: 为了更好地理解本章节中的概念，请先复习 [Lambda Expressions](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 和 [Method References](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) 。
+
+你为什么要使用集合？您不是简单地将对象存储在集合中并将其保留在那里。在大多数情况下，您使用集合来检索存储在其中的元素。
+
+再次考虑 [Lambda表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 一节中描述的场景。假设您正在创建社交网络应用程序。您希望创建一项功能，使管理员能够对满足特定条件的社交网络应用程序成员执行任何类型的操作，例如发送消息。
+
+和以前一样，假设此社交网络应用程序的成员由以下 [`Person`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/Person.java) 类表示：
+
+```java
+public class Person {
+
+    public enum Sex {
+        MALE, FEMALE
+    }
+
+    String name;
+    LocalDate birthday;
+    Sex gender;
+    String emailAddress;
+    
+    // ...
+
+    public int getAge() {
+        // ...
+    }
+
+    public String getName() {
+        // ...
+    }
+}
+```
+
+以下示例使用`for-each`循环打印集合 `roster` 中包含的所有成员的名称：
+
+```java
+for (Person p : roster) {
+    System.out.println(p.getName());
+}
+```
+
+以下示例打印集合 `roster` 中包含的所有成员，但使用`forEach`聚合操作：
+
+```java
+roster
+    .stream()
+    .forEach(e -> System.out.println(e.getName());
+```
+
+虽然在此示例中，使用聚合操作的版本比使用`for-each`循环的版本长，但您会看到使用批量数据操作的版本对于更复杂的任务将更简洁。
+
+本章节包含以下主题：
+
+- [管线和流](https://docs.oracle.com/javase/tutorial/collections/streams/index.html#pipelines)
+- [聚合操作与迭代器的差异](https://docs.oracle.com/javase/tutorial/collections/streams/index.html#differences)
+
+在示例 [`BulkDataOperationsExamples`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/BulkDataOperationsExamples.java) 中查找本节中描述的代码摘录。
+
+**管线和流**
+
+*管道*是一系列聚合操作。以下示例使用由聚合操作 `filter` 和`forEach`组成的管道打印集合 `roster` 中包含的男性成员：
+
+```java
+roster
+    .stream()
+    .filter(e -> e.getGender() == Person.Sex.MALE)
+    .forEach(e -> System.out.println(e.getName()));
+```
+
+将此示例与以下内容进行比较，以使用for-each循环打印包含在集合 `roster` 中的男性成员：
+
+```java
+for (Person p : roster) {
+    if (p.getGender() == Person.Sex.MALE) {
+        System.out.println(p.getName());
+    }
+}
+```
+
+一个管道包含以下元素：
+
+ - 源：这可以是集合，数组，生成器函数或I/O通道。在此示例中，源是集合 `roster`。
+
+ - 零次或多次中间操作：中间操作（例如 `filter`）会生成新流。
+
+     流是一系列元素。与集合不同，它不是存储元素的数据结构。相反，流通过管道从源传输值。此示例通过调用方法 `stream` 从集合 `roster` 创建流。
+
+     `filter` 操作返回一个新流，该流包含与其谓词匹配的元素（此操作的参数）。在此示例中，谓词是lambda表达式 `e -> e.getGender() == Person.Sex.MALE`。如果对象`e`的`gender`字段的值为`Person.Sex.MALE`，则返回布尔值`true`。因此，此示例中的 `filter` 操作返回包含集合 `roster` 中所有男性成员的流。
+
+ - 终结操作：终结操作（例如`forEach`）产生非流结果，例如基本数据类型值（如`double`类型的值），集合，或者在
+
+     `forEach`的情况下，根本没有值。在此示例中，`forEach`操作的参数是lambda表达式 `e -> System.out.println(e.getName())`，它在对象`e`上调用方法`getName`。（Java运行时和编译器推断对象`e`的类型是`Person`。）
+
+以下示例使用由聚合操作 `filter`，`mapToInt`和`average`组成的管道计算集合 `roster` 中包含的所有男性成员的平均年龄：
+
+```java
+double average = roster
+    .stream()
+    .filter(p -> p.getGender() == Person.Sex.MALE)
+    .mapToInt(Person::getAge)
+    .average()
+    .getAsDouble();
+```
+
+`mapToInt`操作返回`IntStream`类型的新流（它是仅包含整数值的流）。该操作将其参数中指定的函数应用于特定流中的每个元素。在此示例中，函数是`Person::getAge`，它是一个返回成员年龄的方法引用。（或者，您可以使用lambda表达式 `e -> e.getAge()` 。）因此，此示例中的`mapToInt`操作返回一个流，该流包含集合 `roster` 中所有男性成员的年龄。
+
+`average` 操作计算`IntStream`类型流中包含的元素的平均值。它返回一个`OptionalDouble`类型的对象。如果流不包含任何元素，则`average`操作返回一个空的`OptionalDouble`实例，并且调用`getAsDouble`方法会抛出`NoSuchElementException`。JDK包含许多终结操作，例如通过组合流的内容返回一个值的`average`。这些操作称为 *reduction operations* 。有关详细信息，请参阅 [Reduction](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html) 部分。
+
+**聚合操作与迭代器的差异**
+
+像`forEach`这样的聚合操作看起来就像迭代器一样。但是，它们有几个根本区别：
+
+- **它们使用内部迭代器**: 聚合操作不包含 `next` 方法，以指示它们处理集合的下一个元素。使用内部委托，您的应用程序确定它迭代的集合，但JDK确定如何迭代集合。通过外部迭代，您的应用程序可以确定它迭代的集合以及迭代它的方式。但是，外部迭代只能按顺序迭代集合的元素。内部迭代没有此限制。它可以更容易地利用并行计算，这涉及将问题分解为子问题，同时解决这些问题，然后将解决方案的结果与子问题相结合。 有关更多信息，请参阅 [Parallelism](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html) 一节。
+- **它们处理来自流的元素**: 聚合操作处理流中的元素，而不是直接来自集合。因此，它们也称为流操作。
+- **它们支持作为参数的行为**: 您可以将 [lambda表达式](https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html) 指定为大多数聚合操作的参数。这使您可以自定义特定聚合操作的行为。
+
+### Reduction
+
