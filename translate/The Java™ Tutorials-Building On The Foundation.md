@@ -1502,3 +1502,43 @@ Object predecessor = ss.headSet(o).last();
 
 `SortedSet`接口包含一个名为`comparator`的访问器方法，它返回用于对集合进行排序的`Comparator`；如果集合根据其元素的自然顺序排序，则返回`null`。提供此方法以便可以将排序的集合复制到具有相同排序的新排序集合中。它由前面描述的`SortedSet`构造函数使用。
 
+### SortedMap 接口
+
+[`SortedMap`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedMap.html) 是一个 [`Map`](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) ，它按升序维护其元素，根据键的自然顺序排序，或根据创建`SortedMap`时提供的`Comparator`进行排序。 [Object Ordering](https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html) 部分讨论了自然排序和 `Comparator`。`SortedMap`接口提供了常规`Map`操作和以下操作：
+
+- `Range view` — 在排序 map 上执行任意范围操作
+- `Endpoints` — 返回排序 map 的第一个或者最后一个键
+- `Comparator access` — 返回 map 排序使用的 `Comparator`，如果存在的话
+
+下面的接口是 [`SortedSet`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedSet.html) 的 `Map` 模拟：
+
+```java
+public interface SortedMap<K, V> extends Map<K, V>{
+    Comparator<? super K> comparator();
+    SortedMap<K, V> subMap(K fromKey, K toKey);
+    SortedMap<K, V> headMap(K toKey);
+    SortedMap<K, V> tailMap(K fromKey);
+    K firstKey();
+    K lastKey();
+}
+```
+
+**Map 操作**
+
+`SortedMap`继承自`Map`的操作在有序映射和普通映射上的行为相同，但有两个例外：
+
+ - `iterator` 操作在任何有序映射的`Collection`视图上返回的 `Iterator` 按顺序遍历集合。
+ - `Collection`视图的`toArray`操作返回的数组按顺序包含键，值或映射元素。
+
+虽然接口无法保证，但所有Java平台的`SortedMap`实现中的`Collection`视图的`toString`方法依次返回包含视图所有元素的字符串。
+
+**标准构造器**
+
+按照惯例，所有通用`Map`实现都提供了一个接受`Map`类型参数的标准转换构造函数；`SortedMap`实现也不例外。在`TreeMap`中，此构造函数创建一个实例，根据其键的自然顺序对其条目进行排序。这可能是一个错误。最好动态检查以查看指定的`Map`实例是否为`SortedMap`，如果是，则根据相同的标准（比较器或自然排序）对新map进行排序。因为`TreeMap`采用了它所采用的方法，所以它还提供了一个构造函数，它接受`SortedMap`并返回一个新的`TreeMap`，它包含与给定`SortedMap`相同的映射，并根据相同的标准进行排序。请注意，它是参数的编译时类型，而不是其运行时类型，它确定是否优先于普通的映射构造函数调用`SortedMap`构造函数。
+
+按照惯例，`SortedMap`实现还提供了一个构造函数，它接受`Comparator`并返回根据指定的`Comparator`排序的空映射。如果将`null`传递给此构造函数，它将返回一个`Map`，该`Map`根据其键的自然顺序对其映射进行排序。
+
+**与 SortedSet 比较**
+
+因为此接口是`SortedSet`的精确`Map`模拟，所以 [The SortedSet Interface](https://docs.oracle.com/javase/tutorial/collections/interfaces/sorted-set.html) 部分中的所有习语和代码示例都适用于`SortedMap`，只需进行一些简单的修改。
+
