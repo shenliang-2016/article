@@ -1396,3 +1396,109 @@ return e1.number() - e2.number();
 
 除非你绝对确定没有人会有负数的员工编号，否则不要这样做！这个技巧一般不起作用，因为有符号整数类型不足以表示两个任意有符号整数的差异。如果`i`是一个大的正整数且`j`是一个大的负整数，`i-j`将溢出并返回一个负整数。由此产生的 `comparator` 违反了我们一直在讨论的四个技术限制之一（传递性）并产生可怕的，微妙的错误。这不是纯粹的理论问题，人们被它坑了。
 
+### SortedSet 接口
+
+ [`SortedSet`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedSet.html) 是一个 [`Set`](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html) ，它按升序维护其元素，根据元素的自然顺序或根据`SortedSet`创建时间提供的`Comparator`进行排序。除了常规的`Set`操作外，`SortedSet`接口还提供以下操作：
+
+- `Range view` — 允许排序集合上的任意范围操作
+- `Endpoints` — 返回排序集合的头部或者尾部元素
+- `Comparator access` — 返回用于集合排序的 `Comparator`，如果存在的话
+
+下面是 `SortedSet` 接口代码：
+
+```java
+public interface SortedSet<E> extends Set<E> {
+    // Range-view
+    SortedSet<E> subSet(E fromElement, E toElement);
+    SortedSet<E> headSet(E toElement);
+    SortedSet<E> tailSet(E fromElement);
+
+    // Endpoints
+    E first();
+    E last();
+
+    // Comparator access
+    Comparator<? super E> comparator();
+}
+```
+
+**集合操作**
+
+ `SortedSet` 从`Set`继承而来的方法在有序集合上的行为与普通集合相同。除了两个例外：
+
+- `iterator` 操作返回的 `Iterator` 按顺序遍历有序集。
+- `toArray`返回的数组按顺序包含有序集合的元素。
+
+虽然接口不保证它，但Java平台的`SortedSet`实现的`toString`方法按顺序返回包含有序集的所有元素的字符串。
+
+**标准构造器**
+
+按照惯例，所有通用`Collection`实现都提供了一个接受`Collection`类型参数的标准转换构造函数；`SortedSet`实现也不例外。在`TreeSet`中，此构造函数创建一个实例，根据其自然顺序对其元素进行排序。这可能是一个错误。最好动态检查以查看指定的集合是否是`SortedSet`实例，如果是，则根据相同的标准（比较器或自然排序）对新的`TreeSet`进行排序。因为`TreeSet`采用了它所采用的方法，所以它还提供了一个构造函数，它接受一个`SortedSet`并返回一个新的`TreeSet`，它包含根据相同标准排序的相同元素。请注意，它是参数的编译时类型，而不是其运行时类型，它确定调用这两个构造函数中的哪一个（以及是否保留排序条件）。
+
+按照惯例，`SortedSet`实现还提供了一个构造函数，它接受`Comparator`并返回根据指定的`Comparator`排序的空集。如果将`null`传递给此构造函数，则返回一个集合，该集合根据其自然顺序对其元素进行排序。
+
+**范围视图操作**
+
+`range-view` 操作有点类似于`List`接口提供的操作，但有一个很大的区别。即使直接修改了后备排序集，排序集的范围视图仍然有效。这是可行的，因为有序集的范围视图的端点是元素空间中的绝对点，而不是后备集合中的特定元素，如列表的情况。排序集的范围视图实际上只是集合的任何部分位于元素空间的指定部分中的窗口。对范围视图的更改将写回到后备排序集，反之亦然。因此，与列表上的范围视图不同，可以在很长一段时间内对已排序的集使用范围视图。
+
+排序集提供三种范围视图操作。第一个`subSet`采用两个端点，如`subList`。端点不是索引，而是对象，必须与有序集合中的元素相比较，使用`Set`的比较器或其元素的自然顺序，无论`Set`使用哪个自定义。与`subList`一样，范围是半开放的，包括其低端点但不包括高端点。
+
+因此，下面的代码行告诉你 `"doorbell"` 和 `"pickle"`之间有多少单词，包括`"doorbell"`但不包括 `"pickle"`，包含在名为 `dictionary`的字符串 `SortedSet`中：
+
+```java
+int count = dictionary.subSet("doorbell", "pickle").size();
+```
+
+以类似的方式，以下代码删除以字母`f`开头的所有元素。
+
+```java
+dictionary.subSet("f", "g").clear();
+```
+
+类似的技巧可以用来打印一个表格，告诉你每个字母开头的单词有多少个。
+
+```java
+for (char ch = 'a'; ch <= 'z'; ) {
+    String from = String.valueOf(ch++);
+    String to = String.valueOf(ch);
+    System.out.println(from + ": " + dictionary.subSet(from, to).size());
+}
+```
+
+假设您要查看包含其两个端点的闭区间，而不是开区间。如果元素类型允许计算元素空间中给定值的后继，则只需请求从`lowEndpoint`到`successor(highEndpoint)`的`subSet`。虽然它并不明显，但`String`的自然排序中的字符串`s`的后继是`s +"\0"` - 也就是说，附加了`null`字符的`s`。
+
+因此，下面的代码告诉你 `"doorbell"` 和 `"pickle"`之间有多少单词，包括 `"doorbell"` 和 `"pickle"`，都包含在字典中。
+
+```java
+count = dictionary.subSet("doorbell", "pickle\0").size();
+```
+
+可以使用类似的技术来查看不包含端点的开区间。从`lowEndpoint`到`highEndpoint`的开区间视图是从 `successor(lowEndpoint)` 到`highEndpoint`的半开半闭区间。使用以下内容计算 `"doorbell"` 和 `"pickle"`之间的单词数，不包括两者。
+
+```java
+count = dictionary.subSet("doorbell\0", "pickle").size();
+```
+
+`SortedSet`接口包含另外两个 `range-view` 操作--`headSet`和`tailSet`，两者都采用单个`Object`参数。前者返回后备`SortedSet`的初始部分的视图，以指定对象为上界，但不包括指定的对象。后者返回后备`SortedSet`的最后部分的视图，从指定的对象开始并持续到后备`SortedSet`的末尾。因此，以下代码允许您将字典视为两个不相交的 `volumes` （`a-m`和`n-z`）。
+
+```java
+SortedSet<String> volume1 = dictionary.headSet("n");
+SortedSet<String> volume2 = dictionary.tailSet("n");
+```
+
+**端点操作**
+
+`SortedSet`接口包含返回有序集合中第一个和最后一个元素的操作，不出意外地称为`first`和`last`。除了它们的明显用途之外，`last`方法还可以作为`SortedSet`接口的明显缺陷的变通解决方法。你想对`SortedSet`做的一件事就是进入`Set`的内部并向前或向后迭代。从内部向前迭代很容易：只需获得一个`tailSet`并迭代它。不幸的是，没有简单的方法可以向后迭代。
+
+以下习语获得元素空间中小于指定对象`o`的第一个元素。
+
+```java
+Object predecessor = ss.headSet(o).last();
+```
+
+这是从排序集内部的一个点向后移动一个元素的好方法。它可以重复应用以向后迭代，但这是非常低效的，需要查找返回的每个元素。
+
+**比较器访问器**
+
+`SortedSet`接口包含一个名为`comparator`的访问器方法，它返回用于对集合进行排序的`Comparator`；如果集合根据其元素的自然顺序排序，则返回`null`。提供此方法以便可以将排序的集合复制到具有相同排序的新排序集合中。它由前面描述的`SortedSet`构造函数使用。
+
