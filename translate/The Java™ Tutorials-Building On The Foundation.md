@@ -1859,3 +1859,239 @@ Map<Person.Sex, Double> averageAgeByGender = roster
             Collectors.averagingInt(Person::getAge)));
 ```
 
+### Parallelism
+
+并行计算涉及将问题划分为子问题，同时解决这些问题（并行地，每个子问题在单独的线程中运行），然后将子问题的结果组合到一起。Java SE提供 [fork/join framework](https://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) ，使您可以更轻松地在应用程序中实现并行计算。但是，使用此框架，您必须指定问题如何细分（分区）。通过聚合操作，Java运行时为您执行此分区和组合解决方案。
+
+在使用集合的应用程序中实现并行性的一个难点是集合不是线程安全的，这意味着多线程无法在不引入 [线程干扰](https://docs.oracle.com/javase/tutorial/essential/concurrency/interfere.html) 或者 [内存一致性错误](https://docs.oracle.com/javase/tutorial/essential/concurrency/memconsist.html).的情况下操作集合。Collections Framework提供 [synchronization wrappers](https://docs.oracle.com/javase/tutorial/collections/implementations/wrapper.html) ，它将自动同步机制添加到任意集合，使其成为线程安全的。但是，同步引入了 [线程竞争](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html#thread_contention) 。您希望避免线程竞争，因为它会阻止线程并行运行。通过聚合操作和并行流，您可以实现与非线程安全集合的并行性，前提是在操作集合时不要修改集合。
+
+请注意，并行性不一定会比串行执行操作更快，尽管可能有足够的数据和处理器内核。虽然聚合操作使您能够更轻松地实现并行性，但您仍有责任确定您的应用程序是否适合并行性。
+
+本节包括以下主题：
+
+- [并行执行流](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#executing_streams_in_parallel)
+- [并发还原](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#concurrent_reduction)
+- [排序](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#ordering)
+- 副作用
+  - [Laziness](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#laziness)
+  - [Interference](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#interference)
+  - [有状态的 Lambda 表达式](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#stateful_lambda_expressions)
+
+你可以在 [`ParallelismExamples`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/ParallelismExamples.java) 示例中看到本章节中的代码片段。
+
+**并行操作流**
+
+您可以串行或并行执行流。当流并行执行时，Java运行时将流分区为多个子流。聚合操作迭代并并行处理这些子流，然后组合结果。
+
+创建流时，除非特别指定，否则它始终是串行流。要创建并行流，请调用操作 [`Collection.parallelStream`](https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html#parallelStream--) 。或者，调用操作 [`BaseStream.parallel`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/BaseStream.html#parallel--) 。例如，以下语句并行计算所有男性成员的平均年龄：
+
+```java
+double average = roster
+    .parallelStream()
+    .filter(p -> p.getGender() == Person.Sex.MALE)
+    .mapToInt(Person::getAge)
+    .average()
+    .getAsDouble();
+```
+
+**并发还原**
+
+再次考虑以下示例（在 [Reduction](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html) 部分中描述）按性别对成员进行分组。这个例子调用`collect`操作，它将集合`roster`还原为`Map`：
+
+```java
+Map<Person.Sex, List<Person>> byGender =
+    roster
+        .stream()
+        .collect(
+            Collectors.groupingBy(Person::getGender));
+```
+
+下面是等效的并发版本：
+
+```java
+ConcurrentMap<Person.Sex, List<Person>> byGender =
+    roster
+        .parallelStream()
+        .collect(
+            Collectors.groupingByConcurrent(Person::getGender));
+```
+
+这称为*并发还原*。如果包含`collect`操作的特定管线满足以下所有条件，Java运行时将执行并发还原：
+
+- 该流是并行流。
+- `collect` 操作的参数，那个收集器，拥有特性 [`Collector.Characteristics.CONCURRENT`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.Characteristics.html#CONCURRENT) 。为了确定收集器的该特性，调用 [`Collector.characteristics`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.Characteristics.html) 方法。
+- 要么流是无序的，要么收集器拥有特性 [`Collector.Characteristics.UNORDERED`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.Characteristics.html#UNORDERED) 。为了保证流是无序的，调用 [`BaseStream.unordered`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/BaseStream.html#unordered--) 操作。
+
+**注意**：此示例返回 [`ConcurrentMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 实例而不是`Map `并调用 [`groupingByConcurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#groupingByConcurrent-java.util.function.Function-) 操作而不是`groupingBy`。（有关`ConcurrentMap`的更多信息，请参见 [Concurrent Collections](https://docs.oracle.com/javase/tutorial/essential/concurrency/collections.html) 一节。）与操作`groupingByConcurrent`不同，操作` groupingBy`在并行流中表现不佳。（这是因为它通过键合并两个映射来运行，这在计算上成本高昂。）同样，操作[`Collectors.toConcurrentMap`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#toConcurrentMap-java.util.function.Function-java.util.function.Function-) 使用并行流比使用 [`Collectors.toMap`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#toMap-java.util.function.Function-java.util.function.Function-) 表现更好。
+
+**排序**
+
+管线处理流的元素的顺序取决于流是以串行还是并行方式执行，流的源和中间操作。例如，考虑以下示例，使用`forEach`操作多次打印`ArrayList`实例的元素：
+
+```java
+Integer[] intArray = {1, 2, 3, 4, 5, 6, 7, 8 };
+List<Integer> listOfIntegers =
+    new ArrayList<>(Arrays.asList(intArray));
+
+System.out.println("listOfIntegers:");
+listOfIntegers
+    .stream()
+    .forEach(e -> System.out.print(e + " "));
+System.out.println("");
+
+System.out.println("listOfIntegers sorted in reverse order:");
+Comparator<Integer> normal = Integer::compare;
+Comparator<Integer> reversed = normal.reversed(); 
+Collections.sort(listOfIntegers, reversed);  
+listOfIntegers
+    .stream()
+    .forEach(e -> System.out.print(e + " "));
+System.out.println("");
+     
+System.out.println("Parallel stream");
+listOfIntegers
+    .parallelStream()
+    .forEach(e -> System.out.print(e + " "));
+System.out.println("");
+    
+System.out.println("Another parallel stream:");
+listOfIntegers
+    .parallelStream()
+    .forEach(e -> System.out.print(e + " "));
+System.out.println("");
+     
+System.out.println("With forEachOrdered:");
+listOfIntegers
+    .parallelStream()
+    .forEachOrdered(e -> System.out.print(e + " "));
+System.out.println("");
+```
+
+此示例包含五个管线。它打印输出类似于以下内容：
+
+```
+listOfIntegers:
+1 2 3 4 5 6 7 8
+listOfIntegers sorted in reverse order:
+8 7 6 5 4 3 2 1
+Parallel stream:
+3 4 1 6 2 5 7 8
+Another parallel stream:
+6 3 1 5 7 8 4 2
+With forEachOrdered:
+8 7 6 5 4 3 2 1
+```
+
+此示例执行以下操作：
+
+ - 第一个管线按照元素添加到列表的顺序打印列表`listOfIntegers`的元素。
+ - 第二个管线在按方法 [`Collections.sort`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#sort-java.util.List-) 排序之后打印`listOfIntegers`的元素。
+ - 第三和第四个管线以看起来随机的顺序打印列表的元素。请记住，流处理在处理流的元素时使用内部迭代。因此，当您并行执行流时，Java编译器和运行时确定处理流元素的顺序，以最大化并行计算的优势，除非流操作另有指定。
+ - 第五个管线使用方法 [`forEachOrdered`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#forEachOrdered-java.util.function.Consumer-) ，无论您是以串行还是并行方式执行流，它都按照源指定的顺序处理流的元素。请注意，如果对并行流使用`forEachOrdered`这样的操作，则可能会失去并行性的好处。
+
+**副作用**
+
+如果方法或表达式除了返回或产生值之外还修改计算机的状态，则该方法或表达式具有副作用。示例包括可变还原（使用`collect`操作的操作：请参阅 [Reduction](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html)  部分以获取更多信息）以及调用`System.out.println`方法进行调试。JDK很好地处理了管线中的某些副作用。特别地，`collect`方法被设计为以并行安全的方式执行具有副作用的最常见的流操作。像`forEach`和`peek`这样的操作是为副作用而设计的。返回`void`的lambda表达式，例如调用`System.out.println`的表达式，只能有副作用。即便如此，你应该小心使用`forEach`和`peek`操作；如果您对并行流使用其中一个操作，那么Java运行时可以从多个线程同时调用您指定为其参数的lambda表达式。另外，永远不要传递作为参数的lambda表达式，如果这些表达式在诸如`filter`和`map`之类的操作中具有副作用。以下部分讨论 [干扰](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#interference) and [有状态的 lambda 表达式](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#stateful_lambda_expressions) ，这两者都可能是副作用的来源，并且可能返回不一致或不可预测的结果，尤其是在并行流中。但是，首先讨论  [laziness](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html#laziness)  的概念，因为它对干扰有直接影响。
+
+**Laziness**
+
+所有中间操作都是*惰性的*。如果表达式，方法或算法仅在需要时才计算其值，则它是惰性的。（如果立即评估或处理，则算法是*饥饿的*。）中间操作是惰性的，因为它们在终结操作开始之前不开始处理流的内容。懒惰地处理流使Java编译器和运行时能够优化它们处理流的方式。例如，在诸如 [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 部分中描述的`filter` -`mapToInt`-`average`示例的管线中，`average`操作可以从`mapToInt`操作创建的流中获取前几个整数，它从`filter`操作中获取元素。`average`操作将重复此过程，直到它从流中获得所有必需元素，然后计算平均值。
+
+**Interference**
+
+流操作中的Lambda表达式不应相互*干扰*。在流水线处理流时修改流的源时会发生干扰。例如，以下代码尝试连接`List` `listOfStrings`中包含的字符串。但是，它会抛出`ConcurrentModificationException`：
+
+```java
+try {
+    List<String> listOfStrings =
+        new ArrayList<>(Arrays.asList("one", "two"));
+         
+    // This will fail as the peek operation will attempt to add the
+    // string "three" to the source after the terminal operation has
+    // commenced. 
+             
+    String concatenatedString = listOfStrings
+        .stream()
+        
+        // Don't do this! Interference occurs here.
+        .peek(s -> listOfStrings.add("three"))
+        
+        .reduce((a, b) -> a + " " + b)
+        .get();
+                 
+    System.out.println("Concatenated string: " + concatenatedString);
+         
+} catch (Exception e) {
+    System.out.println("Exception caught: " + e.toString());
+}
+```
+
+这个例子利用`reduce`操作将`listOfStrings`中包含的字符串连接到`Optional<String>`值之后，这是一个终结操作。但是，这里的管线调用中间操作`peek`，它试图向`listOfStrings`添加一个新元素。请记住，所有中间操作都是懒惰的。这意味着此示例中的管线在调用操作`get`时开始执行，并在`get`操作完成时结束执行。`peek`操作的参数试图在执行管线期间修改流源，这会导致Java运行时抛出`ConcurrentModificationException`。
+
+**有状态的 Lambda 表达式**
+
+避免在流操作中使用*有状态lambda表达式*作为参数。有状态lambda表达式的结果取决于在执行管线期间可能更改的任何状态。下面的示例使用`map`中间操作将`List` `listOfIntegers`中的元素添加到新的`List`实例。它执行两次，首先使用串行流，然后使用并行流：
+
+```java
+List<Integer> serialStorage = new ArrayList<>();
+     
+System.out.println("Serial stream:");
+listOfIntegers
+    .stream()
+    
+    // Don't do this! It uses a stateful lambda expression.
+    .map(e -> { serialStorage.add(e); return e; })
+    
+    .forEachOrdered(e -> System.out.print(e + " "));
+System.out.println("");
+     
+serialStorage
+    .stream()
+    .forEachOrdered(e -> System.out.print(e + " "));
+System.out.println("");
+
+System.out.println("Parallel stream:");
+List<Integer> parallelStorage = Collections.synchronizedList(
+    new ArrayList<>());
+listOfIntegers
+    .parallelStream()
+    
+    // Don't do this! It uses a stateful lambda expression.
+    .map(e -> { parallelStorage.add(e); return e; })
+    
+    .forEachOrdered(e -> System.out.print(e + " "));
+System.out.println("");
+     
+parallelStorage
+    .stream()
+    .forEachOrdered(e -> System.out.print(e + " "));
+System.out.println("");
+```
+
+lambda 表达式 `e -> { parallelStorage.add(e); return e; }` 是有状态的。每次执行该代码都可能产生不同的结果。该例子输出如下结果：
+
+```
+Serial stream:
+8 7 6 5 4 3 2 1
+8 7 6 5 4 3 2 1
+Parallel stream:
+8 7 6 5 4 3 2 1
+1 3 6 2 4 5 8 7
+```
+
+无论流是以串行还是并行方式执行，`forEachOrdered`操作都按流指定的顺序处理元素。但是，当并行执行流时，`map`操作处理由Java运行时和编译器指定的流的元素。因此，每次运行代码时，lambda表达式 `e -> { parallelStorage.add(e); return e; }`添加元素到`List` `listOfIntegers`的顺序都会有所不同。为了保证确定性和可预测的结果，请确保流操作中的lambda表达式参数不具有状态。
+
+**注意**：此示例调用方法 [`synchronizedList`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#synchronizedList-java.util.List-) 因此`List` `andlineStorage`是线程安全的。请记住，集合不是线程安全的。这意味着多个线程不应同时访问特定集合。假设在创建`parallelStorage`时不调用`synchronizedList`方法：
+
+```java
+List<Integer> parallelStorage = new ArrayList<>();
+```
+
+该示例行为不正常，因为多个线程访问和修改`parallelStorage`而没有像同步这样的机制来安排特定线程何时可以访问`List`实例。因此，该示例可以打印类似于以下内容的输出：
+
+```
+Parallel stream:
+8 7 6 5 4 3 2 1
+null 3 5 4 7 8 1 2
+```
+
