@@ -1679,9 +1679,9 @@ double average = roster
 
 ### Reduction
 
-The section [Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) describes the following pipeline of operations, which calculates the average age of all male members in the collection `roster`:
+[Aggregate Operations](https://docs.oracle.com/javase/tutorial/collections/streams/index.html) 章节描述了下面的操作管线，它计算集合`roster`中所有男性成员的额平均年龄：
 
-```
+```java
 double average = roster
     .stream()
     .filter(p -> p.getGender() == Person.Sex.MALE)
@@ -1690,11 +1690,172 @@ double average = roster
     .getAsDouble();
 ```
 
-The JDK contains many terminal operations (such as [`average`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#average--java/lang/reflect/Executable.html), [`sum`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#sum--), [`min`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#min-java.util.Comparator-), [`max`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#max-java.util.Comparator-), and [`count`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#count--)) that return one value by combining the contents of a stream. These operations are called *reduction operations*. The JDK also contains reduction operations that return a collection instead of a single value. Many reduction operations perform a specific task, such as finding the average of values or grouping elements into categories. However, the JDK provides you with the general-purpose reduction operations [`reduce`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-) and [`collect`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.function.Supplier-java.util.function.BiConsumer-java.util.function.BiConsumer-), which this section describes in detail.
+JDK 包含很多终结操作（比如 [`average`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#average--java/lang/reflect/Executable.html), [`sum`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#sum--), [`min`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#min-java.util.Comparator-), [`max`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#max-java.util.Comparator-), 和 [`count`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#count--)）通过结合流的内容来返回一个值。这些操作被称为 *reduction operations*（还原操作）。JDK还包含另外一些还原操作，返回一个集合而不是单个值。很多还原操作执行某项特定任务，比如求平均值或者将元素分类。不过，JDK提供了通用的还原操作 [`reduce`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-) 和 [`collect`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.function.Supplier-java.util.function.BiConsumer-java.util.function.BiConsumer-) ，本章节详细描述了这几个操作。
 
-This section covers the following topics:
+本章节涵盖以下主题：
 
-- [The Stream.reduce Method](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#reduce)
-- [The Stream.collect Method](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#collect)
+- [Stream.reduce 方法](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#reduce)
+- [Stream.collect 方法](https://docs.oracle.com/javase/tutorial/collections/streams/reduction.html#collect)
 
-You can find the code excerpts described in this section in the example [`ReductionExamples`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/ReductionExamples.java).
+你可以在示例 [`ReductionExamples`](https://docs.oracle.com/javase/tutorial/collections/streams/examples/ReductionExamples.java) 中找到本章节中的代码片段。
+
+**Stream.reduce 方法**
+
+[`Stream.reduce`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#reduce-T-java.util.function.BinaryOperator-) 方法是通用还原操作。考虑下面的管线，它计算集合`roster`中所有男性成语的年龄之和。它使用了[`Stream.sum`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/IntStream.html#sum--) 还原操作。
+
+```java
+Integer totalAge = roster
+    .stream()
+    .mapToInt(Person::getAge)
+    .sum();
+```
+
+与下面的管线比较，它使用 `Stream.reduce` 操作来计算相同的值。
+
+```java
+Integer totalAgeReduce = roster
+   .stream()
+   .map(Person::getAge)
+   .reduce(
+       0,
+       (a, b) -> a + b);
+```
+
+这个例子中的`reduce` 操作接受两个参数：
+
+- `identity`: 如果流中没有元素，则`identity`元素既是还原的初始值又是默认结果。在这个例子中，`identity`元素是 0 ；如果集合 `roster`中没有成员，则这是年龄总和的初始值和默认值。
+
+- `accumulator`: 累加器函数有两个参数：还原的部分结果（在本例中，是到目前为止所有处理过的整数的总和）和流的下一个元素（在本例中为一个整数）。它返回一个新的部分结果。在这个例子中，累加器函数是一个lambda表达式，它累加两个`Integer`值并返回一个`Integer`值：
+
+  ```java
+  (a, b) -> a + b
+  ```
+
+`reduce`操作总是返回一个新值。但是，累加器函数每次处理流的元素时也会返回一个新值。假设您要将流的元素还原为更复杂的对象，例如集合。这可能会妨碍您的应用程序的性能。如果你的`reduce`操作涉及向集合中添加元素，那么每次你的累加器函数处理一个元素时，它都会创建一个包含该元素的新集合，这是低效的。相反，更新现有集合会更有效。您可以使用 [`Stream.collect`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.function.Supplier-java.util.function.BiConsumer-java.util.function.BiConsumer-) 执行此操作，下一节将介绍该方法。
+
+**Stream.collect 方法**
+
+`reduce` 方法每次处理一个元素都会产生一个新值。 [`collect`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#collect-java.util.function.Supplier-java.util.function.BiConsumer-java.util.function.BiConsumer-) 方法修改、变异现有的值。
+
+考虑如何找到一个流的平均值。你需要两部分数据：流中值得总数和那些值的总和。不过，类似于`reduce`方法以及所有其他还原方法，`collect`方法返回单一值。你可以创建一个新的数据类型，包含成员变量，表示数值的总数和总和，如下面例子所示：
+
+```java
+class Averager implements IntConsumer
+{
+    private int total = 0;
+    private int count = 0;
+        
+    public double average() {
+        return count > 0 ? ((double) total)/count : 0;
+    }
+        
+    public void accept(int i) { total += i; count++; }
+    public void combine(Averager other) {
+        total += other.total;
+        count += other.count;
+    }
+}
+```
+
+下面的管线使用 `Averager` 类和 `collect` 方法来计算所有男性成语的平均年龄：
+
+```java
+Averager averageCollect = roster.stream()
+    .filter(p -> p.getGender() == Person.Sex.MALE)
+    .map(Person::getAge)
+    .collect(Averager::new, Averager::accept, Averager::combine);
+                   
+System.out.println("Average age of male members: " +
+    averageCollect.average());
+```
+
+例子中 `collect` 操作使用三个参数：
+
+- `supplier`: 一个工厂函数，负责构建新的实例。它为`collect`操作创建结果容器的实例。在这个例子中，它是`Averager`类的实例。
+- `accumulator`: 累加器函数将流元素合并到结果容器中。在这个例子中，它通过将`count`变量增加1，并将流元素的值添加到`total`成员变量，该元素是表示男性成员年龄的整数，来修改`Averager`结果容器。
+- `combiner`: 组合器函数接受两个结果容器并合并其内容。在这个例子中，它通过将`count`变量与另一个`Averager`实例的`count`成员变量相加并将`total`成员变量与另一个`Averager`实例的`total`成员变量值相加来修改`Averager`结果容器。
+
+注意下面的细节：
+
+- `supplier`是一个 lambda 表达式 (或者是一个方法引用) 而不像是 `reduce` 操作中`identity`元素那样的值。
+- 累加器和组合器函数都不返回值。
+- 你可以对并行流使用`collect`操作。参考 [Parallelism](https://docs.oracle.com/javase/tutorial/collections/streams/parallelism.html) 章节获取更多细节。（如果你对一个并行流执行`collect`操作，则当组合器函数创建一个新对象（这个例子中就是`Averager`对象）时，JDK都会创建一个新的线程。因此，你不需要担心线程同步问题。）
+
+尽管JDK为您提供了`average`操作来计算流中元素的平均值，但是如果需要从流的元素中计算多个值，则可以使用`collect`操作和自定义类。
+
+`collect`操作最适合集合。以下示例使用`collect`操作将男性成员的名字放在集合中：
+
+```java
+List<String> namesOfMaleMembersCollect = roster
+    .stream()
+    .filter(p -> p.getGender() == Person.Sex.MALE)
+    .map(p -> p.getName())
+    .collect(Collectors.toList());
+```
+
+这个版本的`collect`操作接受一个 [`Collector`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html) 类型的参数。这个类封装了在`collect`操作中作为参数使用的函数（`supplier`, `accumulator`, 和 `combiner` 函数）。
+
+ [`Collectors`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html) 包含许多有用的还原操作，比如将元素累加到集合中或者按照各种标准将元素分类。这些还原操作返回`Collector`类的实例，因此你可以使用它们作为`collect`操作的参数。
+
+这个例子使用 [`Collectors.toList`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#toList--) 操作，将流元素累计到一个新的`List`实例中。与`Collectors`类中的大多数操作一样，`toList`操作符返回`Collector`的实例，而不是集合。
+
+下面的例子将`roster`集合的成员按照性别分组：
+
+```java
+Map<Person.Sex, List<Person>> byGender =
+    roster
+        .stream()
+        .collect(
+            Collectors.groupingBy(Person::getGender));
+```
+
+ [`groupingBy`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#groupingBy-java.util.function.Function-) 操作返回一个map，其键是应用指定为其参数的lambda表达式（称为*分类函数*）得到的值。在此示例中，返回的map包含两个键，`Person.Sex.MALE`和`Person.Sex.FEMALE`。键的对应值是包含流元素的`List`的实例，当由分类函数处理时，流元素对应于键值。例如，与键`Person.Sex.MALE`对应的值是包含所有男性成员的`List`的实例。
+
+以下示例检索集合`roster`中每个成员的名称，并按性别对它们进行分组：
+
+```java
+Map<Person.Sex, List<String>> namesByGender =
+    roster
+        .stream()
+        .collect(
+            Collectors.groupingBy(
+                Person::getGender,                      
+                Collectors.mapping(
+                    Person::getName,
+                    Collectors.toList())));
+```
+
+这个例子中的 [`groupingBy`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#groupingBy-java.util.function.Function-java.util.stream.Collector-) 操作有两个参数，一个分类函数和一个`Collector`实例。`Collector`参数称为*下游收集器*。这是Java运行时应用于另一个收集器的结果的收集器。因此，这个`groupingBy`操作使您能够将`collect`方法应用于`groupingBy`运算符创建的`List`值。此示例应用收集器 [`mapping`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#mapping-java.util.function.Function-java.util.stream.Collector-java.util.stream.Collector-) ，它将映射函数`Person::getName`应用于流的每个元素。因此，生成的流只包含成员的名称。包含一个或多个下游收集器的管道（如此示例）称为*多级还原*。
+
+以下示例检索每个性别的成员的总年龄：
+
+```java
+Map<Person.Sex, Integer> totalAgeByGender =
+    roster
+        .stream()
+        .collect(
+            Collectors.groupingBy(
+                Person::getGender,                      
+                Collectors.reducing(
+                    0,
+                    Person::getAge,
+                    Integer::sum)));
+```
+
+[`reducing`](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html#reducing-U-java.util.function.Function-java.util.function.BinaryOperator-) 操作接受三个参数：
+
+ - `identity`：与`Stream.reduce`操作一样，如果流中没有元素，则`identity`元素既是还原的初始值又是默认结果。在这个例子中，`identity`元素是 0 ；如果不存在成员，则这是年龄总和的初始值和默认值。
+ - `mapper`：`reducing`操作将此映射器函数应用于所有流元素。在此示例中，映射器检索每个成员的年龄。
+ - `operation`：操作函数用于还原映射值。在此示例中，操作函数累加`Integer`值。
+
+以下示例检索每个性别的成员的平均年龄：
+
+```java
+Map<Person.Sex, Double> averageAgeByGender = roster
+    .stream()
+    .collect(
+        Collectors.groupingBy(
+            Person::getGender,                      
+            Collectors.averagingInt(Person::getAge)));
+```
+
