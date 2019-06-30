@@ -2104,36 +2104,35 @@ JAR 文件格式提供了很多好处：
 - *安全*: 你可以对 JAR 文件内容进行数字签名。然后，识别出您的签名的用户可以选择授予您不具备的软件安全权限。
 - *缩短下载时间*: 如果您的applet打包在JAR文件中，则可以在单个HTTP事务中将applet的类文件和相关资源下载到浏览器，而无需为每个文件打开新连接。
 - *压缩*: JAR格式允许您压缩文件以实现高效存储。
-- *Packaging for extensions*: The extensions framework provides a means by which you can add functionality to the Java core platform, and the JAR file format defines the packaging for extensions. By using the JAR file format, you can turn your software into extensions as well.
-- *Package Sealing*: Packages stored in JAR files can be optionally sealed so that the package can enforce version consistency. Sealing a package within a JAR file means that all classes defined in that package must be found in the same JAR file.
-- *Package Versioning*: A JAR file can hold data about the files it contains, such as vendor and version information.
-- *Portability*: The mechanism for handling JAR files is a standard part of the Java platform's core API.
+- *打包为扩展插件*: 扩展框架提供了一种向Java核心平台添加功能的方法，JAR文件格式定义了扩展的打包方式。通过使用JAR文件格式，您也可以将软件转换为扩展插件。
+- *包密封*: 可以选择密封存储在JAR文件中的包，以便包可以强制实现版本一致性。在JAR文件中封装包意味着必须在同一个JAR文件中找到该包中定义的所有类。
+- *包版本化*: JAR文件可以保存有关其包含的文件的数据，例如提供者和版本信息。
+- *可移植性*: 处理JAR文件的机制是Java平台核心API的标准组成部分。
 
-This lesson has four sections:
+本课程包含四个章节：
 
-## [Using JAR Files: The Basics](https://docs.oracle.com/javase/tutorial/deployment/jar/basicsindex.html)
+**[使用 JAR 文件: 基础](https://docs.oracle.com/javase/tutorial/deployment/jar/basicsindex.html)**
 
-This section shows you how to perform basic JAR-file operations, and how to run software that is bundled in JAR files.
+本节介绍如何执行基本JAR文件操作，以及如何运行打包在JAR文件中的软件。
 
-## [Working with Manifest Files: The Basics](https://docs.oracle.com/javase/tutorial/deployment/jar/manifestindex.html)
+**[使用 Manifest 文件: 基础](https://docs.oracle.com/javase/tutorial/deployment/jar/manifestindex.html)**
 
-This section explains manifest files and how to customize them so you can do such things as seal packages and set an application's entry point.
+本节介绍清单文件以及如何自定义它们，以便您可以执行诸如密封包和设置应用程序入口点之类的操作。
 
-## [Signing and Verifying JAR Files](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html)
+**[签名和验证 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html)**
 
-This section shows you how to digitally sign JAR files and verify the signatures of signed JAR files.
+本节介绍如何对JAR文件进行数字签名并验证JAR文件的签名。
 
-## [Using JAR-related APIs](https://docs.oracle.com/javase/tutorial/deployment/jar/apiindex.html)
+**[使用 JAR 相关 API](https://docs.oracle.com/javase/tutorial/deployment/jar/apiindex.html)**
 
-This section introduces you to some of the JAR-handling features of the Java platform. The JAR file format is an important part of the Java platform's extension mechanism. You can learn more about that aspect of JAR files in the [The Extension Mechanism](https://docs.oracle.com/javase/tutorial/ext/index.html) trail of this tutorial.
+本节介绍Java平台的一些JAR处理功能。JAR文件格式是Java平台扩展机制的重要组成部分。您可以在本教程的 [扩展机制](https://docs.oracle.com/javase/tutorial/ext/index.html) 中了解有关JAR文件的更多信息。
 
-## [Questions and Exercises: JAR](https://docs.oracle.com/javase/tutorial/deployment/jar/QandE/questions.html)
+**附加参考**
 
-Test what you've learned about JAR.
-
-## Additional References
-
-The documentation for the Java Development Kit (JDK) includes information about the Jar tool:
+Java Development Kit（JDK）的文档包含有关Jar工具的信息：
 
 - [Java Archive (JAR) Files Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/index.html)
 - [JAR File Specification](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html)
+
+### 使用 JAR 文件：基础
+
