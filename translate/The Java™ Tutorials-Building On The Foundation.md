@@ -2136,3 +2136,175 @@ Java Development Kit（JDK）的文档包含有关Jar工具的信息：
 
 ### 使用 JAR 文件：基础
 
+JAR文件以ZIP文件格式打包，因此您可以将它们用于无损数据压缩，归档，解压缩和归档解包等任务。这些任务是JAR文件最常见的用途，您只需使用这些基本功能即可享受许多JAR文件优势。
+
+如果您想利用JAR文件格式提供的高级功能（如电子签名），您首先需要熟悉基本操作。
+
+要使用JAR文件执行基本任务，请使用Java Archive Tool作为Java Development Kit（JDK）的一部分提供。因为使用`jar`命令调用Java Archive工具，所以本教程将其称为“Jar工具”。
+
+作为本节中介绍的一些主题的概要和预览，下表总结了常见的JAR文件操作：
+
+| Operation                                                    | Command                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| To create a JAR file                                         | `jar cf *jar-file input-file(s)*`                            |
+| To view the contents of a JAR file                           | `jar tf *jar-file*`                                          |
+| To extract the contents of a JAR file                        | `jar xf *jar-file*`                                          |
+| To extract specific files from a JAR file                    | `jar xf *jar-file archived-file(s)*`                         |
+| To run an application packaged as a JAR file (requires the [`Main-class`](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) manifest header) | `java -jar *app.jar*`                                        |
+| To invoke an applet packaged as a JAR file                   | `<applet code=*AppletClassName.class*         archive="*JarFileName.jar*"         width=*width* height=*height*> </applet> ` |
+
+本节介绍如何执行最常见的JAR文件操作，并提供每个基本功能的示例：
+
+**[创建 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/build.html)**
+
+本节介绍如何使用Jar工具将文件和目录打包到JAR文件中。
+
+**[查看 JAR 文件内容](https://docs.oracle.com/javase/tutorial/deployment/jar/view.html)**
+
+您可以显示JAR文件的目录，以查看它包含的内容，而无需实际解压缩JAR文件。
+
+**[解压 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/unpack.html)**
+
+您可以使用Jar工具解压缩JAR文件。在提取文件时，Jar工具会复制所需的文件并将它们写入当前目录，从而重现文件在存档中的目录结构。
+
+**[升级 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/update.html)**
+
+本节介绍如何通过修改其清单或添加文件来更新现有JAR文件的内容。
+
+**[运行打包成 JAR 文件的软件](https://docs.oracle.com/javase/tutorial/deployment/jar/run.html)**
+
+本节介绍如何调用和运行JAR文件中打包的applet和应用程序。
+
+**附加参考**
+
+JDK的文档包括Jar工具的参考页面：
+
+- [Jar tool reference for the Windows platform](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/jar.html)
+- [Jar tool reference for UNIX-based platforms](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jar.html)
+
+#### 创建 JAR 文件
+
+创建 JAR 文件的基本命令格式是：
+
+```shell
+jar cf jar-file input-file(s)
+```
+
+此命令中使用的选项和参数是：
+
+ - `c`选项表示您要*创建* JAR文件。
+ - `f`选项表示您希望输出重定向到*文件*而不是`stdout`。
+ - `jar-file`是您希望生成的JAR文件具有的名称。您可以使用任何文件名作为JAR文件。按照惯例，JAR文件名被赋予`.jar`扩展名，但这不是必需的。
+ - `input-file（s）`参数是一个以空格分隔的列表，其中包含您要包含在JAR文件中的一个或多个文件。`input-file（s）`参数可以包含通配符`*`符号。如果任何“输入文件”是目录，则这些目录的内容将以递归方式添加到JAR存档中。
+
+`c`和`f`选项可以按任何顺序出现，但它们之间不能有任何空格。
+
+此命令将生成压缩的JAR文件并将其放在当前目录中。 该命令还将为JAR存档生成 [默认清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/defman.html) 。
+
+----
+
+**注意：** JAR文件中的元数据（例如清单的条目名称，注释和内容）必须以UTF8编码。
+
+----
+
+您可以将以下任何附加选项添加到基本命令的`cf`选项中：
+
+| Option     | Description                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `v`        | 在构建JAR文件时，在`stdout`上生成冗长的详细输出。详细输出在每个文件被添加到JAR文件中时告诉您它的名称。 |
+| `0` (zero) | 表示您不希望压缩JAR文件。                                    |
+| `M`        | 表示不应生成默认清单文件。                                   |
+| `m`        | 用于包括现有清单文件中的清单信息。 使用此选项的格式为：`jar cmf jar-file  existing-manifest  input-file(s)`。参见 [修改清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/modman.html) 获取有关此选项的更多信息。**警告：** 清单必须以新行或回车结束。如果不以新行或回车结束，则不会正确解析最后一行。 |
+| `-C`       | 在执行命令期间更改目录。请参阅下面的示例。                   |
+
+------
+
+**注意：** 创建JAR文件时，创建时间存储在JAR文件中。因此，即使JAR文件的内容没有更改，当您多次创建JAR文件时，生成的文件也不完全相同。在构建环境中使用JAR文件时，应该注意这一点。建议您使用清单文件中的版本控制信息而不是创建时间来控制JAR文件的版本。请参阅 [设置包版本信息](https://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html) 部分。
+
+----
+
+**例子**
+
+我们来看一个例子。一个简单的`TicTacToe`小程序。您可以通过从 [Java SE Downloads](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 下载JDK演示和示例包来查看此applet的源代码。此演示包含具有以下结构的类文件，音频文件和图像：
+
+![TicTacToe folder Hierarchy](https://docs.oracle.com/javase/tutorial/figures/deployment/jar/ticTacToeJar.gif)
+
+`audio`和`images`子目录包含applet使用的声音文件和GIF图像。
+
+在线下载整个教程时，您可以从*jar/examples*目录中获取所有这些文件。要将此演示打包到名为`TicTacToe.jar`的单个JAR文件中，您可以从`TicTacToe`目录中运行此命令：
+
+```
+jar cvf TicTacToe.jar TicTacToe.class audio images
+```
+
+`audio`和`images`参数表示目录，因此Jar工具将递归地将它们及其内容放在JAR文件中。生成的JAR文件`TicTacToe.jar`将放在当前目录中。因为该命令使用`v`选项进行详细输出，所以在运行命令时会看到与此输出类似的内容：
+
+```
+adding: TicTacToe.class (in=3825) (out=2222) (deflated 41%)
+adding: audio/ (in=0) (out=0) (stored 0%)
+adding: audio/beep.au (in=4032) (out=3572) (deflated 11%)
+adding: audio/ding.au (in=2566) (out=2055) (deflated 19%)
+adding: audio/return.au (in=6558) (out=4401) (deflated 32%)
+adding: audio/yahoo1.au (in=7834) (out=6985) (deflated 10%)
+adding: audio/yahoo2.au (in=7463) (out=4607) (deflated 38%)
+adding: images/ (in=0) (out=0) (stored 0%)
+adding: images/cross.gif (in=157) (out=160) (deflated -1%)
+adding: images/not.gif (in=158) (out=161) (deflated -1%)
+```
+
+您可以从此输出中看到JAR文件`TicTacToe.jar`已被压缩。Jar工具默认压缩文件。您可以使用`0`（零）选项关闭压缩功能，以便命令如下所示：
+
+```
+jar cvf0 TicTacToe.jar TicTacToe.class audio images
+```
+
+例如，您可能希望避免压缩，以提高浏览器加载JAR文件的速度。通常可以比压缩文件更快地加载未压缩的JAR文件，因为消除了在加载期间解压缩文件的需要。但是，需要权衡的是，对于较大的未压缩文件，网络上的下载时间可能会更长。
+
+Jar工具将接受使用通配符`*`符号的参数。只要`TicTacToe`目录中没有任何不需要的文件，您就可以使用此替代命令来构造JAR文件：
+
+```
+jar cvf TicTacToe.jar *
+```
+
+尽管详细输出未指示它，但Jar工具会自动将清单文件添加到JAR存档中，路径名为“META-INF/MANIFEST.MF”。有关清单文件的信息，请参阅 [使用清单文件：基础知识](https://docs.oracle.com/javase/tutorial/deployment/jar/manifestindex.html) 部分。
+
+在上面的示例中，归档中的文件保留了它们的相对路径名和目录结构。Jar工具提供`-C`选项，您可以使用该选项创建一个JAR文件，其中不保留已归档文件的相对路径。它以TAR的`-C`选项为模型。
+
+例如，假设您想将TicTacToe演示使用的音频文件和gif图像放入JAR文件中，并且您希望所有文件都位于顶层，没有目录层次结构。你可以通过从`images`和`audio`目录的父目录发出这个命令来实现这个目的：
+
+```
+jar cf ImageAudio.jar -C images . -C audio .
+```
+
+此命令的`-C images`部分指示Jar工具转到`images`目录，后面的`.`指示Jar工具归档该目录的所有内容。然后命令的`-C audio .`部分对`audio`目录执行相同的操作。生成的JAR文件将具有以下目录：
+
+```
+META-INF/MANIFEST.MF
+cross.gif
+not.gif
+beep.au
+ding.au
+return.au
+yahoo1.au
+yahoo2.au
+```
+
+相反，假设您使用的命令不使用`-C`选项：
+
+```
+jar cf ImageAudio.jar images audio
+```
+
+生成的JAR文件将具有以下目录：
+
+```
+META-INF/MANIFEST.MF
+images/cross.gif
+images/not.gif
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+```
+
