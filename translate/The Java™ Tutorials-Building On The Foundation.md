@@ -2095,3 +2095,45 @@ Parallel stream:
 null 3 5 4 7 8 1 2
 ```
 
+## 将程序打包成 JAR 文件
+
+Java™Archive（JAR）文件格式使您可以将多个文件打包到一个归档文件中。通常，JAR文件包含与applet和应用程序关联的类文件和辅助资源。
+
+JAR 文件格式提供了很多好处：
+
+- *安全*: 你可以对 JAR 文件内容进行数字签名。然后，识别出您的签名的用户可以选择授予您不具备的软件安全权限。
+- *缩短下载时间*: 如果您的applet打包在JAR文件中，则可以在单个HTTP事务中将applet的类文件和相关资源下载到浏览器，而无需为每个文件打开新连接。
+- *压缩*: JAR格式允许您压缩文件以实现高效存储。
+- *Packaging for extensions*: The extensions framework provides a means by which you can add functionality to the Java core platform, and the JAR file format defines the packaging for extensions. By using the JAR file format, you can turn your software into extensions as well.
+- *Package Sealing*: Packages stored in JAR files can be optionally sealed so that the package can enforce version consistency. Sealing a package within a JAR file means that all classes defined in that package must be found in the same JAR file.
+- *Package Versioning*: A JAR file can hold data about the files it contains, such as vendor and version information.
+- *Portability*: The mechanism for handling JAR files is a standard part of the Java platform's core API.
+
+This lesson has four sections:
+
+## [Using JAR Files: The Basics](https://docs.oracle.com/javase/tutorial/deployment/jar/basicsindex.html)
+
+This section shows you how to perform basic JAR-file operations, and how to run software that is bundled in JAR files.
+
+## [Working with Manifest Files: The Basics](https://docs.oracle.com/javase/tutorial/deployment/jar/manifestindex.html)
+
+This section explains manifest files and how to customize them so you can do such things as seal packages and set an application's entry point.
+
+## [Signing and Verifying JAR Files](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html)
+
+This section shows you how to digitally sign JAR files and verify the signatures of signed JAR files.
+
+## [Using JAR-related APIs](https://docs.oracle.com/javase/tutorial/deployment/jar/apiindex.html)
+
+This section introduces you to some of the JAR-handling features of the Java platform. The JAR file format is an important part of the Java platform's extension mechanism. You can learn more about that aspect of JAR files in the [The Extension Mechanism](https://docs.oracle.com/javase/tutorial/ext/index.html) trail of this tutorial.
+
+## [Questions and Exercises: JAR](https://docs.oracle.com/javase/tutorial/deployment/jar/QandE/questions.html)
+
+Test what you've learned about JAR.
+
+## Additional References
+
+The documentation for the Java Development Kit (JDK) includes information about the Jar tool:
+
+- [Java Archive (JAR) Files Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/index.html)
+- [JAR File Specification](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html)
