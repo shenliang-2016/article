@@ -2144,14 +2144,14 @@ JAR文件以ZIP文件格式打包，因此您可以将它们用于无损数据�
 
 作为本节中介绍的一些主题的概要和预览，下表总结了常见的JAR文件操作：
 
-| Operation                                                    | Command                                                      |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| To create a JAR file                                         | `jar cf *jar-file input-file(s)*`                            |
-| To view the contents of a JAR file                           | `jar tf *jar-file*`                                          |
-| To extract the contents of a JAR file                        | `jar xf *jar-file*`                                          |
-| To extract specific files from a JAR file                    | `jar xf *jar-file archived-file(s)*`                         |
-| To run an application packaged as a JAR file (requires the [`Main-class`](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) manifest header) | `java -jar *app.jar*`                                        |
-| To invoke an applet packaged as a JAR file                   | `<applet code=*AppletClassName.class*         archive="*JarFileName.jar*"         width=*width* height=*height*> </applet> ` |
+| Operation                                | Command                                  |
+| ---------------------------------------- | ---------------------------------------- |
+| To create a JAR file                     | `jar cf *jar-file input-file(s)*`        |
+| To view the contents of a JAR file       | `jar tf *jar-file*`                      |
+| To extract the contents of a JAR file    | `jar xf *jar-file*`                      |
+| To extract specific files from a JAR file | `jar xf *jar-file archived-file(s)*`     |
+| To run an application packaged as a JAR file (requires the [`Main-class`](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) manifest header) | `java -jar *app.jar*`                    |
+| To invoke an applet packaged as a JAR file | `<applet code=*AppletClassName.class*         archive="*JarFileName.jar*"         width=*width* height=*height*> </applet> ` |
 
 本节介绍如何执行最常见的JAR文件操作，并提供每个基本功能的示例：
 
@@ -2209,13 +2209,13 @@ jar cf jar-file input-file(s)
 
 您可以将以下任何附加选项添加到基本命令的`cf`选项中：
 
-| Option     | Description                                                  |
-| ---------- | ------------------------------------------------------------ |
+| Option     | Description                              |
+| ---------- | ---------------------------------------- |
 | `v`        | 在构建JAR文件时，在`stdout`上生成冗长的详细输出。详细输出在每个文件被添加到JAR文件中时告诉您它的名称。 |
-| `0` (zero) | 表示您不希望压缩JAR文件。                                    |
-| `M`        | 表示不应生成默认清单文件。                                   |
+| `0` (zero) | 表示您不希望压缩JAR文件。                           |
+| `M`        | 表示不应生成默认清单文件。                            |
 | `m`        | 用于包括现有清单文件中的清单信息。 使用此选项的格式为：`jar cmf jar-file  existing-manifest  input-file(s)`。参见 [修改清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/modman.html) 获取有关此选项的更多信息。**警告：** 清单必须以新行或回车结束。如果不以新行或回车结束，则不会正确解析最后一行。 |
-| `-C`       | 在执行命令期间更改目录。请参阅下面的示例。                   |
+| `-C`       | 在执行命令期间更改目录。请参阅下面的示例。                    |
 
 ------
 
@@ -2308,3 +2308,140 @@ audio/yahoo1.au
 audio/yahoo2.au
 ```
 
+#### 浏览 JAR 文件内容
+
+浏览 JAR 文件内容的命令的基本格式如下：
+
+```
+jar tf jar-file
+```
+
+让我们看看这个命令中使用的选项和参数：
+
+ -  `t`选项表示您要查看JAR文件的目录。
+ -  `f`选项表示在命令行中指定要查看其内容的JAR文件。
+ -  `jar-file`参数是要查看其内容的JAR文件的路径和名称。
+
+`t`和`f`选项可以按任意顺序出现，但它们之间不能有任何空格。
+
+此命令将向 `stdout` 显示JAR文件的目录。
+
+您可以选择添加详细选项`v`，以在输出中生成有关文件大小和上次修改日期的其他信息。
+
+**例子**
+
+让我们使用Jar工具列出我们在上一节中创建的`TicTacToe.jar`文件的内容：
+
+```
+jar tf TicTacToe.jar
+```
+
+此命令将JAR文件的内容显示到`stdout`：
+
+```
+META-INF/MANIFEST.MF
+TicTacToe.class
+audio/
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+images/
+images/cross.gif
+images/not.gif
+```
+
+JAR文件包含`TicTacToe`类文件以及音频和图像目录，如预期的那样。输出还显示JAR文件包含默认清单文件`META-INF/MANIFEST.MF`，该文件由JAR工具自动放置在归档中。有关更多信息，请参阅 [了解默认清单](https://docs.oracle.com/javase/tutorial/deployment/jar/defman.html) 部分。
+
+无论您使用的平台或操作系统如何，所有路径名都以正斜杠显示。JAR文件中的路径始终是相对的; 例如，你永远不会看到以`C:`开头的路径。
+
+如果使用`v`选项，JAR工具将显示其他信息：
+
+```
+jar tvf TicTacToe.jar
+```
+
+例如，TicTacToe JAR文件的详细输出看起来类似于：
+
+```
+    68 Thu Nov 01 20:00:40 PDT 2012 META-INF/MANIFEST.MF
+   553 Mon Sep 24 21:57:48 PDT 2012 TicTacToe.class
+  3708 Mon Sep 24 21:57:48 PDT 2012 TicTacToe.class
+  9584 Mon Sep 24 21:57:48 PDT 2012 TicTacToe.java
+     0 Mon Sep 24 21:57:48 PDT 2012 audio/
+  4032 Mon Sep 24 21:57:48 PDT 2012 audio/beep.au
+  2566 Mon Sep 24 21:57:48 PDT 2012 audio/ding.au
+  6558 Mon Sep 24 21:57:48 PDT 2012 audio/return.au
+  7834 Mon Sep 24 21:57:48 PDT 2012 audio/yahoo1.au
+  7463 Mon Sep 24 21:57:48 PDT 2012 audio/yahoo2.au
+   424 Mon Sep 24 21:57:48 PDT 2012 example1.html
+     0 Mon Sep 24 21:57:48 PDT 2012 images/
+   157 Mon Sep 24 21:57:48 PDT 2012 images/cross.gif
+   158 Mon Sep 24 21:57:48 PDT 2012 images/not.gif
+```
+
+#### 解压 JAR 文件内容
+
+用于提取JAR文件内容的基本命令是：
+
+```
+jar xf jar-file [archived-file(s)]
+```
+
+让我们看一下这个命令中的选项和参数：
+
+ -  `x`选项表示您要从JAR存档中提取文件。
+ -  `f`选项表示要从中提取文件的JAR文件在命令行中指定，而不是通过`stdin`指定。
+ -  `jar-file`参数是从中提取文件的JAR文件的文件名（或路径和文件名）。
+ -  `archived-file(s)`是一个可选参数，由要从存档中提取的文件的空格分隔列表组成。如果此参数不存在，Jar工具将提取存档中的所有文件。
+
+像往常一样，`x`和`f`选项在命令中出现的顺序无关紧要，但它们之间不能有空格。
+
+在提取文件时，Jar工具会复制所需的文件并将它们写入当前目录，从而重现文件在存档中的目录结构。原始JAR文件保持不变。
+
+----
+
+**警告：** 当它提取文件时，Jar工具将覆盖与提取的文件具有相同路径名的任何现有文件。
+
+----
+
+**例子**
+
+让我们从前面部分中使用的TicTacToe JAR文件中提取一些文件。回想一下`TicTacToe.jar`的内容是：
+
+```
+META-INF/MANIFEST.MF
+TicTacToe.class
+TicTacToe.class
+TicTacToe.java
+audio/
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+example1.html
+images/
+images/cross.gif
+images/not.gif
+```
+
+假设您要提取`TicTacToe`类文件和`cross.gif`图像文件，为此，您可以使用此命令：
+
+```
+jar xf TicTacToe.jar TicTacToe.class images/cross.gif
+```
+
+这个命令做了两件事：
+
+ - 它将`TicTacToe.class`的副本放在当前目录中。
+ - 它创建目录 `images`（如果它尚不存在），并在其中放置`cross.gif`的副本。
+
+原始的TicTacToe JAR文件保持不变。
+
+可以以相同的方式从JAR文件中提取所需的文件。当命令未指定要提取的文件时，Jar工具将提取存档中的所有文件。例如，您可以使用以下命令提取TicTacToe存档中的所有文件：
+
+```
+jar xf TicTacToe.jar
+```
