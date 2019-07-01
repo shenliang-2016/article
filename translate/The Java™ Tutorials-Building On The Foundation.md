@@ -2672,3 +2672,119 @@ Created-By: 1.7.0_06 (Oracle Corporation)
 
 摘要信息不包含在默认清单中。要了解有关摘要和签名的更多信息，请参阅 [签名和验证JAR文件](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html) 课程。
 
+#### 修改清单文件
+
+您可以使用`m`命令行选项在创建JAR文件期间向清单添加自定义信息。本节介绍`m`选项。
+
+Jar工具自动将带有路径名`META-INF/MANIFEST.MF`的默认清单放入您创建的任何JAR文件中。您可以通过修改默认清单来启用特殊JAR文件功能，例如包密封。通常，修改默认清单涉及向清单添加专用标头，以允许JAR文件执行特定的所需功能。
+
+要修改清单，必须首先准备一个文本文件，其中包含要添加到清单的信息。然后，使用Jar工具的`m`选项将文件中的信息添加到清单中。
+
+----
+
+**警告：** 您要从中创建清单的文本文件必须以新行或回车符结束。如果不以新行或回车结束，则不会正确解析最后一行。
+
+----
+
+基本命令格式如下：
+
+```
+jar cfm jar-file manifest-addition input-file(s)
+```
+
+让我们看看这个命令中使用的选项和参数：
+
+ -  `c`选项表示您要创建JAR文件。
+ -  `m`选项表示您要将现有文件中的信息合并到正在创建的JAR文件的清单文件中。
+ -  `f`选项表示您希望输出转到文件（您正在创建的JAR文件）而不是标准输出。
+ -  `manifest-addition`是现有文本文件的名称（或路径和名称），其内容要添加到JAR文件清单的内容中。
+ -  `jar-file`是您希望生成的JAR文件具有的名称。
+ -  `input-file(s)`参数是一个以空格分隔的列表，其中包含要放置在JAR文件中的一个或多个文件。
+
+`m`和`f`选项的顺序必须与相应的参数相同。
+
+----
+
+**注意：** 清单的内容必须以UTF-8编码。
+
+----
+
+本课程的其余部分演示了您可能要对清单文件进行的特定修改。
+
+#### 设定应用入口点
+
+如果您有一个打包在JAR文件中的应用程序，则需要某种方法来指示JAR文件中的哪个类是应用程序的入口点。您可以使用清单中的`Main-Class`标头提供此信息，该标头具有以下一般形式：
+
+```
+Main-Class: classname
+```
+
+值`classname`是作为应用程序入口点的类的名称。
+
+回想一下，入口点是一个具有签名 `public static void main(String[] args)` 的方法的类。
+
+在清单中设置`Main-Class`标头后，然后使用以下形式的`java`命令运行JAR文件：
+
+```
+java -jar JAR-name
+```
+
+执行`Main-Class`标头中指定的类的 `main` 方法。
+
+**例子**
+
+我们想在运行JAR文件时在`MyPackage`包中的`MyClass`类中执行`main`方法。
+
+我们首先创建一个名为`Manifest.txt`的文本文件，其中包含以下内容：
+
+```
+Main-Class: MyPackage.MyClass
+```
+
+----
+
+**警告：** 文本文件必须以新行或回车结束。如果不以新行或回车结束，则不会正确解析最后一行。
+
+----
+
+然后，我们通过输入以下命令创建名为`MyJar.jar`的JAR文件：
+
+```
+jar cfm MyJar.jar Manifest.txt MyPackage/*.class
+```
+
+这将创建一个带有以下内容的清单的JAR文件：
+
+```
+Manifest-Version: 1.0
+Created-By: 1.7.0_06 (Oracle Corporation)
+Main-Class: MyPackage.MyClass
+```
+
+使用以下命令运行JAR文件时，`MyClass`的`main`方法将执行：
+
+```
+java -jar MyJar.jar
+```
+
+**使用 JAR 工具设定一个入口点**
+
+'e'标志（用于'入口点'）创建或覆盖清单文件中的`Main-Class`属性。它可以在创建或更新JAR文件时使用。使用它指定应用程序入口点，而无需编辑或创建清单文件。
+
+例如，此命令创建`app.jar`，其中清单中的`Main-Class`属性值设置为`MyApp`：
+
+```
+jar cfe app.jar MyApp MyApp.class
+```
+
+您可以通过运行以下命令直接调用此应用程序：
+
+```
+java -jar app.jar
+```
+
+如果入口点类名称在包中，则可以使用“.” （点）字符作为分隔符。例如，如果`Main.class`位于名为`foo`的包中，则可以通过以下方式指定入口点：
+
+```
+jar cfe Main.jar foo.Main foo/Main.class
+```
