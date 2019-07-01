@@ -2543,38 +2543,38 @@ new.gif
 
 #### 运行打包为 JAR 的软件
 
-Now that you have learned how to create JAR files, how do you actually run the code you packaged? Consider these scenarios:
+既然您已经学会了如何创建JAR文件，那么如何实际运行您打包的代码？考虑以下情况：
 
-- Your JAR file contains an applet that is to be run inside a browser.
-- Your JAR file contains an application that is to be started from the command line.
-- Your JAR file contains code that you want to use as an extension.
+ - 您的JAR文件包含要在浏览器中运行的applet。
+ - 您的JAR文件包含要从命令行启动的应用程序。
+ - 您的JAR文件包含要用作扩展插件的代码。
 
-This section will cover the first two situations. A separate trail in the tutorial on the [extension mechanism](https://docs.oracle.com/javase/tutorial/ext/index.html) covers the use of JAR files as extensions.
+本节将介绍前两种情况。[扩展机制教程](https://docs.oracle.com/javase/tutorial/ext/index.html) 涵盖了JAR文件作为扩展的使用。
 
 **Applets 打包到 JAR 文件中**
 
-To start any applet from an HTML file for running inside a browser, you use the `applet` tag. For more information, see the [Java Applets](https://docs.oracle.com/javase/tutorial/deployment/applet/index.html) lesson. If the applet is bundled as a JAR file, the only thing you need to do differently is to use the *archive* parameter to specify the relative path to the JAR file.
+要从HTML文件启动任何applet以在浏览器中运行，请使用`applet`标记。更多有关信息，请参阅 [Java Applets](https://docs.oracle.com/javase/tutorial/deployment/applet/index.html) 课程。如果将applet打包为JAR文件，则唯一需要做的就是使用*archive*参数指定JAR文件的相对路径。
 
-As an example, use the TicTacToe demo applet. The `applet` tag in the HTML file that displays the applet can be marked up like this:
+例如，使用TicTacToe演示小程序。 HTML文件中显示applet的`applet`标记可以标记为：
 
-```
+```html
 <applet code=TicTacToe.class 
         width="120" height="120">
 </applet>
 ```
 
-If the TicTacToe demo was packaged in a JAR file named `TicTacToe.jar`, you can modify the `applet` tag with the addition of an `archive` parameter:
+如果TicTacToe演示打包在名为`TicTacToe.jar`的JAR文件中，则可以通过添加 `archive` 参数来修改`applet`标记：
 
-```
+```html
 <applet code=TicTacToe.class 
         archive="TicTacToe.jar"
         width="120" height="120">
 </applet>
 ```
 
-The `archive` parameter specifies the relative path to the JAR file that contains `TicTacToe.class`. For this example it is assumed that the JAR file and the HTML file are in the same directory. If they are not, you must include the JAR file's relative path in the `archive` parameter's value. For example, if the JAR file was one directory below the HTML file in a directory called `applets`, the `applet` tag would look like this:
+`archive`参数指定包含`TicTacToe.class`的JAR文件的相对路径。对于此示例，假定JAR文件和HTML文件位于同一目录中。如果不是，则必须在`archive`参数的值中包含JAR文件的相对路径。例如，如果JAR文件是名为`applets`的目录中HTML文件下面的一个目录，则`applet`标记将如下所示：
 
-```
+```html
 <applet code=TicTacToe.class 
         archive="applets/TicTacToe.jar"
         width="120" height="120">
@@ -2583,30 +2583,92 @@ The `archive` parameter specifies the relative path to the JAR file that contain
 
 **作为应用的 JAR 文件**
 
-You can run JAR packaged applications with the Java launcher (`java` command). The basic command is:
+您可以使用Java启动程序（java命令）运行JAR打包的应用程序。基本命令是：
 
 ```
 java -jar jar-file
 ```
 
-The `-jar` flag tells the launcher that the application is packaged in the JAR file format. You can only specify one JAR file, which must contain all of the application-specific code.
+`-jar`标志告诉启动器应用程序是以JAR文件格式打包的。您只能指定一个JAR文件，该文件必须包含所有特定于应用程序的代码。
 
-Before you execute this command, make sure that the runtime environment has information about which class within the JAR file is the application's entry point.
+在执行此命令之前，请确保运行时环境具有有关JAR文件中哪个类是应用程序入口点的信息。
 
-To indicate which class is the application's entry point, you must add a `Main-Class` header to the JAR file's manifest. The header takes the form:
+要指示哪个类是应用程序的入口点，必须将一个`Main-Class`标头添加到JAR文件的清单中。该标头采用以下形式：
 
 ```
 Main-Class: classname
 ```
 
-The header's value, `classname`, is the name of the class that is the application's entry point.
+标头的值`classname`是应用程序入口点的类的名称。
 
-For more information, see the [Setting an Application's Entry Point](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) section.
+有关更多信息，请参阅 [设置应用程序的入口点](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) 部分。
 
-When the `Main-Class` is set in the manifest file, you can run the application from the command line:
+在清单文件中设置`Main-Class`后，您可以从命令行运行该应用程序：
 
 ```
 java -jar app.jar
 ```
 
-To run the application from the JAR file that is in another directory, you must specify the path of that directory: `java -jar path/app.jar`
+要从另一个目录中的JAR文件运行应用程序，必须指定该目录的路径： `java -jar path/app.jar`
+
+### 使用清单文件：基础
+
+JAR文件支持广泛的功能，包括电子签名，版本控制，封装密封等。什么赋予JAR文件这种多功能性？答案是JAR文件的清单。
+
+清单是一个特殊文件，可以包含有关JAR文件中打包的文件的信息。通过定制清单包含的此“元”信息，您可以启用JAR文件以满足各种用途。
+
+本课将解释清单文件的内容，并向您展示如何使用它，并提供基本功能的示例：
+
+**[理解默认清单](https://docs.oracle.com/javase/tutorial/deployment/jar/defman.html)**
+
+创建JAR文件时，会自动创建默认清单。本节介绍默认清单。
+
+**[修改清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/modman.html)**
+
+本节介绍修改清单文件的基本方法。后面的部分演示了您可能想要进行的具体修改。
+
+**[设置应用入口点](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html)**
+
+本节介绍如何使用清单文件中的`Main-Class`标头设置应用程序的入口点。
+
+**[将类添加到 JAR  文件类路径中](https://docs.oracle.com/javase/tutorial/deployment/jar/downman.html)**
+
+本节介绍如何在清单文件中使用`Class-Path`标头，以便在运行applet或应用程序时将其他JAR文件中的类添加到类路径中。
+
+**[设定包版本信息](https://docs.oracle.com/javase/tutorial/deployment/jar/packageman.html)**
+
+本节介绍如何在清单文件中使用程序包版本标头。
+
+**[将包密封到 JAR 文件中](https://docs.oracle.com/javase/tutorial/deployment/jar/sealman.html)**
+
+本节介绍如何通过修改清单文件来密封JAR文件中的包。
+
+**[利用清单属性增强安全性](https://docs.oracle.com/javase/tutorial/deployment/jar/secman.html)**
+
+本节介绍如何使用清单属性来提高applet或Java Web Start应用程序的安全性。
+
+**附加信息**
+
+[清单格式的规范](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html#JARManifest) 是在线JDK文档的一部分。
+
+#### 理解默认清单
+
+创建JAR文件时，它会自动禅城默认清单文件。归档中只能有一个清单文件，并且它始终具有路径名
+
+```
+META-INF/MANIFEST.MF
+```
+
+创建JAR文件时，默认清单文件只包含以下内容：
+
+```
+Manifest-Version: 1.0
+Created-By: 1.7.0_06 (Oracle Corporation)
+```
+
+这些行显示清单的条目采用"header: value" 对的形式。标头的名称通过冒号与其值分隔。默认清单符合清单规范的1.0版，由JDK的1.7.0_06版本创建。
+
+清单还可以包含有关存档中打包的其他文件的信息。究竟应该在清单中记录哪些文件信息取决于您打算如何使用JAR文件。默认清单不会假设它应该记录哪些关于其他文件的信息。
+
+摘要信息不包含在默认清单中。要了解有关摘要和签名的更多信息，请参阅 [签名和验证JAR文件](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html) 课程。
+
