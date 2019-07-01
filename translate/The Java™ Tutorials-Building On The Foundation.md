@@ -2095,7 +2095,26 @@ Parallel stream:
 null 3 5 4 7 8 1 2
 ```
 
-## 将程序打包成 JAR 文件
+## 实现
+
+Implementations are the data objects used to store collections, which implement the interfaces described in [the Interfaces section](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html). This lesson describes the following kinds of implementations:
+
+- **General-purpose implementations** are the most commonly used implementations, designed for everyday use. They are summarized in the table titled General-purpose-implementations.
+- **Special-purpose implementations** are designed for use in special situations and display nonstandard performance characteristics, usage restrictions, or behavior.
+- **Concurrent implementations** are designed to support high concurrency, typically at the expense of single-threaded performance. These implementations are part of the `java.util.concurrent` package.
+- **Wrapper implementations** are used in combination with other types of implementations, often the general-purpose ones, to provide added or restricted functionality.
+- **Convenience implementations** are mini-implementations, typically made available via static factory methods, that provide convenient, efficient alternatives to general-purpose implementations for special collections (for example, singleton sets).
+- **Abstract implementations** are skeletal implementations that facilitate the construction of custom implementations — described later in the [Custom Collection Implementations](https://docs.oracle.com/javase/tutorial/collections/custom-implementations/index.html) section. An advanced topic, it's not particularly difficult, but relatively few people will need to do it.
+
+The general-purpose implementations are summarized in the following table.
+
+
+
+
+
+
+
+# 将程序打包成 JAR 文件
 
 Java™Archive（JAR）文件格式使您可以将多个文件打包到一个归档文件中。通常，JAR文件包含与applet和应用程序关联的类文件和辅助资源。
 
@@ -2134,7 +2153,7 @@ Java Development Kit（JDK）的文档包含有关Jar工具的信息：
 - [Java Archive (JAR) Files Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/index.html)
 - [JAR File Specification](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html)
 
-### 使用 JAR 文件：基础
+## 使用 JAR 文件：基础
 
 JAR文件以ZIP文件格式打包，因此您可以将它们用于无损数据压缩，归档，解压缩和归档解包等任务。这些任务是JAR文件最常见的用途，您只需使用这些基本功能即可享受许多JAR文件优势。
 
@@ -2182,7 +2201,7 @@ JDK的文档包括Jar工具的参考页面：
 - [Jar tool reference for the Windows platform](https://docs.oracle.com/javase/8/docs/technotes/tools/windows/jar.html)
 - [Jar tool reference for UNIX-based platforms](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jar.html)
 
-#### 创建 JAR 文件
+### 创建 JAR 文件
 
 创建 JAR 文件的基本命令格式是：
 
@@ -2308,7 +2327,7 @@ audio/yahoo1.au
 audio/yahoo2.au
 ```
 
-#### 浏览 JAR 文件内容
+### 浏览 JAR 文件内容
 
 浏览 JAR 文件内容的命令的基本格式如下：
 
@@ -2381,7 +2400,7 @@ jar tvf TicTacToe.jar
    158 Mon Sep 24 21:57:48 PDT 2012 images/not.gif
 ```
 
-#### 解压 JAR 文件内容
+### 解压 JAR 文件内容
 
 用于提取JAR文件内容的基本命令是：
 
@@ -2446,7 +2465,7 @@ jar xf TicTacToe.jar TicTacToe.class images/cross.gif
 jar xf TicTacToe.jar
 ```
 
-#### 升级 JAR 文件
+### 升级 JAR 文件
 
 Jar工具提供了一个`u`选项，您可以通过该选项修改其清单或添加文件来更新现有JAR文件的内容。
 
@@ -2541,7 +2560,7 @@ images/not.gif
 new.gif
 ```
 
-#### 运行打包为 JAR 的软件
+### 运行打包为 JAR 的软件
 
 既然您已经学会了如何创建JAR文件，那么如何实际运行您打包的代码？考虑以下情况：
 
@@ -2611,7 +2630,7 @@ java -jar app.jar
 
 要从另一个目录中的JAR文件运行应用程序，必须指定该目录的路径： `java -jar path/app.jar`
 
-### 使用清单文件：基础
+## 使用清单文件：基础
 
 JAR文件支持广泛的功能，包括电子签名，版本控制，封装密封等。什么赋予JAR文件这种多功能性？答案是JAR文件的清单。
 
@@ -2651,7 +2670,7 @@ JAR文件支持广泛的功能，包括电子签名，版本控制，封装密�
 
 [清单格式的规范](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html#JARManifest) 是在线JDK文档的一部分。
 
-#### 理解默认清单
+### 理解默认清单
 
 创建JAR文件时，它会自动禅城默认清单文件。归档中只能有一个清单文件，并且它始终具有路径名
 
@@ -2672,7 +2691,7 @@ Created-By: 1.7.0_06 (Oracle Corporation)
 
 摘要信息不包含在默认清单中。要了解有关摘要和签名的更多信息，请参阅 [签名和验证JAR文件](https://docs.oracle.com/javase/tutorial/deployment/jar/signindex.html) 课程。
 
-#### 修改清单文件
+### 修改清单文件
 
 您可以使用`m`命令行选项在创建JAR文件期间向清单添加自定义信息。本节介绍`m`选项。
 
@@ -2711,7 +2730,7 @@ jar cfm jar-file manifest-addition input-file(s)
 
 本课程的其余部分演示了您可能要对清单文件进行的特定修改。
 
-#### 设定应用入口点
+### 设定应用入口点
 
 如果您有一个打包在JAR文件中的应用程序，则需要某种方法来指示JAR文件中的哪个类是应用程序的入口点。您可以使用清单中的`Main-Class`标头提供此信息，该标头具有以下一般形式：
 
@@ -2789,7 +2808,7 @@ java -jar app.jar
 jar cfe Main.jar foo.Main foo/Main.class
 ```
 
-#### 添加类到 JAR 文件的类路径
+### 添加类到 JAR 文件的类路径
 
 您可能需要从JAR文件中引用其他JAR文件中的类。
 
