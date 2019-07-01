@@ -2445,3 +2445,168 @@ jar xf TicTacToe.jar TicTacToe.class images/cross.gif
 ```
 jar xf TicTacToe.jar
 ```
+
+#### 升级 JAR 文件
+
+Jar工具提供了一个`u`选项，您可以通过该选项修改其清单或添加文件来更新现有JAR文件的内容。
+
+添加文件的基本命令具有以下格式：
+
+```
+jar uf jar-file input-file(s)
+```
+
+在此命令中：
+
+ -  `u`选项表示您要更新现有JAR文件。
+ -  `f`选项表示要在命令行上指定要更新的JAR文件。
+ -  `jar-file`是要更新的现有JAR文件。
+ -  `input-file(s)`是一个以空格分隔的列表，其中包含要添加到JAR文件的一个或多个文件。
+
+归档中已存在的文件与添加的文件具有相同的路径名将被覆盖。
+
+创建新的JAR文件时，您可以选择使用`-C`选项来指示目录的更改。有关更多信息，请参阅 [创建JAR文件](https://docs.oracle.com/javase/tutorial/deployment/jar/build.html) 部分。
+
+**例子**
+
+回想 `TicTacToe.jar` 包含以下内容：
+
+```
+META-INF/MANIFEST.MF
+TicTacToe.class
+TicTacToe.class
+TicTacToe.java
+audio/
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+example1.html
+images/
+images/cross.gif
+images/not.gif
+```
+
+假设您要将文件`images/new.gif`添加到JAR文件中。您可以通过从`images`目录的父目录发出以下命令来完成此操作：
+
+```
+jar uf TicTacToe.jar images/new.gif
+```
+
+修订后的JAR文件将具有以下目录：
+
+```
+META-INF/MANIFEST.MF
+TicTacToe.class
+TicTacToe.class
+TicTacToe.java
+audio/
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+example1.html
+images/
+images/cross.gif
+images/not.gif
+images/new.gif
+```
+
+您可以在执行命令期间使用`-C`选项“更改目录”。 例如：
+
+```
+jar uf TicTacToe.jar -C images new.gif
+```
+
+在将`new.gif`添加到JAR文件之前，此命令将转向`images`目录。当`new.gif`添加到存档时，`images`目录不会包含在`new.gif`的路径名中，从而产生如下内容的目录：
+
+```
+META-INF/MANIFEST.MF
+META-INF/MANIFEST.MF
+TicTacToe.class
+TicTacToe.class
+TicTacToe.java
+audio/
+audio/beep.au
+audio/ding.au
+audio/return.au
+audio/yahoo1.au
+audio/yahoo2.au
+example1.html
+images/
+images/cross.gif
+images/not.gif
+new.gif
+```
+
+#### 运行打包为 JAR 的软件
+
+Now that you have learned how to create JAR files, how do you actually run the code you packaged? Consider these scenarios:
+
+- Your JAR file contains an applet that is to be run inside a browser.
+- Your JAR file contains an application that is to be started from the command line.
+- Your JAR file contains code that you want to use as an extension.
+
+This section will cover the first two situations. A separate trail in the tutorial on the [extension mechanism](https://docs.oracle.com/javase/tutorial/ext/index.html) covers the use of JAR files as extensions.
+
+**Applets 打包到 JAR 文件中**
+
+To start any applet from an HTML file for running inside a browser, you use the `applet` tag. For more information, see the [Java Applets](https://docs.oracle.com/javase/tutorial/deployment/applet/index.html) lesson. If the applet is bundled as a JAR file, the only thing you need to do differently is to use the *archive* parameter to specify the relative path to the JAR file.
+
+As an example, use the TicTacToe demo applet. The `applet` tag in the HTML file that displays the applet can be marked up like this:
+
+```
+<applet code=TicTacToe.class 
+        width="120" height="120">
+</applet>
+```
+
+If the TicTacToe demo was packaged in a JAR file named `TicTacToe.jar`, you can modify the `applet` tag with the addition of an `archive` parameter:
+
+```
+<applet code=TicTacToe.class 
+        archive="TicTacToe.jar"
+        width="120" height="120">
+</applet>
+```
+
+The `archive` parameter specifies the relative path to the JAR file that contains `TicTacToe.class`. For this example it is assumed that the JAR file and the HTML file are in the same directory. If they are not, you must include the JAR file's relative path in the `archive` parameter's value. For example, if the JAR file was one directory below the HTML file in a directory called `applets`, the `applet` tag would look like this:
+
+```
+<applet code=TicTacToe.class 
+        archive="applets/TicTacToe.jar"
+        width="120" height="120">
+</applet>
+```
+
+**作为应用的 JAR 文件**
+
+You can run JAR packaged applications with the Java launcher (`java` command). The basic command is:
+
+```
+java -jar jar-file
+```
+
+The `-jar` flag tells the launcher that the application is packaged in the JAR file format. You can only specify one JAR file, which must contain all of the application-specific code.
+
+Before you execute this command, make sure that the runtime environment has information about which class within the JAR file is the application's entry point.
+
+To indicate which class is the application's entry point, you must add a `Main-Class` header to the JAR file's manifest. The header takes the form:
+
+```
+Main-Class: classname
+```
+
+The header's value, `classname`, is the name of the class that is the application's entry point.
+
+For more information, see the [Setting an Application's Entry Point](https://docs.oracle.com/javase/tutorial/deployment/jar/appman.html) section.
+
+When the `Main-Class` is set in the manifest file, you can run the application from the command line:
+
+```
+java -jar app.jar
+```
+
+To run the application from the JAR file that is in another directory, you must specify the path of that directory: `java -jar path/app.jar`
