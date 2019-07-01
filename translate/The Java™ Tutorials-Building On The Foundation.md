@@ -2097,20 +2097,36 @@ null 3 5 4 7 8 1 2
 
 ## 实现
 
-Implementations are the data objects used to store collections, which implement the interfaces described in [the Interfaces section](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html). This lesson describes the following kinds of implementations:
+实现是用来存储集合的数据对象，这些对象的类实现了 [接口](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html) 部分中描述的接口。本章节介绍下面几种实现：
 
-- **General-purpose implementations** are the most commonly used implementations, designed for everyday use. They are summarized in the table titled General-purpose-implementations.
-- **Special-purpose implementations** are designed for use in special situations and display nonstandard performance characteristics, usage restrictions, or behavior.
-- **Concurrent implementations** are designed to support high concurrency, typically at the expense of single-threaded performance. These implementations are part of the `java.util.concurrent` package.
-- **Wrapper implementations** are used in combination with other types of implementations, often the general-purpose ones, to provide added or restricted functionality.
-- **Convenience implementations** are mini-implementations, typically made available via static factory methods, that provide convenient, efficient alternatives to general-purpose implementations for special collections (for example, singleton sets).
-- **Abstract implementations** are skeletal implementations that facilitate the construction of custom implementations — described later in the [Custom Collection Implementations](https://docs.oracle.com/javase/tutorial/collections/custom-implementations/index.html) section. An advanced topic, it's not particularly difficult, but relatively few people will need to do it.
+- **通用实现** 是最普遍使用的实现，为日常使用设计。它们在标题为“通用实现”的表中总结。
+- **专用实现** 为特殊情况使用设计，展现出非标准的性能特征、使用限制或者特殊行为。
+- **并发实现** 为支持高并发设计，通常是以单线程性能为代价。这些实现是 `java.util.concurrent` 包的一部分。
+- **包装器实现** 与其他类型的实现结合使用，通常是通用实现，来提供附加功能或者限制功能。
+- **方便实现** 是迷你实现，通常通过静态工厂方法提供，为特殊集合（例如，单例集）的通用实现提供方便，有效的替代方案。
+- **抽象实现** 是有助于构建自定义实现的骨架实现 - 稍后将在 [自定义集合实现](https://docs.oracle.com/javase/tutorial/collections/custom-implementations/index.html) 部分中进行介绍。一个高级主题，并不是特别困难，但相对较少的人需要这样做。
 
-The general-purpose implementations are summarized in the following table.
+通用实现总结在下面表中。
 
+| Interfaces | Hash table Implementations | Resizable array Implementations | Tree Implementations | Linked list Implementations | Hash table + Linked list Implementations |
+| ---------- | -------------------------- | ------------------------------- | -------------------- | --------------------------- | ---------------------------------------- |
+| `Set`      | `HashSet`                  |                                 | `TreeSet`            |                             | `LinkedHashSet`                          |
+| `List`     |                            | `ArrayList`                     |                      | `LinkedList`                |                                          |
+| `Queue`    |                            |                                 |                      |                             |                                          |
+| `Deque`    |                            | `ArrayDeque`                    |                      | `LinkedList`                |                                          |
+| `Map`      | `HashMap`                  |                                 | `TreeMap`            |                             | `LinkedHashMap`                          |
 
+从表中可以看出，Java Collections Framework提供了几个 [`Set`](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html), [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) , 和 [`Map`](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 的通用实现。在每种情况下，一个实现 -  [`HashSet`](https://docs.oracle.com/javase/8/docs/api/java/util/HashSet.html), [`ArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html), and [`HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html)  - 显然是大多数应用程序使用的，所有其他条件相同。注意 [`SortedSet`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedSet.html) 和 [`SortedMap`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedMap.html) 接口在表中没有。每个此类接口都有一个实现 [(`TreeSet`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeSet.html) 和 [`TreeMap`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeMap.html)) 出现在`Set`和`Map`行中。有两个通用的`Queue`实现 - [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)，它也是一个`List ` 实现，和 [`PriorityQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/PriorityQueue.html)，此表省略。这两个实现提供了非常不同的语义：`LinkedList`提供FIFO语义，而`PriorityQueue`根据它们的值对其元素进行排序。
 
+每个通用实现都提供其接口中包含的所有可选操作。所有都允许`null`元素，键和值。无同步（线程安全）。所有都具有*fail-fast迭代器*，它在迭代期间检测非法并发修改并快速且干净地失败，而不是在未来的未确定时间冒任意，不确定行为的风险。所有都是`Serializable`并且都支持公共`clone`方法。
 
+这些实现是不同步的这一事实代表了对过去规则的突破：遗留集合`Vector`和`Hashtable`是同步的。采用本方法是因为当同步没有任何好处时经常使用集合。这些用途包括单线程使用，只读使用，以及用作进行自身同步的大型数据对象的一部分。一般来说，良好的API设计实践不会让用户为他们不使用的功能付出代价。此外，在某些情况下，不必要的同步可能导致死锁。
+
+如果您需要线程安全的集合， [Wrapper Implementations](https://docs.oracle.com/javase/tutorial/collections/implementations/wrapper.html) 部分中描述的同步包装器允许*any*集合被转换成同步的集合。因此，同步对于通用实现是可选的，而对于遗留实现是必需的。此外，`java.util.concurrent`包提供了`BlockingQueue`接口的并发实现，它扩展了`Queue`，以及`ConcurrentMap`接口的并发实现，扩展了`Map`。这些实现提供了比仅仅同步实现更高的并发性。
+
+通常，您应该考虑接口，而不是实现。这就是本节中没有编程示例的原因。在大多数情况下，实现的选择仅影响性能。在 [Interfaces](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html) 部分中提到的首选样式是在创建`Collection`时选择一个实现，并且 立即将新集合分配给相应接口类型的变量（或将集合传递给期望接口类型参数的方法）。通过这种方式，程序不会依赖于给定实现中的任何附加方法，让程序员可以随时根据性能问题或行为细节保证更改实现。
+
+以下部分简要讨论了实现。 使用诸如*constant-time*，*log*，*linear*，*n log(n)*和*quadratic*之类的单词来描述实现的性能，以指代执行操作的时间复杂度的渐近上限。所有这一切都是冗长而拗口的，如果你不知道它意味着什么并不重要。如果您有兴趣了解更多信息，请参阅任何优秀的算法教科书。需要记住的一点是，这种性能指标有其局限性。有时，名义上较慢的实施可能会更快。如有疑问，请评估性能！
 
 
 
