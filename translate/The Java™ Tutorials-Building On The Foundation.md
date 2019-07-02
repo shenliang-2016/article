@@ -2171,23 +2171,23 @@ EnumSet.of(Style.BOLD, Style.ITALIC)
 
 ### List 实现
 
-`List` implementations are grouped into general-purpose and special-purpose implementations.
+`List` 实现分为通用实现和专用实现两种。
 
 **通用 List 实现**
 
-There are two general-purpose [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) implementations — [`ArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html) and [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html). Most of the time, you'll probably use `ArrayList`, which offers constant-time positional access and is just plain fast. It does not have to allocate a node object for each element in the `List`, and it can take advantage of `System.arraycopy` when it has to move multiple elements at the same time. Think of `ArrayList` as `Vector` without the synchronization overhead.
+有两个通用的 [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) 实现-- [`ArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html) 和 [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html) 。大多数情况下，您可能会使用`ArrayList`，它提供常量时间复杂度的指定位置访问，并且速度非常快。它不必为`List`中的每个元素分配节点对象，并且当它必须同时移动多个元素时，它可以利用`System.arraycopy`。可以将`ArrayList`视为没有同步开销的`Vector`。
 
-If you frequently add elements to the beginning of the `List` or iterate over the `List` to delete elements from its interior, you should consider using `LinkedList`. These operations require constant-time in a `LinkedList` and linear-time in an `ArrayList`. But you pay a big price in performance. Positional access requires linear-time in a `LinkedList` and constant-time in an `ArrayList`. Furthermore, the constant factor for `LinkedList` is much worse. If you think you want to use a `LinkedList`, measure the performance of your application with both `LinkedList` and `ArrayList` before making your choice; `ArrayList` is usually faster.
+如果经常将元素添加到`List`的开头或迭代`List`以从其内部删除元素，则应考虑使用`LinkedList`。这些操作在`LinkedList`中消耗常量时间，而在`ArrayList`中消耗线性时间。但是你的性能要付出很大的代价。指定位置访问在`LinkedList`中消耗线性时间，而在`ArrayList`中消耗常量时间。此外，`LinkedList`的时间复杂度中常数因子更大。如果您认为要使用`LinkedList`，请在做出选择之前使用`LinkedList`和`ArrayList`测量应用程序的性能：`ArrayList`通常更快。
 
-`ArrayList` has one tuning parameter — the *initial capacity*, which refers to the number of elements the `ArrayList` can hold before it has to grow. `LinkedList` has no tuning parameters and seven optional operations, one of which is `clone`. The other six are `addFirst`, `getFirst`, `removeFirst`, `addLast`, `getLast`, and `removeLast`. `LinkedList`also implements the `Queue` interface.
+`ArrayList`有一个调整参数 - 初始容量，它指的是`ArrayList`在增长之前可以容纳的元素数。`LinkedList`没有调优参数和七个可选操作，其中一个是`clone`。其他六个是 `addFirst`, `getFirst`, `removeFirst`, `addLast`, `getLast`, 和 `removeLast`。`LinkedList`也实现了`Queue`接口。
 
 **专用 List 实现**
 
-[`CopyOnWriteArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CopyOnWriteArrayList.html) is a `List` implementation backed up by a copy-on-write array. This implementation is similar in nature to `CopyOnWriteArraySet`. No synchronization is necessary, even during iteration, and iterators are guaranteed never to throw `ConcurrentModificationException`. This implementation is well suited to maintaining event-handler lists, in which change is infrequent, and traversal is frequent and potentially time-consuming.
+[`CopyOnWriteArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CopyOnWriteArrayList.html) 是由copy-on-write数组备份的`List`实现。此实现在本质上类似于`CopyOnWriteArraySet`。即使在迭代期间也不需要同步，并且保证迭代器永远不会抛出`ConcurrentModificationException`。此实现非常适合维护事件处理程序列表，其中更改很少发生，并且遍历频繁且可能耗时。
 
-If you need synchronization, a `Vector` will be slightly faster than an `ArrayList` synchronized with `Collections.synchronizedList`. But `Vector` has loads of legacy operations, so be careful to always manipulate the `Vector` with the `List` interface or else you won't be able to replace the implementation at a later time.
+如果需要同步，`Vector`将比用`Collections.synchronizedList`同步的`ArrayList`稍快一些。但`Vector`有大量的遗留操作，因此请务必小心使用`List`接口操作`Vector`，否则您将无法在以后替换该实现。
 
-If your `List` is fixed in size — that is, you'll never use `remove`, `add`, or any of the bulk operations other than `containsAll` — you have a third option that's definitely worth considering. See `Arrays.asList` in the [Convenience Implementations](https://docs.oracle.com/javase/tutorial/collections/implementations/convenience.html) section for more information.
+如果您的 `List` 大小固定 - 也就是说，您永远不会使用 `remove`，`add`或除`containsAll`之外的任何批量操作 - 您有第三个选项，绝对值得考虑。有关详细信息，请参阅 [便捷实现](https://docs.oracle.com/javase/tutorial/collections/implementations/convenience.html) 部分中的`Arrays.asList`。
 
 # 将程序打包成 JAR 文件
 
