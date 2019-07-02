@@ -2128,7 +2128,66 @@ null 3 5 4 7 8 1 2
 
 以下部分简要讨论了实现。 使用诸如*constant-time*，*log*，*linear*，*n log(n)*和*quadratic*之类的单词来描述实现的性能，以指代执行操作的时间复杂度的渐近上限。所有这一切都是冗长而拗口的，如果你不知道它意味着什么并不重要。如果您有兴趣了解更多信息，请参阅任何优秀的算法教科书。需要记住的一点是，这种性能指标有其局限性。有时，名义上较慢的实施可能会更快。如有疑问，请评估性能！
 
+### Set 实现
 
+`Set` 实现分为通用实现和专用实现两种。
+
+**通用 Set 实现**
+
+有三种通用的 [`Set`](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html) i实现 - [`HashSet`](https://docs.oracle.com/javase/8/docs/api/java/util/HashSet.html), [`TreeSet`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeSet.html), 和 [`LinkedHashSet`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashSet.html) 。使用这三种中的哪一种通常都是很明显的。`HashSet`比`TreeSet`快得多（大多数操作的常量时间与对数时间）但不提供排序保证。如果需要使用`SortedSet`接口中的操作，或者需要按值进行迭代，请使用`TreeSet;` 否则，使用`HashSet`。可以肯定的是，大多数时候你最终都会使用`HashSet`。
+
+`LinkedHashSet`在某种意义上介于`HashSet`和`TreeSet`之间。它实现为一个哈希表，其中包含一个链表，它提供了插入顺序迭代（最近最少插入为最新）并且运行速度几乎与`HashSet`一样快。`LinkedHashSet`实现使其客户端免受`HashSet`提供的未指定的，通常是混乱的排序的困扰，而不会导致与`TreeSet`相关的成本增加。
+
+关于`HashSet`值得记住的一件事是，迭代次数是元素条目数和桶数（容量）之和的线性函数。因此，选择太高的初始容量会浪费空间和时间。另一方面，选择一个太低的初始容量会在每次强制增加容量时复制数据结构，从而浪费时间。如果未指定初始容量，则默认值为16。过去，选择素数作为初始容量有一些优势，不过现在已经不再奏效。在内部，容量总是四舍五入到2的幂。使用`int`构造函数指定初始容量。以下代码行分配一个初始容量为64的`HashSet`。
+
+```java
+Set<String> s = new HashSet<String>(64);
+```
+
+`HashSet`类还有一个称为加载因子的调整参数。如果您非常关心`HashSet`的空间消耗，请阅读`HashSet`文档以获取更多信息。否则，只接受默认值，不过这几乎总是正确的事情。
+
+如果您接受默认加载因子但想要指定初始容量，请选择一个大约是您希望该组增长的大小的两倍的数字。如果您的猜测偏大，您可能会浪费一些空间，时间或两者，但这不太可能是一个大问题。
+
+`LinkedHashSet`具有与`HashSet`相同的调整参数，但迭代时间不受容量影响。`TreeSet`没有调整参数。
+
+**专用 Set 实现**
+
+有两个专用的`Set`实现 - [`EnumSet`](https://docs.oracle.com/javase/8/docs/api/java/util/EnumSet.html) 和 [`CopyOnWriteArraySet`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CopyOnWriteArraySet.html) 。
+
+`EnumSet`是枚举类型的高性能`Set`实现。枚举集的所有成员必须具有相同的枚举类型。在内部，它由位向量表示，通常是单个`long`。枚举集支持在枚举类型的范围上迭代。例如，给定星期几的枚举声明，您可以迭代工作日。`EnumSet`类提供了一个简单的静态工厂来帮你实现该功能。
+
+```java
+for (Day d : EnumSet.range(Day.MONDAY, Day.FRIDAY))
+    System.out.println(d);
+```
+
+枚举集还为传统的位标志提供了丰富的，类型安全的替代品。
+
+```java
+EnumSet.of(Style.BOLD, Style.ITALIC)
+```
+
+`CopyOnWriteArraySet`是一个由*copy-on-write*数组备份的`Set`实现。所有可变操作，例如`add`, `set`, 和 `remove`，都是通过创建数组的新副本来实现的，不需要锁定。甚至迭代也可以安全地与元素插入和删除同时进行。与大多数`Set`实现不同，`add`，`remove`和`contains`方法需要与集合大小成比例的时间。此实现仅适用于很少修改但经常迭代的集合。它非常适合维护必须防止重复的事件处理程序列表。
+
+### List 实现
+
+`List` implementations are grouped into general-purpose and special-purpose implementations.
+
+**通用 List 实现**
+
+There are two general-purpose [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) implementations — [`ArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html) and [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html). Most of the time, you'll probably use `ArrayList`, which offers constant-time positional access and is just plain fast. It does not have to allocate a node object for each element in the `List`, and it can take advantage of `System.arraycopy` when it has to move multiple elements at the same time. Think of `ArrayList` as `Vector` without the synchronization overhead.
+
+If you frequently add elements to the beginning of the `List` or iterate over the `List` to delete elements from its interior, you should consider using `LinkedList`. These operations require constant-time in a `LinkedList` and linear-time in an `ArrayList`. But you pay a big price in performance. Positional access requires linear-time in a `LinkedList` and constant-time in an `ArrayList`. Furthermore, the constant factor for `LinkedList` is much worse. If you think you want to use a `LinkedList`, measure the performance of your application with both `LinkedList` and `ArrayList` before making your choice; `ArrayList` is usually faster.
+
+`ArrayList` has one tuning parameter — the *initial capacity*, which refers to the number of elements the `ArrayList` can hold before it has to grow. `LinkedList` has no tuning parameters and seven optional operations, one of which is `clone`. The other six are `addFirst`, `getFirst`, `removeFirst`, `addLast`, `getLast`, and `removeLast`. `LinkedList`also implements the `Queue` interface.
+
+**专用 List 实现**
+
+[`CopyOnWriteArrayList`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CopyOnWriteArrayList.html) is a `List` implementation backed up by a copy-on-write array. This implementation is similar in nature to `CopyOnWriteArraySet`. No synchronization is necessary, even during iteration, and iterators are guaranteed never to throw `ConcurrentModificationException`. This implementation is well suited to maintaining event-handler lists, in which change is infrequent, and traversal is frequent and potentially time-consuming.
+
+If you need synchronization, a `Vector` will be slightly faster than an `ArrayList` synchronized with `Collections.synchronizedList`. But `Vector` has loads of legacy operations, so be careful to always manipulate the `Vector` with the `List` interface or else you won't be able to replace the implementation at a later time.
+
+If your `List` is fixed in size — that is, you'll never use `remove`, `add`, or any of the bulk operations other than `containsAll` — you have a third option that's definitely worth considering. See `Arrays.asList` in the [Convenience Implementations](https://docs.oracle.com/javase/tutorial/collections/implementations/convenience.html) section for more information.
 
 # 将程序打包成 JAR 文件
 
