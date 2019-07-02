@@ -2189,6 +2189,46 @@ EnumSet.of(Style.BOLD, Style.ITALIC)
 
 如果您的 `List` 大小固定 - 也就是说，您永远不会使用 `remove`，`add`或除`containsAll`之外的任何批量操作 - 您有第三个选项，绝对值得考虑。有关详细信息，请参阅 [便捷实现](https://docs.oracle.com/javase/tutorial/collections/implementations/convenience.html) 部分中的`Arrays.asList`。
 
+### Map 实现
+
+`Map` 实现分为通用实现、专用实现以及并发实现三种。
+
+**通用 Map 实现**
+
+三个通用 [`Map`](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html) 实现是 [`HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html), [`TreeMap`](https://docs.oracle.com/javase/8/docs/api/java/util/TreeMap.html) 和 [`LinkedHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html) 。如果需要`SortedMap`操作或按键排序的`Collection`-view迭代，请使用`TreeMap`; 如果您想要最大速度而不关心迭代顺序，请使用`HashMap`; 如果您想要近`HashMap`性能和插入顺序迭代，请使用`LinkedHashMap`。在这方面，`Map`的情况类似于`Set`。同样， [Set Implementations](https://docs.oracle.com/javase/tutorial/collections/implementations/set.html) 部分中的其他所有内容也适用于`Map`实现。
+
+`LinkedHashMap`提供了`LinkedHashSet`不具备的两个功能。创建`LinkedHashMap`时，可以基于键访问而不是插入来对其进行排序。换句话说，仅查找与键相关联的值就会将该键移动到`Map`的末尾。此外，`LinkedHashMap`提供`removeEldestEntry`方法，可以重写此方法以强制执行在将新映射添加到`Map`时自动删除过时映射的策略。这使得实现自定义缓存变得非常容易。
+
+例如，此覆盖将允许`Map`包含多达100个条目，然后每次添加新条目时它将删除最旧条目，从而保持100个条目的稳定状态。
+
+```java
+private static final int MAX_ENTRIES = 100;
+
+protected boolean removeEldestEntry(Map.Entry eldest) {
+    return size() > MAX_ENTRIES;
+}
+```
+
+**专用 Map 实现**
+
+有三种特殊用途的`Map`实现 -  [`EnumMap`](https://docs.oracle.com/javase/8/docs/api/java/util/EnumMap.html), [`WeakHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/WeakHashMap.html) 和 [`IdentityHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/IdentityHashMap.html) 。`EnumMap`是一个内部实现为 `array` 的实现，是一个与枚举键一起使用的高性能`Map`实现。此实现将`Map`接口的丰富性和安全性与接近数组的速度相结合。如果要将枚举映射到值，则应始终优先使用`EnumMap`而不是数组。
+
+`WeakHashMap`是`Map`接口的一个实现，它只存储对其键的弱引用。仅存储弱引用允许在其键不再在`WeakHashMap`之外引用时对键值对进行垃圾收集。此类提供了利用弱引用功能的最简单方法。它对于实现“类似注册表”的数据结构很有用，其中当任何线程不再可以访问其键时，条目的可用性就会消失。
+
+`IdentityHashMap`是基于哈希表的基于id的`Map`实现。此类对于拓扑保留对象图转换非常有用，例如序列化或深度复制。 要执行此类转换，您需要维护一个基于id的“节点表”，以跟踪已经找到的对象。基于id的映射还用于维护动态调试器和类似系统中的对象到元信息映射。最后，基于id的映射有助于挫败基于恶意`equals`方法的“欺骗攻击”，因为`IdentityHashMap`从不在其键上调用`equals`方法。这种实现的另一个好处是它很快。
+
+**并发 Map 实现**
+
+[`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html) 包中包含 [`ConcurrentMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html) 接口，该接口使用原子`putIfAbsent`，`remove`和`replace`方法，同时[`ConcurrentHashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html) 实现该接口。
+
+`ConcurrentHashMap`是一个由哈希表备份的高度并发，高性能的实现。执行检索时，此实现永远不会阻塞，并允许客户端选择更新的并发级别。它旨在作为`Hashtable`的替代品：除了实现`ConcurrentMap`之外，它还支持`Hashtable`特有的所有遗留方法。同样，如果您不需要遗留操作，请小心使用`ConcurrentMap`接口对其进行操作。
+
+
+
+
+
+
+
 # 将程序打包成 JAR 文件
 
 Java™Archive（JAR）文件格式使您可以将多个文件打包到一个归档文件中。通常，JAR文件包含与applet和应用程序关联的类文件和辅助资源。
