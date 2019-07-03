@@ -2252,6 +2252,57 @@ protected boolean removeEldestEntry(Map.Entry eldest) {
 - [`LinkedTransferQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedTransferQueue.html) — 基于链接节点的无界`TransferQueue`
 
 
+### Deque 实现
+
+`Deque`接口，发音为“deck”，表示双端队列。`Deque`接口可以实现为各种类型的 `Collections`。 `Deque`接口实现分为通用和并发实现。
+
+**通用 Deque 实现**
+
+通用实现包括`LinkedList`和`ArrayDeque`类。`Deque`接口支持两端元素的插入，移除和检索。[`ArrayDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayDeque.html) 类是`Deque`接口的可调整大小的数组实现，而 [`LinkedList`](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html) 类是列表实现。
+
+`Deque`接口中的基本插入，删除和检索操作`addFirst`，`addLast`，`removeFirst`，`removeLast`，`getFirst`和`getLast`。 方法`addFirst`在头部添加一个元素，而`addLast`在`Deque`实例的尾部添加一个元素。
+
+`LinkedList`实现比`ArrayDeque`实现更灵活。`LinkedList`实现所有可选的列表操作。`LinkedList`实现中允许使用`null`元素，但`ArrayDeque`实现中不允许使用`null`元素。
+
+在效率方面，`ArrayDeque`比`LinkedList`更有效，可以在两端添加和删除操作。`LinkedList`实现中的最佳操作是在迭代期间删除当前元素。 LinkedList实现不是迭代的理想结构。
+
+`LinkedList`实现比`ArrayDeque`实现消耗更多内存。对于`ArrayDeque`实例遍历，请使用以下任何一种方法：
+
+**foreach**
+
+`foreach` 很快，可以用于各种列表：
+
+```java
+ArrayDeque<String> aDeque = new ArrayDeque<String>();
+
+. . .
+for (String str : aDeque) {
+    System.out.println(str);
+}
+```
+
+**Iterator**
+
+`Iterator`可用于各种数据类型列表的前向遍历。
+
+```java
+ArrayDeque<String> aDeque = new ArrayDeque<String>();
+. . .
+for (Iterator<String> iter = aDeque.iterator(); iter.hasNext();  ) {
+    System.out.println(iter.next());
+}
+```
+
+本教程中使用`ArrayDeque`类来实现`Deque`接口。[`ArrayDequeSample`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/ArrayDequeSample.java)中提供了本教程中使用的示例的完整代码。`LinkedList`和`ArrayDeque`类都不支持多个线程的并发访问。
+
+**并发 Deque 实现**
+
+[`LinkedBlockingDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 类是`Deque`接口的并发实现。如果deque为空，那么诸如`takeFirst`和`takeLast`之类的方法会等到元素变为可用，然后检索并删除相同的元素。
+
+
+
+
+
 
 
 
