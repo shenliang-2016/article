@@ -2299,6 +2299,159 @@ for (Iterator<String> iter = aDeque.iterator(); iter.hasNext();  ) {
 
 [`LinkedBlockingDeque`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html) 类是`Deque`接口的并发实现。如果deque为空，那么诸如`takeFirst`和`takeLast`之类的方法会等到元素变为可用，然后检索并删除相同的元素。
 
+### Wrapper 实现
+
+包装器实现将所有实际工作委托给指定的集合，但在此集合提供的功能之上添加额外的功能。对于设计模式粉丝，这是装饰器模式的一个示例。虽然它看起来有点奇特，但它真的非常简单。
+
+这些实现是匿名的，该库提供静态工厂方法，而不是提供公共类。所有这些实现都可以在 [`Collections`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html) 类中找到，它只包含静态方法。
+
+**同步包装器**
+
+同步包装器将自动同步（线程安全性）添加到任意集合。 六个核心集合接口 [`Collection`](https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html), [`Set`](https://docs.oracle.com/javase/8/docs/api/java/util/Set.html), [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html), [`Map`](https://docs.oracle.com/javase/8/docs/api/java/util/Map.html),[`SortedSet`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedSet.html), 和 [`SortedMap`](https://docs.oracle.com/javase/8/docs/api/java/util/SortedMap.html) 中的每一个都有一个静态工厂方法。
+
+```java
+public static <T> Collection<T> synchronizedCollection(Collection<T> c);
+public static <T> Set<T> synchronizedSet(Set<T> s);
+public static <T> List<T> synchronizedList(List<T> list);
+public static <K,V> Map<K,V> synchronizedMap(Map<K,V> m);
+public static <T> SortedSet<T> synchronizedSortedSet(SortedSet<T> s);
+public static <K,V> SortedMap<K,V> synchronizedSortedMap(SortedMap<K,V> m);
+```
+
+这些方法中的每一个都返回由指定集合备份的同步（线程安全）`Collection` 。为了保证串行访问，必须通过返回的集合完成对后备集合的所有访问。保证这一点的简单方法是不保留对后备集合的引用。使用以下技巧创建同步集合。
+
+```java
+List<Type> list = Collections.synchronizedList(new ArrayList<Type>());
+```
+
+以这种方式创建的集合与正常同步的集合（例如[`Vector`](https://docs.oracle.com/javase/8/docs/api/java/util/Vector.html)）一样具有线程安全性。
+
+面对并发访问，用户必须在迭代时手动同步返回的集合。原因是迭代是通过对集合的多次调用来完成的，而这些操作必须组成一个单独的原子操作。以下是迭代包装器同步集合的习惯用法。
+
+```java
+Collection<Type> c = Collections.synchronizedCollection(myCollection);
+synchronized(c) {
+    for (Type e : c)
+        foo(e);
+}
+```
+
+如果使用显式迭代器，则必须从`synchronized`块中调用 `iterator` 方法。不遵循此建议可能会导致不确定的行为。迭代同步`Map`的`Collection`视图的习惯用法是类似的。当迭代任何`Collection`视图而不是在`Collection`视图本身上进行同步时，用户必须在同步`Map`上进行同步，如以下示例所示。
+
+```java
+Map<KeyType, ValType> m = Collections.synchronizedMap(new HashMap<KeyType, ValType>());
+    ...
+Set<KeyType> s = m.keySet();
+    ...
+// Synchronizing on m, not s!
+synchronized(m) {
+    while (KeyType k : s)
+        foo(k);
+}
+```
+
+使用包装器实现的一个小缺点是您无法执行包装实现的任何非接口操作。因此，例如，在前面的`List`示例中，您无法在包装的`ArrayList`上调用`ArrayList`的`ensureCapacity`操作。
+
+**不可变包装器**
+
+与为包装集合添加功能的同步包装器不同，不可修改的包装器可以消除功能。特别是，它们通过拦截将修改集合的操作并抛出`UnsupportedOperationException`来消除修改集合的能力。不可修改的包装器有两个主要用途，如下所示：
+
+ - 在构建集合后使集合不可变。在这种情况下，最好不要维护对支持集合的引用。这绝对保证了不变性。
+ - 允许某些客户端以只读方式访问您的数据结构。您保留对支持集合的引用，但分发对包装器的引用。通过这种方式，客户可以查看但不能修改，同时保持完全访问权限。
+
+与同步包装器一样，六个核心`Collection`接口中的每一个都有一个静态工厂方法。
+
+```java
+public static <T> Collection<T> unmodifiableCollection(Collection<? extends T> c);
+public static <T> Set<T> unmodifiableSet(Set<? extends T> s);
+public static <T> List<T> unmodifiableList(List<? extends T> list);
+public static <K,V> Map<K, V> unmodifiableMap(Map<? extends K, ? extends V> m);
+public static <T> SortedSet<T> unmodifiableSortedSet(SortedSet<? extends T> s);
+public static <K,V> SortedMap<K, V> unmodifiableSortedMap(SortedMap<K, ? extends V> m);
+```
+
+**受检查的接口包装器**
+
+提供`Collections.checked`接口包装器以用于泛型集合。这些实现返回指定集合的动态类型安全视图，如果客户端尝试添加错误类型的元素，则会抛出`ClassCastException`。Java 语言中的泛型机制提供了编译时（静态）类型检查，但这种机制有可能被打破。动态类型安全的视图完全消除了这种可能性。
+
+### 方便实现
+
+本节描述了几种小型实现，当您不需要它们的全部功能时，它们比通用实现更方便，更高效。本节中的所有实现都是通过静态工厂方法而不是 `public` 类提供的。
+
+**数组的列表视图**
+
+[`Arrays.asList`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#asList-T...-) 方法返回其数组参数的`List`视图。对`List`的更改将写入数组，反之亦然。集合的大小是数组的大小，不能更改。如果在`List`上调用`add`或`remove`方法，将导致`UnsupportedOperationException`。
+
+此实现的正常使用是作为基于数组和基于集合的API之间的桥梁。它允许您将数组传递给期望`Collection`或`List`的方法。但是，这种实现还有另一种用途。如果您需要固定大小的`List`，它比任何通用`List`实现更有效。这是习惯用法。
+
+```java
+List<String> list = Arrays.asList(new String[size]);
+```
+
+请注意，不保留对后备数组的引用。
+
+**不可变的多重复制列表**
+
+有时，您需要一个由同一元素的多个副本组成的不可变列表。`Collections.nCopies`方法返回这样的列表。该实现有两个主要用途。第一种是初始化新创建的`List`。例如，假设您想要一个最初由1,000个`null`元素组成的`ArrayList`。以下代码可以做到。
+
+```java
+List<Type> list = new ArrayList<Type>(Collections.nCopies(1000, (Type)null);
+```
+
+当然，每个元素的初始值不必为`null`。第二个主要用途是增加现有的`List`。例如，假设您要将69个字符串“fruit bat”添加到`List<String>`的末尾。目前尚不清楚你为什么要做这样的事情，但让我们假设你做了。以下是你如何做到的。
+
+```java
+lovablePets.addAll(Collections.nCopies(69, "fruit bat"));
+```
+
+通过使用带有索引和`Collection`的`addAll`形式，您可以将新元素添加到`List`的中间而不是结尾。
+
+**不可变单例 Set**
+
+有时您需要一个不可变的单例`Set`，它由一个指定的单个元素组成。[`Collections.singleton`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#singleton-T-) 方法返回这样的`Set`。此实现的一个用途是从`Collection`中删除所有出现的指定元素。
+
+```java
+c.removeAll(Collections.singleton(e));
+```
+
+相关的习惯用法从`Map`中删除映射到指定值的所有元素。例如，假设您有一个`Map` - `job` - 将人们映射到他们的工作范围，并假设您想要清除所有律师。以下代码将实现该操作。
+
+```java
+job.values().removeAll(Collections.singleton(LAWYER));
+```
+
+此实现的另一个用途是为编写为接受值集合的方法提供单个输入值。
+
+**空 Set, List, 和 Map 常量**
+
+[`Collections`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html) 类提供了返回空`Set`，`List`和`Map`的方法 -  [`emptySet`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#emptySet--), [`emptyList`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#emptyList--), 和 [`emptyMap`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#emptyMap--) 。这些常量的主要用途是当您不想提供任何值时作为采用值集合的方法的输入，如本示例所示。
+
+```java
+tourist.declarePurchases(Collections.emptySet());
+```
+
+### 小结
+
+实现是用于存储集合的数据对象，它实现了 [Interfaces](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html) 课程中描述的接口。
+
+Java Collections Framework提供了几个核心接口的通用实现：
+
+* 对于`Set`接口，`HashSet`是最常用的实现。
+* 对于`List`接口，`ArrayList`是最常用的实现。
+* 对于`Map`接口，`HashMap`是最常用的实现。
+* 对于`Queue`接口，`LinkedList`是最常用的实现。
+* 对于`Deque`接口，`ArrayDeque`是最常用的实现。
+
+每个通用实现都提供其接口中包含的所有可选操作。
+
+Java Collections Framework还为需要非标准性能，使用限制或其他异常行为的情况提供了几种特殊用途的实现。
+
+`java.util.concurrent`包中包含多个集合实现，这些实现是线程安全的，但不受单个排除锁的控制。
+
+`Collections`类（与`Collection`接口相对）提供了对集合进行操作或返回集合的静态方法，这些方法称为包装器实现。
+
+最后，有几种便利实现，当您不需要它们的全部功能时，它可以比通用实现更有效。通过静态工厂方法提供便捷实现。
+
 
 
 
