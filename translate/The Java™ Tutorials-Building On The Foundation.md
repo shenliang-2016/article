@@ -2454,27 +2454,27 @@ Java Collections Framework还为需要非标准性能，使用限制或其他异
 
 ## 算法
 
-The *polymorphic algorithms* described here are pieces of reusable functionality provided by the Java platform. All of them come from the [`Collections`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html) class, and all take the form of static methods whose first argument is the collection on which the operation is to be performed. The great majority of the algorithms provided by the Java platform operate on [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) instances, but a few of them operate on arbitrary[`Collection`](https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html) instances. This section briefly describes the following algorithms:
+这里描述的*多态算法*是Java平台提供的可重用功能。所有这些都来自 [`Collections`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html) 类，所有这些都采用静态方法的形式， 第一个参数是要在其上执行操作的集合。Java平台提供的绝大多数算法都在 [`List`](https://docs.oracle.com/javase/8/docs/api/java/util/List.html) 实例上运行，但是有几个在任意 [`Collection`](https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html) 实例上运行。本节简要介绍以下算法：
 
-- [Sorting](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#sorting)
-- [Shuffling](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#shuffling)
-- [Routine Data Manipulation](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#rdm)
-- [Searching](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#searching)
-- [Composition](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#composition)
-- [Finding Extreme Values](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#fev)
+- [排序](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#sorting)
+- [发牌](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#shuffling)
+- [常规数据操作](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#rdm)
+- [搜索](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#searching)
+- [组合](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#composition)
+- [寻找极值](https://docs.oracle.com/javase/tutorial/collections/algorithms/index.html#fev)
 
-## Sorting
+**排序**
 
-The `sort` algorithm reorders a `List` so that its elements are in ascending order according to an ordering relationship. Two forms of the operation are provided. The simple form takes a `List` and sorts it according to its elements' *natural ordering*. If you're unfamiliar with the concept of natural ordering, read the [Object Ordering](https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html) section.
+`sort`算法重新排序`List`，使其元素按照排序关系按升序排列。提供了两种形式的操作。简单形式采用`List`并根据其元素'*自然排序*对其进行排序。如果您不熟悉自然排序的概念，请阅读 [Object Ordering](https://docs.oracle.com/javase/tutorial/collections/interfaces/order.html) 部分。
 
-The `sort` operation uses a slightly optimized *merge sort* algorithm that is fast and stable:
+`sort`操作使用一种快速稳定的略微优化的*归并排序*算法：
 
-- **Fast**: It is guaranteed to run in `n log(n)` time and runs substantially faster on nearly sorted lists. Empirical tests showed it to be as fast as a highly optimized quicksort. A quicksort is generally considered to be faster than a merge sort but isn't stable and doesn't guarantee `n log(n)` performance.
-- **Stable**: It doesn't reorder equal elements. This is important if you sort the same list repeatedly on different attributes. If a user of a mail program sorts the inbox by mailing date and then sorts it by sender, the user naturally expects that the now-contiguous list of messages from a given sender will (still) be sorted by mailing date. This is guaranteed only if the second sort was stable.
+ - **快速**：保证在 `n log(n)` 时间内运行，并且在接近有序的列表上运行得更快。经验测试显示它与高度优化的快速排序一样快。快速排序通常被认为比合并排序更快，但不稳定并且不保证 `n log(n)` 性能。
+ -  **稳定**：它不会重新排序相同的元素。如果您按照不同的属性对同一个列表重复排序，这一点很重要。如果邮件程序的用户按照邮寄日期对收件箱进行排序，然后按照发件人对其进行排序，则用户自然希望来自给定发件人的现在连续的邮件列表（仍然）将按邮寄日期排序。仅当采用第二种稳定排序时才能保证这一点。
 
-The following [`trivial program`](https://docs.oracle.com/javase/tutorial/collections/algorithms/examples/Sort.java) prints out its arguments in lexicographic (alphabetical) order.
+以下 [`trivial program`](https://docs.oracle.com/javase/tutorial/collections/algorithms/examples/Sort.java) 以字典（按字母顺序）顺序打印出其参数。
 
-```
+```java
 import java.util.*;
 
 public class Sort {
@@ -2484,30 +2484,27 @@ public class Sort {
         System.out.println(list);
     }
 }
-
 ```
 
-Let's run the program.
+运行该程序：
 
-```
+```shell
 % java Sort i walk the line
-
 ```
 
-The following output is produced.
+产生如下输出：
 
 ```
 [i, line, the, walk]
-
 ```
 
-The program was included only to show you that algorithms really are as easy to use as they appear to be.
+该程序仅用于向您展示算法确实像它们看起来一样容易使用。
 
-The second form of `sort` takes a [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) in addition to a `List` and sorts the elements with the `Comparator`. Suppose you want to print out the anagram groups from our earlier example in reverse order of size — largest anagram group first. The example that follows shows you how to achieve this with the help of the second form of the `sort` method.
+第二种形式的`sort`方法采用 [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) 和`List`并使用该 `Comparator` 对列表元素进行排序。假设您想要以降序顺序打印出我们之前示例中的变位词组 - 首先是最大的变位词组。下面的示例向您展示了如何借助于`sort`方法的第二种形式来实现这一点。
 
-Recall that the anagram groups are stored as values in a `Map`, in the form of `List` instances. The revised printing code iterates through the `Map`'s values view, putting every `List` that passes the minimum-size test into a `List` of `List`s. Then the code sorts this `List`, using a `Comparator` that expects `List` instances, and implements reverse size-ordering. Finally, the code iterates through the sorted `List`, printing its elements (the anagram groups). The following code replaces the printing code at the end of the `main` method in the `Anagrams` example.
+回想一下，变位词组作为值存储在`Map`中，形式为`List`实例。修改后的打印代码遍历`Map`的值视图，将通过最小尺寸测试的每个`List`放入`List`的`List`中。然后代码使用期望`List`实例的`Comparator`对此`List`进行排序，并实现降序排序。最后，代码遍历排序的`List`，打印其元素（变位词组）。下面的代码替换了`Anagrams`示例中`main`方法末尾的打印代码。
 
-```
+```java
 // Make a List of all anagram groups above size threshold.
 List<List<String>> winners = new ArrayList<List<String>>();
 for (List<String> l : m.values())
@@ -2523,10 +2520,9 @@ Collections.sort(winners, new Comparator<List<String>>() {
 // Print anagram groups.
 for (List<String> l : winners)
     System.out.println(l.size() + ": " + l);
-
 ```
 
-Running [`the program`](https://docs.oracle.com/javase/tutorial/collections/algorithms/examples/Anagrams2.java) on the [`same dictionary`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/dictionary.txt) as in [The Map Interface](https://docs.oracle.com/javase/tutorial/collections/interfaces/map.html) section, with the same minimum anagram group size (eight), produces the following output.
+在 [The Map Interface](https://docs.oracle.com/javase/tutorial/collections/interfaces/map.html) 部分中同一个 [`same dictionary`](https://docs.oracle.com/javase/tutorial/collections/interfaces/examples/dictionary.txt) 上运行  [`the program`](https://docs.oracle.com/javase/tutorial/collections/algorithms/examples/Anagrams2.java) ，同样采用最小变位词组大小 8，产生以下输出。
 
 ```
 12: [apers, apres, asper, pares, parse, pears, prase,
@@ -2555,50 +2551,48 @@ Running [`the program`](https://docs.oracle.com/javase/tutorial/collections/algo
 8: [ates, east, eats, etas, sate, seat, seta, teas]
 8: [carets, cartes, caster, caters, crates, reacts,
        recast,��traces]
-
 ```
 
-## Shuffling
+**发牌**
 
-The `shuffle` algorithm does the opposite of what `sort` does, destroying any trace of order that may have been present in a `List`. That is, this algorithm reorders the `List` based on input from a source of randomness such that all possible permutations occur with equal likelihood, assuming a fair source of randomness. This algorithm is useful in implementing games of chance. For example, it could be used to shuffle a `List` of `Card` objects representing a deck. Also, it's useful for generating test cases.
+`shuffle`算法与`sort`相反，打乱了`List`中可能出现的任何顺序。也就是说，该算法基于来自随机源的输入重新排序`List`，假设使用理想的随机源，则所有可能的排列以相等的可能性发生。该算法在实现机会游戏时很有用。例如，它可以用于随机播放代表牌组的`Card`对象的`List`。此外，它对生成测试用例很有用。
 
-This operation has two forms: one takes a `List` and uses a default source of randomness, and the other requires the caller to provide a [Random](https://docs.oracle.com/javase/8/docs/api/java/util/Random.html) object to use as a source of randomness. The code for this algorithm is used as an example in the [`List` section](https://docs.oracle.com/javase/tutorial/collections/interfaces/list.html#shuffle).
+此操作有两种形式：一种采用`List`并使用默认的随机源，另一种需要调用者提供 [Random](https://docs.oracle.com/javase/8/docs/api/java/util/Random.html) 对象用作随机源。该算法的代码用作 [`List` section](https://docs.oracle.com/javase/tutorial/collections/interfaces/list.html#shuffle) 中的示例。
 
-## Routine Data Manipulation
+**常规数据操作**
 
-The `Collections` class provides five algorithms for doing routine data manipulation on `List` objects, all of which are pretty straightforward:
+`Collections`类提供了五种算法，用于对`List`对象进行常规数据操作，所有这些都非常简单：
 
-- `reverse` — reverses the order of the elements in a `List`.
-- `fill` — overwrites every element in a `List` with the specified value. This operation is useful for reinitializing a `List`.
-- `copy` — takes two arguments, a destination `List` and a source `List`, and copies the elements of the source into the destination, overwriting its contents. The destination `List` must be at least as long as the source. If it is longer, the remaining elements in the destination `List` are unaffected.
-- `swap` — swaps the elements at the specified positions in a `List`.
-- `addAll` — adds all the specified elements to a `Collection`. The elements to be added may be specified individually or as an array.
+ - `reverse`  - 反转`List`中元素的顺序。
+ - `fill`  - 用指定的值覆盖`List`中的每个元素。 此操作对于重新初始化`List`非常有用。
+ - `copy`  - 接受两个参数，一个目标`List`和一个源`List`，并将源的元素复制到目的地，覆盖其内容。目标`List`必须至少与源一样长。如果它更长，目标`List`中的其余元素不受影响。
+ - `swap`  - 将元素交换到`List`中的指定位置。
+ - `addAll`  - 将所有指定的元素添加到`Collection`中。要添加的元素可以单独指定，也可以作为数组指定。
 
-## Searching
+**搜索**
 
-The `binarySearch` algorithm searches for a specified element in a sorted `List`. This algorithm has two forms. The first takes a `List` and an element to search for (the "search key"). This form assumes that the `List` is sorted in ascending order according to the natural ordering of its elements. The second form takes a `Comparator` in addition to the `List` and the search key, and assumes that the `List` is sorted into ascending order according to the specified `Comparator`. The `sort` algorithm can be used to sort the `List` prior to calling `binarySearch`.
+`binarySearch`算法在有序的`List`中搜索指定的元素。该算法有两种形式。第一个采用`List`和一个要搜索的元素（“搜索关键字”）两个参数。该形式假定`List`根据其元素的自然顺序按升序排序。除了`List`和搜索关键字之外，第二种形式还带有一个`Comparator`，并假定`List`按照指定的`Comparator`按升序排序。在调用`binarySearch`之前，`sort`算法可用于对`List`进行排序。
 
-The return value is the same for both forms. If the `List` contains the search key, its index is returned. If not, the return value is `(-(insertion point) - 1)`, where the insertion point is the point at which the value would be inserted into the `List`, or the index of the first element greater than the value or `list.size()` if all elements in the `List` are less than the specified value. This admittedly ugly formula guarantees that the return value will be `>= 0` if and only if the search key is found. It's basically a hack to combine a boolean `(found)` and an integer `(index)` into a single `int` return value.
+两种形式的返回值相同。如果`List`包含搜索关键字，则返回其索引。否则，则返回值为 `(-(插入点) - 1)`，其中插入点是将值插入`List`的点，或者第一个大于该值的元素的索引，或者`list.size()`，如果`List`中的所有元素都小于指定的值。当且仅当找到搜索关键字时，这个公认的丑陋公式保证返回值为`>= 0`。将布尔值`(found)`和整数`(index)`组合成一个`int`返回值基本上是一个不规范的做法。
 
-The following idiom, usable with both forms of the `binarySearch` operation, looks for the specified search key and inserts it at the appropriate position if it's not already present.
+以下习惯用法（可用于`binarySearch`操作的两种形式）查找指定的搜索关键字并将其插入适当的位置（如果它尚不存在）。
 
-```
+```java
 int pos = Collections.binarySearch(list, key);
 if (pos < 0)
    l.add(-pos-1, key);
-
 ```
 
-## Composition
+**组合**
 
-The frequency and disjoint algorithms test some aspect of the composition of one or more `Collections`:
+频率和不相交算法测试一个或多个 `Collections` 的组成的某些方面：
 
-- `frequency` — counts the number of times the specified element occurs in the specified collection
-- `disjoint` — determines whether two `Collections` are disjoint; that is, whether they contain no elements in common
+ - `frequency`  - 计算指定元素在指定集合中出现的次数
+ - `disjoint` - 确定两个`Collections`是否不相交；也就是说，它们是否不包含任何共同的元素
 
-## Finding Extreme Values
+**寻找极值**
 
-The `min` and the `max` algorithms return, respectively, the minimum and maximum element contained in a specified `Collection`. Both of these operations come in two forms. The simple form takes only a `Collection` and returns the minimum (or maximum) element according to the elements' natural ordering. The second form takes a `Comparator` in addition to the `Collection` and returns the minimum (or maximum) element according to the specified `Comparator`.
+`min`和`max`算法分别返回指定`Collection`中包含的最小和最大元素。这两种操作都有两种形式。简单形式只接受一个`Collection` 参数并根据元素的自然顺序返回最小（或最大）元素。第二种形式除了`Collection`之外还带有一个`Comparator` 参数，并根据指定的`Comparator`返回最小（或最大）元素。
 
 
 
