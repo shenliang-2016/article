@@ -2671,6 +2671,93 @@ public Object[] toArray() {
 3. 测试并在必要时调试实现。您现在有一个可用的自定义集合实现。
 4. 如果您担心性能，请阅读您继承其实现的所有方法的抽象实现类的API文档。如果有任何方法看起来太慢，请覆盖它们。如果覆盖任何方法，请确保在覆盖之前和之后测量方法的性能。您在调整性能方面付出的努力应该取决于实现将获得多少使用以及对其使用性能的关键程度。 （通常最好省略此步骤。）
 
+## 互操作性
+
+本章节中，你将学到关于互操作性的以下两个方便：
+
+- [兼容性](https://docs.oracle.com/javase/tutorial/collections/interoperability/compatibility.html) ：本小节描述了如何集合如何使用老版本的集合API工作，这些旧集合API早于`Collection`被添加到Java平台。
+- [API 设计](https://docs.oracle.com/javase/tutorial/collections/interoperability/api-design.html) ：本小节描述了如何设计新的API，以便它们可以相互无缝地互操作。
+
+### 兼容性
+
+Java Collections Framework旨在确保 [核心集合接口](https://docs.oracle.com/javase/tutorial/collections/interfaces/index.html) 与用于在Java平台早期版本中表示集合的类型之间的完全互操作性： [`Vector`](https://docs.oracle.com/javase/8/docs/api/java/util/Vector.html), [`Hashtable`](https://docs.oracle.com/javase/8/docs/api/java/util/Hashtable.html), [array](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html), 和 [`Enumeration`](https://docs.oracle.com/javase/8/docs/api/java/util/Enumeration.html)。在本节中，您将学习如何将旧集合转换为Java集合框架集合，反之亦然。
+
+**向上兼容**
+
+假设您正在使用一个API，该API返回旧集合，它与另一个需要实现集合接口的对象的API一起工作。为了使两个API顺利地互操作，您必须将旧版集合转换为现代集合。幸运的是，Java Collections Framework使这很容易。
+
+假设旧API返回一个对象数组，而新API需要一个`Collection`。Collections Framework有一个方便的实现，允许将一组对象视为`List`。您使用`Arrays.asList`将数组传递给任何需要`Collection`或`List`的方法。
+
+```java
+Foo[] result = oldMethod(arg);
+newMethod(Arrays.asList(result));
+```
+
+如果旧的API返回`Vector`或`Hashtable`，则根本没有工作要做，因为`Vector`被改进以实现`List`接口，并且`Hashtable`被改进以实现`Map`。因此，`Vector`可以直接传递给任何使用`Collection`或`List`的方法。
+
+```java
+Vector result = oldMethod(arg);
+newMethod(result);
+```
+
+类似地，`Hashtable`可以直接传递给任何使用`Map`的方法。
+
+```java
+Hashtable result = oldMethod(arg);
+newMethod(result);
+```
+
+不太常见的是，API可能会返回表示对象集合的`Enumeration`。`Collections.list`方法将 `Enumeration` 转换为`Collection`。
+
+```java
+Enumeration e = oldMethod(arg);
+newMethod(Collections.list(e));
+```
+
+**向下兼容**
+
+Suppose you're using an API that returns modern collections in tandem with another API that requires you to pass in legacy collections. To make the two APIs interoperate smoothly, you have to transform modern collections into old collections. Again, the Java Collections Framework makes this easy.
+
+Suppose the new API returns a `Collection`, and the old API requires an array of `Object`. As you're probably aware, the `Collection` interface contains a `toArray` method designed expressly for this situation.
+
+```java
+Collection c = newMethod();
+oldMethod(c.toArray());
+```
+
+What if the old API requires an array of `String` (or another type) instead of an array of `Object`? You just use the other form of `toArray` — the one that takes an array on input.
+
+```java
+Collection c = newMethod();
+oldMethod((String[]) c.toArray(new String[0]));
+```
+
+If the old API requires a `Vector`, the standard collection constructor comes in handy.
+
+```java
+Collection c = newMethod();
+oldMethod(new Vector(c));
+```
+
+The case where the old API requires a `Hashtable` is handled analogously.
+
+```java
+Map m = newMethod();
+oldMethod(new Hashtable(m));
+```
+
+Finally, what do you do if the old API requires an `Enumeration`? This case isn't common, but it does happen from time to time, and the [`Collections.enumeration`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#enumeration-java.util.Collection-) method was provided to handle it. This is a static factory method that takes a `Collection` and returns an `Enumeration` over the elements of the `Collection`.
+
+```java
+Collection c = newMethod();
+oldMethod(Collections.enumeration(c));
+```
+
+
+
+
+
+
 
 
 
