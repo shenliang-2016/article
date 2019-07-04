@@ -3697,3 +3697,181 @@ Sealed: true
 
 有关将这些属性添加到清单文件的信息，请参阅 [修改清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/modman.html) 。
 
+## 签名和验证 JAR 文件
+
+您可以选择使用电子“签名”签署JAR文件。验证您的签名的用户可以授予您通常不具备的JAR捆绑软件安全权限。相反，您可以验证要使用的已签名JAR文件的签名。
+
+本课程向您展示如何使用JDK中提供的工具来签名和验证JAR文件：
+
+**[理解签名和验证](https://docs.oracle.com/javase/tutorial/deployment/jar/intro.html)**
+
+如果您不熟悉签名和验证的概念，本节将帮助您。它包含相关术语的定义，签名提供的一些好处的解释，以及Java平台与JAR文件相关的签名机制的概述。
+
+**[签名 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/signing.html)**
+
+在本节中，您将学习如何使用JDK™工具对JAR文件进行数字签名。
+
+**[验证 JAR 文件](https://docs.oracle.com/javase/tutorial/deployment/jar/verify.html)**
+
+本节介绍如何使用JDK工具集验证签名的JAR文件。
+
+### 理解签名和验证
+
+Java™平台使您能够对JAR文件进行数字签名。您对文件进行数字签名的原因与您使用笔和墨水签署纸质文档的原因相同 - 让读者知道您编写了文档，或者至少证明文档已获得您的批准。
+
+例如，当您签署一封信时，每个认出您签名的人都可以确认您是否写了这封信。同样，当您对文件进行数字签名时，任何“识别”您的数字签名的人都知道该文件来自您。“识别”电子签名的过程称为验证。
+
+签名JAR文件时，您还可以选择为签名添加时间戳。与在纸质文档上添加日期类似，签名的时间戳标识了JAR文件的签名时间。时间戳可用于验证用于签署JAR文件的证书在签名时是否有效。
+
+签名和验证文件的能力是Java平台安全架构的重要组成部分。安全性由运行时生效的安全策略控制。您可以将策略配置为向applet和应用程序授予安全权限。例如，您可以向applet授予权限以执行正常情况下禁止的操作，例如读取和写入本地文件或运行本地可执行程序。如果您下载了一些由受信任实体签名的代码，则可以将该事实用作决定分配给代码的安全权限的标准。
+
+一旦您（或您的浏览器）验证了applet来自可靠来源，您就可以让平台放宽安全限制，让applet执行通常情况下被禁止的操作。受信任的applet可以具有有效的策略文件指定的自由。
+
+Java平台通过使用称为公钥和私钥的特殊数字来实现签名和验证。公钥和私钥成对出现，它们扮演互补角色。
+
+私钥是电子“笔”，您可以使用它来签署文件。顾名思义，您的私钥只有您自己知道才能让其他人无法“伪造”您的签名。使用您的私钥签名的文件只能通过相应的公钥进行验证。
+
+但是，单独的公钥和私钥不足以真正验证签名。即使您已验证签名文件包含匹配的密钥对，您仍需要某种方法来确认公钥实际上来自它声称来自的签名者。
+
+因此，需要一个元素来进行签名和验证工作。该附加元素是签名者在签名的JAR文件中包含的证书。证书是来自公认的证书颁发机构的数字签名声明，表明谁拥有特定的公钥。认证机构是整个行业内可信赖的实体（通常是专门从事数字安全的公司），用于为密钥及其所有者签署和颁发证书。对于签名的JAR文件，证书指示谁拥有JAR文件中包含的公钥。
+
+当您签署JAR文件时，您的公钥将与相关证书一起放在存档中，以便任何想要验证签名的人都可以轻松使用它。
+
+总结数字签名：
+
+ - 签名者使用私钥对JAR文件进行签名。
+ - 相应的公钥与其证书一起放在JAR文件中，以便任何想要验证签名的人都可以使用它。
+
+**摘要和签名文件**
+
+签署JAR文件时，归档中的每个文件都会在归档的清单中提供摘要条目。以下是此类条目的示例：
+
+```
+Name: test/classes/ClassOne.class
+SHA1-Digest: TD1GZt8G11dXY2p4olSZPc5Rj64=
+```
+
+摘要值是当文件被签名时文件内容的哈希或编码表示。当且仅当文件本身发生变化时，文件的摘要才会发生变化。
+
+签名JAR文件时，会自动生成签名文件并将其放在JAR文件的`META-INF`目录中，该目录包含存档的清单。签名文件具有扩展名为`.SF`的文件名。以下是签名文件内容的示例：
+
+```
+Signature-Version: 1.0
+SHA1-Digest-Manifest: h1yS+K9T7DyHtZrtI+LxvgqaMYM=
+Created-By: 1.7.0_06 (Oracle Corporation)
+
+Name: test/classes/ClassOne.class
+SHA1-Digest: fcav7ShIG6i86xPepmitOVo4vWY=
+
+Name: test/classes/ClassTwo.class
+SHA1-Digest: xrQem9snnPhLySDiZyclMlsFdtM=
+
+Name: test/images/ImageOne.gif
+SHA1-Digest: kdHbE7kL9ZHLgK7akHttYV4XIa0=
+
+Name: test/images/ImageTwo.gif
+SHA1-Digest: mF0D5zpk68R4oaxEqoS9Q7nhm60=
+```
+
+如您所见，签名文件包含存档文件的摘要条目，这些文件看起来类似于清单中的摘要值条目。但是，虽然清单中的摘要值是根据文件本身计算的，但签名文件中的摘要值是根据清单中的相应条目计算的。签名文件还包含整个清单的摘要值（请参阅上例中的`SHA1-Digest-Manifest`标头）。
+
+在验证签名的JAR文件时，将重新计算其每个文件的摘要，并将其与清单中记录的摘要进行比较，以确保JAR文件的内容自签名以来未发生更改。作为附加检查，重新计算清单文件本身的摘要值，并与签名文件中记录的值进行比较。
+
+您可以在JDK™文档的 [Manifest Format](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jar.html#JAR_Manifest) 页面上阅读有关签名文件的其他信息。
+
+**签名块文件**
+
+除签名文件外，签名JAR文件时，签名块文件将自动放置在`META-INF`目录中。与清单文件或签名文件不同，签名块文件不是人类可读的。
+
+签名块文件包含两个必要的验证元素：
+
+ - 使用签名者的私钥生成的JAR文件的数字签名
+ - 包含签名者公钥的证书，供想要验证签名JAR文件的任何人使用
+
+签名块文件名通常具有`.DSA`扩展名，表示它们是由默认数字签名算法创建的。如果使用与其他标准算法相关联的密钥进行签名，则可以使用其他文件扩展名。
+
+----
+
+**相关文档**
+
+有关密钥，证书和证书颁发机构的其他信息，请参阅
+
+- [The JDK Security Tools](https://docs.oracle.com/javase/8/docs/technotes/tools/index.html#security)
+- [X.509 Certificates](https://docs.oracle.com/javase/8/docs/technotes/guides/security/cert3.html)
+
+有关Java平台安全体系结构的更多信息，请参阅下面的文档：
+
+- [Security Features in Java SE](https://docs.oracle.com/javase/tutorial/security/index.html)
+- [Java SE Security](http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136007.html)
+- [Security Tools](https://docs.oracle.com/javase/8/docs/technotes/tools/index.html#security)
+
+### 签名 JAR 文件
+
+您可以使用JAR签名和验证工具对JAR文件进行签名并为签名添加时间戳。您可以使用`jarsigner`命令调用JAR签名和验证工具，因此我们将其简称为“Jarsigner”。
+
+要签署JAR文件，您必须首先拥有私钥。私钥及其关联的公钥证书存储在名为密钥库的受密码保护的数据库中。密钥库可以容纳许多潜在签名者的密钥。密钥库中的每个密钥都可以通过别名来标识，该别名通常是拥有密钥的签名者的名称。例如，属于丽塔琼斯的密钥可能具有别名“rita”。
+
+用于签名JAR文件的命令的基本形式是：
+
+```
+jarsigner jar-file alias
+```
+
+在此命令中：
+
+ -  `jar-file`是要签名的JAR文件的路径名。
+ -  `alias` 是标识用于对JAR文件进行签名的私钥，以及密钥的关联证书的别名。
+
+Jarsigner工具将提示您输入密钥库和别名的密码。
+
+此命令的这种基本形式假定要使用的密钥库位于主目录中名为`.keystore`的文件中。它将分别创建名称为`x.SF`和`x.DSA`的签名和签名块文件，其中`x`是别名的前八个字母，全部转换为大写。此基本命令将使用签名的JAR文件覆盖原始JAR文件。
+
+实际上，您可能希望使用一个或多个可用的命令选项。例如，鼓励为签名添加时间戳，以便用于部署应用程序的任何工具都可以验证用于签署JAR文件的证书在签名文件时是否有效。如果未包含时间戳，则Jarsigner工具会发出警告。
+
+选项位于 `jar-file` 路径名之前。下表介绍了可用的选项：
+
+| Option                           | Description                              |
+| -------------------------------- | ---------------------------------------- |
+| `-keystore` *url*                | 如果您不想使用`.keystore`缺省数据库，则指定要使用的密钥库。      |
+| `-sigfile` *file*                | 如果您不希望从别名中获取基本名称，请指定`.SF`和`.DSA`文件的基本名称。文件必须仅由大写字母（A-Z），数字（0-9），连字符（ - ）和下划线（_）组成。 |
+| `-signedjar` *file*              | 如果不希望使用签名文件覆盖原始未签名文件，则指定要生成的已签名JAR文件的名称。 |
+| `-tsa` *url*                     | 使用URL标识的时间戳机构（TSA）为签名生成时间戳。              |
+| `-tsacert` *alias*               | 使用别名标识的TSA公钥证书为签名生成时间戳。                  |
+| `-altsigner` *class*             | 表示使用备用签名机制为签名添加时间戳。完全限定类名标识使用的类。         |
+| `-altsignerpath` *classpathlist* | 提供`altsigner`选项标识的类的路径以及该类所依赖的任何JAR文件。   |
+
+**例子**
+
+让我们看一下使用Jarsigner工具签名JAR文件的几个示例。在这些示例中，我们将假设以下内容：
+
+ - 你的别名是“johndoe”。
+ - 要使用的密钥库位于当前工作目录中名为“mykeys”的文件中。
+ - 要用于为签名添加时间戳的TSA位于http://tsa.url.example.com。
+
+在这些假设下，您可以使用此命令对名为`app.jar`的JAR文件进行签名：
+
+```
+jarsigner -keystore mykeys -tsa http://tsa.url.example.com app.jar johndoe
+```
+
+系统将提示您输入密钥库和别名的密码。由于此命令不使用`-sigfile`选项，因此它创建的`.SF`和`.DSA`文件将命名为`JOHNDOE.SF`和`JOHNDOE.DSA`。由于该命令不使用`-signedjar`选项，因此生成的签名文件将覆盖`app.jar`的原始版本。
+
+让我们来看看如果使用不同的选项组合会发生什么：
+
+```
+jarsigner -keystore mykeys -sigfile SIG -signedjar SignedApp.jar 
+          -tsacert testalias app.jar johndoe
+```
+
+签名和签名块文件将分别命名为`SIG.SF`和`SIG.DSA`，签名的JAR文件`SignedApp.jar`将放在当前目录中。原始的未签名JAR文件将保持不变。此外，签名将带有标记为`testalias`的TSA公钥证书的时间戳。
+
+**附加信息**
+
+JAR签名和验证工具的完整参考页面是在线的：[Summary of Security Tools](https://docs.oracle.com/javase/8/docs/technotes/guides/security/SecurityToolsSummary.html) 
+
+----
+
+**注意：** 当证书是自签名时，应用程序的发布者将显示为`UNKNOWN`。有关更多信息，请参阅 [从显示为`UNKNOWN`的发布者运行应用程序是否安全？](http://www.java.com/en/download/faq/self_signed.xml) 。
+
+----
+
