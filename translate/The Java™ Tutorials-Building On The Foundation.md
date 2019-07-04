@@ -4148,3 +4148,53 @@ try {
 
 回想一下，第一个命令行参数是打包为JAR的应用程序的URL。因此，传递给该应用程序的任何参数都在`args`数组中的元素`1`和更之前的元素中。`JarRunner`接受这些元素，并创建一个名为`newArgs`的新数组以传递给应用程序（上面的粗线）。然后，`JarRunner`将入口点的类名和新参数列表传递给`JarClassLoader`的`invokeClass`方法。正如我们在上一节中看到的，`invokeClass`将加载应用程序的入口点类，将所有参数传递给它，然后启动应用程序。
 
+# 国际化
+
+此课程中的课程教您如何使Java应用程序国际化。国际化的应用程序很容易适应世界各地最终用户的习俗和语言。
+
+------
+
+**注意：** 本教程的内容涵盖*核心*国际化功能，这是为桌面，企业和移动应用程序提供的其他功能所需的基础。 有关其他信息，请参阅 [Java Internationalization home page](http://www.oracle.com/technetwork/java/javase/tech/intl-139810.html) 。
+
+----
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**介绍**](https://docs.oracle.com/javase/tutorial/i18n/intro/index.html) 定义术语*国际化*，提供快速示例程序，并提供可用于国际化现有程序的清单。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**设定 Locale**](https://docs.oracle.com/javase/tutorial/i18n/locale/index.html) 解释如何创建和使用 `Locale` 对象。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**隔离 Locale-Specific 数据**](https://docs.oracle.com/javase/tutorial/i18n/resbundle/index.html) 展示如何动态访问随着 `Locale` 变化的对象。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**格式化**](https://docs.oracle.com/javase/tutorial/i18n/format/index.html) 解释了如何根据`Locale`格式化数字，日期和文本消息，以及如何使用模式创建自定义格式。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**使用 Text**](https://docs.oracle.com/javase/tutorial/i18n/text/index.html) 提供了以与语言环境无关的方式操作文本的技术。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**网络资源的国际化**](https://docs.oracle.com/javase/tutorial/i18n/network/index.html) 解释了如何为IDN提供国际化。
+
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/internatsm.GIF)**国际化服务提供者**](https://docs.oracle.com/javase/tutorial/i18n/serviceproviders/index.html) 解释了如何启用与语言环境相关的数据和服务的插件。
+
+## 介绍
+
+*国际化*是设计应用程序的过程，以便它可以适应各种语言和区域而无需进行更改。有时，国际化一词缩写为 i18n，因为第一个“i”和最后一个“n”之间有18个字母。
+
+国际化程序具有以下特点：
+
+ - 通过添加本地化数据，可以在全球范围内运行相同的可执行文件。
+ - 文本元素（例如状态消息和GUI组件标签）在程序中不是硬编码的。相反，它们存储在源代码之外并动态检索。
+ - 支持新语言不需要重新编译。
+ - 与文化相关的数据（如日期和货币）以符合最终用户区域和语言的格式显示。
+ - 它可以快速本地化。
+
+*本地化*是通过添加特定于语言环境的组件和翻译文本来调整特定区域或语言的软件的过程。术语*本地化*通常缩写为l10n，因为“l”和“n”之间有10个字母。
+
+本地化的主要任务是翻译用户界面元素和文档。本地化不仅涉及改变语言交互，还涉及其他相关更改，如数字显示，日期，货币等。其他类型的数据（如声音和图像）如果具有文化敏感性，则可能需要进行本地化。应用程序的国际化程度越高，就越容易将其本地化为特定的语言和字符编码方案。
+
+起初国际化似乎有点令人生畏。阅读以下部分将有助于您轻松进入主题。
+
+**[例子](https://docs.oracle.com/javase/tutorial/i18n/intro/quick.html)**
+
+本节将逐步介绍如何将简单程序国际化。
+
+**[清单](https://docs.oracle.com/javase/tutorial/i18n/intro/checklist.html)**
+
+因此，您继承了需要国际化的程序，或者您计划确定新开发软件的要求。你可能不知道从哪里开始？看看这份清单。它总结了必要的国际化任务，并提供了本章相关课程的链接。
+
