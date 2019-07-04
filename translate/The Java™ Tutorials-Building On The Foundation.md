@@ -2716,52 +2716,82 @@ newMethod(Collections.list(e));
 
 **向下兼容**
 
-Suppose you're using an API that returns modern collections in tandem with another API that requires you to pass in legacy collections. To make the two APIs interoperate smoothly, you have to transform modern collections into old collections. Again, the Java Collections Framework makes this easy.
+假设您正在使用一个API，该API返回现代集合，并与与另一个要求您传入旧集合的API一起工作。要使两个API平滑地互操作，您必须将现代集合转换为旧集合。同样，Java Collections Framework使这一过程变得简单。
 
-Suppose the new API returns a `Collection`, and the old API requires an array of `Object`. As you're probably aware, the `Collection` interface contains a `toArray` method designed expressly for this situation.
+假设新API返回一个`Collection`，旧API需要一个`Object`数组。您可能已经意识到，`Collection`接口包含为此情况明确设计的`toArray`方法。
 
 ```java
 Collection c = newMethod();
 oldMethod(c.toArray());
 ```
 
-What if the old API requires an array of `String` (or another type) instead of an array of `Object`? You just use the other form of `toArray` — the one that takes an array on input.
+如果旧API需要`String`（或其他类型）数组而不是`Object`数组，该怎么办？你只需使用另一种形式的`toArray`--一个在输入上采用数组的形式。
 
 ```java
 Collection c = newMethod();
 oldMethod((String[]) c.toArray(new String[0]));
 ```
 
-If the old API requires a `Vector`, the standard collection constructor comes in handy.
+如果旧API需要`Vector`，则标准集合构造函数会派上用场。
 
 ```java
 Collection c = newMethod();
 oldMethod(new Vector(c));
 ```
 
-The case where the old API requires a `Hashtable` is handled analogously.
+旧API需要`Hashtable`的情况类似地处理。
 
 ```java
 Map m = newMethod();
 oldMethod(new Hashtable(m));
 ```
 
-Finally, what do you do if the old API requires an `Enumeration`? This case isn't common, but it does happen from time to time, and the [`Collections.enumeration`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#enumeration-java.util.Collection-) method was provided to handle it. This is a static factory method that takes a `Collection` and returns an `Enumeration` over the elements of the `Collection`.
+最后，如果旧API需要`Enumeration`，您会怎么做？这种情况并不常见，但它确实经常发生，[`Collections.enumeration`](https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#enumeration-java.util.Collection-) 方法被用来处理它。这是一个静态工厂方法，它接受`Collection`并基于`Collection`的元素返回`Enumeration`。
 
 ```java
 Collection c = newMethod();
 oldMethod(Collections.enumeration(c));
 ```
 
+### API 设计
 
+在这个简短但重要的部分中，您将学习一些简单的指导原则，使您的API能够与遵循这些指南的所有其他API无缝地互操作。从本质上讲，这些规则定义了在收集合世界中成为一个好的“公民”需要什么。
 
+**参数**
 
+如果您的API包含需要输入集合的方法，那么将相关参数类型声明为集合接口类型之一是至关重要的。永远不要使用实现类型，因为这会破坏基于接口的集合框架的目的，即允许操作集合而不考虑实现细节。
 
+此外，您应该始终使用最不具体的类型。例如，如果`Collection`可以，则不需要`List`或`Set`。并不是你永远不应该在输入时需要`List`或`Set` ；如果方法依赖于其中一个接口的属性，则这样做是正确的。例如，Java平台提供的许多算法都需要输入`List`，因为它们依赖于列表的排序事实。但是，作为一般规则，输入时使用的最佳类型是最常用的接口类型：`Collection` 和 `Map`。
 
+----
 
+**警告：** 永远不要定义您自己的专用集合类，并在输入时需要此类的对象。因为这样做，您将失去Java Collections Framework提供的所有好处。
 
+----
 
+**返回值**
 
+使用返回值比使用输入参数更灵活。返回实现或扩展其中一个集合接口的任何类型的对象都可以。这可以是接口之一，也可以是扩展或实现这些接口之一的专用类型。
+
+例如，可以想象一个名为`ImageList`的图像处理包，它返回实现`List`的新类的对象。除了`List`操作之外，`ImageList`还可以支持任何特定于应用程序的操作。例如，它可能提供`indexImage`操作，该操作返回包含`ImageList`中每个图形的缩略图图像的图像。值得注意的是，即使API在输出上提供了`ImageList`实例，它也应该在输入上接受任意`Collection`（或者可能是`List`）实例。
+
+从某种意义上说，返回值应该具有输入参数的相反行为：最好返回最具体的适用集合接口，而不是最常见的。例如，如果您确定要始终返回`SortedMap`，则应该为相关方法提供`SortedMap`的返回类型而不是`Map`。`SortedMap`实例比普通的`Map`实例更耗时，而且功能更强大。鉴于您的模块已经投入时间来构建`SortedMap`，因此让用户访问其增强的功能是很有意义的。此外，用户将能够将返回的对象传递给需要`SortedMap`的方法，以及接受任何`Map`的方法。
+
+**遗留 APIs**
+
+目前有很多API可以定义自己的临时集合类型。虽然这很不幸，但鉴于Java平台的最初两个主要版本中没有Collections Framework，这是既定的事实。假设您拥有其中一个API，这就是你能做的。
+
+如果可能，请改进旧版集合类型以实现其中一个标准集合接口。然后，您返回的所有集合将与其他基于集合的API平滑地互操作。如果这是不可能的（例如，因为一个或多个预先存在的类型签名与标准集合接口冲突），请定义一个适配器类，它包装您的一个旧集合对象，使其可用作标准集合。 （`Adapter`类是 [自定义实现](https://docs.oracle.com/javase/tutorial/collections/custom-implementations/index.html) 的示例。）
+
+如果可能，使用遵循输入准则的新调用来改进API，以接受标准集合接口的对象。此类调用可以与采用旧版集合类型的调用共存。如果这是不可能的，请为遗留类型提供构造函数或静态工厂，该构造函数或静态工厂接受其中一个标准接口的对象，并返回包含相同元素（或映射）的旧集合。这些方法中的任何一种都允许用户将任意集合传递到您的API中。
+
+# lambda 表达式
+
+在新手教程里有，不再重复。
+
+# 聚合操作
+
+在集合部分里有，不再重复。
 
 # 将程序打包成 JAR 文件
 
@@ -3508,3 +3538,4 @@ Created-By: 1.7.0_06 (Oracle Corporation)
 ```
 
 现在，当您运行`MyJar.jar`时，`MyUtils.jar`中的类将加载到类路径中。
+
