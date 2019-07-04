@@ -2470,7 +2470,7 @@ Java Collections Framework还为需要非标准性能，使用限制或其他异
 `sort`操作使用一种快速稳定的略微优化的*归并排序*算法：
 
  - **快速**：保证在 `n log(n)` 时间内运行，并且在接近有序的列表上运行得更快。经验测试显示它与高度优化的快速排序一样快。快速排序通常被认为比合并排序更快，但不稳定并且不保证 `n log(n)` 性能。
- -  **稳定**：它不会重新排序相同的元素。如果您按照不同的属性对同一个列表重复排序，这一点很重要。如果邮件程序的用户按照邮寄日期对收件箱进行排序，然后按照发件人对其进行排序，则用户自然希望来自给定发件人的现在连续的邮件列表（仍然）将按邮寄日期排序。仅当采用第二种稳定排序时才能保证这一点。
+ - **稳定**：它不会重新排序相同的元素。如果您按照不同的属性对同一个列表重复排序，这一点很重要。如果邮件程序的用户按照邮寄日期对收件箱进行排序，然后按照发件人对其进行排序，则用户自然希望来自给定发件人的现在连续的邮件列表（仍然）将按邮寄日期排序。仅当采用第二种稳定排序时才能保证这一点。
 
 以下 [`trivial program`](https://docs.oracle.com/javase/tutorial/collections/algorithms/examples/Sort.java) 以字典（按字母顺序）顺序打印出其参数。
 
@@ -2597,6 +2597,81 @@ if (pos < 0)
 ## 自定义集合实现
 
 许多程序员永远不需要实现自己的`Collections`类。您可以使用本章前面部分中描述的实现进行相当多的操作。但是，有一天你可能想编写自己的实现。借助Java平台提供的抽象实现，这很容易做到这一点。在我们讨论如何编写实现之前，让我们讨论一下为什么要编写一个自定义集合实现。
+
+### 编写自定义集合实现的动机
+
+以下列表说明了您可能希望实现的自定义集合的类型。它并非详尽无遗：
+
+- **持久性：** 所有内置的`Collection`实现都驻留在主内存中，并在程序退出时消失。如果您希望下次程序启动时集合仍然存在，您可以通过在外部数据库上构建胶合代码来实现它。这样的集合可以由多个程序同时访问。
+- **特定与应用：** 这是一个非常广泛的类别。一个例子是包含实时遥测数据的不可修改的 `Map` 。键可以表示位置，并且可以通过`get`操作从这些位置处的传感器读取值。
+- **高性能，专用：** 许多数据结构利用受限制的使用来提供比通用实现更好的性能。例如，考虑一个包含多个连续相同元素值的`List`。在文本处理中经常出现的这种列表，可以是行程编码的 - 行程可以表示为包含重复元素和连续重复次数的对象。这个例子很有意思，因为它会影响性能的两个方面：它需要的空间更少，但是比`ArrayList`需要更多的时间。
+- **高性能，通用：** Java Collections Framework的设计者试图为每个接口提供最佳的通用实现，但是可以使用很多数据结构，并且每天都会发明新的数据结构。也许你可以更快地拿出一些东西！
+- **增强功能：** 假设您需要一个有效的包实现（也称为多重集）：一个 `Collection` ，它提供常量时间复杂度的包含元素检查，同时允许重复元素。在`HashMap`上实现这样的集合是相当简单的。
+- **便利性：** 您可能希望获得除Java平台提供的便利之外的其他实现。例如，您可能经常需要表示连续范围的整数的`List`实例。
+- **适配器：** 假设您使用的是具有自己的特殊集合API的旧API。您可以编写一个适配器实现，允许这些集合在Java Collections Framework中运行。适配器实现是一个很薄的胶合层，它包装一种类型的对象，并通过将后一种类型的操作转换为前者的操作，使它们的行为类似于另一种类型的对象。
+
+### 如何编写自定义集合实现
+
+编写自定义实现非常简单。Java Collections Framework提供了明确设计的抽象实现，以方便自定义实现。我们将从以下[`Arrays.asList`](https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#asList-T...-)实现的示例开始。
+
+```java
+public static <T> List<T> asList(T[] a) {
+    return new MyArrayList<T>(a);
+}
+
+private static class MyArrayList<T> extends AbstractList<T> {
+
+    private final T[] a;
+
+    MyArrayList(T[] array) {
+        a = array;
+    }
+
+    public T get(int index) {
+        return a[index];
+    }
+
+    public T set(int index, T element) {
+        T oldValue = a[index];
+        a[index] = element;
+        return oldValue;
+    }
+
+    public int size() {
+        return a.length;
+    }
+}
+```
+
+信不信由你，这非常接近`java.util.Arrays`中包含的实现。就这么简单！您只要提供构造函数以及`get`，`set`和`size`方法，而`AbstractList`完成了所有其他方法。您可以自然获得`ListIterator`，批量操作，搜索操作，哈希值计算，比较和字符串表示。
+
+假设您希望实现更快一点。抽象实现的API文档精确描述了每个方法的实现方式，因此您将知道要覆盖哪些方法以获得所需的性能。前面的实现的性能很好，但可以稍微改进一下。特别是，`toArray`方法迭代`List`，一次复制一个元素。鉴于内部表示，克隆数组的速度更快，更明智。
+
+```java
+public Object[] toArray() {
+    return (Object[]) a.clone();
+}
+```
+
+通过添加此覆盖以及更多类似的覆盖，此实现与`java.util.Arrays`中的实现完全相同。为了完全公开，使用其他抽象实现有点困难，因为你必须编写自己的迭代器，但它仍然不是那么困难。
+
+下面的列表总结了抽象实现：
+
+ -  [`AbstractCollection`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractCollection.html) - 既不是`Set`也不是`List`的`Collection`。您必须至少提供 `iterator` 和 `size` 方法。
+ -  [`AbstractSet`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractSet.html) - 与`AbstractCollection`相同用途的`Set`。
+ -  [`AbstractList`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractList.html) - 由随机访问数据存储（例如数组）作为后备的 `List` 。您必须至少提供 `positional access` 方法（`get` 以及可选的, `set`, `remove`, and `add`）和 `size` 方法。抽象类负责listIterator（和 `iterator`）。
+ -  [`AbstractSequentialList`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractSequentialList.html) - 由顺序访问数据存储（例如链表）作为后备的`List`。您至少必须提供`listIterator`和`size`方法。抽象类负责位置访问方法。（这与`AbstractList`相反。）
+ -  [`AbstractQueue`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractQueue.html) - 您必须至少提供`offer`，`peek`，`poll`和`size`方法以及支持`remove`的`iterator`。
+ -  [`AbstractMap`](https://docs.oracle.com/javase/8/docs/api/java/util/AbstractMap.html) - 一个`Map`。您至少必须提供`entrySet`视图。这通常使用`AbstractSet`类实现。如果`Map`是可修改的，则还必须提供`put`方法。
+
+编写自定义实现的过程如下：
+
+1. 从前面的列表中选择适当的抽象实现类。
+2. 提供类的所有抽象方法的实现。如果您的自定义集合是可修改的，则还必须覆盖一个或多个具体方法。抽象实现类的API文档将告诉您要覆盖哪些方法。
+3. 测试并在必要时调试实现。您现在有一个可用的自定义集合实现。
+4. 如果您担心性能，请阅读您继承其实现的所有方法的抽象实现类的API文档。如果有任何方法看起来太慢，请覆盖它们。如果覆盖任何方法，请确保在覆盖之前和之后测量方法的性能。您在调整性能方面付出的努力应该取决于实现将获得多少使用以及对其使用性能的关键程度。 （通常最好省略此步骤。）
+
+
 
 
 
