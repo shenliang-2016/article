@@ -3539,3 +3539,161 @@ Created-By: 1.7.0_06 (Oracle Corporation)
 
 现在，当您运行`MyJar.jar`时，`MyUtils.jar`中的类将加载到类路径中。
 
+### 设置包版本信息
+
+您可能需要在JAR文件的清单中包含软件包版本信息。使用清单中的以下标头提供此信息：
+
+| Header                   | Definition                              |
+| ------------------------ | --------------------------------------- |
+| `Name`                   | The name of the specification.          |
+| `Specification-Title`    | The title of the specification.         |
+| `Specification-Version`  | The version of the specification.       |
+| `Specification-Vendor`   | The vendor of the specification.        |
+| `Implementation-Title`   | The title of the implementation.        |
+| `Implementation-Version` | The build number of the implementation. |
+| `Implementation-Vendor`  | The vendor of the implementation.       |
+
+可以为每个包分配一组这样的头。版本控制标题应直接显示在包的`Name`头下方。此示例显示所有版本控制标头：
+
+```
+Name: java/util/
+Specification-Title: Java Utility Classes
+Specification-Version: 1.2
+Specification-Vendor: Example Tech, Inc.
+Implementation-Title: java.util
+Implementation-Version: build57
+Implementation-Vendor: Example Tech, Inc.
+```
+
+有关包版本标头的更多信息，请参阅 [包版本控制规范](https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html#wp89936) 。
+
+**例子**
+
+我们希望在`MyJar.jar`的清单中包含上面示例中的标头。
+
+我们首先创建一个名为`Manifest.txt`的文本文件，其中包含以下内容：
+
+```
+Name: java/util/
+Specification-Title: Java Utility Classes
+Specification-Version: 1.2
+Specification-Vendor: Example Tech, Inc.
+Implementation-Title: java.util 
+Implementation-Version: build57
+Implementation-Vendor: Example Tech, Inc.
+```
+
+----
+
+**警告：** 文本文件必须以新行或回车结束。如果不以新行或回车结束，则不会正确解析最后一行。
+
+----
+
+然后，我们通过输入以下命令创建名为`MyJar.jar`的JAR文件：
+
+```
+jar cfm MyJar.jar Manifest.txt MyPackage/*.class
+```
+
+这将创建一个带有以下内容的清单的JAR文件：
+
+```
+Manifest-Version: 1.0
+Created-By: 1.7.0_06 (Oracle Corporation)
+Name: java/util/
+Specification-Title: Java Utility Classes
+Specification-Version: 1.2
+Specification-Vendor: Example Tech, Inc.
+Implementation-Title: java.util 
+Implementation-Version: build57
+Implementation-Vendor: Example Tech, Inc.
+```
+
+### 将包密封在 JAR 文件中
+
+JAR文件中的包可以选择性地密封，这意味着该包中定义的所有类必须打包在同一个JAR文件中。例如，您可能希望密封包，以确保软件中类之间的版本一致性。
+
+您通过在清单中添加`Sealed`标头来封装JAR文件中的包，该标头具有以下一般形式：
+
+```
+Name: myCompany/myPackage/
+Sealed: true
+```
+
+值 `myCompany/myPackage/` 是要封装的包的名称。
+
+请注意，包名称必须以“/”结尾。
+
+**例子**
+
+我们想在JAR文件`MyJar.jar`中密封两个包`firstPackage`和`secondPackage`。
+
+我们首先创建一个名为`Manifest.txt`的文本文件，其中包含以下内容：
+
+```
+Name: myCompany/firstPackage/
+Sealed: true
+
+Name: myCompany/secondPackage/
+Sealed: true
+```
+
+----
+
+**警告：** 文本文件必须以新行或回车结束。如果不以新行或回车结束，则不会正确解析最后一行。
+
+----
+
+然后，我们通过输入以下命令创建名为`MyJar.jar`的JAR文件：
+
+```
+jar cfm MyJar.jar Manifest.txt MyPackage/*.class
+```
+
+这将创建一个带有以下内容的清单的JAR文件：
+
+```
+Manifest-Version: 1.0
+Created-By: 1.7.0_06 (Oracle Corporation)
+Name: myCompany/firstPackage/
+Sealed: true
+Name: myCompany/secondPackage/
+Sealed: true
+```
+
+**密封的 JAR 文件**
+
+如果要保证包中的所有类都来自相同的代码源，请使用JAR密封。密封的JAR指定由JAR定义的所有包都是密封的，除非在每个包的基础上被覆盖。
+
+要密封JAR文件，请使用值为`true`的 `Sealed` 清单标头。 例如，
+
+```
+Sealed: true
+```
+
+指定此存档中的所有包都是密封的，除非显式覆盖清单条目中具有`Sealed`属性的特定包。
+
+### 使用清单属性增强安全性
+
+以下JAR文件清单属性可用于帮助确保applet或Java Web Start应用程序的安全性。只需要`Permissions`属性。
+
+- `Permissions`属性用于确保应用请求仅仅在applet标签或用于调用应用程序的JNLP文件中指定的权限级别上。使用此属性可帮助防止某人重新部署使用您的证书签名的应用程序并在不同权限级别运行它。
+
+  主JAR文件的清单中需要此属性。有关详细信息，请参阅Java平台标准版部署指南中的  [Permissions Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG896) 。
+
+- `Codebase`属性用于确保JAR文件的代码库仅限于特定域。使用此属性可防止某人出于恶意目的在其他网站上重新部署您的应用程序。有关详细信息，请参阅Java平台标准版部署指南中的 [Codebase Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG897) 。
+
+- `Application-Name`属性用于提供签名应用程序的安全提示中显示的标题。有关详细信息，请参阅Java平台标准版部署指南中的 [Application-Name Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG899) 。
+
+- `Application-Library-Allowable-Codebase`属性用于标识应该找到您的应用程序的位置。当JAR文件位于与JNLP文件或HTML页面不同的位置时，使用此属性可减少安全提示中显示的位置数。有关详细信息，请参阅Java平台标准版部署指南中的 [Application-Library-Allowable-Codebase Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG900) 。
+
+- `Caller-Allowable-Codebase`属性用于标识JavaScript代码可以从中调用应用程序的域。使用此属性可防止未知JavaScript代码访问您的应用程序。有关详细信息，请参阅Java平台标准版部署指南中的 [Caller-Allowable-Codebase Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG901) 属性。
+
+- `Entry-Point`属性用于标识允许用作RIA入口点的类。使用此属性可防止未经授权的代码从JAR文件中的其他可用入口点运行。有关详细信息，请参阅Java平台标准版部署指南中的 [Entry-Point Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG902) 。
+
+- `Trusted-Only`属性用于防止加载不受信任的组件。有关详细信息，请参阅Java平台标准版部署指南中的 [Trusted-Only Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG903) 。
+
+- `Trusted-Library`属性用于允许特权Java代码和沙箱Java代码之间的调用，而不会提示用户许可。有关详细信息，请参阅Java平台标准版部署指南中的 [Trusted-Library Attribute](https://docs.oracle.com/javase/8/docs/technotes/guides/deploy/manifest.html#JSDPG904) 。
+
+有关将这些属性添加到清单文件的信息，请参阅 [修改清单文件](https://docs.oracle.com/javase/tutorial/deployment/jar/modman.html) 。
+
