@@ -3875,3 +3875,276 @@ JAR签名和验证工具的完整参考页面是在线的：[Summary of Security
 
 ----
 
+### 验证已签名的 JAR 文件
+
+通常，签名JAR文件的验证将由Java™运行时环境负责。您的浏览器将验证它下载的签名小程序。使用解释器的`-jar`选项调用的签名应用程序将由运行时环境验证。
+
+但是，您可以使用`jarsigner`工具自行验证签名的JAR文件。您可能希望这样做，例如，测试您已准备好的已签名JAR文件。
+
+用于验证签名JAR文件的基本命令是：
+
+```
+jarsigner -verify jar-file
+```
+
+此命令将验证JAR文件的签名，并确保存档中的文件自签名后未发生更改。如果验证成功，您将看到以下消息：
+
+```
+jar verified.
+```
+
+如果您尝试验证未签名的JAR文件，则会出现以下消息：
+
+```
+jar is unsigned. (signatures missing or not parsable)
+```
+
+如果验证失败，则会显示相应的消息。例如，如果自JAR文件签名以来JAR文件的内容已更改，则在尝试验证文件时将产生类似于以下内容的消息：
+
+```
+jarsigner: java.lang.SecurityException: invalid SHA1 
+signature file digest for test/classes/Manifest.class
+```
+
+----
+
+**注意：** 如果签名的JAR文件使用 `{java.home}/lib/security/java.security` 文件中的`jdk.jar.disabledAlgorithms` 安全属性中指定的任何算法，则JDK将签名的JAR文件作为未签名进行处理（其中`java.home`是您安装JRE的目录)。
+
+----
+
+## 使用 JAR 相关 API
+
+Java平台包含几个用于JAR文件的类。其中一些API是：
+
+- [`java.util.jar` 包](https://docs.oracle.com/javase/8/docs/api/java/util/jar/package-summary.html)
+- [`java.net.JarURLConnection` 类](https://docs.oracle.com/javase/8/docs/api/java/net/JarURLConnection.html)
+- [`java.net.URLClassLoader` 类](https://docs.oracle.com/javase/8/docs/api/java/net/URLClassLoader.html)
+
+为了让您了解这些新API开辟的可能性，本课程将指导您完成名为`JarRunner`的示例应用程序的内部工作。
+
+**例子 - The JarRunner Application**
+
+JarRunner允许您通过在命令行上指定JAR文件的URL来运行捆绑在JAR文件中的应用程序。例如，如果名为`TargetApp`的应用程序捆绑在`http://www.example.com/TargetApp.jar`的JAR文件中，则可以使用以下命令运行该应用程序：
+
+```
+java JarRunner http://www.example.com/TargetApp.jar
+```
+
+为了让`JarRunner`工作，它必须能够执行以下任务，所有这些都是通过使用新API完成的：
+
+ - 访问远程JAR文件并与其建立通信链接。
+ - 检查JAR文件的清单，以查看存档中的哪些类是主类。
+ - 在JAR文件中加载类。
+
+`JarRunner`应用程序由两个类组成，`JarRunner`和`JarClassLoader`。`JarRunner`将大多数JAR处理任务委托给`JarClassLoader`类。`JarClassLoader`扩展`java.net.URLClassLoader`类。在继续学习之前，您可以浏览`JarRunner`和`JarClassLoader`类的源代码：
+
+- [`JarRunner.java`](https://docs.oracle.com/javase/tutorial/deployment/jar/examples/JarRunner.java)
+- [`JarClassLoader.java`](https://docs.oracle.com/javase/tutorial/deployment/jar/examples/JarClassLoader.java)
+
+本课程包含两部分：
+
+**[JarClassLoader 类](https://docs.oracle.com/javase/tutorial/deployment/jar/jarclassloader.html)**
+
+本节将向您展示`JarClassLoader`如何使用一些新API来执行`JarRunner`应用程序所需的任务。
+
+**[JarRunner 类](https://docs.oracle.com/javase/tutorial/deployment/jar/jarrunner.html)**
+
+本节总结了包含`JarRunner`应用程序的`JarRunner`类。
+
+### JarClassLoader 类
+
+`JarClassLoader`类扩展了`java.net.URLClassLoader`。顾名思义，`URLClassLoader`旨在用于加载通过搜索一组URL访问的类和资源。URL可以引用目录或JAR文件。
+
+除了子类化`URLClassLoader`之外，`JarClassLoader`还在其他两个与JAR相关的新API中使用，`java.util.jar`包和`java.net.JarURLConnectionclass`。在本节中，我们将详细介绍构造函数和`JarClassLoader`的两个方法。
+
+**JarClassLoader 构造器**
+
+构造函数将`java.net.URL`的实例作为参数。传递给此构造函数的URL将在`JarClassLoader`中的其他位置使用，以查找要从中加载类的JAR文件。
+
+```java
+public JarClassLoader(URL url) {
+    super(new URL[] { url });
+    this.url = url;
+}
+```
+
+`URL`对象被传递给超类`URLClassLoader`的构造函数，该构造函数将`URL[]`数组而不是单个`URL`实例作为参数。
+
+**getMainClassName 方法**
+
+一旦使用打包为JAR的应用程序的URL构造了`JarClassLoader`对象，就需要一种方法来确定JAR文件中哪个类是应用程序的入口点。这是`getMainClassName`方法的工作：
+
+```java
+public String getMainClassName() throws IOException {
+    URL u = new URL("jar", "", url + "!/");
+    JarURLConnection uc = (JarURLConnection)u.openConnection();
+    Attributes attr = uc.getMainAttributes();
+    return attr != null
+                   ? attr.getValue(Attributes.Name.MAIN_CLASS)
+                   : null;
+}
+```
+
+您可以回忆起打包为JAR的应用程序的入口点是由JAR文件清单的`Main-Class`标头指定的。要了解`getMainClassName`如何访问`Main-Class`标头值，让我们详细查看该方法，特别注意它使用的新JAR处理功能：
+
+**JarURLConnection 类和 JAR URLs**
+
+`getMainClassName`方法使用`java.net.JarURLConnection`类指定的JAR URL格式。JAR文件的URL语法如下例所示：
+
+```
+jar:http://www.example.com/jarfile.jar!/
+```
+
+终止分隔符 `!/` 表示URL引用整个JAR文件。分隔符后面的任何内容都引用特定的JAR文件内容，如下例所示：
+
+```
+jar:http://www.example.com/jarfile.jar!/mypackage/myclass.class
+```
+
+`getMainClassName` 方法的第一行是：
+
+```
+URL u = new URL("jar", "", url + "!/");
+```
+
+此语句构造一个表示JAR URL的新URL对象，将 `!/` 分隔符附加到用于创建`JarClassLoader`实例的URL。
+
+**java.net.JarURLConnection 类**
+
+此类表示应用程序和JAR文件之间的通信链接。它具有访问JAR文件清单的方法。`getMainClassName`的第二行是：
+
+```
+JarURLConnection uc = (JarURLConnection)u.openConnection();
+```
+
+在此语句中，在第一行中创建的URL实例将打开`URLConnection`。然后将`URLConnection`实例强制转换为`JarURLConnection`，以便它可以利用`JarURLConnection`的JAR处理功能。
+
+**获取清单属性：java.util.jar.Attributes**
+
+通过对JAR文件打开`JarURLConnection`，可以使用`JarURLConnection`的`getMainAttributes`方法访问JAR文件清单中的标头信息。此方法返回`java.util.jar.Attributes`的实例，该实例将JAR文件清单中的标题名称与其关联的字符串值进行映射。`getMainClassName`中的第三行创建一个`Attributes`对象：
+
+```
+Attributes attr = uc.getMainAttributes();
+```
+
+要获取清单的`Main-Class`标头的值，`getMainClassName`的第四行将调用`Attributes.getValue`方法：
+
+```
+return attr != null
+               ? attr.getValue(Attributes.Name.MAIN_CLASS)
+               : null;
+```
+
+方法的参数`Attributes.Name.MAIN_CLASS`指定它是您想要的`Main-Class`标头的值。（`Attributes.Name`类还提供静态字段，如`MANIFEST_VERSION`，`CLASS_PATH`和`SEALED`，用于指定其他标准清单头。）
+
+**invokeClass 方法**
+
+我们已经看到了`JarURLClassLoader`如何识别JAR捆绑应用程序中的主类。最后一个要考虑的方法是`JarURLClassLoader.invokeClass`，它可以调用主类来启动JAR绑定的应用程序：
+
+```java
+public void invokeClass(String name, String[] args)
+    throws ClassNotFoundException,
+           NoSuchMethodException,
+           InvocationTargetException
+{
+    Class c = loadClass(name);
+    Method m = c.getMethod("main", new Class[] { args.getClass() });
+    m.setAccessible(true);
+    int mods = m.getModifiers();
+    if (m.getReturnType() != void.class || !Modifier.isStatic(mods) ||
+        !Modifier.isPublic(mods)) {
+        throw new NoSuchMethodException("main");
+    }
+    try {
+        m.invoke(null, new Object[] { args });
+    } catch (IllegalAccessException e) {
+        // This should not happen, as we have disabled access checks
+    }
+}
+```
+
+`invokeClass`方法有两个参数：应用程序的入口点类的名称和要传递给入口点类的`main`方法的字符串参数数组。首先，加载主类：
+
+```
+Class c = loadClass(name);
+```
+
+`loadClass`方法继承自`java.lang.ClassLoader`。
+
+加载主类后，`java.lang.reflect`包的反射API用于将参数传递给类并启动它。您可以参考 [The Reflection API](https://docs.oracle.com/javase/tutorial/reflect/index.html) 上的教程来查看反射。
+
+### JarRunner 类
+
+使用以下形式的命令启动JarRunner应用程序：
+
+```
+java JarRunner url [arguments]
+```
+
+在上一节中，我们已经看到了`JarClassLoader`如何从给定的URL中识别和加载打包为JAR应用程序的主类。因此，要完成`JarRunner`应用程序，我们需要能够从命令行获取URL和任何参数，并将它们传递给`JarClassLoader`的实例。这些任务属于`JarRunner`类，它是`JarRunner`应用程序的入口点。
+
+首先，从命令行中指定的URL创建`java.net.URL`对象：
+
+```java
+public static void main(String[] args) {
+    if (args.length < 1) {
+        usage();
+    }
+    URL url = null;
+    try {
+        url = new URL(args[0]);
+    } catch (MalformedURLException e) {
+        fatal("Invalid URL: " + args[0]);
+    }
+```
+
+如果`args.length < 1`，则表示命令行中未指定URL，因此将打印有用的提示消息。如果第一个命令行参数是一个有效的URL，则会创建一个新的`URL`对象来表示它。
+
+接下来，JarRunner创建一个新的`JarClassLoader`实例，将构造函数传递给命令行中指定的URL：
+
+```java
+JarClassLoader cl = new JarClassLoader(url);
+```
+
+正如我们在上一节中看到的那样，JarRunner通过`JarClassLoader`进入JAR处理API。
+
+传递给`JarClassLoader`构造函数的URL是您要运行的打包为JAR应用程序的URL。接下来，JarRunner调用类加载器的`getMainClassNamemethod`来识别应用程序的入口点类：
+
+```java
+String name = null;
+try {
+    name = cl.getMainClassName();
+} catch (IOException e) {
+    System.err.println("I/O error while loading JAR file:");
+    e.printStackTrace();
+    System.exit(1);
+}
+if (name == null) {
+    fatal("Specified jar file does not contain a 'Main-Class'" +
+          " manifest attribute");
+}
+```
+
+关键声明以粗体突出显示。其他语句用于错误处理。
+
+一旦`JarRunner`识别出应用程序的入口点类，只剩下两个步骤：将所有参数传递给应用程序并实际启动应用程序。 `JarRunner`使用以下代码执行这些步骤：
+
+```java
+// Get arguments for the application
+String[] newArgs = new String[args.length - 1];
+System.arraycopy(args, 1, newArgs, 0, newArgs.length);
+// Invoke application's main class
+try {
+    cl.invokeClass(name, newArgs);
+} catch (ClassNotFoundException e) {
+    fatal("Class not found: " + name);
+} catch (NoSuchMethodException e) {
+    fatal("Class does not define a 'main' method: " + name);
+} catch (InvocationTargetException e) {
+    e.getTargetException().printStackTrace();
+    System.exit(1);
+}
+```
+
+回想一下，第一个命令行参数是打包为JAR的应用程序的URL。因此，传递给该应用程序的任何参数都在`args`数组中的元素`1`和更之前的元素中。`JarRunner`接受这些元素，并创建一个名为`newArgs`的新数组以传递给应用程序（上面的粗线）。然后，`JarRunner`将入口点的类名和新参数列表传递给`JarClassLoader`的`invokeClass`方法。正如我们在上一节中看到的，`invokeClass`将加载应用程序的入口点类，将所有参数传递给它，然后启动应用程序。
+
