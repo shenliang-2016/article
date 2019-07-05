@@ -4198,3 +4198,316 @@ try {
 
 因此，您继承了需要国际化的程序，或者您计划确定新开发软件的要求。你可能不知道从哪里开始？看看这份清单。它总结了必要的国际化任务，并提供了本章相关课程的链接。
 
+### 例子
+
+如果您是国际化软件的新手，本课程适合您。本课程使用一个简单示例演示如何使程序国际化，以便以适当的语言显示文本消息。您将了解`Locale`和`ResourceBundle`对象如何协同工作以及如何使用属性文件。
+
+**[国际化之前](https://docs.oracle.com/javase/tutorial/i18n/intro/before.html)**
+
+源代码的第一个版本包含我们想要显示的消息的硬编码英语版本。 这不是您编写国际化软件的方式。
+
+**[国际化之后](https://docs.oracle.com/javase/tutorial/i18n/intro/after.html)**
+
+这是对国际化后源代码外观的预览。
+
+**[运行例子程序](https://docs.oracle.com/javase/tutorial/i18n/intro/run.html)**
+
+要运行示例程序，请在命令行中指定语言和国家/地区。 
+
+**[例子程序国际化](https://docs.oracle.com/javase/tutorial/i18n/intro/steps.html)**
+
+国际化该程序只需几步。你会惊讶于它是多么容易。
+
+#### 国际化之前
+
+假设您编写了一个显示三条消息的程序，如下所示：
+
+```java
+public class NotI18N {
+
+    static public void main(String[] args) {
+
+        System.out.println("Hello.");
+        System.out.println("How are you?");
+        System.out.println("Goodbye.");
+    }
+}
+```
+
+您已经决定该程序需要为居住在法国和德国的人们展示相同的信息。不幸的是，您的编程人员不是多语言的，因此需要您帮助将消息翻译成法语和德语。由于翻译人员不是程序员，因此您必须将消息从源代码中移出并转换为翻译人员可以编辑的文本文件。此外，程序必须足够灵活，以便能够以其他语言显示消息，但现在没有人知道这些语言是什么。
+
+看起来该程序需要国际化。
+
+#### 国际化之后
+
+国际化计划的源代码如下。请注意，消息的文本不是硬编码的。
+
+```java
+import java.util.*;
+
+public class I18NSample {
+
+    static public void main(String[] args) {
+
+        String language;
+        String country;
+
+        if (args.length != 2) {
+            language = new String("en");
+            country = new String("US");
+        } else {
+            language = new String(args[0]);
+            country = new String(args[1]);
+        }
+
+        Locale currentLocale;
+        ResourceBundle messages;
+
+        currentLocale = new Locale(language, country);
+
+        messages = ResourceBundle.getBundle("MessagesBundle", currentLocale);
+        System.out.println(messages.getString("greetings"));
+        System.out.println(messages.getString("inquiry"));
+        System.out.println(messages.getString("farewell"));
+    }
+}
+```
+
+要编译和运行此程序，您需要以下源文件：
+
+- [`I18NSample.java`](https://docs.oracle.com/javase/tutorial/i18n/intro/examples/I18NSample.java)
+- [`MessagesBundle.properties`](https://docs.oracle.com/javase/tutorial/i18n/intro/examples/MessagesBundle.properties)
+- [`MessagesBundle_de_DE.properties`](https://docs.oracle.com/javase/tutorial/i18n/intro/examples/MessagesBundle_de_DE.properties)
+- [`MessagesBundle_en_US.properties`](https://docs.oracle.com/javase/tutorial/i18n/intro/examples/MessagesBundle_en_US.properties)
+- [`MessagesBundle_fr_FR.properties`](https://docs.oracle.com/javase/tutorial/i18n/intro/examples/MessagesBundle_fr_FR.properties)
+
+#### 运行例子程序
+
+国际化程序是灵活的; 它允许最终用户在命令行上指定语言和国家/地区。在以下示例中，语言代码为`fr`（法语），国家/地区代码为`FR`（法国），因此程序以法语显示消息：
+
+```
+% java I18NSample fr FR
+Bonjour.
+Comment allez-vous?
+Au revoir.
+```
+
+在下一个示例中，语言代码为`en`（英语），国家/地区代码为`US`（美国），因此程序以英语显示消息：
+
+```
+% java I18NSample en US
+Hello.
+How are you?
+Goodbye.
+```
+
+#### 例子程序的国际化
+
+如果你查看国际化的源代码，你会发现硬编码的英文消息已被删除。由于消息不再是硬编码的，并且因为语言代码是在运行时指定的，因此可以在全球范围内分发相同的可执行文件。本地化不需要重新编译。该程序已国际化。
+
+您可能想知道消息文本的内容或语言和国家/地区代码的含义。别担心。 当您逐步完成示例程序的国际化过程时，您将了解这些概念。
+
+**1. 创建 Properties 文件**
+
+属性文件存储有关程序或环境特征的信息。属性文件采用纯文本格式。您可以使用几乎任何文本编辑器创建文件。
+
+在示例中，属性文件存储要显示的消息的可翻译文本。在程序国际化之前，此文本的英文版本在`System.out.println`语句中进行了硬编码。默认属性文件名为`MessagesBundle.properties`，包含以下行：
+
+```
+greetings = Hello
+farewell = Goodbye
+inquiry = How are you?
+```
+
+现在消息在属性文件中，它们可以被翻译成各种语言。不需要更改源代码。法语翻译器创建了一个名为`MessagesBundle_fr_FR.properties`的属性文件，其中包含以下行：
+
+```
+greetings = Bonjour.
+farewell = Au revoir.
+inquiry = Comment allez-vous?
+```
+
+请注意，等号右侧的值已被翻译，但左侧的键未更改。这些键不能更改，因为它们将在您的程序获取翻译文本时被引用。
+
+属性文件的名称很重要。例如，`MessagesBundle_fr_FR.properties`文件的名称包含`fr`语言代码和`FR`国家/地区代码。创建`Locale`对象时也会使用这些代码。
+
+**2. 定义 Locale**
+
+`Locale`对象标识特定语言和国家/地区。以下语句定义语言为英语且国家/地区为美国的 `Locale` ：
+
+```
+aLocale = new Locale("en","US");
+```
+
+下一个示例为加拿大和法国的法语创建`Locale`对象：
+
+```
+caLocale = new Locale("fr","CA");
+frLocale = new Locale("fr","FR");
+```
+
+该计划非常灵活。该程序不是使用硬编码语言和国家/地区代码，而是在运行时从命令行获取它们：
+
+```
+String language = new String(args[0]);
+String country = new String(args[1]);
+currentLocale = new Locale(language, country);
+```
+
+`Locale` 对象只是标识符。定义`Locale` 后，将其传递给执行有用任务的其他对象，例如格式化日期和数字。这些对象是区域设置敏感的，因为它们的行为因`Locale` 而异。`ResourceBundle`是区域设置敏感对象的示例。
+
+**3. 创建 ResourceBundle**
+
+`ResourceBundle`对象包含特定于语言环境的对象。您使用`ResourceBundle`对象来隔离区域设置敏感数据，例如可翻译文本。在示例程序中，`ResourceBundle`由包含我们要显示的消息文本的属性文件支持。
+
+`ResourceBundle`创建如下：
+
+```
+messages = ResourceBundle.getBundle("MessagesBundle", currentLocale);
+```
+
+传递给`getBundle`方法的参数标识将访问哪些属性文件。`MessagesBundle`的第一个参数引用了这个属性文件系列：
+
+```
+MessagesBundle_en_US.properties
+MessagesBundle_fr_FR.properties
+MessagesBundle_de_DE.properties
+```
+
+`Locale`是`getBundle`的第二个参数，它指定选择哪个`MessagesBundle`文件。创建 `Locale` 后，语言代码和国家/地区代码将传递给其构造函数。请注意，语言和国家/地区代码遵循属性文件名称中的`MessagesBundle`。
+
+现在，您所要做的就是从`ResourceBundle`获取已翻译的消息。
+
+**4. 从 ResourceBundle 获取文本**
+
+属性文件包含键值对。值包含程序将显示的已翻译文本。使用`getString`方法从`ResourceBundle`获取已翻译的消息时指定消息对应的键。例如，要检索由问候键标识的消息，请按如下方式调用`getString`：
+
+```
+String msg1 = messages.getString("greetings");
+```
+
+示例程序使用键 `greetings` ，因为它反映了消息的内容，但它可能使用了另一个字符串，例如`s1`或`msg1`。请记住，键在程序中是硬编码的，并且必须存在于属性文件中。如果您的翻译人员意外地修改了属性文件中的键，则`getString`将无法找到消息。
+
+**总结**
+
+如您所见，国际化程序并不太难。它需要一些规划和一些额外的编码，但好处是巨大的。为了向您提供国际化过程的概述，本课程中的示例程序有意保持简单。在阅读下面的课程时，您将了解Java编程语言的更高级的国际化功能。
+
+### 清单
+
+首次编写时，许多程序都没有国际化。这些程序可能已经开始作为原型，或者它们可能不是用于国际分发。如果必须国际化现有程序，请执行以下步骤：
+
+**识别文化依赖数据**
+
+短信是最明显的数据形式，随文化而变化。 但是，其他类型的数据可能因地区或语言而异。 以下列表包含文化相关数据的示例：
+
+ - 消息
+ - GUI组件上的标签
+- 在线帮助
+ - 声音
+ - 颜色
+ - 图形
+ - 图标
+- 日期
+ - 时间
+ - 数字
+ - 货币
+- 计量单位
+- 电话号码
+ - 荣誉和个人头衔
+ - 邮政地址
+ - 页面布局
+
+**将可翻译的文本隔离进入 Resource Bundles**
+
+翻译费用昂贵。您可以通过隔离必须在`ResourceBundle`对象中转换的文本来帮助降低成本。可翻译文本包括状态消息，错误消息，日志文件条目和GUI组件标签。该文本被硬编码到尚未国际化的程序中。您需要找到显示给最终用户的所有硬编码文本。例如，您应该像这样清理代码：
+
+```java
+String buttonLabel = "OK";
+// ...
+JButton okButton = new JButton(buttonLabel);
+```
+
+有关详细信息，请参阅 [隔离特定于区域设置的数据](https://docs.oracle.com/javase/tutorial/i18n/resbundle/index.html) 部分。
+
+**处理复合消息**
+
+复合消息包含可变数据。在消息“磁盘包含1100个文件”中，整数1100可以变化。此消息难以翻译，因为句子中整数的位置在所有语言中都不相同。以下消息不可翻译，因为句子元素的顺序是通过连接硬编码的：
+
+```java
+Integer fileCount;
+// ...
+String diskStatus = "The disk contains " + fileCount.toString() + " files";
+```
+
+只要有可能，您应该避免构造复合消息，因为它们很难翻译。但是，如果您的应用程序需要复合消息，则可以使用 [消息](https://docs.oracle.com/javase/tutorial/i18n/format/messageintro.html) 一节中描述的技术处理它们。
+
+**格式化数字和货币**
+
+如果您的应用程序显示数字和货币，则必须以与语言环境无关的方式格式化它们。以下代码尚未国际化，因为它不会在所有国家/地区正确显示数字：
+
+```java
+Double amount;
+TextField amountField;
+// ...
+String displayAmount = amount.toString();
+amountField.setText(displayAmount);
+```
+
+您应该使用正确格式化数字的例程替换前面的代码。Java编程语言提供了几个格式化数字和货币的类。这些类在 [数字和货币](https://docs.oracle.com/javase/tutorial/i18n/format/numberintro.html) 部分中讨论。
+
+**格式化日期和时间**
+
+日期和时间格式因地区和语言而异。如果您的代码包含如下语句，则需要更改它：
+
+```java
+Date currentDate = new Date();
+TextField dateField;
+// ...
+String dateString = currentDate.toString();
+dateField.setText(dateString);
+```
+
+如果您使用日期格式化类，您的应用程序可以在世界各地正确显示日期和时间。有关示例和说明，请参阅 [日期和时间](https://docs.oracle.com/javase/tutorial/i18n/format/dateintro.html) 部分。
+
+**使用 Unicode 字符属性**
+
+以下代码尝试验证字符是否为字母：
+
+```java
+char ch;
+// This code is incorrect
+if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
+```
+
+注意这样的代码，因为它不适用于英语以外的语言。例如，`if`语句错过了德语单词`Grün`中的字符`ü`。
+
+`Character`比较方法使用`Unicode`标准来标识字符属性。因此，您应该使用以下代码替换以前的代码：
+
+```java
+char ch;
+// ...
+if (Character.isLetter(ch))
+```
+
+有关字符比较方法的详细信息，请参阅 [检查字符属性](https://docs.oracle.com/javase/tutorial/i18n/text/charintro.html) 一节。
+
+**比较字符串属性**
+
+排序文本时，您经常比较字符串。如果显示文本，则不应使用`String`类的比较方法。尚未国际化的程序可能会比较字符串如下：
+
+```java
+String target;
+String candidate;
+// ...
+if (target.equals(candidate)) {
+// ...
+if (target.compareTo(candidate) < 0) {
+// ...
+```
+
+`String.equals`和`String.compareTo`方法执行二进制比较，在大多数语言中排序时无效。相反，您应该使用`Collator`类，这在 [比较字符串](https://docs.oracle.com/javase/tutorial/i18n/text/collationintro.html) 一节中有所描述。
+
+**转换非Unicode文本**
+
+Java编程语言中的字符以Unicode编码。如果您的应用程序处理非Unicode文本，您可能需要将其转换为Unicode。有关更多信息，请参阅 [转换非Unicode文本](https://docs.oracle.com/javase/tutorial/i18n/text/convertintro.html) 部分。
+
