@@ -4931,11 +4931,11 @@ public class LanguageTagDemo {
 
 **创建语言优先级列表**
 
-You can create a Language Priority List from a list of language ranges by using the [`LanguageRange.parse(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.LanguageRange.html#parse-java.lang.String-) method. This method accepts a list of comma-separated language ranges, performs a syntactic check for each language range in the given ranges, and then returns the newly created Language Priority List.
+您可以使用 [`LanguageRange.parse(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.LanguageRange.html#parse-java.lang.String-) 方法从语言范围列表中创建语言优先级列表。此方法接受逗号分隔语言范围列表，对给定范围内的每个语言范围执行语法检查，然后返回新创建的语言优先级列表。
 
-For detailed information about the required format of the "ranges" parameter, see the API specification for this method.
+有关“范围”参数所需格式的详细信息，请参阅此方法的API规范。
 
-Example 3:
+例子3：
 
 ```java
 package languagetagdemo;
@@ -4962,24 +4962,24 @@ public class LanguageTagDemo {
 }
 ```
 
-Example 3 creates the same three language ranges as Example 2, but stores them in a `String` object, which is passed to the `parse(String)` method. The returned `List` of `LanguageRange` objects is the Language Priority List.
+示例3创建与示例2相同的三种语言范围，但将它们存储在`String`对象中，该对象将传递给 `parse(String)` 方法。返回的`LanguageRange`对象列表是语言优先级列表。
 
 **过滤语言标签**
 
-Language tag filtering is the process of matching a set of language tags against a user's Language Priority List. The result of filtering will be a complete list of all matching results. The `Locale` class defines two filter methods that return a list of `Locale` objects. Their signatures are as follows:
+语言标记过滤是将一组语言标记与用户的语言优先级列表进行匹配的过程。过滤结果将是所有匹配结果的完整列表。 `Locale`类定义了两个返回`Locale`对象列表的过滤器方法。他们的方法签名如下：
 
 - [`public static List filter (List priorityList, Collection locales)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#filter-java.util.List-java.util.Collection-)
 - [`public static List filter (List priorityList, Collection locales, Locale.FilteringMode mode)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#filter-java.util.List-java.util.Collection-java.util.Locale.FilteringMode-)
 
-In both methods, the first argument specifies the user's Language Priority List as described in the previous section.
+在这两种方法中，第一个参数指定用户的语言优先级列表，如上一节中所述。
 
-The second argument specifies a `Collection` of `Locale` objects to match against. The match itself will take place according to the rules specified by RFC 4647.
+第二个参数指定要匹配的`Locale`对象的集合。匹配本身将根据RFC 4647指定的规则进行。
 
-The third argument (if provided) specifies the "filtering mode" to use. The [`Locale.FilteringMode`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.FilteringMode.html) enum provides a number of different values to choose from, such as `AUTOSELECT_FILTERING` (for basic language range filtering) or `EXTENDED_FILTERING` (for extended language range filtering).
+第三个参数（如果提供）指定要使用的“过滤模式”。[`Locale.FilteringMode`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.FilteringMode.html) 枚举提供了许多不同的值可供选择，例如`AUTOSELECT_FILTERING`（用于基本语言范围过滤）或`EXTENDED_FILTERING`（用于扩展语言范围过滤）。
 
-Example 4 provides a demonstration of language tag filtering.
+示例4提供了语言标记过滤的演示。
 
-Example 4:
+例4：
 
 ```java
 package languagetagdemo;
@@ -5015,23 +5015,25 @@ public class LanguageTagDemo {
 }
 ```
 
-The output of this program is:
+程序的输出：
 
+````
 en_US
 en_GB
+````
 
-This returned list is ordered according to the weights specified in the user's Language Priority List.
+此返回列表根据用户的语言优先级列表中指定的权重进行排序。
 
-The `Locale` class also defines `filterTags` methods for filtering language tags as `String` objects.
+`Locale`类还定义了`filterTags`方法，用于将语言标记过滤为`String`对象。
 
-The method signatures are as follows:
+方法签名如下：
 
 - [`public static List filterTags (List priorityList, Collection tags)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#filterTags-java.util.List-java.util.Collection-)
 - [`public static List filterTags (List priorityList, Collection tags, Locale.FilteringMode mode)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#filterTags-java.util.List-java.util.Collection-java.util.Locale.FilteringMode-)
 
-Example 5 provides the same search as Example 4, but uses `String` objects instead of `Locale` objects.
+示例5提供与示例4相同的搜索，但使用`String`对象而不是`Locale`对象。
 
-Example 5:
+例5：
 
 ```java
 package languagetagdemo;
@@ -5067,13 +5069,13 @@ public class LanguageTagDemo {
 } 
 ```
 
-As before, the search will match and return "en-US" and "en-GB" (in that order).
+和以前一样，搜索将匹配并返回“en-US”和“en-GB”（按此顺序）。
 
 **执行语言标签查找**
 
-In contrast to language tag filtering, language tag lookup is the process of matching language ranges to sets of language tags and returning the one language tag that best matches the range. RFC4647 states that: "Lookup produces the single result that best matches the user's preferences from the list of available tags, so it is useful in cases in which a single item is required (and for which only a single item can be returned). For example, if a process were to insert a human-readable error message into a protocol header, it might select the text based on the user's language priority list. Since the process can return only one item, it is forced to choose a single item and it has to return some item, even if none of the content's language tags match the language priority list supplied by the user."
+与语言标记过滤相反，语言标记查找是将语言范围与语言标记集匹配并返回与该范围最匹配的一种语言标记的过程。RFC4647声明：“查找从可用标记列表中生成最符合用户首选项的单个结果，因此在需要单个项目（并且只能返回单个项目）的情况下，它非常有用。例如，如果一个进程要将一个人类可读的错误消息插入到协议头中，它可能会根据用户的语言优先级列表选择文本。由于该进程只能返回一个项目，因此它被强制选择一个项目， 它必须返回一些项目，即使内容的语言标签都没有与用户提供的语言优先级列表相匹配。“
 
-Example 6:
+例6：
 
 ```java
 package languagetagdemo;
@@ -5105,9 +5107,9 @@ public class LanguageTagDemo {
 }
 ```
 
-In contrast to the filtering examples, the lookup demo in Example 6 returns the one object that is the best match (`en-US` in this case). For completenes, Example 7 shows how to perform the same lookup using `String` objects.
+与过滤示例相反，示例6中的查找演示返回最匹配的一个对象（在本例中为`en-US`）。为了保证完整性，示例7显示了如何使用`String`对象执行相同的查找。
 
-Example 7:
+例7：
 
 ```java
 package languagetagdemo;
@@ -5138,4 +5140,63 @@ public class LanguageTagDemo {
 } 
 ```
 
-This example returns the single object that best matches the user's Language Priority List.
+此示例返回与用户的语言优先级列表最匹配的单个对象。
+
+### Locale 的作用域
+
+Java平台不要求您在整个程序中使用相同的`Locale`。如果愿意，可以为程序中的每个区域设置敏感对象分配不同的`Locale`。这种灵活性允许您开发多语言应用程序，可以显示多种语言的信息。
+
+但是，大多数应用程序不是多语言的，它们的区域设置敏感对象依赖于默认的`Locale`。由Java虚拟机启动时设置，默认`Locale`对应于主机平台的区域设置。要确定Java虚拟机的默认`Locale`，请调用`Locale.getDefault`方法。
+
+----
+
+**注意：** 可以为两种类型的用途独立设置默认语言环境：格式设置用于格式化资源，显示设置用于菜单和对话框。在Java SE 7发行版中，[`Locale.getDefault(Locale.Category)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDefault-java.util.Locale.Category-) 方法采用 [`Locale.Category`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.Category.html) 参数。将`FORMAT`枚举传递给`getDefault(Locale.Category)` 方法将返回格式化资源的默认语言环境。同样，传递`DISPLAY`枚举返回UI使用的默认语言环境。相应的 [`setDefault(Locale.Category, Locale)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#setDefault-java.util.Locale.Category-java.util.Locale-) 方法允许设置所需类别的区域设置。无参数`getDefault`方法返回`DISPLAY`默认值。
+
+在Windows平台上，根据Windows控制面板中的“标准和格式”和“显示语言”设置初始化这些默认值。
+
+---
+
+您不应以编程方式设置默认 `Locale` ，因为它由所有区域设置敏感类共享。
+
+分布式计算提出了一些有趣的问题。例如，假设您正在设计一个应用程序服务器，它将接收来自不同国家/地区的客户端的请求。如果每个客户端的区域设置不同，那么服务器的区域设置应该是什么？也许服务器是多线程的，每个线程都设置为它所服务的客户端的`Locale`。或者，服务器和客户端之间传递的所有数据都应该是与语言环境无关的。
+
+你应该选择哪种设计方法？如果可能，服务器和客户端之间传递的数据应该与语言环境无关。这通过使客户端负责以区域设置敏感的方式显示数据来简化服务器的设计。但是，如果服务器必须以特定于语言环境的形式存储数据，则此方法将不起作用。例如，服务器可能将相同数据的西班牙语，英语和法语版本存储在不同的数据库列中。在这种情况下，服务器可能希望查询客户端的`Locale`，因为`Locale`可能自上次请求以来已更改。
+
+### 区域敏感服务SPI
+
+此功能启用与区域设置相关的数据和服务的插件。通过这种方式，第三方能够在`java.text`和`java.util`包中提供大多数区域设置敏感类的实现。
+
+SPI（服务提供者接口）的实现基于由服务提供者实现的抽象类和Java接口。在运行时，Java类加载机制用于动态定位和加载实现SPI的类。
+
+您可以使用区域设置敏感服务SPI来提供以下区域设置敏感实现：
+
+- `BreakIterator` 对象
+- `Collator` 对象
+- `Locale`类的语言代码，国家/地区代码和变体名称
+- 时区名称
+- 货币符号
+- `DateFormat` 对象
+- `DateFormatSymbol` 对象
+- `NumberFormat` 对象
+- `DecimalFormatSymbols` 对象
+
+相应的SPI包含在`java.text.spi`和`java.util.spi`包中：
+
+| `java.util.spi`                          | `java.text.spi`                          |
+| ---------------------------------------- | ---------------------------------------- |
+| `CurrencyNameProvider`<br />`LocaleServiceProvider`<br />`TimeZoneNameProvider`<br />`CalendarDataProvider` | `BreakIteratorProvider`<br />`CollatorProvider`<br />`DateFormatProvider`<br />`DateFormatSymbolsProvider`<br />`DecimalFormatSymbolsProvider`<br />`NumberFormatProvider` |
+
+例如，如果要为新语言环境提供`NumberFormat`对象，则必须实现`java.text.spi.NumberFormatProvider`类。您需要扩展此类并实现其方法：
+
+- `getCurrencyInstance(Locale locale)`
+- `getIntegerInstance(Locale locale)`
+- `getNumberInstance(Locale locale)`
+- `getPercentInstance(Locale locale)`
+
+```java
+Locale loc = new Locale("da", "DK");
+NumberFormat nf = NumberFormatProvider.getNumberInstance(loc);
+```
+
+这些方法首先检查Java运行时环境是否支持所请求的语言环境; 如果是这样，他们会使用这种支持。否则，这些方法会调用已安装提供程序的 `getAvailableLocales()` 方法以获取相应的接口，以查找支持所请求区域设置的提供程序。
+
