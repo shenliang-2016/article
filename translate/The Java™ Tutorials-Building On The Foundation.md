@@ -4511,3 +4511,227 @@ if (target.compareTo(candidate) < 0) {
 
 Java编程语言中的字符以Unicode编码。如果您的应用程序处理非Unicode文本，您可能需要将其转换为Unicode。有关更多信息，请参阅 [转换非Unicode文本](https://docs.oracle.com/javase/tutorial/i18n/text/convertintro.html) 部分。
 
+## 设定 Locale
+
+国际化程序可以在全世界以不同方式显示信息。例如，该程序将在巴黎，东京和纽约显示不同的消息。如果本地化过程已经过微调，该程序将在纽约和伦敦显示不同的消息，以解释美国和英国英语之间的差异。国际化计划如何确定最终用户的适当语言和区域？简单。它引用了`Locale`对象。
+
+`Locale`对象是语言和区域的特定组合的标识符。如果一个类根据`Locale`改变其行为，则称其对语言环境敏感。例如，`NumberFormat`类是区域设置敏感的，它返回的数字格式取决于`Locale`。因此，`NumberFormat`可以返回`902 300`（法国），或`902.300`（德国）或`902,300`（美国）的数字。区域设置对象只是标识符。实际工作（例如格式化和检测字边界）由区域设置敏感类的方法执行。
+
+以下部分说明如何使用`Locale`对象：
+
+**[创建 Locale](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html)**
+
+创建`Locale`对象时，通常指定语言代码和国家/地区代码。第三个参数，即变体，是可选的。
+
+**[BCP 47 扩展](https://docs.oracle.com/javase/tutorial/i18n/locale/extensions.html)**
+
+本节介绍如何将Unicode区域设置扩展或专用扩展添加到`Locale`。
+
+**[识别可用 Locales](https://docs.oracle.com/javase/tutorial/i18n/locale/identify.html)**
+
+区分区域设置的类仅支持某些 `Locale` 定义。本节介绍如何确定支持哪些`Locale`定义。
+
+**[语言标签过滤和查找](https://docs.oracle.com/javase/tutorial/i18n/locale/matching.html)**
+
+本节介绍语言标记，语言标记过滤和语言标记查找的国际化支持。
+
+**[Locale 的作用域](https://docs.oracle.com/javase/tutorial/i18n/locale/scope.html)**
+
+在Java平台上，您不能通过在运行应用程序之前设置环境变量来指定全局 `Locale` 。相反，您要么依赖默认的 `Locale` ，要么将 `Locale` 分配给每个区域设置敏感的对象。
+
+**[语言环境敏感的服务 SPI](https://docs.oracle.com/javase/tutorial/i18n/locale/services.html)**
+
+本节介绍如何启用与语言环境相关的数据和服务的插件。除了当前可用的语言环境之外，这些SPI（服务提供程序接口）还提供对更多语言环境的支持。
+
+### 创建 Locale
+
+有几种方法可以创建`Locale`对象。无论使用何种技术，创建都可以像指定语言代码一样简单。但是，您可以通过设置区域（也称为“国家/地区”）和变体代码来进一步区分区域设置。如果您使用的是JDK 7或更高版本，则还可以指定脚本代码和Unicode语言环境扩展。
+
+创建`Locale`对象的四种方法是：
+
+- [`Locale.Builder` 类](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html#builder)
+- [`Locale` 构造器](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html#constructors)
+- [`Locale.forLanguageTag` 工厂方法](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html#factory)
+- [`Locale` 常量](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html#constants)
+
+----
+
+**版本说明:**  `Locale.Builder` 类和 `forLanguageTag` 方法被添加到 Java SE 7 发行版中。
+
+----
+
+**`LocaleBuilder` 类**
+
+The [`Locale.Builder`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.Builder.html) utility class can be used to construct a `Locale` object that conforms to the IETF BCP 47 syntax. For example, to specify the French language and the country of Canada, you could invoke the `Locale.Builder` constructor and then chain the setter methods as follows:
+
+```
+Locale aLocale = new Locale.Builder().setLanguage("fr").setRegion("CA").build();
+
+```
+
+The next example creates `Locale` objects for the English language in the United States and Great Britain:
+
+```
+Locale bLocale = new Locale.Builder().setLanguage("en").setRegion("US").build();
+Locale cLocale = new Locale.Builder().setLanguage("en").setRegion("GB").build();
+
+```
+
+The final example creates a `Locale` object for the Russian language:
+
+```
+Locale dLocale = new Locale.Builder().setLanguage("ru").setScript("Cyrl").build();
+
+```
+
+**`Locale` 构造器**
+
+There are three constructors available in the `Locale` class for creating a `Locale` object:
+
+- [`Locale(String language)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-)
+- [`Locale(String language, String country)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-java.lang.String-)
+- [`Locale(String language, String country, String variant)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-java.lang.String-java.lang.String-)
+
+The following examples create `Locale` objects for the French language in Canada, the English language in the U.S. and Great Britain, and the Russian language.
+
+```
+aLocale = new Locale("fr", "CA");
+bLocale = new Locale("en", "US");
+cLocale = new Locale("en", "GB");
+dLocale = new Locale("ru");
+
+```
+
+It is not possible to set a script code on a `Locale` object in a release earlier than JDK 7.
+
+**`forLanguageTag` 工厂方法**
+
+If you have a language tag string that conforms to the IETF BCP 47 standard, you can use the [`forLanguageTag(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#forLanguageTag-java.lang.String-) factory method, which was introduced in the Java SE 7 release. For example:
+
+```
+Locale aLocale = Locale.forLanguageTag("en-US");
+Locale bLocale = Locale.forLanguageTag("ja-JP-u-ca-japanese");
+
+```
+
+**`Locale` 常量**
+
+For your convenience the `Locale` class provides [constants](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#field_summary) for some languages and countries. For example:
+
+```
+cLocale = Locale.JAPAN;
+dLocale = Locale.CANADA_FRENCH;
+
+```
+
+When you specify a language constant, the region portion of the `Locale` is undefined. The next three statements create equivalent `Locale` objects:
+
+```
+j1Locale = Locale.JAPANESE;
+j2Locale = new Locale.Builder().setLanguage("ja").build();
+j3Locale = new Locale("ja");
+
+```
+
+The `Locale` objects created by the following three statements are also equivalent:
+
+```
+j4Locale = Locale.JAPAN;
+j5Locale = new Locale.Builder().setLanguage("ja").setRegion("JP").build();
+j6Locale = new Locale("ja", "JP");
+
+```
+
+**编码**
+
+The following sections discuss the language code and the optional script, region, and variant codes.
+
+**语言编码**
+
+The language code is either two or three lowercase letters that conform to the ISO 639 standard. You can find a full list of the ISO 639 codes at <http://www.loc.gov/standards/iso639-2/php/code_list.php>.
+
+The following table lists a few of the language codes.
+
+| Language Code | Description |
+| ------------- | ----------- |
+| `de`          | German      |
+| `en`          | English     |
+| `fr`          | French      |
+| `ru`          | Russian     |
+| `ja`          | Japanese    |
+| `jv`          | Javanese    |
+| `ko`          | Korean      |
+| `zh`          | Chinese     |
+
+**脚本编码**
+
+The script code begins with an uppercase letter followed by three lowercase letters and conforms to the ISO 15924 standard. You can find a full list of the ISO 15924 codes at<http://unicode.org/iso15924/iso15924-codes.html>.
+
+The following table lists a few of the script codes.
+
+| Script Code | Description |
+| ----------- | ----------- |
+| `Arab`      | Arabic      |
+| `Cyrl`      | Cyrillic    |
+| `Kana`      | Katakana    |
+| `Latn`      | Latin       |
+
+There are three methods for retrieving the script information for a `Locale`:
+
+- [`getScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getScript--) – returns the 4-letter script code for a `Locale` object. If no script is defined for the locale, an empty string is returned.
+- [`getDisplayScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript--) – returns a name for the locale's script that is appropriate for display to the user. If possible, the name will be localized for the default locale. So, for example, if the script code is "Latn," the diplay script name returned would be the string "Latin" for an English language locale.
+- [`getDisplayScript(Locale)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript-java.util.Locale-) – returns the display name of the specified `Locale` localized, if possible, for the locale.
+
+**区域编码**
+
+The region (country) code consists of either two or three uppercase letters that conform to the ISO 3166 standard, or three numbers that conform to the UN M.49 standard. A copy of the codes can be found at <http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html>.
+
+The following table contains several sample country and region codes.
+
+| A-2 Code | A-3 Code | Numeric Code | Description        |
+| -------- | -------- | ------------ | ------------------ |
+| `AU`     | `AUS`    | `036`        | Australia          |
+| `BR`     | `BRA`    | `076`        | Brazil             |
+| `CA`     | `CAN`    | `124`        | Canada             |
+| `CN`     | `CHN`    | `156`        | China              |
+| `DE`     | `DEU`    | `276`        | Germany            |
+| `FR`     | `FRA`    | `250`        | France             |
+| `IN`     | `IND`    | `356`        | India              |
+| `RU`     | `RUS`    | `643`        | Russian Federation |
+| `US`     | `USA`    | `840`        | United States      |
+
+**变体编码**
+
+The optional `variant` code can be used to further distinguish your `Locale`. For example, the variant code can be used to indicate dialectical differences that are not covered by the region code.
+
+------
+
+**Version Note:**  Prior to the Java SE 7 release, the variant code was sometimes used to identify differences that were not specific to the language or region. For example, it might have been used to identify differences between computing platforms, such as Windows or UNIX. Under the IETF BCP 47 standard, this use is discouraged.
+
+To define non-language-specific variations relevant to your environment, use the extensions mechanism, as explained in [BCP 47 Extensions](https://docs.oracle.com/javase/tutorial/i18n/locale/extensions.html).
+
+------
+
+As of the Java SE 7 release, which conforms to the IETF BCP 47 standard, the variant code is used specifically to indicate additional variations that define a language or its dialects. The IETF BCP 47 standard imposes syntactic restrictions on the variant subtag. You can see a list of variant codes (search for *variant*) at<http://www.iana.org/assignments/language-subtag-registry>.
+
+For example, Java SE uses the variant code to support the Thai language. By convention, a `NumberFormat` object for the `th` and `th_TH` locales will use common Arabic digit shapes, or Arabic numerals, to format Thai numbers. However, a `NumberFormat` for the `th_TH_TH` locale uses Thai digit shapes. The excerpt from [`ThaiDigits.java`](https://docs.oracle.com/javase/tutorial/i18n/locale/examples/ThaiDigits.java)demonstrates this:
+
+```java
+String outputString = new String();
+Locale[] thaiLocale = {
+             new Locale("th"),
+             new Locale("th", "TH"),
+             new Locale("th", "TH", "TH")
+         };
+
+for (Locale locale : thaiLocale) {
+    NumberFormat nf = NumberFormat.getNumberInstance(locale);
+    outputString = outputString + locale.toString() + ": ";
+    outputString = outputString + nf.format(573.34) + "\n";
+}
+```
+
+The following is a screenshot of this sample:
+
+![Screenshot of Sample ThaiDigits.java](https://docs.oracle.com/javase/tutorial/figures/i18n/locale/thaidigits.jpg)
+
