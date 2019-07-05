@@ -4562,95 +4562,87 @@ Java编程语言中的字符以Unicode编码。如果您的应用程序处理非
 
 **`LocaleBuilder` 类**
 
-The [`Locale.Builder`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.Builder.html) utility class can be used to construct a `Locale` object that conforms to the IETF BCP 47 syntax. For example, to specify the French language and the country of Canada, you could invoke the `Locale.Builder` constructor and then chain the setter methods as follows:
+[`Locale.Builder`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.Builder.html) 实用程序类可用于构造符合IETF BCP 47语法的`Locale`对象。例如，要指定法语和加拿大的国家/地区，可以调用`Locale.Builder`构造函数，然后按如下方式链接`setter`方法：
 
-```
+```java
 Locale aLocale = new Locale.Builder().setLanguage("fr").setRegion("CA").build();
-
 ```
 
-The next example creates `Locale` objects for the English language in the United States and Great Britain:
+下一个示例为美国和英国的英语创建`Locale`对象：
 
-```
+```java
 Locale bLocale = new Locale.Builder().setLanguage("en").setRegion("US").build();
 Locale cLocale = new Locale.Builder().setLanguage("en").setRegion("GB").build();
-
 ```
 
-The final example creates a `Locale` object for the Russian language:
+最后一个示例为俄语创建一个`Locale`对象：
 
-```
+```java
 Locale dLocale = new Locale.Builder().setLanguage("ru").setScript("Cyrl").build();
-
 ```
 
 **`Locale` 构造器**
 
-There are three constructors available in the `Locale` class for creating a `Locale` object:
+`Locale`类中有三个可用于创建`Locale`对象的构造函数：
 
 - [`Locale(String language)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-)
 - [`Locale(String language, String country)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-java.lang.String-)
 - [`Locale(String language, String country, String variant)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#Locale-java.lang.String-java.lang.String-java.lang.String-)
 
-The following examples create `Locale` objects for the French language in Canada, the English language in the U.S. and Great Britain, and the Russian language.
+以下示例为加拿大的法语，美国和英国的英语以及俄语创建 `Locale` 对象。
 
-```
+```java
 aLocale = new Locale("fr", "CA");
 bLocale = new Locale("en", "US");
 cLocale = new Locale("en", "GB");
 dLocale = new Locale("ru");
-
 ```
 
-It is not possible to set a script code on a `Locale` object in a release earlier than JDK 7.
+在JDK 7之前的版本中，无法在`Locale`对象上设置脚本代码。
 
 **`forLanguageTag` 工厂方法**
 
-If you have a language tag string that conforms to the IETF BCP 47 standard, you can use the [`forLanguageTag(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#forLanguageTag-java.lang.String-) factory method, which was introduced in the Java SE 7 release. For example:
+如果您的语言标记字符串符合IETF BCP 47标准，则可以使用Java SE 7发行版中引入的[`forLanguageTag(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#forLanguageTag-java.lang.String-) 工厂方法。例如：
 
-```
+```java
 Locale aLocale = Locale.forLanguageTag("en-US");
 Locale bLocale = Locale.forLanguageTag("ja-JP-u-ca-japanese");
-
 ```
 
 **`Locale` 常量**
 
-For your convenience the `Locale` class provides [constants](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#field_summary) for some languages and countries. For example:
+为方便起见，`Locale`类为某些语言和国家/地区提供常量。例如：
 
-```
+```java
 cLocale = Locale.JAPAN;
 dLocale = Locale.CANADA_FRENCH;
-
 ```
 
-When you specify a language constant, the region portion of the `Locale` is undefined. The next three statements create equivalent `Locale` objects:
+指定语言常量时，区域设置的区域部分未定义。接下来的三个语句创建等效的`Locale`对象：
 
-```
+```java
 j1Locale = Locale.JAPANESE;
 j2Locale = new Locale.Builder().setLanguage("ja").build();
 j3Locale = new Locale("ja");
-
 ```
 
-The `Locale` objects created by the following three statements are also equivalent:
+由以下三个语句创建的`Locale`对象也是等效的：
 
-```
+```java
 j4Locale = Locale.JAPAN;
 j5Locale = new Locale.Builder().setLanguage("ja").setRegion("JP").build();
 j6Locale = new Locale("ja", "JP");
-
 ```
 
 **编码**
 
-The following sections discuss the language code and the optional script, region, and variant codes.
+以下部分讨论语言代码和可选脚本，区域和变体代码。
 
 **语言编码**
 
-The language code is either two or three lowercase letters that conform to the ISO 639 standard. You can find a full list of the ISO 639 codes at <http://www.loc.gov/standards/iso639-2/php/code_list.php>.
+语言代码是符合ISO 639标准的两个或三个小写字母。您可以在 http://www.loc.gov/standards/iso639-2/php/code_list.php 找到ISO 639代码的完整列表。
 
-The following table lists a few of the language codes.
+下表列出了一些语言代码。
 
 | Language Code | Description |
 | ------------- | ----------- |
@@ -4665,9 +4657,9 @@ The following table lists a few of the language codes.
 
 **脚本编码**
 
-The script code begins with an uppercase letter followed by three lowercase letters and conforms to the ISO 15924 standard. You can find a full list of the ISO 15924 codes at<http://unicode.org/iso15924/iso15924-codes.html>.
+脚本代码以大写字母开头，后跟三个小写字母，符合ISO 15924标准。您可以在 http://unicode.org/iso15924/iso15924-codes.html 找到ISO 15924代码的完整列表。
 
-The following table lists a few of the script codes.
+下表列出了一些脚本代码。
 
 | Script Code | Description |
 | ----------- | ----------- |
@@ -4676,17 +4668,17 @@ The following table lists a few of the script codes.
 | `Kana`      | Katakana    |
 | `Latn`      | Latin       |
 
-There are three methods for retrieving the script information for a `Locale`:
+检索`Locale`的脚本信息有三种方法：
 
-- [`getScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getScript--) – returns the 4-letter script code for a `Locale` object. If no script is defined for the locale, an empty string is returned.
-- [`getDisplayScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript--) – returns a name for the locale's script that is appropriate for display to the user. If possible, the name will be localized for the default locale. So, for example, if the script code is "Latn," the diplay script name returned would be the string "Latin" for an English language locale.
-- [`getDisplayScript(Locale)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript-java.util.Locale-) – returns the display name of the specified `Locale` localized, if possible, for the locale.
+- [`getScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getScript--) –  返回`Locale`对象的4个字母的脚本代码。如果没有为语言环境定义脚本，则返回空字符串。
+- [`getDisplayScript()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript--) – 返回适合显示给用户的语言环境脚本的名称。如果可能，将为默认语言环境本地化名称。因此，例如，如果脚本代码是“Latn”，则返回的脚本名称将是英语语言环境的字符串“Latin”。
+- [`getDisplayScript(Locale)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getDisplayScript-java.util.Locale-) – 如果可能，返回本地化的指定`Locale`的显示名称。
 
 **区域编码**
 
-The region (country) code consists of either two or three uppercase letters that conform to the ISO 3166 standard, or three numbers that conform to the UN M.49 standard. A copy of the codes can be found at <http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html>.
+区域（国家/地区）代码包含符合ISO 3166标准的两个或三个大写字母，或符合UN M.49标准的三个数字。可以在 http://www.chemie.fu-berlin.de/diverse/doc/ISO_3166.html 找到代码的副本。
 
-The following table contains several sample country and region codes.
+下表包含几个示例国家和地区代码。
 
 | A-2 Code | A-3 Code | Numeric Code | Description        |
 | -------- | -------- | ------------ | ------------------ |
@@ -4702,7 +4694,7 @@ The following table contains several sample country and region codes.
 
 **变体编码**
 
-The optional `variant` code can be used to further distinguish your `Locale`. For example, the variant code can be used to indicate dialectical differences that are not covered by the region code.
+可选的`variant`代码可用于进一步区分您的`Locale`。例如，变体代码可用于指示区域代码未涵盖的辩证差异。
 
 ------
 
@@ -4710,11 +4702,15 @@ The optional `variant` code can be used to further distinguish your `Locale`. Fo
 
 To define non-language-specific variations relevant to your environment, use the extensions mechanism, as explained in [BCP 47 Extensions](https://docs.oracle.com/javase/tutorial/i18n/locale/extensions.html).
 
+**版本说明：** 在Java SE 7发行版之前，变体代码有时用于识别不是特定于语言或区域的差异。例如，它可能已被用于识别计算平台之间的差异，例如Windows或UNIX。根据IETF BCP 47标准，不鼓励使用此标准。
+
+要定义与您的环境相关的非语言特定变体，请使用扩展机制，如 [BCP 47 Extensions](https://docs.oracle.com/javase/tutorial/i18n/locale/extensions.html) 中所述。
+
 ------
 
-As of the Java SE 7 release, which conforms to the IETF BCP 47 standard, the variant code is used specifically to indicate additional variations that define a language or its dialects. The IETF BCP 47 standard imposes syntactic restrictions on the variant subtag. You can see a list of variant codes (search for *variant*) at<http://www.iana.org/assignments/language-subtag-registry>.
+从符合IETF BCP 47标准的Java SE 7版本开始，变体代码专门用于指示定义语言或其方言的其他变体。IETF BCP 47标准对变体子标签强加了语法限制。您可以查看变体代码列表（搜索变体）<http://www.iana.org/assignments/language-subtag-registry> 。
 
-For example, Java SE uses the variant code to support the Thai language. By convention, a `NumberFormat` object for the `th` and `th_TH` locales will use common Arabic digit shapes, or Arabic numerals, to format Thai numbers. However, a `NumberFormat` for the `th_TH_TH` locale uses Thai digit shapes. The excerpt from [`ThaiDigits.java`](https://docs.oracle.com/javase/tutorial/i18n/locale/examples/ThaiDigits.java)demonstrates this:
+例如，Java SE使用变体代码来支持泰语。按照惯例，`th`和`th_TH`语言环境的`NumberFormat`对象将使用常见的阿拉伯数字形状或阿拉伯数字来格式化泰语数字。但是，`th_TH_TH`语言环境的`NumberFormat`使用泰语数字形状。来自 [`ThaiDigits.java`](https://docs.oracle.com/javase/tutorial/i18n/locale/examples/ThaiDigits.java) 的摘录表明：
 
 ```java
 String outputString = new String();
@@ -4731,7 +4727,84 @@ for (Locale locale : thaiLocale) {
 }
 ```
 
-The following is a screenshot of this sample:
+以下是此示例的屏幕截图：
 
 ![Screenshot of Sample ThaiDigits.java](https://docs.oracle.com/javase/tutorial/figures/i18n/locale/thaidigits.jpg)
+
+### BCP 47 扩展
+
+Java SE 7版本符合IETF BCP 47标准，该标准支持向`Locale`添加扩展。任何单个字符都可用于表示扩展名，但有两个预定义的扩展代码：`'u'`指定Unicode语言环境扩展名，`'x'`指定专用扩展名。
+
+Unicode语言环境扩展由Unicode公共区域设置数据存储库 [Common Locale Data Repository (CLDR)](http://cldr.unicode.org/) 项目定义。它们用于指定非语言特定的信息，例如日历或货币。私有扩展可用于指定任何其他信息，例如平台（例如，Windows，UNIX或Linux）或发布信息（例如，6u23或JDK 7）。
+
+扩展名被指定为键/值对，其中键是单个字符（通常为 `'u'` 或 `'x'`）。格式良好的值具有以下格式：
+
+```
+SUBTAG ('-' SUBTAG)*
+```
+
+此格式中：
+
+```
+SUBTAG = [0-9a-zA-Z]{2,8}    For key='u'
+SUBTAG = [0-9a-zA-Z]{1,8}    For key='x'
+```
+
+请注意，私有扩展允许使用单字符值。但是，Unicode语言环境扩展中的值最小为2个字符。
+
+扩展字符串不区分大小写，但`Locale`类将所有键和值映射为小写。
+
+[`getExtensionKeys()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getExtensionKeys--) 方法返回`Locale`的扩展键集（如果有）。[`getExtension(key)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getExtension-char-) 方法返回指定键的值字符串（如果有）。
+
+**Unicode Locale 扩展**
+
+如前所述，Unicode语言环境扩展由 `'u'` 键代码或`UNICODE_LOCALE_EXTENSION`常量指定。值本身也由键/类型对指定。合法值在 [Unicode](http://www.unicode.org/) 网站的 [Key/Type Definitions](http://www.unicode.org/reports/tr35/#Key_Type_Definitions) 表中定义。键代码由两个字母字符指定。下表列出了Unicode语言环境扩展键：
+
+| Key Code | Description          |
+| -------- | -------------------- |
+| ca       | calendar algorithm   |
+| co       | collation type       |
+| ka       | collation parameters |
+| cu       | currency type        |
+| nu       | number type          |
+| va       | common variant type  |
+
+------
+
+注意：指定Unicode语言环境扩展（例如数字格式）并不保证底层平台的语言环境服务将遵循该请求。
+
+------
+
+下表显示了Unicode语言环境扩展的键/类型对的一些示例。
+
+| Key/Type pair | Description                 |
+| ------------- | --------------------------- |
+| ca-buddhist   | Thai Buddhist calendar      |
+| co-pinyin     | Pinyin ordering for Latin   |
+| cu-usd        | U.S. dollars                |
+| nu-jpanfin    | Japanese financial numerals |
+| tz-aldav      | Europe/Andorra              |
+
+以下字符串表示使用Linux平台的电话簿订购样式的德国所在国家/地区的德语语言环境。此示例还包含名为`"email"`的属性。
+
+```
+de-DE-u-email-co-phonebk-x-linux
+```
+
+以下`Locale`方法可用于访问有关Unicode语言环境扩展的信息。使用以前的德语语言环境示例描述了这些方法。
+
+- [`getUnicodeLocaleKeys()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getUnicodeLocaleKeys--) – 如果语言环境没有，则返回Unicode语言环境键代码或空集。对于德语示例，这将返回包含单个字符串`"co"`的集合。
+- [`getUnicodeLocaleType(String)`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getUnicodeLocaleType-java.lang.String-) – 返回与Unicode语言环境键代码关联的Unicode语言环境类型。为德语示例调用 `getUnicodeLocaleType("co")` 将返回字符串`"phonebk"`。
+- [`getUnicodeLocaleAttributes()`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html#getUnicodeLocaleAttributes--) – 返回与此语言环境关联的Unicode语言环境属性集（如果有）。在德语示例中，这将返回包含单个字符串 `"email"`的集合。
+
+**私有用途扩展**
+
+由`'x'`键代码或`PRIVATE_USE_EXTENSION`常量指定的私有使用扩展名可以是任何内容，只要该值格式良好即可。
+
+以下是可能的私有使用扩展的示例：
+
+```
+x-jdk-1-7
+x-linux
+```
 
