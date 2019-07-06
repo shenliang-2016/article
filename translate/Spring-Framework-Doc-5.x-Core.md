@@ -2351,7 +2351,7 @@ org.springframework.scripting.groovy.GroovyMessenger@272961
 
 > 与`BeanPostProcessors`一样，您通常不希望为延迟初始化配置`BeanFactoryPostProcessors`。如果没有其他bean引用 `Bean(Factory)PostProcessor`，则该后处理器根本不会被实例化。因此，将忽略将其标记为延迟初始化，即使在`<beans/>`元素的声明中将`default-lazy-init`属性设置为`true`，也会急切地实例化`Bean(Factory)PostProcessor` 。
 
-*示例：类名替换`PropertyPlaceholderConfigurer`**
+**示例：类名替换`PropertyPlaceholderConfigurer`**
 您可以使用`PropertyPlaceholderConfigurer`通过使用标准Java Properties格式从单独文件中的bean定义外部化属性值。这样做可以使部署应用程序的人员自定义特定于环境的属性，例如数据库URL和密码，而不会出现修改主XML定义文件或容器文件的复杂性或风险。
 
 请考虑以下基于XML的配置元数据片段，其中定义了具有占位符值的`DataSource`：
@@ -2415,4 +2415,39 @@ jdbc.password=root
 > ````
 >
 > 如果在运行时无法将类解析为有效的类，则在即将创建bean时，bean的解析将失败，这是在`ApplicationContext`为非延迟初始化 bean的`preInstantiateSingletons()`阶段期间。
+
+**示例：`PropertyOverrideConfigurer`**
+
+另一个bean工厂后处理器`PropertyOverrideConfigurer`类似于`PropertyPlaceholderConfigurer`，但与后者不同，原始定义可以具有默认值，或者根本没有值用于bean属性。如果覆盖的`Properties`文件没有某个bean属性的条目，则使用默认的上下文定义。
+
+请注意，bean定义并不知道属性被覆盖，因此从XML定义文件中无法立即看出正在使用覆盖配置器。如果多个`PropertyOverrideConfigurer`实例为同一个bean属性定义不同的值，则由于覆盖机制，最后一个实例将生效。
+
+属性文件配置行采用以下格式：
+
+```
+beanName.property=value
+```
+
+以下清单显示了格式的示例：
+
+```
+dataSource.driverClassName=com.mysql.jdbc.Driver
+dataSource.url=jdbc:mysql:mydb
+```
+
+此示例文件可以与包含名为`dataSource`的bean的容器定义一起使用，该bean具有`driver`和`url`属性。
+
+同时也支持复合属性名称，只要路径的每个组件（重写的最终属性除外）都已经非空（可能由构造函数初始化）。在下面的例子中，`tom` bean的`fred`属性的`bob`属性的`sammy`属性被设置为标量值`123`：
+
+```
+tom.fred.bob.sammy=123
+```
+
+> 指定的覆盖值始终是字面值。它们不会被翻译成bean引用。当XML bean定义中的原始值指定bean引用时，此约定也适用。
+
+使用Spring 2.5中引入的`context`命名空间，可以使用专用配置元素配置属性覆盖，如以下示例所示：
+
+```
+<context:property-override location="classpath:override.properties"/>
+```
 
