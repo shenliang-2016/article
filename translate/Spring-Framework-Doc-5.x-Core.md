@@ -2341,5 +2341,78 @@ org.springframework.scripting.groovy.GroovyMessenger@272961
 
 你可以配置多个`BeanFactoryPostProcessor`实例，并且还可以通过设定`order`属性来控制这些`BeanFactoryPostProcessor`实例的运行顺序。不过，只有`BeanFactoryPostProcessor`实现了`Ordered`接口时你才能这么做。如果你编写自己的`BeanFactoryPostProcessor`，你也应该考虑实现`Ordered`接口。参考文档 [`BeanFactoryPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/config/BeanFactoryPostProcessor.html) 和 [`Ordered`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/core/Ordered.html) 获取更多信息。
 
-> 如果你想要改变实际的 bean 实例（根据配置元数据创建而来的对象），你就需要借助 `BeanPostProcessor`（前文 [Customizing Beans by Using a `BeanPostProcessor`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp) 中描述过 ）。尽管在 `BeanFactoryPostProcessor` 中操作 bean 实例在技术上是可能的（比如，通过使用 `BeanFactory.getBean()`），这么做会导致过早的 bean 实例化，因而违反了标准的容器生命周期管理规则。这可能会导致负面影响，比如可能会跳过 bean 后处理过程。同时，`BeanFactoryPostProcessor` 实例的作用域是容器范围。仅当您使用容器层次结构时，这才有意义。如果在一个容器中定义`BeanFactoryPostProcessor`，它只应用于该容器中的bean定义。一个容器中的Bean定义不会被另一个容器中的`BeanFactoryPostProcessor`实例进行后处理，即使两个容器都是同一层次结构的一部分。
+> 如果你想要改变实际的 bean 实例（根据配置元数据创建而来的对象），你就需要借助 `BeanPostProcessor`（前文 [Customizing Beans by Using a `BeanPostProcessor`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp) 中描述过 ）。尽管在 `BeanFactoryPostProcessor` 中操作 bean 实例在技术上是可能的（比如，通过使用 `BeanFactory.getBean()`），这么做会导致过早的 bean 实例化，因而违反了标准的容器生命周期管理规则。这可能会导致负面影响，比如可能会跳过 bean 后处理过程。
+>
+> 同时，`BeanFactoryPostProcessor` 实例的作用域是容器范围。仅当您使用容器层次结构时，这才有意义。如果在一个容器中定义`BeanFactoryPostProcessor`，它只应用于该容器中的bean定义。一个容器中的Bean定义不会被另一个容器中的`BeanFactoryPostProcessor`实例进行后处理，即使两个容器都是同一层次结构的一部分。
+
+当它在 `ApplicationContext` 内部被声明时，bean 工厂后处理器自动执行，以便将修改应用到定义容器的配置元数据。Spring 包含大量的预定义 bean 工厂后处理器，比如 `PropertyOverrideConfigurer` and `PropertyPlaceholderConfigurer` 。你也可以使用自定义的 `BeanFactoryPostProcessor` - 比如，注册自定义属性编辑器。
+
+`ApplicationContext`自动检测部署到其中的任何实现`BeanFactoryPostProcessor`接口的bean。它在适当的时候使用这些bean作为bean工厂后处理器。您可以像处理任何其他bean一样部署这些后处理器bean。
+
+> 与`BeanPostProcessors`一样，您通常不希望为延迟初始化配置`BeanFactoryPostProcessors`。如果没有其他bean引用 `Bean(Factory)PostProcessor`，则该后处理器根本不会被实例化。因此，将忽略将其标记为延迟初始化，即使在`<beans/>`元素的声明中将`default-lazy-init`属性设置为`true`，也会急切地实例化`Bean(Factory)PostProcessor` 。
+
+*示例：类名替换`PropertyPlaceholderConfigurer`**
+您可以使用`PropertyPlaceholderConfigurer`通过使用标准Java Properties格式从单独文件中的bean定义外部化属性值。这样做可以使部署应用程序的人员自定义特定于环境的属性，例如数据库URL和密码，而不会出现修改主XML定义文件或容器文件的复杂性或风险。
+
+请考虑以下基于XML的配置元数据片段，其中定义了具有占位符值的`DataSource`：
+
+````xml
+<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="locations" value="classpath:com/something/jdbc.properties"/>
+</bean>
+
+<bean id="dataSource" destroy-method="close"
+        class="org.apache.commons.dbcp.BasicDataSource">
+    <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    <property name="url" value="${jdbc.url}"/>
+    <property name="username" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+</bean>
+````
+
+该示例显示了从外部 `Properties` 文件配置的属性。在运行时，`PropertyPlaceholderConfigurer`应用于替换`DataSource`的某些属性的元数据。要替换的值被指定为 `${property-name}`形式的占位符，它遵循 Ant 和 log4j 以及 JSP EL 样式。
+
+实际值来自标准Java `Properties` 格式的另一个文件：
+
+````xml
+jdbc.driverClassName=org.hsqldb.jdbcDriver
+jdbc.url=jdbc:hsqldb:hsql://production:9002
+jdbc.username=sa
+jdbc.password=root
+````
+
+因此， `${jdbc.username}` 字符串在运行时将替换为值'sa'，并且同样适用于与属性文件中的键匹配的其他占位符值。`PropertyPlaceholderConfigurer`检查bean定义的大多数属性和属性中的占位符。此外，您可以自定义占位符前缀和后缀。
+
+使用Spring 2.5中引入的 `context` 命名空间，您可以使用专用配置元素配置属性占位符。您可以在 `location` 属性中以逗号分隔列表的形式提供一个或多个位置，如以下示例所示：
+
+````xml
+<context:property-placeholder location="classpath:com/something/jdbc.properties"/>
+````
+
+`PropertyPlaceholderConfigurer`不仅在您指定的 `Properties` 文件中查找属性。默认情况下，如果它在指定的属性文件中找不到属性，它还会检查Java `System`属性。您可以通过使用以下三个受支持的整数值之一设置configurer的`systemPropertiesMode`属性来自定义此行为：
+
+* `never (0)`：从不检查系统属性。
+
+* `fallback (1)`：如果在指定的属性文件中无法解析，则检查系统属性。这是默认值。
+
+* `override (2)`：在尝试指定的属性文件之前，首先检查系统属性。这使系统属性可以覆盖任何其他属性源。
+
+有关更多信息，请参见 [`PropertyPlaceholderConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/config/PropertyPlaceholderConfigurer.html) 文档。
+
+> 您可以使用`PropertyPlaceholderConfigurer`来替换类名，当您必须在运行时选择特定的实现类时，这有时很有用。以下示例显示了如何执行此操作：
+>
+> ````xml
+> <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+>     <property name="locations">
+>         <value>classpath:com/something/strategy.properties</value>
+>     </property>
+>     <property name="properties">
+>         <value>custom.strategy.class=com.something.DefaultStrategy</value>
+>     </property>
+> </bean>
+> 
+> <bean id="serviceStrategy" class="${custom.strategy.class}"/>
+> ````
+>
+> 如果在运行时无法将类解析为有效的类，则在即将创建bean时，bean的解析将失败，这是在`ApplicationContext`为非延迟初始化 bean的`preInstantiateSingletons()`阶段期间。
 
