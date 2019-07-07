@@ -2451,3 +2451,190 @@ tom.fred.bob.sammy=123
 <context:property-override location="classpath:override.properties"/>
 ```
 
+#### 1.8.3 使用`FactoryBean`自定义实例化逻辑
+
+您可以为本身为工厂的对象实现`org.springframework.beans.factory.FactoryBean`接口。
+
+`FactoryBean`接口是Spring IoC容器实例化逻辑的可插拔点。如果您有更复杂的初始化代码，这些代码在Java中表达得更好，而不是（可能）冗长的XML，您可以创建自己的`FactoryBean`，在该类中编写复杂的初始化，然后将自定义的`FactoryBean`插入容器。
+
+`FactoryBean` 接口体用了三个方法：
+
+- `Object getObject()`: 返回此工厂创建的对象的实例。可以共享实例，具体取决于此工厂是返回单例还是原型。
+- `boolean isSingleton()`: 如果`FactoryBean`返回单例，则返回`true`，否则返回`false`。
+- `Class getObjectType()`: 如果事先不知道类型，则返回`getObject()`方法返回的对象类型或`null`。
+
+`FactoryBean`概念和接口在Spring Framework中的许多地方使用。`FactoryBean`接口的50多个实现随Spring一起提供。
+
+当你需要向容器请求一个实际的`FactoryBean`实例本身而不是它生成的bean时，在调用`ApplicationContext`的`getBean()`方法时，用`＆`符号作为bean的`id`的前缀。因此，对于具有`id`为`myBean`的给定`FactoryBean`，在容器上调用`getBean("myBean")`返回`FactoryBean`的产品，而调用`getBean("&myBean")`返回 `FactoryBean`实例本身。
+
+### 1.9 基于注解的容器配置
+
+> 配置 Spring ，注解还是 XML 更好？
+>
+> 基于注解的配置的引入引发了这种方法是否比XML“更好”的问题。简短的回答是“看情况。”完整的答案是每种方法都有其优点和缺点，通常，由开发人员决定哪种策略更适合他们。由于它们的定义方式，注解在其声明中提供了大量上下文，从而导致更短更简洁的配置。但是，XML擅长在不触及源代码或重新编译它们的情况下连接组件。一些开发人员更喜欢将布线靠近源，而另一些开发人员则认为注解类不再是POJO，而且配置变得分散且难以控制。
+>
+> 无论选择如何，Spring都可以兼顾两种风格，甚至可以将它们混合在一起。值得指出的是，通过其 [JavaConfig](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java) 选项，Spring允许以非侵入方式使用注解，而无需触及目标组件源代码，并且在工具方面， [Spring Tool Suite](https://spring.io/tools/sts) 支持所有配置样式。
+
+基于注解的配置提供了XML设置的替代方案，该配置依赖于字节码元数据来连接组件而不是角括号声明。开发人员不是使用XML来描述bean连接，而是通过在相关的类，方法或字段声明上使用注解将配置移动到组件类本身。如示例中所述： [Example: The `RequiredAnnotationBeanPostProcessor`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp-examples-rabpp)，将`BeanPostProcessor`与注解结合使用是扩展Spring IoC容器的常用方法。例如，Spring 2.0引入了使用 [`@Required`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-required-annotation) 注解强制执行所需属性的可能性。Spring 2.5使得有可能采用相同的通用方法来驱动Spring的依赖注入。从本质上讲，`@Autowired`注释提供的功能与 [自动装配协作者](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-autowire) 中描述的相同，但具有更细粒度的控制和更广泛的适用性。Spring 2.5还增加了对JSR-250注解的支持，例如`@PostConstruct`和`@PreDestroy`。Spring 3.0增加了对`javax.inject`包中包含的JSR-330（Java的依赖注入）注解的支持，例如`@Inject`和`@Named`。有关这些注解的详细信息，请参阅 [相关章节](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-standard-annotations) 。
+
+> 注解注入在XML注入之前执行。因此，XML配置会覆盖通过这两种方法连接的属性的注解。
+
+与往常一样，您可以将它们注册为单独的bean定义，但也可以通过在基于XML的Spring配置中包含以下标记来隐式注册它们（请注意包含上下文命名空间）：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+</beans>
+````
+
+
+
+（ 隐式注册的后处理器包括 [`AutowiredAnnotationBeanPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/AutowiredAnnotationBeanPostProcessor.html),[`CommonAnnotationBeanPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/CommonAnnotationBeanPostProcessor.html), [`PersistenceAnnotationBeanPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/orm/jpa/support/PersistenceAnnotationBeanPostProcessor.html), 以及前面提到的 [`RequiredAnnotationBeanPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/RequiredAnnotationBeanPostProcessor.html) ）
+
+> `<context:annotation-config/>` 仅仅查找它被定义于其中的应用上下文中的beans上的注解。这就意味着，如果你将 `<context:annotation-config/>` 放进`DispatcherServlet`的 `WebApplicationContext` 中，它将仅仅检查你的控制器中的的 `@Autowired` beans，而不管你的服务类。参考 [The DispatcherServlet](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc-servlet) 获取更多信息。
+
+#### 1.9.1 `@Required`
+
+`@Required` 注解应用于bean属性设定器方法，如下面例子所示：
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Required
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+
+    // ...
+}
+```
+
+此注解指示必须在配置时通过bean定义中的显式属性值或通过自动装配填充受影响的bean属性。如果尚未填充受影响的bean属性，则容器将引发异常。这允许急切和显式的失败，避免以后出现`NullPointerException`实例等。我们仍然建议您将断言放入bean类本身（例如，放进`init`方法）。即使您在容器外部使用类，这样做也会强制保证那些必需的引用和值。
+
+> `@Required`注解从Spring Framework 5.1开始正式弃用，转而支持使用构造函数注入所需的设置（或者自定义实现`InitializingBean.afterPropertiesSet()`以及bean属性setter方法）。
+
+#### 1.9.2 使用 `@Autowired`
+
+> 在本节所包含的示例中，可以使用JSR 330的`@Inject`注解代替Spring的`@Autowired`注解。有关详细信息，请参见 [此处](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-standard-annotations) 。
+
+你可以将`@Autowired` 注解用在构造器上面，如下面例子所示：
+
+```java
+public class MovieRecommender {
+
+    private final CustomerPreferenceDao customerPreferenceDao;
+
+    @Autowired
+    public MovieRecommender(CustomerPreferenceDao customerPreferenceDao) {
+        this.customerPreferenceDao = customerPreferenceDao;
+    }
+
+    // ...
+}
+```
+
+> 从Spring Framework 4.3开始，如果目标bean只在开头定义了一个构造函数，则不再需要在这样的构造函数上使用`@Autowired`注解。但是，如果有几个构造器可用，则必须注解至少一个构造器以告知容器使用哪一个。
+
+你也可以将 `@Autowired` 注解应用于“传统的”设定器方法，如下面例子所示：
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Autowired
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+
+    // ...
+}
+```
+
+您还可以将注释应用于具有任意名称和多个参数的方法，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    private MovieCatalog movieCatalog;
+
+    private CustomerPreferenceDao customerPreferenceDao;
+
+    @Autowired
+    public void prepare(MovieCatalog movieCatalog,
+            CustomerPreferenceDao customerPreferenceDao) {
+        this.movieCatalog = movieCatalog;
+        this.customerPreferenceDao = customerPreferenceDao;
+    }
+
+    // ...
+}
+```
+
+您也可以将`@Autowired`应用于字段，甚至可以将其与构造函数混合使用，如下例所示：
+
+```java
+public class MovieRecommender {
+
+    private final CustomerPreferenceDao customerPreferenceDao;
+
+    @Autowired
+    private MovieCatalog movieCatalog;
+
+    @Autowired
+    public MovieRecommender(CustomerPreferenceDao customerPreferenceDao) {
+        this.customerPreferenceDao = customerPreferenceDao;
+    }
+
+    // ...
+}
+```
+
+> 确保您的目标组件（例如，`MovieCatalog`或`CustomerPreferenceDao`）始终按照用于`@Autowired`注解标识的注入点的类型声明。否则，由于在运行时未找到类型匹配，注入可能会失败。
+>
+> 对于通过类路径扫描找到的XML定义的bean或组件类，容器通常预先知道具体类型。但是，对于`@Bean`工厂方法，您需要确保声明的返回类型具有足够的表现力。对于实现多个接口的组件或可能由其实现类型引用的组件，请考虑在工厂方法上声明最具体的返回类型（至少与引用bean的注入点所需的特定类型一致）。
+
+您还可以通过将注解添加到需要该类型数组的字段或方法，从`ApplicationContext`提供特定类型的所有bean，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    @Autowired
+    private MovieCatalog[] movieCatalogs;
+
+    // ...
+}
+```
+
+这同样适用于类型化集合，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    private Set<MovieCatalog> movieCatalogs;
+
+    @Autowired
+    public void setMovieCatalogs(Set<MovieCatalog> movieCatalogs) {
+        this.movieCatalogs = movieCatalogs;
+    }
+
+    // ...
+}
+```
+
+> Your target beans can implement the `org.springframework.core.Ordered` interface or use the `@Order` or standard `@Priority` annotation if you want items in the array or list to be sorted in a specific order. Otherwise, their order follows the registration order of the corresponding target bean definitions in the container.
+>
+> You can declare the `@Order` annotation at the target class level and on `@Bean` methods, potentially by individual bean definition (in case of multiple definitions that use the same bean class). `@Order` values may influence priorities at injection points, but be aware that they do not influence singleton startup order, which is an orthogonal concern determined by dependency relationships and `@DependsOn` declarations.
+>
+> Note that the standard `javax.annotation.Priority` annotation is not available at the `@Bean` level, since it cannot be declared on methods. Its semantics can be modeled through `@Order` values in combination with `@Primary` on a single bean for each type.
