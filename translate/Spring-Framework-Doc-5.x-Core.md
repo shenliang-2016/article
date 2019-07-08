@@ -3192,3 +3192,107 @@ public class CachingMovieLister {
 
 > 与`@Resource`一样，`@PostConstruct`和`@PreDestroy`注解类型是JDK 6到8的标准Java库的一部分。但是，整个`javax.annotation`包与JDK 9中的核心Java模块分离，最终在JDK 11中删除。如果需要，现在需要通过Maven Central获取`javax.annotation-api`组件，只需像任何其他库一样添加到应用程序的类路径中。
 
+### 1.10 类路径扫描和受管理的组件
+
+本章中的大多数示例都使用XML来指定在Spring容器中生成每个`BeanDefinition`的配置元数据。上一节（ [基于注解的容器配置](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-annotation-config) ）演示了如何通过源码层面的注解提供大量配置元数据。但是，即使在这些示例中，“基本”bean定义也在XML文件中显式定义，而注解仅驱动依赖项注入。本节介绍通过扫描类路径隐式检测候选组件的选项。候选组件是与筛选条件匹配的类，并且具有向容器注册的相应bean定义。这消除了使用XML执行bean注册的需要。相反，您可以使用注解（例如，`@Component`），AspectJ类型表达式或您自己的自定义筛选条件来选择哪些类具有向容器注册的bean定义。
+
+> 从Spring 3.0开始，Spring JavaConfig项目提供的许多功能都是核心Spring Framework的一部分。这允许您使用Java类而不是使用传统的XML文件来定义bean。有关如何使用这些新功能的示例，请查看`@Configuration`，`@Both`，`@Import`和`@DependsOn`注解。
+
+#### 1.10.1 `@Component` 和其它构造型注解
+
+`@Repository` 注解是任何满足存储仓库（也被称为数据访问对象，DAO）的角色或者构造的所有类的标记。这个标记的一种使用场景就是自动异常转换，在 [Exception Translation](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#orm-exception-translation) 中描述。
+
+Spring提供了进一步的构造型注解：`@Component`，`@Service`和`@Controller`。`@Component`是任何Spring管理组件的通用构造型注解。`@Repository`，`@Service`和`@Controller`是`@Component`的特殊化，用于更具体的情况（分别用在持久性，服务和表示层中）。因此，您可以使用`@Component`注解组件类，但是，通过使用`@Repository`，`@Service`或`@Controller`注解它们，您的类将更适合通过工具处理或与切面关联。例如，这些构造型注解成为切入点的理想目标。`@Repository`，`@Service`和`@Controller`还可以在Spring Framework的未来版本中携带其他语义。因此，如果您选择在服务层使用`@Component`或`@Service`，`@Service`显然是更好的选择。同样，如前所述，已经支持`@Repository`作为持久层中自动异常转换的标记。
+
+#### 1.10.2 使用元注解和组合注解
+
+Spring提供的许多注解都可以在您自己的代码中用作元注解。元注解是可以应用于另一个注解的注解。例如，前面提到的`@Service`注解是使用`@Component`进行元注解的，如下例所示：
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Component //The Component causes @Service to be treated in the same way as @Component.
+public @interface Service {
+
+    // ....
+}
+```
+
+您还可以组合元注解来创建“组合注解”。例如，Spring MVC的`@RestController`注解由`@Controller`和`@ResponseBody`组成。
+
+此外，组合注解可以选择从元注解重新声明属性以允许自定义。当您只想公开元注解属性的子集时，这可能特别有用。例如，Spring的`@SessionScope`注解将作用域名称硬编码为 `session` ，但仍允许自定义`proxyMode`。以下清单显示了`SessionScope`注解的定义：
+
+```java
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Scope(WebApplicationContext.SCOPE_SESSION)
+public @interface SessionScope {
+
+    /**
+     * Alias for {@link Scope#proxyMode}.
+     * <p>Defaults to {@link ScopedProxyMode#TARGET_CLASS}.
+     */
+    @AliasFor(annotation = Scope.class)
+    ScopedProxyMode proxyMode() default ScopedProxyMode.TARGET_CLASS;
+
+}
+```
+
+然后，您可以使用`@SessionScope`而不声明`proxyMode`，如下所示：
+
+```java
+@Service
+@SessionScope
+public class SessionScopedService {
+    // ...
+}
+```
+
+您还可以覆盖`proxyMode`的值，如以下示例所示：
+
+```java
+@Service
+@SessionScope(proxyMode = ScopedProxyMode.INTERFACES)
+public class SessionScopedUserService implements UserService {
+    // ...
+}
+```
+
+有关更多详细信息，请参阅 [Spring Annotation Programming Model](https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model) wiki页面。
+
+#### 1.10.3 自动探测类并注册 Bean 定义
+
+Spring可以自动检测构造型类，并使用`ApplicationContext`注册相应的`BeanDefinition`实例。例如，以下两个类符合此类自动检测的条件：
+
+```java
+@Service
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Autowired
+    public SimpleMovieLister(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+}
+```
+
+```java
+@Repository
+public class JpaMovieFinder implements MovieFinder {
+    // implementation elided for clarity
+}
+```
+
+要自动检测这些类并注册相应的bean，需要将`@ComponentScan`添加到`@Configurationclass`，其中`basePackages`属性值是两个类的公共父包。（或者，您可以指定包含每个类的父包的逗号或分号或空格分隔列表。）
+
+```java
+@Configuration
+@ComponentScan(basePackages = "org.example")
+public class AppConfig  {
+    ...
+}
+```
+
