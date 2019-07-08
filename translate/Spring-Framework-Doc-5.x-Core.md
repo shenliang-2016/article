@@ -2410,7 +2410,7 @@ jdbc.password=root
 >         <value>custom.strategy.class=com.something.DefaultStrategy</value>
 >     </property>
 > </bean>
-> 
+>
 > <bean id="serviceStrategy" class="${custom.strategy.class}"/>
 > ````
 >
@@ -2633,8 +2633,562 @@ public class MovieRecommender {
 }
 ```
 
-> Your target beans can implement the `org.springframework.core.Ordered` interface or use the `@Order` or standard `@Priority` annotation if you want items in the array or list to be sorted in a specific order. Otherwise, their order follows the registration order of the corresponding target bean definitions in the container.
+> 你的目标 beans 可以实现 `org.springframework.core.Ordered` 接口，或者使用 `@Order` 或者标准的 `@Priority` 注解，如果你希望数组或者列表中的元素按照特定顺序排序。否则，它们的顺序遵循容器中相应目标 bean 定义的注册顺序。
 >
-> You can declare the `@Order` annotation at the target class level and on `@Bean` methods, potentially by individual bean definition (in case of multiple definitions that use the same bean class). `@Order` values may influence priorities at injection points, but be aware that they do not influence singleton startup order, which is an orthogonal concern determined by dependency relationships and `@DependsOn` declarations.
+> 您可以在目标类级别和`@Bean`方法上声明`@Order`注释，可能是通过单个bean定义（在多个定义使用相同bean类的情况下）。`@Order`值可能影响注入点的优先级，但要注意它们不会影响单例启动顺序，这是由依赖关系和`@DependsOn`声明确定的正交关注点。
 >
-> Note that the standard `javax.annotation.Priority` annotation is not available at the `@Bean` level, since it cannot be declared on methods. Its semantics can be modeled through `@Order` values in combination with `@Primary` on a single bean for each type.
+> 请注意，标准的`javax.annotation.Priority`注释在`@Bean`级别不可用，因为它无法在方法上声明。它的语义可以通过`@Order`值与`@Primary`在每个类型的单个bean上进行建模。
+
+只要预期的键类型是`String`，即使是类型化的`Map`实例也可以自动装配。`Map`值包含所有期望类型的bean，并且键包含相应的bean名称，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    private Map<String, MovieCatalog> movieCatalogs;
+
+    @Autowired
+    public void setMovieCatalogs(Map<String, MovieCatalog> movieCatalogs) {
+        this.movieCatalogs = movieCatalogs;
+    }
+
+    // ...
+}
+```
+
+默认情况下，当给定注入点没有匹配的候选bean时，自动装配失败。对于声明的数组，集合或映射，至少需要一个匹配元素。
+
+默认行为是将带注解的方法和字段视为指示所需的依赖项。您可以更改此行为，如以下示例所示，通过将其标记为非必需，使框架能够来跳过不可满足的注入点：
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Autowired(required = false)
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+
+    // ...
+}
+```
+
+如果它的依赖项（或多个参数情况下的依赖项之一）不可用，则根本不会调用该非必需的方法。在这种情况下，根本不会填充非必填字段，保留其默认值。
+
+注入构造函数和工厂方法参数是一种特殊情况，因为·@Autowired·上的'required'标志具有一些不同的含义，因为Spring的构造函数解析算法可能涉及多个构造函数。默认情况下确实需要构造函数和工厂方法参数，但在单构造函数场景中有一些特殊规则，例如，如果没有匹配的bean可用，则多元素注入点（数组，集合，映射）解析为空实例。这允许一种通用的实现模式，其中所有依赖关系都可以在唯一的多参数构造函数中声明，例如， 声明为没有`@Autowired`注解的单个公共构造函数。
+
+> 每个类中只有一个注解修饰的构造器可以被标记为必需的，但是多个非必需的构造器都可以被注解修饰。这种情况下，每个构造器都作为候选，Spring 会使用其中依赖被满足的最贪婪的那个 - 也就是说，那个参数最多的构造器。构造器解析算法与包含重载构造器的非注解类相同，只是将候选构造器范围限制为被注解修饰的构造器。
+>
+> 在 setter 方法上推荐使用`@Autowired`注解的`required`属性而不是`@Required`注解。`required`属性表示该属性对自动绑定是非必需的。如果不能被自动绑定，则该属性就会被忽略。而`@Required`则强制该属性必须在容器支持的意义上被设置。如果值没有定义，就会产生相应的异常。
+
+或者，您可以通过Java 8的`java.util.Optional`表达特定依赖项的非必需特性，如以下示例所示：
+
+```java
+public class SimpleMovieLister {
+
+    @Autowired
+    public void setMovieFinder(Optional<MovieFinder> movieFinder) {
+        ...
+    }
+}
+```
+
+从Spring Framework 5.0开始，您还可以使用`@Nullable`注解（任何包中的任何类型 - 例如，来自JSR-305的`javax.annotation.Nullable`）：
+
+```java
+public class SimpleMovieLister {
+
+    @Autowired
+    public void setMovieFinder(@Nullable MovieFinder movieFinder) {
+        ...
+    }
+}
+```
+
+您还可以将`@Autowired`用于众所周知的可解析依赖项的接口：`BeanFactory`，`ApplicationContext`，`Environment`，`ResourceLoader`，`ApplicationEventPublisher`和`MessageSource`。这些接口及其扩展接口（如`ConfigurableApplicationContext`或`ResourcePatternResolver`）将自动解析，无需特殊设置。以下示例自动装配`ApplicationContext`对象：
+
+```java
+public class MovieRecommender {
+
+    @Autowired
+    private ApplicationContext context;
+
+    public MovieRecommender() {
+    }
+
+    // ...
+}
+```
+
+> `@Autowired`，`@Inject`，`@Value`和`@Resource`注解由Spring `BeanPostProcessor`实现处理。这意味着您无法在自己的`BeanPostProcessor`或`BeanFactoryPostProcessor`类型（如果有）中应用这些注解。必须使用XML或Spring `@Bean`方法显式地“连接”这些类型。
+
+#### 1.9.3 使用`@Primary`微调基于注释的自动装配
+
+由于按类型自动装配可能会导致多个候选者，因此通常需要对选择过程进行更多控制。实现这一目标的一种方法是使用Spring的`@Primary`注解。`@Primary`指示当多个bean可以自动装配到单值依赖项时，应该优先选择特定的bean。如果候选者中只存在一个主bean，则它将成为自动装配的值。
+
+请考虑以下配置，将`firstMovieCatalog`定义为主要`MovieCatalog`：
+
+```java
+@Configuration
+public class MovieConfiguration {
+
+    @Bean
+    @Primary
+    public MovieCatalog firstMovieCatalog() { ... }
+
+    @Bean
+    public MovieCatalog secondMovieCatalog() { ... }
+
+    // ...
+}
+```
+
+使用上述配置，以下`MovieRecommender`将与`firstMovieCatalog`一起自动装配：
+
+```java
+public class MovieRecommender {
+
+    @Autowired
+    private MovieCatalog movieCatalog;
+
+    // ...
+}
+```
+
+相应的bean定义如下：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="example.SimpleMovieCatalog" primary="true">
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean id="movieRecommender" class="example.MovieRecommender"/>
+
+</beans>
+```
+
+#### 1.9.4 使用限定符微调基于注解的自动装配
+
+@Primary是一种有效的方法，可以在按类型使用自动装配的情况下确定一个主要候选者。当您需要更多控制选择过程时，可以使用Spring的`@Qualifier`注解。您可以将限定符值与特定参数相关联，缩小类型匹配集，以便为每个参数选择特定的bean。在最简单的情况下，这可以是一个简单的描述性值，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    @Autowired
+    @Qualifier("main")
+    private MovieCatalog movieCatalog;
+
+    // ...
+}
+```
+
+您还可以在各个构造函数参数或方法参数上指定`@Qualifier`注释，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    private MovieCatalog movieCatalog;
+
+    private CustomerPreferenceDao customerPreferenceDao;
+
+    @Autowired
+    public void prepare(@Qualifier("main") MovieCatalog movieCatalog,
+            CustomerPreferenceDao customerPreferenceDao) {
+        this.movieCatalog = movieCatalog;
+        this.customerPreferenceDao = customerPreferenceDao;
+    }
+
+    // ...
+}
+```
+
+下面的例子展示了相应的 bean 定义：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier value="main"/> <!-- The bean with the main qualifier value is wired with the constructor argument that is qualified with the same value. -->
+
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier value="action"/> <!-- The bean with the action qualifier value is wired with the constructor argument that is qualified with the same value. -->
+
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean id="movieRecommender" class="example.MovieRecommender"/>
+
+</beans>
+```
+
+对于回退匹配，bean名称被视为默认限定符值。因此，您可以使用id而不是嵌套限定符元素定义bean，从而得到相同的匹配结果。但是，虽然您可以使用此约定来按名称引用特定bean，但`@Autowired`基本上是关于具有可选语义限定符的类型驱动注入。这意味着即使使用bean名称回退，限定符值在类型匹配集中也总是具有缩窄范围的语义。它们在语义上不表示对唯一bean `id`的引用。良好的限定符值是`main`或`EMEA`或`persistent`，表示独立于bean `id`的特定组件的特征，可以在匿名bean定义（例如前面示例中的定义）的情况下自动生成。
+
+限定符也适用于类型化集合，如前所述 - 例如， `Set<MovieCatalog>`。在这种情况下，根据声明的限定符，所有匹配的bean都作为集合注入。这意味着限定符不必是唯一的。相反，它们构成了过滤标准。例如，您可以使用相同的限定符值“action”定义多个`MovieCatalog` bean，所有这些bean都注入到使用`@Qualifier("action")`注解修饰的 `Set<MovieCatalog>` 中。
+
+> 在类型匹配候选项中，根据目标bean名称选择限定符值，在注入点不需要`@Qualifier`注解。 如果没有其他解析指示符（例如限定符或主要标记），则对于非唯一依赖性情况，Spring会将注入点名称（即字段名称或参数名称）与目标bean名称进行匹配，然后选择同名的候选人，如果有的话。
+>
+> 也就是说，如果您打算用名称表达注解驱动的注入，请不要主要使用`@Autowired`，即使它能够在类型匹配候选项中通过bean名称进行选择。相反，使用JSR-250 `@Resource`注解，它在语义上定义为通过其唯一名称标识特定目标组件，声明的类型与匹配过程无关。`@Autowired`具有相当不同的语义：在按类型选择候选bean之后，仅在那些类型选择的候选项中考虑指定的 `String` 限定符值（例如，将 `account` 限定符与标记有相同限定符标签的bean匹配）。
+>
+> 对于自身定义为集合，`Map`或数组类型的bean，`@ Resource`是一个很好的解决方案，通过唯一名称引用特定的集合或数组bean。也就是说，从4.3版本开始，只要元素类型信息保存在`@Bean`返回类型签名或集合继承层次结构中，您就可以通过Spring的`@Autowired`类型匹配算法匹配`Map`和数组类型。在这种情况下，您可以使用限定符值在相同类型的集合中进行选择，如上一段所述。
+>
+> 从4.3开始，`@Autowired`还会考虑自引用注入（即，引用回头指向到当前注入的bean）。请注意，自我注入是一种后备。对其他组件的常规依赖性始终具有优先权。从这个意义上说，自我引用并不参与常规的候选人选择，因此特殊情况永远不会是主要的。相反，它们总是最低优先级。在实践中，您应该仅使用自引用作为最后的手段（例如，通过bean的事务代理调用同一实例上的其他方法）。考虑在这种情况下将受影响的方法分解为单独的委托bean。或者，您可以使用`@Resource`，它可以通过其唯一名称获取当前bean的代理。
+>
+> `@Autowired`适用于字段，构造函数和多参数方法，允许在参数级别缩小限定符注解选择范围。相比之下，`@Resource`仅支持字段和具有单个参数的bean属性setter方法。因此，如果注射目标是构造函数或多参数方法，则应该使用限定符。
+
+你可以创建自定义限定器注解。想要这样做，定义一个注解并在其中提供`@Qualifier`注解，如下面例子所示：
+
+````java
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface Genre {
+
+    String value();
+}
+````
+
+然后你可以在自动装配的字段和参数上使用这个限定器，如下面例子所示：
+
+````java
+public class MovieRecommender {
+  
+  @Autowired
+  @Genre("Action")
+  private MovieCatalog actionCatalog;
+  
+  private MovieCatalog comedyCatalog;
+  
+  @Autowired
+  public void setComedyCatalog(@Genre("Comedy") MovieCatalog comedyCatalog) {
+    this.comedyCatalog = comedyCatalog;
+  }
+  
+  //...
+}
+````
+
+接下来，你可以提供有关候选者 bean 定义的信息。你可以添加`<qualifier/>`标签作为`<bean/>`标签的子元素来指定`type`和`value`来匹配你自定义的限定器注解。该类型匹配到注解的全限定类型名。另外，如果不存在名称冲突的风险，你也可以使用简单类名。下面的例子展示了这两种方式：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier type="Genre" value="Action"/>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier type="example.Genre" value="Comedy"/>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean id="movieRecommender" class="example.MovieRecommender"/>
+
+</beans>
+````
+
+
+
+在 [Classpath Scanning and Managed Components](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-classpath-scanning) 中，你可以看到通过基于注解额配置提供上面XML中的限定器元数据的方法。具体来说，请参考 [Providing Qualifier Metadata with Annotations](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-scanning-qualifiers) 。
+
+某些情况下，使用不指定值的注解就足够了。这在注解支持更通用的场景且注解可以用于多种不同类型的依赖时很有用。比如，你可以提供一个离线目录可以在网络连接不可用情况下使用。首先，定义一个简答的注解如下：
+
+````java
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface Offline {
+
+}
+````
+
+然后将此注解添加到自动装配的字段或者属性上，如下例子所示：
+
+````java
+public class MovieRecommender {
+  
+  @Autowired
+  @Offline
+  private MovieCatalog offlineCatalog;
+  
+  //...
+}
+````
+
+现在，该 bean 定义只需要一个限定器`type`，如下面例子所示：
+
+````xml
+<bean class="example.SimpleMovieCatalog">
+    <qualifier type="Offline"/> 
+    <!-- inject any dependencies required by this bean -->
+</bean>
+````
+
+你也可以自定义接受命名属性的自定义限定器注解，而不仅仅接受`value`属性。如果多个属性值被指定到一个自动装配的字段或者参数上，bean定义必须匹配所有这些属性值才能为认为是自动装配的候选者。作为示例，考虑下面的注解定义：
+
+```java
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface MovieQualifier {
+
+    String genre();
+
+    Format format();
+}
+```
+
+`Format` 是一个枚举，定义如下：
+
+```java
+public enum Format {
+    VHS, DVD, BLURAY
+}
+```
+
+要自动装配的字段使用自定义限定符进行注解，并包含两个属性的值：`genre`和`format`，如以下示例所示：
+
+```java
+public class MovieRecommender {
+
+    @Autowired
+    @MovieQualifier(format=Format.VHS, genre="Action")
+    private MovieCatalog actionVhsCatalog;
+
+    @Autowired
+    @MovieQualifier(format=Format.VHS, genre="Comedy")
+    private MovieCatalog comedyVhsCatalog;
+
+    @Autowired
+    @MovieQualifier(format=Format.DVD, genre="Action")
+    private MovieCatalog actionDvdCatalog;
+
+    @Autowired
+    @MovieQualifier(format=Format.BLURAY, genre="Comedy")
+    private MovieCatalog comedyBluRayCatalog;
+
+    // ...
+}
+```
+
+最后，bean定义应包含匹配的限定符值。此示例还演示了您可以使用bean元属性而不是`<qualifier/>`元素。如果可用，`<qualifier/>`元素及其属性优先，但是如果不存在这样的限定符，则自动装配机制将回退到`<meta/>`标签内提供的值，如以下示例中的最后两个bean定义：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier type="MovieQualifier">
+            <attribute key="format" value="VHS"/>
+            <attribute key="genre" value="Action"/>
+        </qualifier>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <qualifier type="MovieQualifier">
+            <attribute key="format" value="VHS"/>
+            <attribute key="genre" value="Comedy"/>
+        </qualifier>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <meta key="format" value="DVD"/>
+        <meta key="genre" value="Action"/>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+    <bean class="example.SimpleMovieCatalog">
+        <meta key="format" value="BLURAY"/>
+        <meta key="genre" value="Comedy"/>
+        <!-- inject any dependencies required by this bean -->
+    </bean>
+
+</beans>
+```
+
+#### 1.9.5 使用泛型作为自动装配限定符
+
+除了`@Qualifier`注解之外，您还可以使用Java泛型类型作为隐式的限定形式。例如，假设您具有以下配置：
+
+```java
+@Configuration
+public class MyConfiguration {
+
+    @Bean
+    public StringStore stringStore() {
+        return new StringStore();
+    }
+
+    @Bean
+    public IntegerStore integerStore() {
+        return new IntegerStore();
+    }
+}
+```
+
+假设上面的bean实现了一个通用接口（即`Store<String>`和`Store<Integer>`），您可以`@Autowired`该`Store`接口，并将泛型用作限定符，如下例所示：
+
+```java
+@Autowired
+private Store<String> s1; // <String> qualifier, injects the stringStore bean
+
+@Autowired
+private Store<Integer> s2; // <Integer> qualifier, injects the integerStore bean
+```
+
+通用限定符也适用于自动装配列表，`Map`实例和数组。以下示例自动装配泛型`List`：
+
+```java
+// Inject all Store beans as long as they have an <Integer> generic
+// Store<String> beans will not appear in this list
+@Autowired
+private List<Store<Integer>> s;
+```
+
+#### 1.9.6 使用 `CustomAutowireConfigurer`
+
+[`CustomAutowireConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/beans/factory/annotation/CustomAutowireConfigurer.html) 是一个 `BeanFactoryPostProcessor` ，允许你注册你自己定义的限定器注解类型，即使它们没有用 Spring 的 `@Qualifier` 注解修饰。下面的例子展示了如何使用 `CustomAutowireConfigurer`：
+
+```xml
+<bean id="customAutowireConfigurer"
+        class="org.springframework.beans.factory.annotation.CustomAutowireConfigurer">
+    <property name="customQualifierTypes">
+        <set>
+            <value>example.CustomQualifier</value>
+        </set>
+    </property>
+</bean>
+```
+
+`AutowireCandidateResolver` 确定自动装配候选者，通过：
+
+- 每个 bean 定义的 `autowire-candidate` 值
+- `<beans/>` 元素上所有可用的 `default-autowire-candidates` 模式
+- 存在`@Qualifier`注解以及使用`CustomAutowireConfigurer`注册的任何自定义注解
+
+当多个bean有资格作为autowire候选者时，“primary”的确定如下：如果候选者中只有一个bean定义的`primary`属性设置为`true`，则选择它。
+
+#### 1.9.7 使用 `@Resource` 注入
+
+Spring还通过对字段或bean属性setter方法使用JSR-250 `@Resource`注解（`javax.annotation.Resource`）来支持注入。这是Java EE中的常见模式：例如，在JSF管理的bean和JAX-WS端点中。Spring也支持Spring管理对象的这种模式。
+
+`@Resource`采用name属性。默认情况下，Spring将该值解释为要注入的bean名称。换句话说，它遵循按名称语义，如以下示例所示：
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Resource(name="myMovieFinder") 
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+}
+```
+
+如果未明确指定名称，则默认名称是从字段名称或setter方法派生的。如果是字段，则采用字段名称。在setter方法的情况下，它采用bean属性名称。下面的例子将把名为`movieFinder`的bean注入其setter方法：
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Resource
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+}
+```
+
+> 随注解提供的名称由`ApplicationContext`解析为bean名称，`CommonAnnotationBeanPostProcessor`知道该名称。如果您显式配置Spring的 [`SimpleJndiBeanFactory`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/jndi/support/SimpleJndiBeanFactory.html) ，则可以通过JNDI解析名称。但是，我们建议您依赖于默认行为并使用Spring的JNDI查找功能来保留间接级别。
+
+在没有指定显式名称的`@Resource`用法的独有情况下，类似于`@Autowired`，`@Resource`找到主要类型匹配而不是特定的命名bean，并解析众所周知的可解析依赖项：`BeanFactory`，`ApplicationContext`，`ResourceLoader`，`ApplicationEventPublisher`和 `MessageSource`接口。
+
+因此，在以下示例中，`customerPreferenceDao`字段首先查找名为“customerPreferenceDao”的bean，然后返回到`CustomerPreferenceDao`类型的主类型匹配：
+
+```java
+public class MovieRecommender {
+
+    @Resource
+    private CustomerPreferenceDao customerPreferenceDao;
+
+    @Resource
+    private ApplicationContext context; //	The context field is injected based on the known resolvable dependency type: ApplicationContext.
+
+
+    public MovieRecommender() {
+    }
+
+    // ...
+}
+```
+
+#### 1.9.8 使用 `@PostConstruct` 和 `@PreDestroy`
+
+`CommonAnnotationBeanPostProcessor`不仅识别`@Resource`注解，还识别JSR-250生命周期注解：`javax.annotation.PostConstruct`和`javax.annotation.PreDestroy`。在Spring 2.5中引入，对这些注解的支持提供了 [initialization callbacks](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-initializingbean) 和 [destruction callbacks](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-disposablebean) 中描述的生命周期回调机制的替代方法。如果`CommonAnnotationBeanPostProcessor`在Spring `ApplicationContext`中注册，则在生命周期的同一点调用承载这些注释之一的方法，将作为相应的Spring生命周期接口方法或显式声明的回调方法。在以下示例中，缓存在初始化时预填充并在销毁时清除：
+
+```java
+public class CachingMovieLister {
+
+    @PostConstruct
+    public void populateMovieCache() {
+        // populates the movie cache upon initialization...
+    }
+
+    @PreDestroy
+    public void clearMovieCache() {
+        // clears the movie cache upon destruction...
+    }
+}
+```
+
+有关组合各种生命周期机制的效果的详细信息，请参阅 [Combining Lifecycle Mechanisms](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-lifecycle-combined-effects) 。
+
+> 与`@Resource`一样，`@PostConstruct`和`@PreDestroy`注解类型是JDK 6到8的标准Java库的一部分。但是，整个`javax.annotation`包与JDK 9中的核心Java模块分离，最终在JDK 11中删除。如果需要，现在需要通过Maven Central获取`javax.annotation-api`组件，只需像任何其他库一样添加到应用程序的类路径中。
+
