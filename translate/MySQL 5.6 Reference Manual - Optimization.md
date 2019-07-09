@@ -47,13 +47,78 @@
 
 **硬件层面的优化**
 
-Any database application eventually hits hardware limits as the database becomes more and more busy. A DBA must evaluate whether it is possible to tune the application or reconfigure the server to avoid these [bottlenecks](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_bottleneck), or whether more hardware resources are required. System bottlenecks typically arise from these sources:
+所有数据库应用随着数据库越来越繁忙最终都会抵达硬件极限。DBA 必须分析是否可以通过调整应用或者数据库服务器的配置来避免遇到的这些 [瓶颈](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_bottleneck) ，否则就需要更多的硬件资源。系统瓶颈通常来自以下来源：
 
-- Disk seeks. It takes time for the disk to find a piece of data. With modern disks, the mean time for this is usually lower than 10ms, so we can in theory do about 100 seeks a second. This time improves slowly with new disks and is very hard to optimize for a single table. The way to optimize seek time is to distribute the data onto more than one disk.
-- Disk reading and writing. When the disk is at the correct position, we need to read or write the data. With modern disks, one disk delivers at least 10–20MB/s throughput. This is easier to optimize than seeks because you can read in parallel from multiple disks.
-- CPU cycles. When the data is in main memory, we must process it to get our result. Having large tables compared to the amount of memory is the most common limiting factor. But with small tables, speed is usually not the problem.
-- Memory bandwidth. When the CPU needs more data than can fit in the CPU cache, main memory bandwidth becomes a bottleneck. This is an uncommon bottleneck for most systems, but one to be aware of.
+- 磁盘查找。在磁盘上寻找特定数据片段需要消耗一定的时间。对现代磁盘而言，平均查找时间通常低于 10 ms，也即是说理论上每秒可以执行大约 100 次查找。这个时间随着磁盘技术的更新而缓慢提升，并且非常难以针对单个的表进行优化。优化查找时间的方法是将数据分布到多个磁盘上。
+- 磁盘读取和写入。当磁盘位于正确的位置，我们需要读取或者写入数据。对于现代磁盘，一个磁盘驱动器至少可以支持 10~20MB/s 的数据吞吐量。相对与寻找时间，可以简单地通过从多个磁盘并发读取来优化读取时间。
+- CPU 周期。当数据已经在主内存中，我们必须处理它来得到我们需要的结果。对大表来说，内存空间是最重要的限制因素，但是对于小表来说，速度通常不是问题。
+- 内存带宽。当 CPU 需要更多数据，而这些数据又不在 CPU 缓存中，主存的带宽就会成为瓶颈。这对大多数系统来说都不会出现，但是需要有这个意识。
 
-### Balancing Portability and Performance
+**平衡可移植性和性能**
 
-To use performance-oriented SQL extensions in a portable MySQL program, you can wrap MySQL-specific keywords in a statement within `/*! */` comment delimiters. Other SQL servers ignore the commented keywords. For information about writing comments, see [Section 9.6, “Comment Syntax”](https://dev.mysql.com/doc/refman/5.6/en/comments.html).
+要在可移植的MySQL程序中使用面向性能的SQL扩展，您可以用 `/*! */`注释分隔符包围语句中包含的特定于MySQL的关键字。其他SQL服务器忽略注释的关键字。有关编写注释的信息，请参见 [第9.6节“注释语法”](https://dev.mysql.com/doc/refman/5.6/en/comments.html) 。
+
+## 8.2 SQL 语句优化
+
+- [8.2.1 优化 SELECT 语句](https://dev.mysql.com/doc/refman/5.6/en/select-optimization.html)
+- [8.2.2 优化子查询和驱动表](https://dev.mysql.com/doc/refman/5.6/en/subquery-optimization.html)
+- [8.2.3 优化 INFORMATION_SCHEMA 查询](https://dev.mysql.com/doc/refman/5.6/en/information-schema-optimization.html)
+- [8.2.4 优化数据修改语句](https://dev.mysql.com/doc/refman/5.6/en/data-change-optimization.html)
+- [8.2.5 优化数据库权限](https://dev.mysql.com/doc/refman/5.6/en/permission-optimization.html)
+- [8.2.6 其它优化建议](https://dev.mysql.com/doc/refman/5.6/en/miscellaneous-optimization-tips.html)
+
+数据库应用程序的核心逻辑是通过SQL语句执行的，无论是直接通过解释器发出还是通过API在后台提交。本节中的调整准则有助于加速各种MySQL应用程序。这些准则涵盖了读取和写入数据的SQL操作，一般SQL操作的幕后开销，以及特定方案（如数据库监视）中使用的操作。
+
+### 8.2.1 SELECT 语句优化
+
+- [8.2.1.1 WHERE 子句优化](https://dev.mysql.com/doc/refman/5.6/en/where-optimization.html)
+- [8.2.1.2 Range 优化](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html)
+- [8.2.1.3 索引合并优化](https://dev.mysql.com/doc/refman/5.6/en/index-merge-optimization.html)
+- [8.2.1.4 引擎条件下推优化](https://dev.mysql.com/doc/refman/5.6/en/condition-pushdown-optimization.html)
+- [8.2.1.5 索引条件下推优化](https://dev.mysql.com/doc/refman/5.6/en/index-condition-pushdown-optimization.html)
+- [8.2.1.6 嵌套循环连接算法](https://dev.mysql.com/doc/refman/5.6/en/nested-loop-joins.html)
+- [8.2.1.7 嵌套连接优化](https://dev.mysql.com/doc/refman/5.6/en/nested-join-optimization.html)
+- [8.2.1.8 外连接优化](https://dev.mysql.com/doc/refman/5.6/en/outer-join-optimization.html)
+- [8.2.1.9 外连接简化](https://dev.mysql.com/doc/refman/5.6/en/outer-join-simplification.html)
+- [8.2.1.10 Multi-Range 读优化](https://dev.mysql.com/doc/refman/5.6/en/mrr-optimization.html)
+- [8.2.1.11 块嵌套循环和批量键访问连接](https://dev.mysql.com/doc/refman/5.6/en/bnl-bka-optimization.html)
+- [8.2.1.12 IS NULL 优化](https://dev.mysql.com/doc/refman/5.6/en/is-null-optimization.html)
+- [8.2.1.13 ORDER BY 优化](https://dev.mysql.com/doc/refman/5.6/en/order-by-optimization.html)
+- [8.2.1.14 GROUP BY 优化](https://dev.mysql.com/doc/refman/5.6/en/group-by-optimization.html)
+- [8.2.1.15 DISTINCT 优化](https://dev.mysql.com/doc/refman/5.6/en/distinct-optimization.html)
+- [8.2.1.16 LIMIT 查询优化](https://dev.mysql.com/doc/refman/5.6/en/limit-optimization.html)
+- [8.2.1.17 函数调用优化](https://dev.mysql.com/doc/refman/5.6/en/function-optimization.html)
+- [8.2.1.18 行构造器表达式优化](https://dev.mysql.com/doc/refman/5.6/en/row-constructor-optimization.html)
+- [8.2.1.19 避免全表扫描](https://dev.mysql.com/doc/refman/5.6/en/table-scan-avoidance.html)
+
+Queries, in the form of [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, perform all the lookup operations in the database. Tuning these statements is a top priority, whether to achieve sub-second response times for dynamic web pages, or to chop hours off the time to generate huge overnight reports.
+
+Besides [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, the tuning techniques for queries also apply to constructs such as [`CREATE TABLE...AS SELECT`](https://dev.mysql.com/doc/refman/5.6/en/create-table-select.html), [`INSERT INTO...SELECT`](https://dev.mysql.com/doc/refman/5.6/en/insert-select.html), and `WHERE` clauses in[`DELETE`](https://dev.mysql.com/doc/refman/5.6/en/delete.html) statements. Those statements have additional performance considerations because they combine write operations with the read-oriented query operations.
+
+NDB Cluster supports a join pushdown optimization whereby a qualifying join is sent in its entirety to NDB Cluster data nodes, where it can be distributed among them and executed in parallel. For more information about this optimization, see [Conditions for NDB pushdown joins](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster-options-variables.html#ndb_join_pushdown-conditions),
+
+The main considerations for optimizing queries are:
+
+- To make a slow `SELECT ... WHERE` query faster, the first thing to check is whether you can add an [index](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_index). Set up indexes on columns used in the `WHERE` clause, to speed up evaluation, filtering, and the final retrieval of results. To avoid wasted disk space, construct a small set of indexes that speed up many related queries used in your application.
+
+  Indexes are especially important for queries that reference different tables, using features such as [joins](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_join) and [foreign keys](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_foreign_key). You can use the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) statement to determine which indexes are used for a [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html). See [Section 8.3.1, “How MySQL Uses Indexes”](https://dev.mysql.com/doc/refman/5.6/en/mysql-indexes.html) and [Section 8.8.1, “Optimizing Queries with EXPLAIN”](https://dev.mysql.com/doc/refman/5.6/en/using-explain.html).
+
+- Isolate and tune any part of the query, such as a function call, that takes excessive time. Depending on how the query is structured, a function could be called once for every row in the result set, or even once for every row in the table, greatly magnifying any inefficiency.
+
+- Minimize the number of [full table scans](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_full_table_scan) in your queries, particularly for big tables.
+
+- Keep table statistics up to date by using the [`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html) statement periodically, so the optimizer has the information needed to construct an efficient execution plan.
+
+- Learn the tuning techniques, indexing techniques, and configuration parameters that are specific to the storage engine for each table. Both `InnoDB` and `MyISAM` have sets of guidelines for enabling and sustaining high performance in queries. For details, see [Section 8.5.6, “Optimizing InnoDB Queries”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-innodb-queries.html) and [Section 8.6.1, “Optimizing MyISAM Queries”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-queries-myisam.html).
+
+- You can optimize single-query transactions for `InnoDB` tables, using the technique in [Section 8.5.3, “Optimizing InnoDB Read-Only Transactions”](https://dev.mysql.com/doc/refman/5.6/en/innodb-performance-ro-txn.html).
+
+- Avoid transforming the query in ways that make it hard to understand, especially if the optimizer does some of the same transformations automatically.
+
+- If a performance issue is not easily solved by one of the basic guidelines, investigate the internal details of the specific query by reading the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) plan and adjusting your indexes, `WHERE` clauses, join clauses, and so on. (When you reach a certain level of expertise, reading the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) plan might be your first step for every query.)
+
+- Adjust the size and properties of the memory areas that MySQL uses for caching. With efficient use of the `InnoDB` [buffer pool](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_buffer_pool), `MyISAM` key cache, and the MySQL query cache, repeated queries run faster because the results are retrieved from memory the second and subsequent times.
+
+- Even for a query that runs fast using the cache memory areas, you might still optimize further so that they require less cache memory, making your application more scalable. Scalability means that your application can handle more simultaneous users, larger requests, and so on without experiencing a big drop in performance.
+
+- Deal with locking issues, where the speed of your query might be affected by other sessions accessing the tables at the same time.
