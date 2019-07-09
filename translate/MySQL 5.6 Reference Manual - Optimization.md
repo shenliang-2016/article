@@ -93,32 +93,134 @@
 
 [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句形式的查询执行数据库中的所有查找操作。调整这些语句是首要任务，无论是为动态网页实现亚秒响应时间，还是为了产生巨大的隔夜报告而缩短工作时间。
 
-Besides [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, the tuning techniques for queries also apply to constructs such as [`CREATE TABLE...AS SELECT`](https://dev.mysql.com/doc/refman/5.6/en/create-table-select.html), [`INSERT INTO...SELECT`](https://dev.mysql.com/doc/refman/5.6/en/insert-select.html), and `WHERE` clauses in[`DELETE`](https://dev.mysql.com/doc/refman/5.6/en/delete.html) statements. Those statements have additional performance considerations because they combine write operations with the read-oriented query operations.
+除了 [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句，查询优化技术也适用于诸如 [`CREATE TABLE...AS SELECT`](https://dev.mysql.com/doc/refman/5.6/en/create-table-select.html), [`INSERT INTO...SELECT`](https://dev.mysql.com/doc/refman/5.6/en/insert-select.html) ，以及[`DELETE`](https://dev.mysql.com/doc/refman/5.6/en/delete.html) 语句中的 `WHERE` 子句。那些语句需要额外的性能考量因为它们将写入操作与面向读取的查询操作结合了起来。
 
-NDB Cluster supports a join pushdown optimization whereby a qualifying join is sent in its entirety to NDB Cluster data nodes, where it can be distributed among them and executed in parallel. For more information about this optimization, see [Conditions for NDB pushdown joins](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster-options-variables.html#ndb_join_pushdown-conditions),
+NDB Cluster支持连接下推优化，从而将合格连接完整地发送到NDB Cluster数据节点，在NDB Cluster数据节点中可以将连接操作分布在它们之间并且并行执行。有关此优化的更多信息，请参阅 [NDB下推连接的条件](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster-options-variables.html#ndb_join_pushdown-conditions) 。
 
-The main considerations for optimizing queries are:
+查询优化的主要考量有：
 
-- To make a slow `SELECT ... WHERE` query faster, the first thing to check is whether you can add an [index](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_index). Set up indexes on columns used in the `WHERE` clause, to speed up evaluation, filtering, and the final retrieval of results. To avoid wasted disk space, construct a small set of indexes that speed up many related queries used in your application.
+- 为了让一个执行缓慢的 `SELECT ... WHERE` 查询更快，首先应该检查你是否为其添加了 [索引](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_index) 。在`WHERE`子句使用的列上设置索引，来加速评估、过滤以及最终结果的查询。为了避免磁盘空间的浪费，构造一个小的索引集合来加速你的应用用到的尽可能多的相关查询。
 
-  Indexes are especially important for queries that reference different tables, using features such as [joins](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_join) and [foreign keys](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_foreign_key). You can use the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) statement to determine which indexes are used for a [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html). See [Section 8.3.1, “How MySQL Uses Indexes”](https://dev.mysql.com/doc/refman/5.6/en/mysql-indexes.html) and [Section 8.8.1, “Optimizing Queries with EXPLAIN”](https://dev.mysql.com/doc/refman/5.6/en/using-explain.html).
+  索引对那些引用不同的表的查询特别重要，这些查询使用了诸如 [joins](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_join) 和 [foreign keys](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_foreign_key) 等特性。你可以使用 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 语句来确定一个查询语句用到了哪些索引。参考 [Section 8.3.1, “How MySQL Uses Indexes”](https://dev.mysql.com/doc/refman/5.6/en/mysql-indexes.html) 和 [Section 8.8.1, “Optimizing Queries with EXPLAIN”](https://dev.mysql.com/doc/refman/5.6/en/using-explain.html) 。
 
-- Isolate and tune any part of the query, such as a function call, that takes excessive time. Depending on how the query is structured, a function could be called once for every row in the result set, or even once for every row in the table, greatly magnifying any inefficiency.
+- 隔离并微调查询的各个部分，比如函数调用，它可能耗费过多时间。按照查询的结构，一个函数可能为结果集中的每一行数据调用一次，或者甚至会为表中的每一行都调用一次，显著放大低效操作。
 
-- Minimize the number of [full table scans](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_full_table_scan) in your queries, particularly for big tables.
+- 最小化你的查询导致的 [全表扫描](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_full_table_scan) ，特别是对于大表。
 
-- Keep table statistics up to date by using the [`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html) statement periodically, so the optimizer has the information needed to construct an efficient execution plan.
+- 定期使用[`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html) 语句更新表统计，以便优化器具有构建有效的执行计划所需的信息。
 
-- Learn the tuning techniques, indexing techniques, and configuration parameters that are specific to the storage engine for each table. Both `InnoDB` and `MyISAM` have sets of guidelines for enabling and sustaining high performance in queries. For details, see [Section 8.5.6, “Optimizing InnoDB Queries”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-innodb-queries.html) and [Section 8.6.1, “Optimizing MyISAM Queries”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-queries-myisam.html).
+- 了解特定于每个表的存储引擎的调优技术，索引技术和配置参数。`InnoDB` 和 `MyISAM` 都有一套启用和维持查询高性能的指南。有关详细信息，请参见 [第8.5.6节“优化InnoDB查询”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-innodb-queries.html) 和 [第8.6.1节 “优化MyISAM查询”](https://dev.mysql.com/doc/refman/5.6/en/optimizing-queries-myisam.html) 。
 
-- You can optimize single-query transactions for `InnoDB` tables, using the technique in [Section 8.5.3, “Optimizing InnoDB Read-Only Transactions”](https://dev.mysql.com/doc/refman/5.6/en/innodb-performance-ro-txn.html).
+- 您可以使用 [第8.5.3节“优化InnoDB只读事务”](https://dev.mysql.com/doc/refman/5.6/en/innodb-performance-ro-txn.html) 中的技术优化`InnoDB`表的单查询事务。
 
-- Avoid transforming the query in ways that make it hard to understand, especially if the optimizer does some of the same transformations automatically.
+- 避免以难以理解的方式转换查询，尤其是在优化程序自动执行某些相同转换的情况下。
 
-- If a performance issue is not easily solved by one of the basic guidelines, investigate the internal details of the specific query by reading the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) plan and adjusting your indexes, `WHERE` clauses, join clauses, and so on. (When you reach a certain level of expertise, reading the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) plan might be your first step for every query.)
+- 如果其中一个基本准则无法轻松解决性能问题，请阅读 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 计划来调查特定查询的内部详细信息，进而调整索引，`WHERE`子句，join子句等。（当您达到一定的专业水平时，阅读 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 计划可能是您进行每个查询的第一步。）
 
-- Adjust the size and properties of the memory areas that MySQL uses for caching. With efficient use of the `InnoDB` [buffer pool](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_buffer_pool), `MyISAM` key cache, and the MySQL query cache, repeated queries run faster because the results are retrieved from memory the second and subsequent times.
+- 调整MySQL用于缓存的内存区域的大小和属性。有效地使用`InnoDB` [缓冲池](https://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_buffer_pool) ，`MyISAM`键缓存和MySQL查询缓存，重复查询运行得更快，因为第二次及以后的查询都会从内存中检索结果。
 
-- Even for a query that runs fast using the cache memory areas, you might still optimize further so that they require less cache memory, making your application more scalable. Scalability means that your application can handle more simultaneous users, larger requests, and so on without experiencing a big drop in performance.
+- 即使对于使用高速缓存存储区域快速运行的查询，您仍可以进一步优化，以便它们需要更少的高速缓存，从而使您的应用程序更具可伸缩性。可伸缩性意味着您的应用程序可以处理更多的并发用户，更大的请求等，而不会出现性能大幅下降的情况。
 
-- Deal with locking issues, where the speed of your query might be affected by other sessions accessing the tables at the same time.
+- 处理锁问题，其中查询的速度可能会受到同时访问表的其他会话的影响。
+
+#### 8.2.1.1 WHERE 子句优化
+
+本章节讨论可以用于`WHERE`子句的优化技术。这里使用 [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句为例说明，不过这种优化技术同样可以用于 [`DELETE`](https://dev.mysql.com/doc/refman/5.6/en/delete.html) 和 [`UPDATE`](https://dev.mysql.com/doc/refman/5.6/en/update.html) 语句中的`WHERE`子句。
+
+> **注意：** 由于 MySQL 优化器在不断进化中，本手册中并不会包含所有的优化技术。
+
+您可能想要重写查询以更快地进行算术运算，同时牺牲可读性。因为MySQL会自动执行类似的优化，所以通常应该避免这种工作，并使查询保持更易理解和可维护的形式。MySQL执行的一些优化如下：
+
+- 删除不必要的括号：
+
+  ```sql
+     ((a AND b) AND c OR (((a AND b) AND (c AND d))))
+  -> (a AND b AND c) OR (a AND b AND c AND d)
+  ```
+
+- 常量折叠：
+
+  ```sql
+     (a<b AND b=c) AND a=5
+  -> b>5 AND b=c AND a=5
+  ```
+
+- 恒定条件消除：
+
+  ```sql
+     (b>=5 AND b=5) OR (b=6 AND 5=5) OR (b=7 AND 5=6)
+  -> b=5 OR b=6
+  ```
+
+- 索引使用的常量表达式仅计算一次。
+
+- [`COUNT(*)`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count) on a single table without a `WHERE` is retrieved directly from the table information for `MyISAM` and `MEMORY` tables. This is also done for any `NOT NULL` expression when used with only one table.
+
+- Early detection of invalid constant expressions. MySQL quickly detects that some [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements are impossible and returns no rows.
+
+- `HAVING` is merged with `WHERE` if you do not use `GROUP BY` or aggregate functions ([`COUNT()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count), [`MIN()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_min), and so on).
+
+- For each table in a join, a simpler `WHERE` is constructed to get a fast `WHERE` evaluation for the table and also to skip rows as soon as possible.
+
+- All constant tables are read first before any other tables in the query. A constant table is any of the following:
+
+  - An empty table or a table with one row.
+  - A table that is used with a `WHERE` clause on a `PRIMARY KEY` or a `UNIQUE` index, where all index parts are compared to constant expressions and are defined as `NOT NULL`.
+
+  All of the following tables are used as constant tables:
+
+  ```sql
+  SELECT * FROM t WHERE primary_key=1;
+  SELECT * FROM t1,t2
+    WHERE t1.primary_key=1 AND t2.primary_key=t1.id;
+  ```
+
+- The best join combination for joining the tables is found by trying all possibilities. If all columns in `ORDER BY` and `GROUP BY`clauses come from the same table, that table is preferred first when joining.
+
+- If there is an `ORDER BY` clause and a different `GROUP BY` clause, or if the `ORDER BY` or `GROUP BY` contains columns from tables other than the first table in the join queue, a temporary table is created.
+
+- If you use the `SQL_SMALL_RESULT` modifier, MySQL uses an in-memory temporary table.
+
+- Each table index is queried, and the best index is used unless the optimizer believes that it is more efficient to use a table scan. At one time, a scan was used based on whether the best index spanned more than 30% of the table, but a fixed percentage no longer determines the choice between using an index or a scan. The optimizer now is more complex and bases its estimate on additional factors such as table size, number of rows, and I/O block size.
+
+- In some cases, MySQL can read rows from the index without even consulting the data file. If all columns used from the index are numeric, only the index tree is used to resolve the query.
+
+- Before each row is output, those that do not match the `HAVING` clause are skipped.
+
+Some examples of queries that are very fast:
+
+```sql
+SELECT COUNT(*) FROM tbl_name;
+
+SELECT MIN(key_part1),MAX(key_part1) FROM tbl_name;
+
+SELECT MAX(key_part2) FROM tbl_name
+  WHERE key_part1=constant;
+
+SELECT ... FROM tbl_name
+  ORDER BY key_part1,key_part2,... LIMIT 10;
+
+SELECT ... FROM tbl_name
+  ORDER BY key_part1 DESC, key_part2 DESC, ... LIMIT 10;
+```
+
+MySQL resolves the following queries using only the index tree, assuming that the indexed columns are numeric:
+
+```sql
+SELECT key_part1,key_part2 FROM tbl_name WHERE key_part1=val;
+
+SELECT COUNT(*) FROM tbl_name
+  WHERE key_part1=val1 AND key_part2=val2;
+
+SELECT key_part2 FROM tbl_name GROUP BY key_part1;
+```
+
+The following queries use indexing to retrieve the rows in sorted order without a separate sorting pass:
+
+```sql
+SELECT ... FROM tbl_name
+  ORDER BY key_part1,key_part2,... ;
+
+SELECT ... FROM tbl_name
+  ORDER BY key_part1 DESC, key_part2 DESC, ... ;
+```
