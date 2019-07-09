@@ -1,128 +1,143 @@
-#### 1.10.4 使用过滤器定制组件扫描
+#### 1.10.6 命名被自动探测的组件
 
-默认情况下，被注解`@Component`，`@Repository`，`@Service`，`@Controller` 或者你自定义的注解（本身被`@Component`修饰）修饰的类就是自动扫描探测的候选组件。不过，你可以修改和扩展这种行为，通过应用自定义过滤器。将它们添加为`@ComponentScan`注解的`include-filters`或者`excludeFilters`参数（或者作为`component-scan`元素的`include-filter`或者`exclude-filter`子元素）。每个过滤器元素都需要`type`和`expression`属性。下表描述了过滤器选项：
+当一个组件被自动探测为扫描过程的一部分时，它的 bean 名称由扫描器所知的`BeanNameGenerator`策略产生。默认地，包含一个名称`value`的任何 Spring 构造型注解（`@Component`, `@Repository`, `@Service`, 和 `@Controller`）则会将该名称提供给相应的 bean 定义。
 
-| Filter Type          | Example Expression           | Description                              |
-| -------------------- | ---------------------------- | ---------------------------------------- |
-| annotation (default) | `org.example.SomeAnnotation` | 要在目标组件中的类型级别出现的注解。                       |
-| assignable           | `org.example.SomeClass`      | 目标组件可分配给（扩展或实现）的类（或接口）。                  |
-| aspectj              | `org.example..*Service+`     | 要由目标组件匹配的AspectJ类型表达式。                   |
-| regex                | `org\.example\.Default.*`    | 要由目标组件类名匹配的正则表达式。                        |
-| custom               | `org.example.MyTypeFilter`   | `org.springframework.core.type.TypeFilter`接口的自定义实现。 |
+如果这样的注解不包含名称`value` ，或者是通过其它方式被探测到的组件，比如被自定义过滤器发现的那些组件，默认的 bean 名称产生器将返回首字母小写的非限定类名。比如，如果下面的组件类被探测到，则其 bean 名称将分别是 `myMovieLister` 和 `movieFinderImpl` ：
 
-以下示例显示忽略所有`@Repository`注释并使用“存根”存储库的配置：
+```java
+@Service("myMovieLister")
+public class SimpleMovieLister {
+    // ...
+}
+@Repository
+public class MovieFinderImpl implements MovieFinder {
+    // ...
+}
+```
+
+> 如果您不想依赖默认的bean命名策略，则可以提供自定义bean命名策略。首先，实现`BeanNameGenerator`接口，并确保包含默认的无参数构造函数。然后，在配置扫描程序时提供完全限定的类名，如以下示例注解和bean定义所示：
 
 ```java
 @Configuration
-@ComponentScan(basePackages = "org.example",
-        includeFilters = @Filter(type = FilterType.REGEX, pattern = ".*Stub.*Repository"),
-        excludeFilters = @Filter(Repository.class))
+@ComponentScan(basePackages = "org.example", nameGenerator = MyNameGenerator.class)
+public class AppConfig {
+    ...
+}
+<beans>
+    <context:component-scan base-package="org.example"
+        name-generator="org.example.MyNameGenerator" />
+</beans>
+```
+
+作为一般规则，考虑在其他组件可能对其进行显式引用时使用注解指定名称。另一方面，只要容器负责装配，自动生成的名称就足够了。
+
+#### 1.10.7 为被探测到的组件提供作用域
+
+与Spring管理的组件一样，自动检测组件的默认和最常见的作用域是单例。但是，有时您需要一个可由`@Scope`注解指定的不同作用域。您可以在注解中提供作用域的名称，如以下示例所示：
+
+```java
+@Scope("prototype")
+@Repository
+public class MovieFinderImpl implements MovieFinder {
+    // ...
+}
+```
+
+> `@Scope`注解仅在具体bean类（对于带注解的组件）或工厂方法（对于`@Bean`方法）上进行了内省。与XML bean定义相比，没有bean定义继承的概念，类级别的继承层次结构与元数据目的无关。
+
+有关特定于Web应用的作用域范围（如Spring上下文中的“request”或“session”）的详细信息，请参阅请 [Request, Session, Application, and WebSocket Scopes](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-other) 。与这些作用域范围的预构建注解一样，您也可以使用Spring的元注解方法编写自己的作用域范围注解：例如，使用`@Scope("prototype")`进行元注解的自定义注解，可能还会声明自定义作用域代理模式。
+
+> 要为作用域范围解析提供自定义策略而不是依赖基于注解的方法，可以实现`ScopeMetadataResolver`接口。请确保包含默认的无参数构造函数。然后，您可以在配置扫描程序时提供完全限定的类名，如以下注解和bean定义示例显示：
+
+```java
+@Configuration
+@ComponentScan(basePackages = "org.example", scopeResolver = MyScopeResolver.class)
 public class AppConfig {
     ...
 }
 ```
 
-以下清单显示了等效的XML：
-
-```java
+```xml
 <beans>
-    <context:component-scan base-package="org.example">
-        <context:include-filter type="regex"
-                expression=".*Stub.*Repository"/>
-        <context:exclude-filter type="annotation"
-                expression="org.springframework.stereotype.Repository"/>
-    </context:component-scan>
+    <context:component-scan base-package="org.example" scope-resolver="org.example.MyScopeResolver"/>
 </beans>
 ```
 
-> 您还可以通过在注解上设置`useDefaultFilters=false`或通过提供`use-default-filters=“false”`作为`<component-scan />`元素的属性来禁用默认过滤器。实际上，这会禁用自动检测使用`@Component`，`@Repository`，`@Service`，`@Controller`或`@Configuration`注解修饰的类。
+使用某些非单例作用域时，可能需要为作用域对象生成代理。这种推理在 [Scoped Beans as Dependencies](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-other-injection) 中描述。为此，component-scan元素上提供了scoped-proxy属性。三个可能的值是：`no`，`interfaces`和`targetClass`。例如，以下配置导致标准JDK动态代理：
 
-#### 1.10.5 在组件中定义 Bean 元数据
+```java
+@Configuration
+@ComponentScan(basePackages = "org.example", scopedProxy = ScopedProxyMode.INTERFACES)
+public class AppConfig {
+    ...
+}
+<beans>
+    <context:component-scan base-package="org.example" scoped-proxy="interfaces"/>
+</beans>
+```
 
-Spring组件还可以向容器提供bean定义元数据。您可以在`@Configuration`注解修饰的类中使用用于定义bean元数据的相同`@Bean`注解来执行此操作。以下示例显示了如何执行此操作：
+#### 1.10.8 使用注解提供限定符元数据
+
+在 [使用限定符微调基于注解的自动装配](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-autowired-annotation-qualifiers) 中讨论了`@Qualifier`注解。该部分中的示例演示了在解析自动线候选时使用`@Qualifier`注解和自定义限定符注解来提供细粒度控制。因为这些示例基于XML bean定义，所以通过使用XML中`bean`元素的 `qualifier` 或 `meta` 子元素，在候选bean定义上提供限定符元数据。当依靠类路径扫描来自动检测组件时，可以在候选类上使用类型级注解限定符元数据。以下三个示例演示了此技术：
 
 ```java
 @Component
-public class FactoryMethodComponent {
-
-    @Bean
-    @Qualifier("public")
-    public TestBean publicInstance() {
-        return new TestBean("publicInstance");
-    }
-
-    public void doWork() {
-        // Component method implementation omitted
-    }
+@Qualifier("Action")
+public class ActionMovieCatalog implements MovieCatalog {
+    // ...
 }
-```
-
-上面的类是一个Spring组件，在其 `doWork()` 方法中具有特定于应用程序的代码。但是，它还提供了一个bean定义，它具有引用 `publicInstance()`方法的工厂方法。`@Bean`注解标识工厂方法和其他bean定义属性，例如通过`@Qualifier`注解指定的限定符值。可以指定的其他方法级注解是`@Scope`，`@Lazy`和自定义限定符注解。
-
-> 除了它的组件初始化角色之外，您还可以将`@Lazy`注解放在标有`@Autowired`或`@Inject`的注入点上。在这种情况下，它会导致惰性解析代理注入。
-
-如前所述，支持自动装配的字段和方法，以及对`@Bean`方法的自动装配的额外支持。以下示例显示了如何执行此操作：
-
-```java
 @Component
-public class FactoryMethodComponent {
-
-    private static int i;
-
-    @Bean
-    @Qualifier("public")
-    public TestBean publicInstance() {
-        return new TestBean("publicInstance");
-    }
-
-    // use of a custom qualifier and autowiring of method parameters
-    @Bean
-    protected TestBean protectedInstance(
-            @Qualifier("public") TestBean spouse,
-            @Value("#{privateInstance.age}") String country) {
-        TestBean tb = new TestBean("protectedInstance", 1);
-        tb.setSpouse(spouse);
-        tb.setCountry(country);
-        return tb;
-    }
-
-    @Bean
-    private TestBean privateInstance() {
-        return new TestBean("privateInstance", i++);
-    }
-
-    @Bean
-    @RequestScope
-    public TestBean requestScopedInstance() {
-        return new TestBean("requestScopedInstance", 3);
-    }
+@Genre("Action")
+public class ActionMovieCatalog implements MovieCatalog {
+    // ...
 }
-```
-
-该示例将`String`方法参数`country`自动装配到另一个名为`privateInstance`的bean上的`age`属性值。Spring Expression Language元素通过符号`#{<expression>}`定义属性的值。对于`@Value`注释，表达式解析器预先配置为在解析表达式文本时查找bean名称。
-
-从Spring Framework 4.3开始，您还可以声明一个类型为`InjectionPoint`的工厂方法参数（或其更具体的子类：`DependencyDescriptor`）来访问触发创建当前bean的请求注入点。请注意，这仅适用于创建bean实例，而不适用于注入现有实例。因此，此功能对原型作用域的bean最有意义。对于其他作用域，工厂方法只能看到触发在给定作用域中创建新bean实例的注入点（例如，触发创建惰性单例bean的依赖项）。在这种情况下，您可以使用提供的注入点元数据和相关语义。以下示例显示了如何使用`InjectionPoint`：
-
-```java
 @Component
-public class FactoryMethodComponent {
-
-    @Bean @Scope("prototype")
-    public TestBean prototypeInstance(InjectionPoint injectionPoint) {
-        return new TestBean("prototypeInstance for " + injectionPoint.getMember());
-    }
+@Offline
+public class CachingMovieCatalog implements MovieCatalog {
+    // ...
 }
 ```
 
-常规Spring组件中的`@Bean`方法的处理方式与Spring `@Configuration`类中的处理方式不同。不同之处在于，使用CGLIB不会增强`@Component`类来拦截方法和字段的调用。CGLIB代理是调用`@Configuration`类中的`@Bean`方法中的方法或字段创建对协作对象的bean元数据引用的方法。这些方法不是用普通的Java语义调用的，而是通过容器来提供通常的生命周期管理和Spring bean的代理，即使在通过对`@Bean`方法的编程调用引用其他bean时也是如此。相反，在普通的`@Component`类中调用`@Bean`方法中的方法或字段具有标准的Java语义，没有应用特殊的CGLIB处理或其他约束。
+> 与大多数基于注解的备选方案一样，请记住注解元数据绑定到类定义本身，而XML的使用允许多个相同类型的bean在其限定符元数据中提供变体，因为元数据都是为每个实例提供而不是为每个类提供。
 
-> 您可以将`@Bean`方法声明为`static`，允许在不创建包含配置类实例的情况下调用它们。这在定义后处理器bean（例如，`BeanFactoryPostProcessor`或`BeanPostProcessor`类型）时特别有意义，因为这样的bean在容器生命周期的早期就会初始化，并且应该避免在那时触发配置的其他部分。
->
-> 由于技术限制，对静态`@Bean`方法的调用永远不会被容器拦截，甚至在`@Configuration`类中也没有（如本节前面所述）：CGLIB子类化只能覆盖非静态方法。因此，直接调用另一个`@Bean`方法具有标准的Java语义，从而导致直接从工厂方法本身返回一个独立的实例。
->
-> `@Bean`方法的Java语言可见性对Spring容器中生成的bean定义没有立即影响。您可以根据需要在非`@Configuration`类中自由声明工厂方法，也可以在任何地方自由声明静态方法。但是，`@Conffiguration`类中的常规`@Bean`方法需要可以覆盖 - 也就是说，它们不能声明为`private`或`final`。
->
-> `@Bean`方法也可以在给定组件或配置类的基类上出现，也可以在组件或配置类实现的接口中声明的Java 8默认方法上出现。这使得在编写复杂的配置时具有很大的灵活性，从Spring 4.2开始，甚至可以通过Java 8默认方法实现多重继承。
->
-> 最后，单个类可以为同一个bean保存多个`@Bean`方法，作为根据运行时可用依赖项使用的多个工厂方法的安排。这与在其他配置方案中选择“最贪婪”构造函数或工厂方法的算法相同：在构造时选择具有最多可满足依赖项的变体，类似于容器在多个`@Autowired`构造函数之间进行选择的方式。
+#### 1.10.9 生成候选组件索引
+
+虽然类路径扫描速度非常快，但可以通过在编译时创建候选的静态列表来提高大型应用程序的启动性能。在此模式下，所有作为组件扫描目标的模块都必须使用此机制。
+
+> 您现有的`@ComponentScan`或`<context:component-scan>`指令必须保持原样，以请求上下文扫描某些包中的候选组件。当`ApplicationContext`检测到这样的索引时，它会自动使用它而不是扫描类路径。
+
+要生成索引，请为包含组件扫描指令目标的组件的每个模块添加附加依赖项。以下示例显示了如何使用Maven执行此操作：
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context-indexer</artifactId>
+        <version>5.1.8.RELEASE</version>
+        <optional>true</optional>
+    </dependency>
+</dependencies>
+```
+
+使用Gradle 4.5及更早版本时，应在`compileOnly`配置中声明依赖项，如以下示例所示：
+
+```xml
+dependencies {
+    compileOnly "org.springframework:spring-context-indexer:5.1.8.RELEASE"
+}
+```
+
+使用Gradle 4.6及更高版本时，应在`annotationProcessor`配置中声明依赖项，如以下示例所示：
+
+```xml
+dependencies {
+    annotationProcessor "org.springframework:spring-context-indexer:5.1.8.RELEASE"
+}
+```
+
+该过程生成包含在jar文件中的 `META-INF/spring.components` 文件。
+
+> 在IDE中使用此模式时，必须将`spring-context-indexer`注册为注解处理器，以确保在更新候选组件时索引是最新的。
+
+> 在类路径上找到 `META-INF/spring.components` 时，将自动启用索引。如果索引部分可用于某些库（或用例）但不能为整个应用程序构建，则可以通过将`spring.index.ignore`设置为`true`而回退到常规类路径扫描配置（就好像根本没有索引），无论是作为系统属性还是在类路径根目录下的`spring.properties`文件中。
 
