@@ -3296,3 +3296,32 @@ public class AppConfig  {
 }
 ```
 
+> 简介起见，上面的例子可以使用注解的`value`属性，也就是说，`@ComponentScan("org.example")` 。
+
+下面是使用 XML 的形式：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="org.example"/>
+
+</beans>
+````
+
+> 使用`<context:component-scan>`隐式启用`<context:annotation-config>`功能。通常在使用`<context:component-scan>`时不需要包含`<context:annotation-config>`元素。
+
+> 类路径包扫描需要相应的目录实体存在于类路径上。当你使用 Ant 构建 JARs 文件时，请确保你没有开启 JAR 任务的“仅文件”开关。同时，在某些环境下，基于安全策略考虑，类路径的目录可以不向外暴露，比如，JDK 1.7.0_45 或者更高版本（需要清单中的“Trusted-Library”设置，参考 <https://stackoverflow.com/questions/19394570/java-jre-7u45-breaks-classloader-getresources> ）之上的独立应用。
+>
+> 在 JDK 9 的模块路径（Jigsaw）上，Spring 的类路径扫描通常可以正常工作。不过，请确保你的组件类都输出在了`module-info`描述器中。如果你希望 Spring 调用你的类中的非公共成员，请确保它们是“开放的”（也就是说，在你的`module-info`描述器中，它们使用`opens`声明而不是`exports`声明。）
+
+此外，使用`component-scan`元素时，将隐式包含`AutowiredAnnotationBeanPostProcessor`和`CommonAnnotationBeanPostProcessor`。这意味着这两个组件是自动检测并连接在一起的 - 所有这些都没有在XML中提供任何bean配置元数据。
+
+> 您可以通过包含值为`false`的`annotation-config`属性来禁用`AutowiredAnnotationBeanPostProcessor`和`CommonAnnotationBeanPostProcessor`的注册。
+
