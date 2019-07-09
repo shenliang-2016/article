@@ -91,7 +91,7 @@
 - [8.2.1.18 行构造器表达式优化](https://dev.mysql.com/doc/refman/5.6/en/row-constructor-optimization.html)
 - [8.2.1.19 避免全表扫描](https://dev.mysql.com/doc/refman/5.6/en/table-scan-avoidance.html)
 
-Queries, in the form of [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, perform all the lookup operations in the database. Tuning these statements is a top priority, whether to achieve sub-second response times for dynamic web pages, or to chop hours off the time to generate huge overnight reports.
+[`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句形式的查询执行数据库中的所有查找操作。调整这些语句是首要任务，无论是为动态网页实现亚秒响应时间，还是为了产生巨大的隔夜报告而缩短工作时间。
 
 Besides [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, the tuning techniques for queries also apply to constructs such as [`CREATE TABLE...AS SELECT`](https://dev.mysql.com/doc/refman/5.6/en/create-table-select.html), [`INSERT INTO...SELECT`](https://dev.mysql.com/doc/refman/5.6/en/insert-select.html), and `WHERE` clauses in[`DELETE`](https://dev.mysql.com/doc/refman/5.6/en/delete.html) statements. Those statements have additional performance considerations because they combine write operations with the read-oriented query operations.
 
