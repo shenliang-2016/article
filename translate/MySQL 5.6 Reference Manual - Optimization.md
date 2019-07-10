@@ -280,7 +280,7 @@ SELECT * FROM t1 WHERE
 
 键 `key1` 的范围条件抽取过程如下：
 
-1. Start with original `WHERE` clause:
+1. 初始的 `WHERE` 子句：
 
    ```sql
    (key1 < 'abc' AND (key1 LIKE 'abcde%' OR key1 LIKE '%b')) OR
@@ -288,7 +288,7 @@ SELECT * FROM t1 WHERE
    (key1 < 'uux' AND key1 > 'z')
    ```
 
-2. Remove `nonkey = 4` and `key1 LIKE '%b'` because they cannot be used for a range scan. The correct way to remove them is to replace them with `TRUE`, so that we do not miss any matching rows when doing the range scan. Replacing them with `TRUE` yields:
+2. 删除 `nonkey = 4` 和 `key1 LIKE '%b'` 因为它们不能被用来进行范围扫描。正确的删除方法是用`TRUE`替换它们。这样我们进行范围扫描时就不会丢失任何匹配的行。替换之后得到：
 
    ```sql
    (key1 < 'abc' AND (key1 LIKE 'abcde%' OR TRUE)) OR
@@ -296,40 +296,40 @@ SELECT * FROM t1 WHERE
    (key1 < 'uux' AND key1 > 'z')
    ```
 
-3. Collapse conditions that are always true or false:
+3. 消除始终为`true`或者`false`的条件：
 
-   - `(key1 LIKE 'abcde%' OR TRUE)` is always true
-   - `(key1 < 'uux' AND key1 > 'z')` is always false
+   - `(key1 LIKE 'abcde%' OR TRUE)` 永远为`true`
+   - `(key1 < 'uux' AND key1 > 'z')` 永远为`false`
 
-   Replacing these conditions with constants yields:
+   用常量替换这些条件后得到：
 
    ```sql
    (key1 < 'abc' AND TRUE) OR (key1 < 'bar' AND TRUE) OR (FALSE)
    ```
 
-   Removing unnecessary `TRUE` and `FALSE` constants yields:
+   删除没必要的 `TRUE` 和 `FALSE` 常量得到：
 
    ```sql
    (key1 < 'abc') OR (key1 < 'bar')
    ```
 
-4. Combining overlapping intervals into one yields the final condition to be used for the range scan:
+4. 组合重叠的间隔成为一个以得到最终的范围扫描条件：
 
    ```sql
    (key1 < 'bar')
    ```
 
-In general (and as demonstrated by the preceding example), the condition used for a range scan is less restrictive than the `WHERE` clause. MySQL performs an additional check to filter out rows that satisfy the range condition but not the full `WHERE` clause.
+通常（如同上面这个例子所示），用于范围扫描的条件相对于初始的`WHERE`子句是放松了限制。MySQL 执行额外的检查来过滤掉那些满足范围条件但是不满足`WHERE`子句的行。
 
-The range condition extraction algorithm can handle nested [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and)/[`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) constructs of arbitrary depth, and its output does not depend on the order in which conditions appear in `WHERE` clause.
+范围条件抽取算法能够处理任意深度的 [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and)/[`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 嵌套结构，同时，抽取的结果并不取决于这些条件出现在初始`WHERE`子句中的顺序。
 
-MySQL does not support merging multiple ranges for the [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range) access method for spatial indexes. To work around this limitation, you can use a [`UNION`](https://dev.mysql.com/doc/refman/5.6/en/union.html) with identical[`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, except that you put each spatial predicate in a different [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html).
+MySQL不支持合并空间索引的 [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range) 访问方法的多个范围。要解决此限制，除了将每个空间谓词放在不同的[`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 中之外，您可以使用具有相同[`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句的 [`UNION`](https://dev.mysql.com/doc/refman/5.6/en/union.html) 。
 
-**Range Access Method for Multiple-Part Indexes**
+**多部分索引的 Range 访问方法**
 
-Range conditions on a multiple-part index are an extension of range conditions for a single-part index. A range condition on a multiple-part index restricts index rows to lie within one or several key tuple intervals. Key tuple intervals are defined over a set of key tuples, using ordering from the index.
+多部分索引的范围条件是单部分索引的范围条件的扩展。多部分索引上的范围条件将索引行限制在一个或多个键元组间隔内。使用索引中的排序在一组键元组上定义键元组间隔。
 
-For example, consider a multiple-part index defined as `key1(*key_part1*, *key_part2*, *key_part3*)`, and the following set of key tuples listed in key order:
+比如，考虑这样的多部份索引 `key1(*key_part1*, *key_part2*, *key_part3*)` ，同时下列键元组集合按照键顺序列出：
 
 ```
 key_part1  key_part2  key_part3
@@ -342,19 +342,19 @@ key_part1  key_part2  key_part3
    2         1          'aaa'
 ```
 
-The condition `*key_part1* = 1` defines this interval:
+条件 `*key_part1* = 1` 定义如下间隔：
 
 ```sql
 (1,-inf,-inf) <= (key_part1,key_part2,key_part3) < (1,+inf,+inf)
 ```
 
-The interval covers the 4th, 5th, and 6th tuples in the preceding data set and can be used by the range access method.
+该间隔涵盖上面数据集中的第四个、第五个以及第六个键元组并可以被用于范围访问方法。
 
-By contrast, the condition `*key_part3* = 'abc'` does not define a single interval and cannot be used by the range access method.
+相反，条件 `*key_part3* = 'abc'` 没有定义单个间隔因而不能被用于范围访问方法。
 
-The following descriptions indicate how range conditions work for multiple-part indexes in greater detail.
+下面的描述更详细地说明了如何对多部份索引进行范围访问。
 
-- For `HASH` indexes, each interval containing identical values can be used. This means that the interval can be produced only for conditions in the following form:
+- 对 `HASH` 索引，每个包含相同值的间隔都可以被使用。这意味着该间隔能够产生如下形式的条件：
 
   ```sql
       key_part1 cmp const1
@@ -363,37 +363,37 @@ The following descriptions indicate how range conditions work for multiple-part 
   AND key_partN cmp constN;
   ```
 
-  Here, *const1*, *const2*, … are constants, *cmp* is one of the [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), or [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null) comparison operators, and the conditions cover all index parts. (That is, there are *N*conditions, one for each part of an *N*-part index.) For example, the following is a range condition for a three-part `HASH` index:
+  这里， *const1*, *const2*, … 都是常量，*cmp*是 [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), 或者 [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null) 比较操作之一，同时该条件涵盖所有索引部分。（也就是说，存在N个条件，每个条件对应于N部分索引的一部分。）比如，下面是一个三部分`HASH`索引的范围条件：
 
   ```sql
   key_part1 = 1 AND key_part2 IS NULL AND key_part3 = 'foo'
   ```
 
-  For the definition of what is considered to be a constant, see [Range Access Method for Single-Part Indexes](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part).
+  什么会被认为是常量的定义，参考 [单部分索引的范围访问方法](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part) 。
 
-- For a `BTREE` index, an interval might be usable for conditions combined with [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and), where each condition compares a key part with a constant value using [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null), [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), or [`LIKE '*pattern*'`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) (where `'*pattern*'` does not start with a wildcard). An interval can be used as long as it is possible to determine a single key tuple containing all rows that match the condition (or two intervals if [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) or [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) is used).
+- 对于`BTREE`索引，间隔可以用于与 [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and) 组合的条件，其中每个条件使用 [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null), [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), 或者 [`LIKE '*pattern*'`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) (其中'\*pattern\*'不以通配符开头)来比较键部分和常量值。可以使用间隔，只要可以确定包含与条件匹配的所有行的单个键元组（或者如果使用 [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) 或者 [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) 则为两个间隔）。
 
-  The optimizer attempts to use additional key parts to determine the interval as long as the comparison operator is [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), or [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null). If the operator is [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal),[`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), or [`LIKE`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like), the optimizer uses it but considers no more key parts. For the following expression, the optimizer uses [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal) from the first comparison. It also uses[`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal) from the second comparison but considers no further key parts and does not use the third comparison for interval construction:
+  只要比较运算符为[`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), or [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null) ，优化器就会尝试使用其他键部分来确定间隔。如果运算符是 [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal),[`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), or [`LIKE`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) ，优化程序将使用它，而不再考虑更多键部分。对于以下表达式，优化程序使用来自第一次比较的 [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal) 。它还使用了来自第二次比较的 [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal) ，但没有考虑其他键部分，也没有使用第三个比较进行间隔构造：
 
   ```sql
   key_part1 = 'foo' AND key_part2 >= 10 AND key_part3 > 10
   ```
 
-  The single interval is:
+  单个间隔是：
 
   ```sql
   ('foo',10,-inf) < (key_part1,key_part2,key_part3) < ('foo',+inf,+inf)
   ```
 
-  It is possible that the created interval contains more rows than the initial condition. For example, the preceding interval includes the value `('foo', 11, 0)`, which does not satisfy the original condition.
+  创建的间隔可能包含比初始条件更多的行。例如，前面的间隔包括值 `('foo', 11, 0)`，它不满足原始条件。
 
-- If conditions that cover sets of rows contained within intervals are combined with [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or), they form a condition that covers a set of rows contained within the union of their intervals. If the conditions are combined with [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and), they form a condition that covers a set of rows contained within the intersection of their intervals. For example, for this condition on a two-part index:
+- 如果覆盖区间中包含的行集合的条件通过 [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 组合，则它们形成一个条件，该条件覆盖其间隔的并集中包含的一组行。如果条件通过 [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and) 组合，则它们形成一个条件，该条件覆盖其间隔的交集中包含的一组行。例如，对于这个由两部分组成的索引：
 
   ```sql
   (key_part1 = 1 AND key_part2 < 2) OR (key_part1 > 5)
   ```
 
-  The intervals are:
+  间隔是：
 
   ```sql
   (1,-inf) < (key_part1,key_part2) < (1,2)
