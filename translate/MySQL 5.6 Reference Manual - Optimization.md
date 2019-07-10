@@ -215,7 +215,7 @@ SELECT COUNT(*) FROM tbl_name
 SELECT key_part2 FROM tbl_name GROUP BY key_part1;
 ```
 
-The following queries use indexing to retrieve the rows in sorted order without a separate sorting pass:
+以下查询使用索引来按排序顺序检索行，而不使用单独的排序传递：
 
 ```sql
 SELECT ... FROM tbl_name
@@ -224,3 +224,225 @@ SELECT ... FROM tbl_name
 SELECT ... FROM tbl_name
   ORDER BY key_part1 DESC, key_part2 DESC, ... ;
 ```
+#### 8.2.1.2 Range 优化
+
+[`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range) 访问方法使用单个索引来检索包含在一个或多个索引值间隔内的表行的子集。它可用于单部分或多部分索引。 以下部分详细说明了如何从`WHERE`子句中提取间隔。
+
+- [单部分索引的 Range 访问方法](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part)
+- [多部分索引的 Range 访问方法](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-multi-part)
+- [多值比较的等值 Range 优化](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#equality-range-optimization)
+
+**单部分索引的 Range 访问方法**
+
+对一个单部分索引，索引值间隔能够用`WHERE`子句中的对应条件方便地表示，表示范围条件而不是“间隔”。
+
+单部分索引的范围条件定义如下：
+
+- 对`BTREE`和`HASH`索引，当使用 [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), [`IN()`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_in), [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null), 或者 [`IS NOT NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-not-null) 等操作符时，键部分与常量值的比较就是范围条件。
+- 另外，对`BTREE`索引，当使用[`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), 或者 [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) 操作符时，或者 [`LIKE`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) 比较，如果 [`LIKE`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) 的参数是不以通配符开头的字符串常量，键部分与常量值的比较就是范围条件。
+- 对所有类型的索引，多个范围条件由 [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 或者 [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and) 组合形成一个范围条件。
+
+上面描述的提到的“常量值”代表如下含义：
+
+- 来自查询字符串的常量
+- 来自同一连接的 [`const`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_const) 或者 [`system`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_system) 表的列
+- 不相关子查询的结果
+- 完全由前面任何类型的子表达式组成的任何表达式
+
+下面是一些`WHERE`子句中包含范围条件的查询示例：
+
+```sql
+SELECT * FROM t1
+  WHERE key_col > 1
+  AND key_col < 10;
+
+SELECT * FROM t1
+  WHERE key_col = 1
+  OR key_col IN (15,18,20);
+
+SELECT * FROM t1
+  WHERE key_col LIKE 'ab%'
+  OR key_col BETWEEN 'bar' AND 'foo';
+```
+
+在优化器常量传播阶段，一些非常量值可以转换为常量。
+
+MySQL尝试为每个可能的索引从`WHERE`子句中提取范围条件。在提取过程期间，丢弃不能用于构建范围条件的条件，组合产生重叠范围的条件，并且去除产生空范围的条件。
+
+考虑下面的语句，其中 `key1` 是索引列，而 `nonkey` 未被索引：
+
+```sql
+SELECT * FROM t1 WHERE
+  (key1 < 'abc' AND (key1 LIKE 'abcde%' OR key1 LIKE '%b')) OR
+  (key1 < 'bar' AND nonkey = 4) OR
+  (key1 < 'uux' AND key1 > 'z');
+```
+
+键 `key1` 的范围条件抽取过程如下：
+
+1. Start with original `WHERE` clause:
+
+   ```sql
+   (key1 < 'abc' AND (key1 LIKE 'abcde%' OR key1 LIKE '%b')) OR
+   (key1 < 'bar' AND nonkey = 4) OR
+   (key1 < 'uux' AND key1 > 'z')
+   ```
+
+2. Remove `nonkey = 4` and `key1 LIKE '%b'` because they cannot be used for a range scan. The correct way to remove them is to replace them with `TRUE`, so that we do not miss any matching rows when doing the range scan. Replacing them with `TRUE` yields:
+
+   ```sql
+   (key1 < 'abc' AND (key1 LIKE 'abcde%' OR TRUE)) OR
+   (key1 < 'bar' AND TRUE) OR
+   (key1 < 'uux' AND key1 > 'z')
+   ```
+
+3. Collapse conditions that are always true or false:
+
+   - `(key1 LIKE 'abcde%' OR TRUE)` is always true
+   - `(key1 < 'uux' AND key1 > 'z')` is always false
+
+   Replacing these conditions with constants yields:
+
+   ```sql
+   (key1 < 'abc' AND TRUE) OR (key1 < 'bar' AND TRUE) OR (FALSE)
+   ```
+
+   Removing unnecessary `TRUE` and `FALSE` constants yields:
+
+   ```sql
+   (key1 < 'abc') OR (key1 < 'bar')
+   ```
+
+4. Combining overlapping intervals into one yields the final condition to be used for the range scan:
+
+   ```sql
+   (key1 < 'bar')
+   ```
+
+In general (and as demonstrated by the preceding example), the condition used for a range scan is less restrictive than the `WHERE` clause. MySQL performs an additional check to filter out rows that satisfy the range condition but not the full `WHERE` clause.
+
+The range condition extraction algorithm can handle nested [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and)/[`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) constructs of arbitrary depth, and its output does not depend on the order in which conditions appear in `WHERE` clause.
+
+MySQL does not support merging multiple ranges for the [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range) access method for spatial indexes. To work around this limitation, you can use a [`UNION`](https://dev.mysql.com/doc/refman/5.6/en/union.html) with identical[`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements, except that you put each spatial predicate in a different [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html).
+
+**Range Access Method for Multiple-Part Indexes**
+
+Range conditions on a multiple-part index are an extension of range conditions for a single-part index. A range condition on a multiple-part index restricts index rows to lie within one or several key tuple intervals. Key tuple intervals are defined over a set of key tuples, using ordering from the index.
+
+For example, consider a multiple-part index defined as `key1(*key_part1*, *key_part2*, *key_part3*)`, and the following set of key tuples listed in key order:
+
+```
+key_part1  key_part2  key_part3
+  NULL       1          'abc'
+  NULL       1          'xyz'
+  NULL       2          'foo'
+   1         1          'abc'
+   1         1          'xyz'
+   1         2          'abc'
+   2         1          'aaa'
+```
+
+The condition `*key_part1* = 1` defines this interval:
+
+```sql
+(1,-inf,-inf) <= (key_part1,key_part2,key_part3) < (1,+inf,+inf)
+```
+
+The interval covers the 4th, 5th, and 6th tuples in the preceding data set and can be used by the range access method.
+
+By contrast, the condition `*key_part3* = 'abc'` does not define a single interval and cannot be used by the range access method.
+
+The following descriptions indicate how range conditions work for multiple-part indexes in greater detail.
+
+- For `HASH` indexes, each interval containing identical values can be used. This means that the interval can be produced only for conditions in the following form:
+
+  ```sql
+      key_part1 cmp const1
+  AND key_part2 cmp const2
+  AND ...
+  AND key_partN cmp constN;
+  ```
+
+  Here, *const1*, *const2*, … are constants, *cmp* is one of the [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), or [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null) comparison operators, and the conditions cover all index parts. (That is, there are *N*conditions, one for each part of an *N*-part index.) For example, the following is a range condition for a three-part `HASH` index:
+
+  ```sql
+  key_part1 = 1 AND key_part2 IS NULL AND key_part3 = 'foo'
+  ```
+
+  For the definition of what is considered to be a constant, see [Range Access Method for Single-Part Indexes](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part).
+
+- For a `BTREE` index, an interval might be usable for conditions combined with [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and), where each condition compares a key part with a constant value using [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null), [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), or [`LIKE '*pattern*'`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like) (where `'*pattern*'` does not start with a wildcard). An interval can be used as long as it is possible to determine a single key tuple containing all rows that match the condition (or two intervals if [`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) or [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal) is used).
+
+  The optimizer attempts to use additional key parts to determine the interval as long as the comparison operator is [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal), [`<=>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal-to), or [`IS NULL`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_is-null). If the operator is [`>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than), [`<`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than), [`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal), [`<=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_less-than-or-equal), [`!=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal),[`<>`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_not-equal), [`BETWEEN`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_between), or [`LIKE`](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html#operator_like), the optimizer uses it but considers no more key parts. For the following expression, the optimizer uses [`=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_equal) from the first comparison. It also uses[`>=`](https://dev.mysql.com/doc/refman/5.6/en/comparison-operators.html#operator_greater-than-or-equal) from the second comparison but considers no further key parts and does not use the third comparison for interval construction:
+
+  ```sql
+  key_part1 = 'foo' AND key_part2 >= 10 AND key_part3 > 10
+  ```
+
+  The single interval is:
+
+  ```sql
+  ('foo',10,-inf) < (key_part1,key_part2,key_part3) < ('foo',+inf,+inf)
+  ```
+
+  It is possible that the created interval contains more rows than the initial condition. For example, the preceding interval includes the value `('foo', 11, 0)`, which does not satisfy the original condition.
+
+- If conditions that cover sets of rows contained within intervals are combined with [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or), they form a condition that covers a set of rows contained within the union of their intervals. If the conditions are combined with [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and), they form a condition that covers a set of rows contained within the intersection of their intervals. For example, for this condition on a two-part index:
+
+  ```sql
+  (key_part1 = 1 AND key_part2 < 2) OR (key_part1 > 5)
+  ```
+
+  The intervals are:
+
+  ```sql
+  (1,-inf) < (key_part1,key_part2) < (1,2)
+  (5,-inf) < (key_part1,key_part2)
+  ```
+
+  In this example, the interval on the first line uses one key part for the left bound and two key parts for the right bound. The interval on the second line uses only one key part. The `key_len` column in the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output indicates the maximum length of the key prefix used.
+
+  In some cases, `key_len` may indicate that a key part was used, but that might be not what you would expect. Suppose that *key_part1* and *key_part2* can be `NULL`. Then the `key_len` column displays two key part lengths for the following condition:
+
+  ```sql
+  key_part1 >= 1 AND key_part2 < 2
+  ```
+
+  But, in fact, the condition is converted to this:
+
+  ```sql
+  key_part1 >= 1 AND key_part2 IS NOT NULL
+  ```
+
+For a description of how optimizations are performed to combine or eliminate intervals for range conditions on a single-part index, see [Range Access Method for Single-Part Indexes](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part). Analogous steps are performed for range conditions on multiple-part indexes.
+
+**Equality Range Optimization of Many-Valued Comparisons**
+
+Consider these expressions, where *col_name* is an indexed column:
+
+```sql
+col_name IN(val1, ..., valN)
+col_name = val1 OR ... OR col_name = valN
+```
+
+Each expression is true if *col_name* is equal to any of several values. These comparisons are equality range comparisons (where the “range” is a single value). The optimizer estimates the cost of reading qualifying rows for equality range comparisons as follows:
+
+- If there is a unique index on *col_name*, the row estimate for each range is 1 because at most one row can have the given value.
+- Otherwise, any index on *col_name* is nonunique and the optimizer can estimate the row count for each range using dives into the index or index statistics.
+
+With index dives, the optimizer makes a dive at each end of a range and uses the number of rows in the range as the estimate. For example, the expression `*col_name* IN (10, 20, 30)` has three equality ranges and the optimizer makes two dives per range to generate a row estimate. Each pair of dives yields an estimate of the number of rows that have the given value.
+
+Index dives provide accurate row estimates, but as the number of comparison values in the expression increases, the optimizer takes longer to generate a row estimate. Use of index statistics is less accurate than index dives but permits faster row estimation for large value lists.
+
+The [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) system variable enables you to configure the number of values at which the optimizer switches from one row estimation strategy to the other. To permit use of index dives for comparisons of up to *N* equality ranges, set [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) to *N* + 1. To disable use of statistics and always use index dives regardless of *N*, set [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) to 0.
+
+To update table index statistics for best estimates, use [`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html).
+
+Even under conditions when index dives would otherwise be used, they are skipped for queries that satisfy all these conditions:
+
+- A single-index `FORCE INDEX` index hint is present. The idea is that if index use is forced, there is nothing to be gained from the additional overhead of performing dives into the index.
+- The index is nonunique and not a `FULLTEXT` index.
+- No subquery is present.
+- No `DISTINCT`, `GROUP BY`, or `ORDER BY` clause is present.
+
+Those dive-skipping conditions apply only for single-table queries. Index dives are not skipped for multiple-table queries (joins).
