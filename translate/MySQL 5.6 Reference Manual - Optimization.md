@@ -400,49 +400,50 @@ key_part1  key_part2  key_part3
   (5,-inf) < (key_part1,key_part2)
   ```
 
-  In this example, the interval on the first line uses one key part for the left bound and two key parts for the right bound. The interval on the second line uses only one key part. The `key_len` column in the [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output indicates the maximum length of the key prefix used.
+  在此示例中，第一行的间隔使用一个键部分作为左边界的，而使用两个键部分作为右边界。第二行的间隔仅使用一个键部分。[`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出中的`key_len`列指示使用的键前缀的最大长度。
 
-  In some cases, `key_len` may indicate that a key part was used, but that might be not what you would expect. Suppose that *key_part1* and *key_part2* can be `NULL`. Then the `key_len` column displays two key part lengths for the following condition:
+  某些情况下，`key_len`可以表示一个键部分被使用，但是这并不一定是你期望的效果。假设*key_part1*和*key_part2*可以为`NULL`。然后`key_len`列显示下面条件的两个键部分长度：
 
   ```sql
   key_part1 >= 1 AND key_part2 < 2
   ```
 
-  But, in fact, the condition is converted to this:
+  然而，实际上，该条件被转化为如下形式：
 
   ```sql
   key_part1 >= 1 AND key_part2 IS NOT NULL
   ```
 
-For a description of how optimizations are performed to combine or eliminate intervals for range conditions on a single-part index, see [Range Access Method for Single-Part Indexes](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part). Analogous steps are performed for range conditions on multiple-part indexes.
+有关如何执行优化以组合或消除单部分索引上的范围条件的间隔的说明，请参阅 [单部分索引的范围访问方法](https://dev.mysql.com/doc/refman/5.6/en/range-optimization.html#range-access-single-part) 。对多部分索引的范围条件执行类似步骤。
 
-**Equality Range Optimization of Many-Valued Comparisons**
+**多值比较的等值 Range 优化**
 
-Consider these expressions, where *col_name* is an indexed column:
+考虑下面的表达式，其中 *col_name* 是一个索引列：
 
 ```sql
 col_name IN(val1, ..., valN)
 col_name = val1 OR ... OR col_name = valN
 ```
 
-Each expression is true if *col_name* is equal to any of several values. These comparisons are equality range comparisons (where the “range” is a single value). The optimizer estimates the cost of reading qualifying rows for equality range comparisons as follows:
+如果*col-name*等于这几个值中的任何一个，则每个表达式的值都是`true`。这些比较就是等值范围比较（其中的“范围”是单个值）。优化器度量读取取限定行的成本以进行相等范围比较，如下所示：
 
-- If there is a unique index on *col_name*, the row estimate for each range is 1 because at most one row can have the given value.
-- Otherwise, any index on *col_name* is nonunique and the optimizer can estimate the row count for each range using dives into the index or index statistics.
+- 如果*col_name*列上存在一个唯一索引，每个范围的行度量值就是1，因为至多有一行具有给定的值。
+- 否则，*col_name*列上的所有索引都不是唯一索引，优化器可以使用潜入索引或索引统计信息来估计每个范围的行数。
 
-With index dives, the optimizer makes a dive at each end of a range and uses the number of rows in the range as the estimate. For example, the expression `*col_name* IN (10, 20, 30)` has three equality ranges and the optimizer makes two dives per range to generate a row estimate. Each pair of dives yields an estimate of the number of rows that have the given value.
+使用索引潜入时，优化程序会在范围的每一端进行潜入，并使用范围中的行数作为估计值。例如，表达式 `*col_name* IN (10, 20, 30)` 具有三个相等范围，优化器对每个范围进行两次潜入以生成行估计。每对潜入产生具有给定值的行的数量的估计。
 
-Index dives provide accurate row estimates, but as the number of comparison values in the expression increases, the optimizer takes longer to generate a row estimate. Use of index statistics is less accurate than index dives but permits faster row estimation for large value lists.
+索引潜入提供准确的行估计，但随着表达式中比较值的数量增加，优化器需要更长时间才能生成行估计。索引统计的结果不如索引潜入准确，但允许对巨大列表进行更快的行估计。
 
-The [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) system variable enables you to configure the number of values at which the optimizer switches from one row estimation strategy to the other. To permit use of index dives for comparisons of up to *N* equality ranges, set [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) to *N* + 1. To disable use of statistics and always use index dives regardless of *N*, set [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) to 0.
+[`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) 系统变量使您可以配置优化器从一个行估计策略切换到另一个行估计策略的值的数量。要允许使用索引潜入进行最多N个相等范围的比较，请将 [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) 设置为N + 1。要禁用统计数据并始终使用索引潜入而不考虑N，请将 [`eq_range_index_dive_limit`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_eq_range_index_dive_limit) 设置为0。
 
-To update table index statistics for best estimates, use [`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html).
+更新表索引统计来获得最优估计，使用 [`ANALYZE TABLE`](https://dev.mysql.com/doc/refman/5.6/en/analyze-table.html) 。
 
-Even under conditions when index dives would otherwise be used, they are skipped for queries that satisfy all these conditions:
+即使在以其他方式使用索引潜入的情况下，也会跳过满足所有这些条件的查询：
 
-- A single-index `FORCE INDEX` index hint is present. The idea is that if index use is forced, there is nothing to be gained from the additional overhead of performing dives into the index.
-- The index is nonunique and not a `FULLTEXT` index.
-- No subquery is present.
-- No `DISTINCT`, `GROUP BY`, or `ORDER BY` clause is present.
+- 存在单索引`FORCE INDEX`索引提示。我们的想法是，如果强制使用索引，那么从索引潜入中产生的额外开销就无法获得任何好处。
+- 索引是非唯一性索引而且也不是`FULLTEXT`索引。
+- 不存在子查询。
+- 不存在 `DISTINCT`, `GROUP BY`, or `ORDER BY` 子句。
 
-Those dive-skipping conditions apply only for single-table queries. Index dives are not skipped for multiple-table queries (joins).
+这种索引潜入的跳过只会应用于单表查询，而不会应用于多表连接查询。
+
