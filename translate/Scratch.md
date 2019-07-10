@@ -1,166 +1,50 @@
-### 1.11 使用 JSR 330 标准注解
+### 1.12 基于 Java 类的容器配置
 
-从 Spring 3.0 开始，Spring 提供了对 JSR-330 标准注解（依赖注入）的支持。那些注解像 Spring 注解一样被扫描。为了使用它们，你需要将相关的 jars 放在你的类路径下。
+本章节介绍如何在你的 Java 代码中使用注解来配置 Spring 容器。包含以下主题：
 
-> 如果你使用Maven，则 `javax.inject` 坐标在 Maven 标准中央仓库 (<https://repo1.maven.org/maven2/javax/inject/javax.inject/1/>) 中是可用的。你可以添加下列依赖到你的 `pom.xml` 文件中：
->
-> ```xml
-> <dependency>
->     <groupId>javax.inject</groupId>
->     <artifactId>javax.inject</artifactId>
->     <version>1</version>
-> </dependency>
-> ```
+- [基本概念: `@Bean` 和 `@Configuration`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java-basic-concepts)
+- [使用 `AnnotationConfigApplicationContext`实例化 Spring 容器](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java-instantiating-container)
+- [使用 `@Bean` 注解](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java-bean-annotation)
+- [使用 `@Configuration` 注解](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java-configuration-annotation)
+- [构造基于 Java 类的配置](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-java-composing-configuration-classes)
+- [Bean 定义配置](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-definition-profiles)
+- [`PropertySource` 抽象](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-property-source-abstraction)
+- [使用 `@PropertySource`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-using-propertysource)
+- [语句中的占位符解析](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-placeholder-resolution-in-statements)
 
-#### 1.11.1 使用`@Inject`和`@Named`进行依赖注入
+#### 1.12.1 基本概念：`@Bean` 和 `@Configuration`
 
-代替 `@Autowired`，你可以如下使用 `@javax.inject.Inject` ：
+Spring 的新 Java 配置支持机制的核心是`@Configuration`注解修饰的类和`@Bean`注解修饰的方法。
 
-```java
-import javax.inject.Inject;
+`@Bean`注解用于指示一个方法实例化，配置和初始化由Spring IoC容器管理的新对象。对于那些熟悉Spring的`<beans/>` XML配置的人来说，`@Bean`注解扮演的角色与`<bean/>`元素相同。您可以将`@Bean`注解修饰的方法与任何Spring `@Component`一起使用。但是，它们最常用于`@Configuration`bean 中。
 
-public class SimpleMovieLister {
-
-    private MovieFinder movieFinder;
-
-    @Inject
-    public void setMovieFinder(MovieFinder movieFinder) {
-        this.movieFinder = movieFinder;
-    }
-
-    public void listMovies() {
-        this.movieFinder.findMovies(...);
-        ...
-    }
-}
-```
-
-与`@Autowired`一样，您可以在字段级别，方法级别和构造函数 - 参数级别使用`@Inject`。此外，您可以将注入点声明为 `Provider`，允许按需访问较短作用域范围的bean或通过 `Provider.get()` 调用对其他bean的延迟访问。以下示例提供了上述示例的变体：
-
-```java
-import javax.inject.Inject;
-import javax.inject.Provider;
-
-public class SimpleMovieLister {
-
-    private Provider<MovieFinder> movieFinder;
-
-    @Inject
-    public void setMovieFinder(Provider<MovieFinder> movieFinder) {
-        this.movieFinder = movieFinder;
-    }
-
-    public void listMovies() {
-        this.movieFinder.get().findMovies(...);
-        ...
-    }
-}
-```
-
-如果要为应注入的依赖项使用限定名称，则应使用`@Named`注解，如以下示例所示：
-
-```java
-import javax.inject.Inject;
-import javax.inject.Named;
-
-public class SimpleMovieLister {
-
-    private MovieFinder movieFinder;
-
-    @Inject
-    public void setMovieFinder(@Named("main") MovieFinder movieFinder) {
-        this.movieFinder = movieFinder;
-    }
-
-    // ...
-}
-```
-
-与`@Autowired`一样，`@Inject`也可以与`java.util.Optional`或`@Nullable`一起使用。这在这里更适用，因为`@Inject`没有必需的属性。以下一对示例显示了如何使用`@Inject`和`@Nullable`：
-
-```java
-public class SimpleMovieLister {
-
-    @Inject
-    public void setMovieFinder(Optional<MovieFinder> movieFinder) {
-        ...
-    }
-}
-public class SimpleMovieLister {
-
-    @Inject
-    public void setMovieFinder(@Nullable MovieFinder movieFinder) {
-        ...
-    }
-}
-```
-
-#### 1.11.2 `@Named`和`@ManagedBean`：`@Component`注解的标准等价物
-
-代替 `@Component`，你可以使用 `@javax.inject.Named` 或者 `javax.annotation.ManagedBean`，如下面例子所示：
-
-```java
-import javax.inject.Inject;
-import javax.inject.Named;
-
-@Named("movieListener")  // @ManagedBean("movieListener") could be used as well
-public class SimpleMovieLister {
-
-    private MovieFinder movieFinder;
-
-    @Inject
-    public void setMovieFinder(MovieFinder movieFinder) {
-        this.movieFinder = movieFinder;
-    }
-
-    // ...
-}
-```
-
-在不指定组件名称的情况下使用`@Component`是很常见的。`@Named`可以以类似的方式使用，如下例所示：
-
-```java
-import javax.inject.Inject;
-import javax.inject.Named;
-
-@Named
-public class SimpleMovieLister {
-
-    private MovieFinder movieFinder;
-
-    @Inject
-    public void setMovieFinder(MovieFinder movieFinder) {
-        this.movieFinder = movieFinder;
-    }
-
-    // ...
-}
-```
-
-使用`@Named`或`@ManagedBean`时，可以使用与使用Spring注解时完全相同的方式使用组件扫描，如以下示例所示：
+使用`@Configuration`注释类表示其主要目的是作为bean定义的源。此外，`@Configuration`类允许通过调用同一个类中的其他`@Bean`方法来定义bean间依赖关系。最简单的`@Configuration`类如下所示：
 
 ```java
 @Configuration
-@ComponentScan(basePackages = "org.example")
-public class AppConfig  {
-    ...
+public class AppConfig {
+
+    @Bean
+    public MyService myService() {
+        return new MyServiceImpl();
+    }
 }
 ```
 
-> 与`@Component`相比，JSR-330 `@Named`和JSR-250 `@ManagedBean`注解不可组合。您应该使用Spring的构造型模型来构建自定义组件注解。
+前面的`AppConfig`类等效于以下Spring `<beans/>` XML：
 
-#### 1.11.3 JSR-330 标准注解的局限性
+```xml
+<beans>
+    <bean id="myService" class="com.acme.services.MyServiceImpl"/>
+</beans>
+```
 
-当你使用标准注解时，你应该了解其一些重要的不可用的特性，如下表所述：
+> Full @Configuration vs “lite” @Bean mode?
+>
+> When `@Bean` methods are declared within classes that are not annotated with `@Configuration`, they are referred to as being processed in a “lite” mode. Bean methods declared in a `@Component` or even in a plain old class are considered to be “lite”, with a different primary purpose of the containing class and a `@Bean` method being a sort of bonus there. For example, service components may expose management views to the container through an additional `@Bean` method on each applicable component class. In such scenarios, `@Bean` methods are a general-purpose factory method mechanism.
+>
+> Unlike full `@Configuration`, lite `@Bean` methods cannot declare inter-bean dependencies. Instead, they operate on their containing component’s internal state and, optionally, on arguments that they may declare. Such a `@Bean` method should therefore not invoke other `@Bean` methods. Each such method is literally only a factory method for a particular bean reference, without any special runtime semantics. The positive side-effect here is that no CGLIB subclassing has to be applied at runtime, so there are no limitations in terms of class design (that is, the containing class may be `final` and so forth).
+>
+> In common scenarios, `@Bean` methods are to be declared within `@Configuration` classes, ensuring that “full” mode is always used and that cross-method references therefore get redirected to the container’s lifecycle management. This prevents the same `@Bean` method from accidentally being invoked through a regular Java call, which helps to reduce subtle bugs that can be hard to track down when operating in “lite” mode.
 
-| Spring              | javax.inject.*        | javax.inject restrictions / comments     |
-| ------------------- | --------------------- | ---------------------------------------- |
-| @Autowired          | @Inject               | `@Inject` 没有 'required' 属性。可以以 Java 8 中的 `Optional`替代。 |
-| @Component          | @Named / @ManagedBean | JSR-330不提供可组合模型，只是一种识别命名组件的方法。           |
-| @Scope("singleton") | @Singleton            | JSR-330的默认作用域范围就像Spring的原型。但是，为了使其与Spring的一般默认值保持一致，默认情况下，Spring容器中声明的JSR-330 bean是一个单例。为了使用除单例之外的作用域范围，您应该使用Spring的`@Scope`注解。`javax.inject`也提供了`@Scope`注解。然而，这个仅用于创建你自己的注解。 |
-| @Qualifier          | @Qualifier / @Named   | `javax.inject.Qualifier`只是构建自定义限定符的元注解。具体`String`限定符（如Spring的带有值的`@Qualifier`）可以通过`javax.inject.Named`关联。 |
-| @Value              | -                     | 没有等价物                                    |
-| @Required           | -                     | 没有等价物                                    |
-| @Lazy               | -                     | 没有等价物                                    |
-| ObjectFactory       | Provider              | `javax.inject.Provider`是Spring的`ObjectFactory`的直接替代品，只有更短的`get()`方法名称。它也可以与Spring的`@Autowired`或者没有注解修饰的构造函数和setter方法结合使用。 |
-
+The `@Bean` and `@Configuration` annotations are discussed in depth in the following sections. First, however, we cover the various ways of creating a spring container using by Java-based configuration.
