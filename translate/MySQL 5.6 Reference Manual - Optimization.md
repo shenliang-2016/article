@@ -129,7 +129,7 @@ NDB Cluster支持连接下推优化，从而将合格连接完整地发送到NDB
 
 > **注意：** 由于 MySQL 优化器在不断进化中，本手册中并不会包含所有的优化技术。
 
-您可能想要重写查询以更快地进行算术运算，同时牺牲可读性。因为MySQL会自动执行类似的优化，所以通常应该避免这种工作，并使查询保持更易理解和可维护的形式。MySQL执行的一些优化如下：
+您可能想要重写查询以更快地进行算术运算，同时牺牲可读性。因为MySQL会自动执行类似的优化，所以通常应该避免这种工作，并使查询保持更易理解和可维护的形式。MySQL自动执行的一些优化如下：
 
 - 删除不必要的括号：
 
@@ -154,20 +154,20 @@ NDB Cluster支持连接下推优化，从而将合格连接完整地发送到NDB
 
 - 索引使用的常量表达式仅计算一次。
 
-- [`COUNT(*)`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count) on a single table without a `WHERE` is retrieved directly from the table information for `MyISAM` and `MEMORY` tables. This is also done for any `NOT NULL` expression when used with only one table.
+- 在单个表上执行没有`WHERE`子句的 [`COUNT(*)`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count) 查询直接从 `MyISAM` 和 `MEMORY`表的表信息中获取结果。这种操作同样应用于任何在单个表上执行的`NOT NULL` 表达式。
 
-- Early detection of invalid constant expressions. MySQL quickly detects that some [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) statements are impossible and returns no rows.
+- 尽早检测无效常量表达式。MySQL快速检测到某些 [`SELECT`](https://dev.mysql.com/doc/refman/5.6/en/select.html) 语句是不可能的，并且不返回任何行。
 
-- `HAVING` is merged with `WHERE` if you do not use `GROUP BY` or aggregate functions ([`COUNT()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count), [`MIN()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_min), and so on).
+- 如果你没有使用`GROUP BY`或者聚合函数，[`COUNT()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_count), [`MIN()`](https://dev.mysql.com/doc/refman/5.6/en/group-by-functions.html#function_min) 等等，`HAVING`就会与`WHERE`合并。
 
-- For each table in a join, a simpler `WHERE` is constructed to get a fast `WHERE` evaluation for the table and also to skip rows as soon as possible.
+- 对于连接中的每个表，构造一个更简单的`WHERE`以获得对表的快速`WHERE`评估，并且还尽可能跳过行。
 
-- All constant tables are read first before any other tables in the query. A constant table is any of the following:
+- 查询中涉及到的所有常量表都会首先读取。常量表是指：
 
-  - An empty table or a table with one row.
-  - A table that is used with a `WHERE` clause on a `PRIMARY KEY` or a `UNIQUE` index, where all index parts are compared to constant expressions and are defined as `NOT NULL`.
+  - 空表或者只有一行数据的表。An empty table or a table with one row.
+  - 与`PRIMARY KEY`或者`UNIQUE`索引上的`WHERE`子句共同使用的表，其中所有的索引部分都与常量表达式比较并且定义为`NOT NULL` 。
 
-  All of the following tables are used as constant tables:
+  以下所有表都用作常量表：
 
   ```sql
   SELECT * FROM t WHERE primary_key=1;
@@ -175,19 +175,19 @@ NDB Cluster支持连接下推优化，从而将合格连接完整地发送到NDB
     WHERE t1.primary_key=1 AND t2.primary_key=t1.id;
   ```
 
-- The best join combination for joining the tables is found by trying all possibilities. If all columns in `ORDER BY` and `GROUP BY`clauses come from the same table, that table is preferred first when joining.
+- 通过尝试所有可能的组合以找到待连接表的最优连接组合方式。如果`GROUP BY`和`ORDER BY`子句中的所有列都来自同一张表，则该表在连接中就会作为第一张表。
 
-- If there is an `ORDER BY` clause and a different `GROUP BY` clause, or if the `ORDER BY` or `GROUP BY` contains columns from tables other than the first table in the join queue, a temporary table is created.
+- 如果存在`ORDER BY`子句和不同的`GROUP BY`子句，或者`ORDER BY`或`GROUP BY`包含连接队列中第一个表以外的表中的列，则会创建临时表。
 
-- If you use the `SQL_SMALL_RESULT` modifier, MySQL uses an in-memory temporary table.
+- 如果使用`SQL_SMALL_RESULT`修饰符，MySQL将使用内存中的临时表。
 
-- Each table index is queried, and the best index is used unless the optimizer believes that it is more efficient to use a table scan. At one time, a scan was used based on whether the best index spanned more than 30% of the table, but a fixed percentage no longer determines the choice between using an index or a scan. The optimizer now is more complex and bases its estimate on additional factors such as table size, number of rows, and I/O block size.
+- 查询每个表索引，并使用最佳索引，除非优化器认为使用表扫描更有效。曾经有段时间，优化器会根据最佳索引是否能够跳过超过表的30％来决定是否使用表扫描，但如今固定百分比不再决定使用索引或表扫描之间的选择。优化器现在更复杂，并且基于其他因素（例如表大小，行数和I/O块大小）进行评估。
 
-- In some cases, MySQL can read rows from the index without even consulting the data file. If all columns used from the index are numeric, only the index tree is used to resolve the query.
+- 在某些情况下，MySQL甚至无需查询数据文件即可从索引中读取行。如果索引中使用的所有列都是数字，则仅使用索引树来解析查询。
 
-- Before each row is output, those that do not match the `HAVING` clause are skipped.
+- 在输出每一行之前，将跳过与`HAVING`子句不匹配的行。
 
-Some examples of queries that are very fast:
+一些执行非常快的查询示例：
 
 ```sql
 SELECT COUNT(*) FROM tbl_name;
@@ -204,7 +204,7 @@ SELECT ... FROM tbl_name
   ORDER BY key_part1 DESC, key_part2 DESC, ... LIMIT 10;
 ```
 
-MySQL resolves the following queries using only the index tree, assuming that the indexed columns are numeric:
+MySQL仅使用索引树解析以下查询，假设索引列是数字：
 
 ```sql
 SELECT key_part1,key_part2 FROM tbl_name WHERE key_part1=val;
