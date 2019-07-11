@@ -486,7 +486,7 @@ public class Author {
 
 你可以重写类型处理器或创建你自己的类型处理器来处理不支持的或非标准的类型。 具体做法为：实现 `org.apache.ibatis.type.TypeHandler` 接口， 或继承一个很便利的类 `org.apache.ibatis.type.BaseTypeHandler`， 然后可以选择性地将它映射到一个 JDBC 类型。比如：
 
-```
+```java
 // ExampleTypeHandler.java
 @MappedJdbcTypes(JdbcType.VARCHAR)
 public class ExampleTypeHandler extends BaseTypeHandler<String> {
@@ -513,7 +513,7 @@ public class ExampleTypeHandler extends BaseTypeHandler<String> {
 }
 ```
 
-```
+```xml
 <!-- mybatis-config.xml -->
 <typeHandlers>
   <typeHandler handler="org.mybatis.example.ExampleTypeHandler"/>
@@ -536,7 +536,7 @@ public class ExampleTypeHandler extends BaseTypeHandler<String> {
 
 最后，可以让 MyBatis 为你查找类型处理器：
 
-```
+```xml
 <!-- mybatis-config.xml -->
 <typeHandlers>
   <package name="org.mybatis.example"/>
@@ -547,7 +547,7 @@ public class ExampleTypeHandler extends BaseTypeHandler<String> {
 
 你可以创建一个能够处理多个类的泛型类型处理器。为了使用泛型类型处理器， 需要增加一个接受该类的 class 作为参数的构造器，这样在构造一个类型处理器的时候 MyBatis 就会传入一个具体的类。
 
-```
+```java
 //GenericTypeHandler.java
 public class GenericTypeHandler<E extends MyObject> extends BaseTypeHandler<E> {
 
@@ -572,7 +572,7 @@ public class GenericTypeHandler<E extends MyObject> extends BaseTypeHandler<E> {
 
 不过，我们可能不想存储名字，相反我们的 DBA 会坚持使用整形值代码。那也一样轻而易举： 在配置文件中把 `EnumOrdinalTypeHandler` 加到 `typeHandlers` 中即可， 这样每个 `RoundingMode` 将通过他们的序数值来映射成对应的整形数值。
 
-```
+```xml
 <!-- mybatis-config.xml -->
 <typeHandlers>
   <typeHandler handler="org.apache.ibatis.type.EnumOrdinalTypeHandler" javaType="java.math.RoundingMode"/>
@@ -585,7 +585,7 @@ public class GenericTypeHandler<E extends MyObject> extends BaseTypeHandler<E> {
 
 （下一节才开始介绍映射器文件，如果你是首次阅读该文档，你可能需要先跳过这里，过会再来看。）
 
-```
+```xml
 <!DOCTYPE mapper
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -631,7 +631,7 @@ public class GenericTypeHandler<E extends MyObject> extends BaseTypeHandler<E> {
 
 MyBatis 每次创建结果对象的新实例时，它都会使用一个对象工厂（ObjectFactory）实例来完成。 默认的对象工厂需要做的仅仅是实例化目标类，要么通过默认构造方法，要么在参数映射存在的时候通过参数构造方法来实例化。 如果想覆盖对象工厂的默认行为，则可以通过创建自己的对象工厂来实现。比如：
 
-```
+```java
 // ExampleObjectFactory.java
 public class ExampleObjectFactory extends DefaultObjectFactory {
   public Object create(Class type) {
@@ -648,7 +648,7 @@ public class ExampleObjectFactory extends DefaultObjectFactory {
   }}
 ```
 
-```
+```xml
 <!-- mybatis-config.xml -->
 <objectFactory type="org.mybatis.example.ExampleObjectFactory">
   <property name="someProperty" value="100"/>
@@ -670,7 +670,7 @@ MyBatis 允许你在已映射语句执行过程中的某一点进行拦截调用
 
 通过 MyBatis 提供的强大机制，使用插件是非常简单的，只需实现 Interceptor 接口，并指定想要拦截的方法签名即可。
 
-```
+```java
 // ExamplePlugin.java
 @Intercepts({@Signature(
   type= Executor.class,
@@ -688,7 +688,7 @@ public class ExamplePlugin implements Interceptor {
 }
 ```
 
-```
+```xml
 <!-- mybatis-config.xml -->
 <plugins>
   <plugin interceptor="org.mybatis.example.ExamplePlugin">
@@ -715,21 +715,21 @@ MyBatis 可以配置成适应多种环境，这种机制有助于将 SQL 映射�
 
 为了指定创建哪种环境，只要将它作为可选的参数传递给 SqlSessionFactoryBuilder 即可。可以接受环境配置的两个方法签名是：
 
-```
+```java
 SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, environment);
 SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, environment, properties);
 ```
 
 如果忽略了环境参数，那么默认环境将会被加载，如下所示：
 
-```
+```java
 SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader);
 SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, properties);
 ```
 
 环境元素定义了如何配置环境。
 
-```
+```xml
 <environments default="development">
   <environment id="development">
     <transactionManager type="JDBC">
@@ -762,7 +762,7 @@ SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, propert
 
 - MANAGED – 这个配置几乎没做什么。它从来不提交或回滚一个连接，而是让容器来管理事务的整个生命周期（比如 JEE 应用服务器的上下文）。 默认情况下它会关闭连接，然而一些容器并不希望这样，因此需要将 closeConnection 属性设置为 false 来阻止它默认的关闭行为。例如:
 
-  ```
+  ```xml
   <transactionManager type="MANAGED">
     <property name="closeConnection" value="false"/>
   </transactionManager>
@@ -772,7 +772,7 @@ SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(reader, propert
 
 这两种事务管理器类型都不需要设置任何属性。它们其实是类型别名，换句话说，你可以使用 TransactionFactory 接口的实现类的完全限定名或类型别名代替它们。
 
-```
+```java
 public interface TransactionFactory {
   void setProperties(Properties props);
   Transaction newTransaction(Connection conn);
@@ -782,7 +782,7 @@ public interface TransactionFactory {
 
 任何在 XML 中配置的属性在实例化之后将会被传递给 setProperties() 方法。你也需要创建一个 Transaction 接口的实现类，这个接口也很简单：
 
-```
+```java
 public interface Transaction {
   Connection getConnection() throws SQLException;
   void commit() throws SQLException;
@@ -842,7 +842,7 @@ dataSource 元素使用标准的 JDBC 数据源接口来配置 JDBC 连接对象
 
 你可以通过实现接口 `org.apache.ibatis.datasource.DataSourceFactory` 来使用第三方数据源：
 
-```
+```java
 public interface DataSourceFactory {
   void setProperties(Properties props);
   DataSource getDataSource();
@@ -851,7 +851,7 @@ public interface DataSourceFactory {
 
 `org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory` 可被用作父类来构建新的数据源适配器，比如下面这段插入 C3P0 数据源所必需的代码：
 
-```
+```java
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
@@ -865,7 +865,7 @@ public class C3P0DataSourceFactory extends UnpooledDataSourceFactory {
 
 为了令其工作，记得为每个希望 MyBatis 调用的 setter 方法在配置文件中增加对应的属性。 下面是一个可以连接至 PostgreSQL 数据库的例子：
 
-```
+```xml
 <dataSource type="org.myproject.C3P0DataSourceFactory">
   <property name="driver" value="org.postgresql.Driver"/>
   <property name="url" value="jdbc:postgresql:mydb"/>
@@ -878,13 +878,13 @@ public class C3P0DataSourceFactory extends UnpooledDataSourceFactory {
 
 MyBatis 可以根据不同的数据库厂商执行不同的语句，这种多厂商的支持是基于映射语句中的 `databaseId` 属性。 MyBatis 会加载不带 `databaseId` 属性和带有匹配当前数据库 `databaseId` 属性的所有语句。 如果同时找到带有 `databaseId` 和不带 `databaseId` 的相同语句，则后者会被舍弃。 为支持多厂商特性只要像下面这样在 mybatis-config.xml 文件中加入 `databaseIdProvider` 即可：
 
-```
+```xml
 <databaseIdProvider type="DB_VENDOR" />
 ```
 
 DB_VENDOR 对应的 databaseIdProvider 实现会将 databaseId 设置为 `DatabaseMetaData#getDatabaseProductName()` 返回的字符串。 由于通常情况下这些字符串都非常长而且相同产品的不同版本会返回不同的值，所以你可能想通过设置属性别名来使其变短，如下：
 
-```
+```xml
 <databaseIdProvider type="DB_VENDOR">
   <property name="SQL Server" value="sqlserver"/>
   <property name="DB2" value="db2"/>
@@ -896,7 +896,7 @@ DB_VENDOR 对应的 databaseIdProvider 实现会将 databaseId 设置为 `Databa
 
 你可以通过实现接口 `org.apache.ibatis.mapping.DatabaseIdProvider` 并在 mybatis-config.xml 中注册来构建自己的 DatabaseIdProvider：
 
-```
+```java
 public interface DatabaseIdProvider {
   void setProperties(Properties p);
   String getDatabaseId(DataSource dataSource) throws SQLException;
@@ -907,7 +907,7 @@ public interface DatabaseIdProvider {
 
 既然 MyBatis 的行为已经由上述元素配置完了，我们现在就要定义 SQL 映射语句了。 但是首先我们需要告诉 MyBatis 到哪里去找到这些语句。 Java 在自动查找这方面没有提供一个很好的方法，所以最佳的方式是告诉 MyBatis 到哪里去找映射文件。 你可以使用相对于类路径的资源引用， 或完全限定资源定位符（包括 `file:///` 的 URL），或类名和包名等。例如：
 
-```
+```xml
 <!-- 使用相对于类路径的资源引用 -->
 <mappers>
   <mapper resource="org/mybatis/builder/AuthorMapper.xml"/>
@@ -916,7 +916,7 @@ public interface DatabaseIdProvider {
 </mappers>
 ```
 
-```
+```xml
 <!-- 使用完全限定资源定位符（URL） -->
 <mappers>
   <mapper url="file:///var/mappers/AuthorMapper.xml"/>
@@ -925,7 +925,7 @@ public interface DatabaseIdProvider {
 </mappers>
 ```
 
-```
+```xml
 <!-- 使用映射器接口实现类的完全限定类名 -->
 <mappers>
   <mapper class="org.mybatis.builder.AuthorMapper"/>
@@ -962,7 +962,7 @@ SQL 映射文件只有很少的几个顶级元素（按照应被定义的顺序�
 
 查询语句是 MyBatis 中最常用的元素之一，光能把数据存到数据库中价值并不大，只有还能重新取出来才有用，多数应用也都是查询比修改要频繁。对每个插入、更新或删除操作，通常间隔多个查询操作。这是 MyBatis 的基本原则之一，也是将焦点和努力放在查询和结果映射的原因。简单查询的 select 元素是非常简单的。比如：
 
-```
+```xml
 <select id="selectPerson" parameterType="int" resultType="hashmap">
   SELECT * FROM PERSON WHERE ID = #{id}
 </select>
@@ -978,7 +978,7 @@ SQL 映射文件只有很少的几个顶级元素（按照应被定义的顺序�
 
 这就告诉 MyBatis 创建一个预处理语句（PreparedStatement）参数，在 JDBC 中，这样的一个参数在 SQL 中会由一个“?”来标识，并被传递到一个新的预处理语句中，就像这样：
 
-```
+```java
 // 近似的 JDBC 代码，非 MyBatis 代码...
 String selectPerson = "SELECT * FROM PERSON WHERE ID=?";
 PreparedStatement ps = conn.prepareStatement(selectPerson);
@@ -989,7 +989,7 @@ ps.setInt(1,id);
 
 select 元素允许你配置很多属性来配置每条语句的作用细节。
 
-```
+```xml
 <select
   id="selectPerson"
   parameterType="int"
@@ -1025,7 +1025,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 数据变更语句 insert，update 和 delete 的实现非常接近：
 
-```
+```xml
 <insert
   id="insertAuthor"
   parameterType="domain.blog.Author"
@@ -1066,7 +1066,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 下面就是 insert，update 和 delete 语句的示例：
 
-```
+```xml
 <insert id="insertAuthor">
   insert into Author (id,username,password,email,bio)
   values (#{id},#{username},#{password},#{email},#{bio})
@@ -1090,7 +1090,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 首先，如果你的数据库支持自动生成主键的字段（比如 MySQL 和 SQL Server），那么你可以设置 useGeneratedKeys=”true”，然后再把 keyProperty 设置到目标属性上就 OK 了。例如，如果上面的 Author 表已经对 id 使用了自动生成的列类型，那么语句可以修改为：
 
-```
+```xml
 <insert id="insertAuthor" useGeneratedKeys="true"
     keyProperty="id">
   insert into Author (username,password,email,bio)
@@ -1100,7 +1100,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 如果你的数据库还支持多行插入, 你也可以传入一个 `Author` 数组或集合，并返回自动生成的主键。
 
-```
+```xml
 <insert id="insertAuthor" useGeneratedKeys="true"
     keyProperty="id">
   insert into Author (username, password, email, bio) values
@@ -1114,7 +1114,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 这里有一个简单（甚至很傻）的示例，它可以生成一个随机 ID（你最好不要这么做，但这里展示了 MyBatis 处理问题的灵活性及其所关心的广度）：
 
-```
+```xml
 <insert id="insertAuthor">
   <selectKey keyProperty="id" resultType="int" order="BEFORE">
     select CAST(RANDOM()*1000000 as INTEGER) a from SYSIBM.SYSDUMMY1
@@ -1130,7 +1130,7 @@ select 元素允许你配置很多属性来配置每条语句的作用细节。
 
 selectKey 元素描述如下：
 
-```
+```xml
 <selectKey
   keyProperty="id"
   resultType="int"
@@ -1150,13 +1150,13 @@ selectKey 元素描述如下：
 
 这个元素可以被用来定义可重用的 SQL 代码段，这些 SQL 代码可以被包含在其他语句中。它可以（在加载的时候）被静态地设置参数。 在不同的包含语句中可以设置不同的值到参数占位符上。比如：
 
-```
+```xml
 <sql id="userColumns"> ${alias}.id,${alias}.username,${alias}.password </sql>
 ```
 
 这个 SQL 片段可以被包含在其他语句中，例如：
 
-```
+```xml
 <select id="selectUsers" resultType="map">
   select
     <include refid="userColumns"><property name="alias" value="t1"/></include>,
@@ -1168,7 +1168,7 @@ selectKey 元素描述如下：
 
 属性值也可以被用在 include 元素的 refid 属性里或 include 元素的内部语句中，例如：
 
-```
+```xml
 <sql id="sometable">
   ${prefix}Table
 </sql>
@@ -1192,7 +1192,7 @@ selectKey 元素描述如下：
 
 你之前见到的所有语句中，使用的都是简单参数。实际上参数是 MyBatis 非常强大的元素。对于简单的使用场景，大约 90% 的情况下你都不需要使用复杂的参数，比如：
 
-```
+```xml
 <select id="selectUsers" resultType="User">
   select id, username, password
   from users
@@ -1202,7 +1202,7 @@ selectKey 元素描述如下：
 
 上面的这个示例说明了一个非常简单的命名参数映射。参数类型被设置为 `int`，这样这个参数就可以被设置成任何内容。原始类型或简单数据类型（比如 `Integer` 和 `String`）因为没有相关属性，它会完全用参数值来替代。 然而，如果传入一个复杂的对象，行为就会有一点不同了。比如：
 
-```
+```xml
 <insert id="insertUser" parameterType="User">
   insert into users (id, username, password)
   values (#{id}, #{username}, #{password})
@@ -1269,7 +1269,7 @@ ORDER BY ${columnName}
 
 当 SQL 语句中的元数据（如表名或列名）是动态生成的时候，字符串替换将会非常有用。 举个例子，如果你想通过任何一列从表中 `select` 数据时，不需要像下面这样写：
 
-```
+```java
 @Select("select * from user where id = #{id}")
 User findById(@Param("id") long id);
 
@@ -1282,30 +1282,15 @@ User findByEmail(@Param("email") String email);
 // and more "findByXxx" method
 ```
 
-```
+可以只写这样一个方法：
+```java
 @Select("select * from user where ${column} = #{value}")
 User findByColumn(@Param("column") String column, @Param("value") String value);
 ```
 
- 
+其中 ${column} 会被直接替换，而 #{value} 会被使用 ? 预处理。 因此你就可以像下面这样来达到上述功能：
 
-${column}
-
- 
-
- 
-
-\#{value}
-
- 
-
- 
-
-?
-
- 
-
-```
+```java
 User userOfId1 = userMapper.findByColumn("id", 1L);
 User userOfNameKid = userMapper.findByColumn("name", "kid");
 User userOfEmail = userMapper.findByColumn("email", "noone@nowhere.com");
@@ -1321,7 +1306,7 @@ User userOfEmail = userMapper.findByColumn("email", "noone@nowhere.com");
 
 你已经见过简单映射语句的示例了，但并没有显式指定 `resultMap`。比如：
 
-```
+```xml
 <select id="selectUsers" resultType="map">
   select id, username, hashedPassword
   from some_table
@@ -1331,7 +1316,7 @@ User userOfEmail = userMapper.findByColumn("email", "noone@nowhere.com");
 
 上述语句只是简单地将所有的列映射到 `HashMap` 的键上，这由 `resultType` 属性指定。虽然在大部分情况下都够用，但是 HashMap 不是一个很好的领域模型。你的程序更可能会使用 JavaBean 或 POJO（Plain Old Java Objects，普通老式 Java 对象）作为领域模型。MyBatis 对两者都提供了支持。看看下面这个 JavaBean：
 
-```
+```java
 package com.someapp.model;
 public class User {
   private int id;
@@ -1363,7 +1348,7 @@ public class User {
 
 这样的一个 JavaBean 可以被映射到 `ResultSet`，就像映射到 `HashMap` 一样简单。
 
-```
+```xml
 <select id="selectUsers" resultType="com.someapp.model.User">
   select id, username, hashedPassword
   from some_table
@@ -1387,7 +1372,7 @@ public class User {
 
 这些情况下，MyBatis 会在幕后自动创建一个 `ResultMap`，再基于属性名来映射列到 JavaBean 的属性上。如果列名和属性名没有精确匹配，可以在 SELECT 语句中对列使用别名（这是一个基本的 SQL 特性）来匹配标签。比如：
 
-```
+```xml
 <select id="selectUsers" resultType="User">
   select
     user_id             as "id",
