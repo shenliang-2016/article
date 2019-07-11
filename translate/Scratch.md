@@ -39,12 +39,15 @@ public class AppConfig {
 </beans>
 ```
 
-> Full @Configuration vs “lite” @Bean mode?
+> 完整的`@Configuration` VS “精简的” `@Bean`模式？
 >
-> When `@Bean` methods are declared within classes that are not annotated with `@Configuration`, they are referred to as being processed in a “lite” mode. Bean methods declared in a `@Component` or even in a plain old class are considered to be “lite”, with a different primary purpose of the containing class and a `@Bean` method being a sort of bonus there. For example, service components may expose management views to the container through an additional `@Bean` method on each applicable component class. In such scenarios, `@Bean` methods are a general-purpose factory method mechanism.
+> 当`@Bean`方法在未使用`@Configuration`注解修饰的类中声明时，它们被称为以“精简”模式处理。在`@Component`或甚至普通旧类中声明的Bean方法被认为是“精简的”，包含类的主要目的不同，而`@Bean`方法在那里更像是是一种奖励。例如，服务组件可以通过每个适用的组件类上的附加`@Bean`方法将管理视图公开给容器。在这种情况下，`@Bean`方法是一种通用的工厂方法机制。
 >
-> Unlike full `@Configuration`, lite `@Bean` methods cannot declare inter-bean dependencies. Instead, they operate on their containing component’s internal state and, optionally, on arguments that they may declare. Such a `@Bean` method should therefore not invoke other `@Bean` methods. Each such method is literally only a factory method for a particular bean reference, without any special runtime semantics. The positive side-effect here is that no CGLIB subclassing has to be applied at runtime, so there are no limitations in terms of class design (that is, the containing class may be `final` and so forth).
+> 与完整的`@Configuration`不同，精简的`@Bean`方法不能声明bean间依赖关系。相反，它们对其包含组件的内部状态进行操作，并且可选地，对它们可以声明的参数进行操作。因此，这样的`@Bean`方法不应该调用其他`@Bean`方法。每个这样的方法实际上只是特定bean引用的工厂方法，没有任何特殊的运行时语义。这里所谓的积极副作用是不必在运行时应用CGLIB子类，因此在类设计方面没有限制（即，包含类可能是`final`的，等等）。
 >
-> In common scenarios, `@Bean` methods are to be declared within `@Configuration` classes, ensuring that “full” mode is always used and that cross-method references therefore get redirected to the container’s lifecycle management. This prevents the same `@Bean` method from accidentally being invoked through a regular Java call, which helps to reduce subtle bugs that can be hard to track down when operating in “lite” mode.
+> 在常见的场景中，`@Bean`方法将在`@Configuration`类中声明，确保始终使用“完整”模式，并因此将交叉方法引用重定向到容器的生命周期管理。这可以防止通过常规Java调用意外地调用相同的`@Bean`方法，这有助于减少在“精简”模式下操作时难以跟踪的细微错误。
 
 The `@Bean` and `@Configuration` annotations are discussed in depth in the following sections. First, however, we cover the various ways of creating a spring container using by Java-based configuration.
+
+`@Bean`和`@Configuration`注解将在以下部分中进行深入讨论。首先，我们将介绍使用基于Java的配置创建 Spring 容器的各种方法。
+
