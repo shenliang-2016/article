@@ -1358,7 +1358,7 @@ public class User {
 
 类型别名是你的好帮手。使用它们，你就可以不用输入类的完全限定名称了。比如：
 
-```
+```xml
 <!-- mybatis-config.xml 中 -->
 <typeAlias type="com.someapp.model.User" alias="User"/>
 
@@ -1385,7 +1385,7 @@ public class User {
 
 `ResultMap` 最优秀的地方在于，虽然你已经对它相当了解了，但是根本就不需要显式地用到他们。 上面这些简单的示例根本不需要下面这些繁琐的配置。 但出于示范的原因，让我们来看看最后一个示例中，如果使用外部的 `resultMap` 会怎样，这也是解决列名不匹配的另外一种方式。
 
-```
+```xml
 <resultMap id="userResultMap" type="User">
   <id property="id" column="user_id" />
   <result property="username" column="user_name"/>
@@ -1395,7 +1395,7 @@ public class User {
 
 而在引用它的语句中使用 `resultMap` 属性就行了（注意我们去掉了 `resultType` 属性）。比如:
 
-```
+```xml
 <select id="selectUsers" resultMap="userResultMap">
   select user_id, user_name, hashed_password
   from some_table
@@ -1411,7 +1411,7 @@ MyBatis 创建时的一个思想是：数据库不可能永远是你所想或所
 
 比如，我们如何映射下面这个语句？
 
-```
+```xml
 <!-- 非常复杂的语句 -->
 <select id="selectBlogDetails" resultMap="detailedBlogResultMap">
   select
@@ -1450,7 +1450,7 @@ MyBatis 创建时的一个思想是：数据库不可能永远是你所想或所
 
 你可能想把它映射到一个智能的对象模型，这个对象表示了一篇博客，它由某位作者所写，有很多的博文，每篇博文有零或多条的评论和标签。 我们来看看下面这个完整的例子，它是一个非常复杂的结果映射（假设作者，博客，博文，评论和标签都是类型别名）。 不用紧张，我们会一步一步来说明。虽然它看起来令人望而生畏，但其实非常简单。
 
-```
+```xml
 <!-- 非常复杂的结果映射 -->
 <resultMap id="detailedBlogResultMap" type="Blog">
   <constructor>
@@ -1486,46 +1486,27 @@ MyBatis 创建时的一个思想是：数据库不可能永远是你所想或所
 
 #### 结果映射（resultMap）
 
-- constructor
+- constructo - 用于在实例化类时，注入结果到构造方法中
 
-
-  \- 用于在实例化类时，注入结果到构造方法中
-
-  - `idArg` - ID 参数；标记出作为 ID 的结果可以帮助提高整体性能
-  - `arg` - 将被注入到构造方法的一个普通结果
+    - `idArg` - ID 参数；标记出作为 ID 的结果可以帮助提高整体性能
+    - `arg` - 将被注入到构造方法的一个普通结果
 
 - `id` – 一个 ID 结果；标记出作为 ID 的结果可以帮助提高整体性能
 
 - `result` – 注入到字段或 JavaBean 属性的普通结果
 
-- association
+- association – 一个复杂类型的关联；许多结果将包装成这种类型
 
+    - 嵌套结果映射 – 关联本身可以是一个 `resultMap` 元素，或者从别处引用一个
 
-  – 一个复杂类型的关联；许多结果将包装成这种类型
+- collection  – 一个复杂类型的集合
 
-  - 嵌套结果映射 – 关联本身可以是一个 `resultMap` 元素，或者从别处引用一个
+    - 嵌套结果映射 – 集合本身可以是一个 `resultMap` 元素，或者从别处引用一个
 
-- collection
+- discriminator  – 使用结果值来决定使用哪个  resultMap
 
-
-  – 一个复杂类型的集合
-
-  - 嵌套结果映射 – 集合本身可以是一个 `resultMap` 元素，或者从别处引用一个
-
-- discriminator
-
-
-  – 使用结果值来决定使用哪个
-
-   
-
-  resultMap
-
-  - case
-
-
-    – 基于某些值的结果映射
-
+    - case – 基于某些值的结果映射
+    
     - 嵌套结果映射 – `case` 本身可以是一个 `resultMap` 元素，因此可以具有相同的结构和元素，或者从别处引用一个
 
 | 属性            | 描述                                       |
@@ -1540,7 +1521,7 @@ MyBatis 创建时的一个思想是：数据库不可能永远是你所想或所
 
 #### id & result
 
-```
+```xml
 <id property="id" column="post_id"/>
 <result property="subject" column="post_subject"/>
 ```
@@ -1576,7 +1557,7 @@ MyBatis 创建时的一个思想是：数据库不可能永远是你所想或所
 
 看看下面这个构造方法:
 
-```
+```java
 public class User {
    //...
    public User(Integer id, String username, int age) {
@@ -1588,7 +1569,7 @@ public class User {
 
 为了将结果注入构造方法，MyBatis 需要通过某种方式定位相应的构造方法。 在下面的例子中，MyBatis 搜索一个声明了三个形参的的构造方法，参数类型以 `java.lang.Integer`, `java.lang.String` 和 `int` 的顺序给出。
 
-```
+```xml
 <constructor>
    <idArg column="id" javaType="int"/>
    <arg column="username" javaType="String"/>
@@ -1598,7 +1579,7 @@ public class User {
 
 当你在处理一个带有多个形参的构造方法时，很容易搞乱 arg 元素的顺序。 从版本 3.4.3 开始，可以在指定参数名称的前提下，以任意顺序编写 arg 元素。 为了通过名称来引用构造方法参数，你可以添加 `@Param` 注解，或者使用 '-parameters' 编译选项并启用 `useActualParamName` 选项（默认开启）来编译项目。下面是一个等价的例子，尽管函数签名中第二和第三个形参的顺序与 constructor 元素中参数声明的顺序不匹配。
 
-```
+```xml
 <constructor>
    <idArg column="id" javaType="int" name="id" />
    <arg column="age" javaType="_int" name="age" />
@@ -1622,7 +1603,7 @@ public class User {
 
 #### 关联
 
-```
+```xml
 <association property="author" column="blog_author_id" javaType="Author">
   <id property="id" column="author_id"/>
   <result property="username" column="author_username"/>
@@ -1655,7 +1636,7 @@ public class User {
 
 示例：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <association property="author" column="author_id" javaType="Author" select="selectAuthor"/>
 </resultMap>
@@ -1695,7 +1676,7 @@ public class User {
 
 之前，你已经看到了一个非常复杂的嵌套关联的例子。 下面的例子则是一个非常简单的例子，用于演示嵌套结果映射如何工作。 现在我们将博客表和作者表连接在一起，而不是执行一个独立的查询语句，就像这样：
 
-```
+```xml
 <select id="selectBlog" resultMap="blogResult">
   select
     B.id            as blog_id,
@@ -1713,7 +1694,7 @@ public class User {
 
 注意查询中的连接，以及为确保结果能够拥有唯一且清晰的名字，我们设置的别名。 这使得进行映射非常简单。现在我们可以映射这个结果：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="blog_id" />
   <result property="title" column="blog_title"/>
@@ -1735,7 +1716,7 @@ public class User {
 
 现在，上面的示例使用了外部的结果映射元素来映射关联。这使得 Author 的结果映射可以被重用。 然而，如果你不打算重用它，或者你更喜欢将你所有的结果映射放在一个具有描述性的结果映射元素中。 你可以直接将结果映射作为子元素嵌套在内。这里给出使用这种方式的等效例子：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="blog_id" />
   <result property="title" column="blog_title"/>
@@ -1751,7 +1732,7 @@ public class User {
 
 那如果博客（blog）有一个共同作者（co-author）该怎么办？select 语句看起来会是这样的：
 
-```
+```xml
 <select id="selectBlog" resultMap="blogResult">
   select
     B.id            as blog_id,
@@ -1775,7 +1756,7 @@ public class User {
 
 回忆一下，Author 的结果映射定义如下：
 
-```
+```xml
 <resultMap id="authorResult" type="Author">
   <id property="id" column="author_id"/>
   <result property="username" column="author_username"/>
@@ -1787,7 +1768,7 @@ public class User {
 
 由于结果中的列名与结果映射中的列名不同。你需要指定 `columnPrefix` 以便重复使用该结果映射来映射 co-author 的结果。
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="blog_id" />
   <result property="title" column="blog_title"/>
@@ -1813,7 +1794,7 @@ public class User {
 
 在例子中，存储过程执行下面的查询并返回两个结果集。第一个结果集会返回博客（Blog）的结果，第二个则返回作者（Author）的结果。
 
-```
+```sql
 SELECT * FROM BLOG WHERE ID = #{id}
 
 SELECT * FROM AUTHOR WHERE ID = #{id}
@@ -1821,7 +1802,7 @@ SELECT * FROM AUTHOR WHERE ID = #{id}
 
 在映射语句中，必须通过 `resultSets` 属性为每个结果集指定一个名字，多个名字使用逗号隔开。
 
-```
+```xml
 <select id="selectBlog" resultSets="blogs,authors" resultMap="blogResult" statementType="CALLABLE">
   {call getBlogsAndAuthors(#{id,jdbcType=INTEGER,mode=IN})}
 </select>
@@ -1829,7 +1810,7 @@ SELECT * FROM AUTHOR WHERE ID = #{id}
 
 现在我们可以指定使用 “authors” 结果集的数据来填充 “author” 关联：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="id" />
   <result property="title" column="title"/>
@@ -1847,7 +1828,7 @@ SELECT * FROM AUTHOR WHERE ID = #{id}
 
 #### 集合
 
-```
+```xml
 <collection property="posts" ofType="domain.blog.Post">
   <id property="id" column="post_id"/>
   <result property="subject" column="post_subject"/>
@@ -1859,7 +1840,7 @@ SELECT * FROM AUTHOR WHERE ID = #{id}
 
 我们来继续上面的示例，一个博客（Blog）只有一个作者（Author)。但一个博客有很多文章（Post)。 在博客类中，这可以用下面的写法来表示：
 
-```
+```java
 private List<Post> posts;
 ```
 
@@ -1869,7 +1850,7 @@ private List<Post> posts;
 
 首先，让我们看看如何使用嵌套 Select 查询来为博客加载文章。
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <collection property="posts" javaType="ArrayList" column="id" ofType="Post" select="selectPostsForBlog"/>
 </resultMap>
@@ -1885,7 +1866,7 @@ private List<Post> posts;
 
 你可能会立刻注意到几个不同，但大部分都和我们上面学习过的关联元素非常相似。 首先，你会注意到我们使用的是集合元素。 接下来你会注意到有一个新的 “ofType” 属性。这个属性非常重要，它用来将 JavaBean（或字段）属性的类型和集合存储的类型区分开来。 所以你可以按照下面这样来阅读映射：
 
-```
+```xml
 <collection property="posts" javaType="ArrayList" column="id" ofType="Post" select="selectPostsForBlog"/>
 ```
 
@@ -1893,7 +1874,7 @@ private List<Post> posts;
 
 在一般情况下，MyBatis 可以推断 javaType 属性，因此并不需要填写。所以很多时候你可以简略成：
 
-```
+```xml
 <collection property="posts" column="id" ofType="Post" select="selectPostsForBlog"/>
 ```
 
@@ -1903,7 +1884,7 @@ private List<Post> posts;
 
 首先, 让我们看看对应的 SQL 语句：
 
-```
+```xml
 <select id="selectBlog" resultMap="blogResult">
   select
   B.id as blog_id,
@@ -1920,7 +1901,7 @@ private List<Post> posts;
 
 我们再次连接了博客表和文章表，并且为每一列都赋予了一个有意义的别名，以便映射保持简单。 要映射博客里面的文章集合，就这么简单：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="blog_id" />
   <result property="title" column="blog_title"/>
@@ -1936,7 +1917,7 @@ private List<Post> posts;
 
 如果你喜欢更详略的、可重用的结果映射，你可以使用下面的等价形式：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="blog_id" />
   <result property="title" column="blog_title"/>
@@ -1954,7 +1935,7 @@ private List<Post> posts;
 
 像关联元素那样，我们可以通过执行存储过程实现，它会执行两个查询并返回两个结果集，一个是博客的结果集，另一个是文章的结果集：
 
-```
+```sql
 SELECT * FROM BLOG WHERE ID = #{id}
 
 SELECT * FROM POST WHERE BLOG_ID = #{id}
@@ -1962,7 +1943,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 在映射语句中，必须通过 `resultSets` 属性为每个结果集指定一个名字，多个名字使用逗号隔开。
 
-```
+```xml
 <select id="selectBlog" resultSets="blogs,posts" resultMap="blogResult">
   {call getBlogsAndPosts(#{id,jdbcType=INTEGER,mode=IN})}
 </select>
@@ -1970,7 +1951,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 我们指定 “posts” 集合将会使用存储在 “posts” 结果集中的数据进行填充：
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <id property="id" column="id" />
   <result property="title" column="title"/>
@@ -1988,7 +1969,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 #### 鉴别器
 
-```
+```xml
 <discriminator javaType="int" column="draft">
   <case value="1" resultType="DraftPost"/>
 </discriminator>
@@ -1998,7 +1979,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 一个鉴别器的定义需要指定 column 和 javaType 属性。column 指定了 MyBatis 查询被比较值的地方。 而 javaType 用来确保使用正确的相等测试（虽然很多情况下字符串的相等测试都可以工作）。例如：
 
-```
+```xml
 <resultMap id="vehicleResult" type="Vehicle">
   <id property="id" column="id" />
   <result property="vin" column="vin"/>
@@ -2017,7 +1998,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 在这个示例中，MyBatis 会从结果集中得到每条记录，然后比较它的 vehicle type 值。 如果它匹配任意一个鉴别器的 case，就会使用这个 case 指定的结果映射。 这个过程是互斥的，也就是说，剩余的结果映射将被忽略（除非它是扩展的，我们将在稍后讨论它）。 如果不能匹配任何一个 case，MyBatis 就只会使用鉴别器块外定义的结果映射。 所以，如果 carResult 的声明如下：
 
-```
+```xml
 <resultMap id="carResult" type="Car">
   <result property="doorCount" column="door_count" />
 </resultMap>
@@ -2025,7 +2006,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 那么只有 doorCount 属性会被加载。这是为了即使鉴别器的 case 之间都能分为完全独立的一组，尽管和父结果映射可能没有什么关系。在上面的例子中，我们当然知道 cars 和 vehicles 之间有关系，也就是 Car 是一个 Vehicle。因此，我们希望剩余的属性也能被加载。而这只需要一个小修改。
 
-```
+```xml
 <resultMap id="carResult" type="Car" extends="vehicleResult">
   <result property="doorCount" column="door_count" />
 </resultMap>
@@ -2035,7 +2016,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 可能有人又会觉得映射的外部定义有点太冗长了。 因此，对于那些更喜欢简洁的映射风格的人来说，还有另一种语法可以选择。例如：
 
-```
+```xml
 <resultMap id="vehicleResult" type="Vehicle">
   <id property="id" column="id" />
   <result property="vin" column="vin"/>
@@ -2073,7 +2054,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 甚至在提供了结果映射后，自动映射也能工作。在这种情况下，对于每一个结果映射，在 ResultSet 出现的列，如果没有设置手动映射，将被自动映射。在自动映射处理完毕后，再处理手动映射。 在下面的例子中，*id* 和 *userName* 列将被自动映射，*hashed_password* 列将根据配置进行映射。
 
-```
+```xml
 <select id="selectUsers" resultMap="userResultMap">
   select
     user_id             as "id",
@@ -2084,7 +2065,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 </select>
 ```
 
-```
+```xml
 <resultMap id="userResultMap" type="User">
   <result property="password" column="hashed_password"/>
 </resultMap>
@@ -2098,7 +2079,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 默认值是 `PARTIAL`，这是有原因的。当对连接查询的结果使用 `FULL` 时，连接查询会在同一行中获取多个不同实体的数据，因此可能导致非预期的映射。 下面的例子将展示这种风险：
 
-```
+```xml
 <select id="selectBlog" resultMap="blogResult">
   select
     B.id,
@@ -2109,7 +2090,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 </select>
 ```
 
-```
+```xml
 <resultMap id="blogResult" type="Blog">
   <association property="author" resultMap="authorResult"/>
 </resultMap>
@@ -2123,7 +2104,7 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 
 无论设置的自动映射等级是哪种，你都可以通过在结果映射上设置 `autoMapping` 属性来为指定的结果映射设置启用/禁用自动映射。
 
-```
+```xml
 <resultMap id="userResultMap" type="User" autoMapping="false">
   <result property="password" column="hashed_password"/>
 </resultMap>
@@ -2135,7 +2116,7 @@ MyBatis 内置了一个强大的事务性查询缓存机制，它可以非常方
 
 默认情况下，只启用了本地的会话缓存，它仅仅对一个会话中的数据进行缓存。 要启用全局的二级缓存，只需要在你的 SQL 映射文件中添加一行：
 
-```
+```xml
 <cache/>
 ```
 
@@ -2152,7 +2133,7 @@ MyBatis 内置了一个强大的事务性查询缓存机制，它可以非常方
 
 这些属性可以通过 cache 元素的属性来修改。比如：
 
-```
+```xml
 <cache
   eviction="FIFO"
   flushInterval="60000"
@@ -2183,13 +2164,13 @@ readOnly（只读）属性可以被设置为 true 或 false。只读的缓存会
 
 除了上述自定义缓存的方式，你也可以通过实现你自己的缓存，或为其他第三方缓存方案创建适配器，来完全覆盖缓存行为。
 
-```
+```xml
 <cache type="com.domain.something.MyCustomCache"/>
 ```
 
 这个示例展示了如何使用一个自定义的缓存实现。type 属性指定的类必须实现 org.mybatis.cache.Cache 接口，且提供一个接受 String 参数作为 id 的构造器。 这个接口是 MyBatis 框架中许多复杂的接口之一，但是行为却非常简单。
 
-```
+```java
 public interface Cache {
   String getId();
   int getSize();
@@ -2203,7 +2184,7 @@ public interface Cache {
 
 为了对你的缓存进行配置，只需要简单地在你的缓存实现中添加公有的 JavaBean 属性，然后通过 cache 元素传递属性值，例如，下面的例子将在你的缓存实现上调用一个名为 `setCacheFile(String file)` 的方法：
 
-```
+```xml
 <cache type="com.domain.something.MyCustomCache">
   <property name="cacheFile" value="/tmp/my-custom-cache.tmp"/>
 </cache>
@@ -2213,7 +2194,7 @@ public interface Cache {
 
 从版本 3.4.2 开始，MyBatis 已经支持在所有属性设置完毕之后，调用一个初始化方法。 如果想要使用这个特性，请在你的自定义缓存类里实现 `org.apache.ibatis.builder.InitializingObject` 接口。
 
-```
+```java
 public interface InitializingObject {
   void initialize() throws Exception;
 }
@@ -2223,7 +2204,7 @@ public interface InitializingObject {
 
 请注意，缓存的配置和缓存实例会被绑定到 SQL 映射文件的命名空间中。 因此，同一命名空间中的所有语句和缓存将通过命名空间绑定在一起。 每条语句可以自定义与缓存交互的方式，或将它们完全排除于缓存之外，这可以通过在每条语句上使用两个简单属性来达成。 默认情况下，语句会这样来配置：
 
-```
+```xml
 <select ... flushCache="false" useCache="true"/>
 <insert ... flushCache="true"/>
 <update ... flushCache="true"/>
@@ -2236,21 +2217,15 @@ public interface InitializingObject {
 
 回想一下上一节的内容，对某一命名空间的语句，只会使用该命名空间的缓存进行缓存或刷新。 但你可能会想要在多个命名空间中共享相同的缓存配置和实例。要实现这种需求，你可以使用 cache-ref 元素来引用另一个缓存。
 
-```
+```xml
 <cache-ref namespace="com.someone.application.data.SomeMapper"/>
 ```
 
 ## 动态 SQL
 
-​     
-
 MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC 或其它类似框架的经验，你就能体会到根据不同条件拼接 SQL 语句的痛苦。例如拼接时要确保不能忘记添加必要的空格，还要注意去掉列表最后一个列名的逗号。利用动态 SQL 这一特性可以彻底摆脱这种痛苦。
 
-​     
-
 虽然在以前使用动态 SQL 并非一件易事，但正是 MyBatis 提供了可以被用在任意 SQL 映射语句中的强大的动态 SQL 语言得以改进这种情形。
-
-​     
 
 动态 SQL 元素和 JSTL 或基于类似 XML 的文本处理器相似。在 MyBatis 之前的版本中，有很多元素需要花时间了解。MyBatis 3 大大精简了元素种类，现在只需学习原来一半的元素便可。MyBatis 采用功能强大的基于 OGNL 的表达式来淘汰其它大部分元素。
 
@@ -2263,7 +2238,7 @@ MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC �
 
 动态 SQL 通常要做的事情是根据条件包含 where 子句的一部分。比如：
 
-```
+```xml
 <select id="findActiveBlogWithTitleLike"
      resultType="Blog">
   SELECT * FROM BLOG
@@ -2278,7 +2253,7 @@ MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC �
 
 如果希望通过“title”和“author”两个参数进行可选搜索该怎么办呢？首先，改变语句的名称让它更具实际意义；然后只要加入另一个条件即可。
 
-```
+```xml
 <select id="findActiveBlogLike"
      resultType="Blog">
   SELECT * FROM BLOG WHERE state = ‘ACTIVE’
@@ -2297,7 +2272,7 @@ MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC �
 
 还是上面的例子，但是这次变为提供了“title”就按“title”查找，提供了“author”就按“author”查找的情形，若两者都没有提供，就返回所有符合条件的 BLOG（实际情况可能是由管理员按一定策略选出 BLOG 列表，而不是返回大量无意义的随机结果）。
 
-```
+```xml
 <select id="findActiveBlogLike"
      resultType="Blog">
   SELECT * FROM BLOG WHERE state = ‘ACTIVE’
@@ -2319,7 +2294,7 @@ MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC �
 
 前面几个例子已经合宜地解决了一个臭名昭著的动态 SQL 问题。现在回到“if”示例，这次我们将“ACTIVE = 1”也设置成动态的条件，看看会发生什么。
 
-```
+```xml
 <select id="findActiveBlogLike"
      resultType="Blog">
   SELECT * FROM BLOG
@@ -2338,14 +2313,14 @@ MyBatis 的强大特性之一便是它的动态 SQL。如果你有使用 JDBC �
 
 如果这些条件没有一个能匹配上会发生什么？最终这条 SQL 会变成这样：
 
-```
+```sql
 SELECT * FROM BLOG
 WHERE
 ```
 
 这会导致查询失败。如果仅仅第二个条件匹配又会怎样？这条 SQL 最终会是这样:
 
-```
+```sql
 SELECT * FROM BLOG
 WHERE
 AND title like ‘someTitle’
@@ -2355,7 +2330,7 @@ AND title like ‘someTitle’
 
 MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在不能使用的地方，你可以自定义处理方式来令其正常工作。一处简单的修改就能达到目的：
 
-```
+```xml
 <select id="findActiveBlogLike"
      resultType="Blog">
   SELECT * FROM BLOG
@@ -2377,7 +2352,7 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 
 如果 *where* 元素没有按正常套路出牌，我们可以通过自定义 trim 元素来定制 *where* 元素的功能。比如，和 *where* 元素等价的自定义 trim 元素为：
 
-```
+```xml
 <trim prefix="WHERE" prefixOverrides="AND |OR ">
   ...
 </trim>
@@ -2387,7 +2362,7 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 
 类似的用于动态更新语句的解决方案叫做 *set*。*set* 元素可以用于动态包含需要更新的列，而舍去其它的。比如：
 
-```
+```xml
 <update id="updateAuthorIfNecessary">
   update Author
     <set>
@@ -2404,7 +2379,7 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 
 若你对 *set* 元素等价的自定义 trim 元素的代码感兴趣，那这就是它的真面目：
 
-```
+```xml
 <trim prefix="SET" suffixOverrides=",">
   ...
 </trim>
@@ -2416,7 +2391,7 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 
 动态 SQL 的另外一个常用的操作需求是对一个集合进行遍历，通常是在构建 IN 条件语句的时候。比如：
 
-```
+```xml
 <select id="selectPostIn" resultType="domain.blog.Post">
   SELECT *
   FROM POST P
@@ -2438,7 +2413,7 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 
 `bind` 元素可以从 OGNL 表达式中创建一个变量并将其绑定到上下文。比如：
 
-```
+```xml
 <select id="selectBlogsLike" resultType="Blog">
   <bind name="pattern" value="'%' + _parameter.getTitle() + '%'" />
   SELECT * FROM BLOG
@@ -2446,13 +2421,11 @@ MyBatis 有一个简单的处理，这在 90% 的情况下都会有用。而在�
 </select>
 ```
 
-​     
-
 ### 多数据库支持
 
 一个配置了“_databaseId”变量的 databaseIdProvider 可用于动态代码中，这样就可以根据不同的数据库厂商构建特定的语句。比如下面的例子：
 
-```
+```xml
 <insert id="insert">
   <selectKey keyProperty="id" resultType="int" order="BEFORE">
     <if test="_databaseId == 'oracle'">
@@ -2472,7 +2445,7 @@ MyBatis 从 3.2 开始支持可插拔脚本语言，这允许你插入一种脚�
 
 可以通过实现以下接口来插入一种语言：
 
-```
+```java
 public interface LanguageDriver {
   ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql);
   SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType);
@@ -2482,7 +2455,7 @@ public interface LanguageDriver {
 
 一旦设定了自定义语言驱动，你就可以在 mybatis-config.xml 文件中将它设置为默认语言：
 
-```
+```xml
 <typeAliases>
   <typeAlias type="org.sample.MyLanguageDriver" alias="myLanguage"/>
 </typeAliases>
@@ -2493,7 +2466,7 @@ public interface LanguageDriver {
 
 除了设置默认语言，你也可以针对特殊的语句指定特定语言，可以通过如下的 `lang` 属性来完成：
 
-```
+```xml
 <select id="selectBlog" lang="myLanguage">
   SELECT * FROM BLOG
 </select>
@@ -2501,7 +2474,7 @@ public interface LanguageDriver {
 
 或者，如果你使用的是映射器接口类，在抽象方法上加上 `@Lang` 注解即可：
 
-```
+```java
 public interface Mapper {
   @Lang(MyLanguageDriver.class)
   @Select("SELECT * FROM BLOG")
@@ -2515,9 +2488,7 @@ public interface Mapper {
 
 ## Java API
 
- 
-
-既然你已经知道如何配置 MyBatis 和创建映射文件，你就已经准备好来提升技能了。MyBatis 的 Java API 就是你收获你所做的努力的地方。正如你即将看到的，和 JDBC 相比，MyBatis 很大程度简化了你的代码并保持代码简洁，容易理解并维护。MyBatis 3 已经引入了很多重要的改进来使得 SQL 映射更加优秀。
+ 既然你已经知道如何配置 MyBatis 和创建映射文件，你就已经准备好来提升技能了。MyBatis 的 Java API 就是你收获你所做的努力的地方。正如你即将看到的，和 JDBC 相比，MyBatis 很大程度简化了你的代码并保持代码简洁，容易理解并维护。MyBatis 3 已经引入了很多重要的改进来使得 SQL 映射更加优秀。
 
 ### 应用目录结构
 
@@ -2568,7 +2539,7 @@ public interface Mapper {
 
 SqlSessionFactoryBuilder 有五个 build() 方法，每一种都允许你从不同的资源中创建一个 SqlSession 实例。
 
-```
+```java
 SqlSessionFactory build(InputStream inputStream)
 SqlSessionFactory build(InputStream inputStream, String environment)
 SqlSessionFactory build(InputStream inputStream, Properties properties)
@@ -2578,7 +2549,7 @@ SqlSessionFactory build(Configuration config)
 
 第一种方法是最常用的，它使用了一个参照了 XML 文档或上面讨论过的更特定的 mybatis-config.xml 文件的 Reader 实例。可选的参数是 environment 和 properties。environment 决定加载哪种环境，包括数据源和事务管理器。比如：
 
-```
+```xml
 <environments default="development">
   <environment id="development">
     <transactionManager type="JDBC">
@@ -2615,7 +2586,7 @@ SqlSessionFactory build(Configuration config)
 
 总结一下，前四个方法很大程度上是相同的，但是由于覆盖机制，便允许你可选地指定 environment 和/或 properties。以下给出一个从 mybatis-config.xml 文件创建 SqlSessionFactory 的示例：
 
-```
+```java
 String resource = "org/mybatis/builder/mybatis-config.xml";
 InputStream inputStream = Resources.getResourceAsStream(resource);
 SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
@@ -2624,7 +2595,7 @@ SqlSessionFactory factory = builder.build(inputStream);
 
 注意到这里我们使用了 Resources 工具类，这个类在 org.apache.ibatis.io 包中。Resources 类正如其名，会帮助你从类路径下、文件系统或一个 web URL 中加载资源文件。看一下这个类的源代码或者通过你的 IDE 来查看，就会看到一整套相当实用的方法。这里给出一个简表：
 
-```
+```java
 URL getResourceURL(String resource)
 URL getResourceURL(ClassLoader loader, String resource)
 InputStream getResourceAsStream(String resource)
@@ -2643,7 +2614,7 @@ Class classForName(String className)
 
 最后一个 build 方法的参数为 Configuration 实例。configuration 类包含你可能需要了解 SqlSessionFactory 实例的所有内容。Configuration 类对于配置的自查很有用，它包含查找和操作 SQL 映射（当应用接收请求时便不推荐使用）。作为一个 Java API 的 configuration 类具有所有配置的开关，这些你已经了解了。这里有一个简单的示例，教你如何手动配置 configuration 实例，然后将它传递给 build() 方法来创建 SqlSessionFactory。
 
-```
+```java
 DataSource dataSource = BaseDataTest.createBlogDataSource();
 TransactionFactory transactionFactory = new JdbcTransactionFactory();
 
@@ -2662,7 +2633,7 @@ SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
 SqlSessionFactory factory = builder.build(configuration);
 ```
 
-现在你就获得一个可以用来创建 SqlSession 实例的 SqlSessionFactory 了！
+现在你就获得一个可以用来创建 SqlSession 实例的 SqlSessionFactory 
 
 #### SqlSessionFactory
 
@@ -2674,7 +2645,7 @@ SqlSessionFactory 有六个方法创建 SqlSession 实例。通常来说，当�
 
 基于以上需求，有下列已重载的多个 openSession() 方法供使用。
 
-```
+```java
 SqlSession openSession()
 SqlSession openSession(boolean autoCommit)
 SqlSession openSession(Connection connection)
@@ -2715,7 +2686,7 @@ Configuration getConfiguration();
 
 这些方法被用来执行定义在 SQL 映射的 XML 文件中的 SELECT、INSERT、UPDATE 和 DELETE 语句。它们都会自行解释，每一句都使用语句的 ID 属性和参数对象，参数可以是原生类型（自动装箱或包装类）、JavaBean、POJO 或 Map。
 
-```
+```java
 <T> T selectOne(String statement, Object parameter)
 <E> List<E> selectList(String statement, Object parameter)
 <T> Cursor<T> selectCursor(String statement, Object parameter)
@@ -2727,9 +2698,9 @@ int delete(String statement, Object parameter)
 
 selectOne 和 selectList 的不同仅仅是 selectOne 必须返回一个对象或 null 值。如果返回值多于一个，那么就会抛出异常。如果你不知道返回对象的数量，请使用 selectList。如果需要查看返回对象是否存在，可行的方案是返回一个值即可（0 或 1）。selectMap 稍微特殊一点，因为它会将返回的对象的其中一个属性作为 key 值，将对象作为 value 值，从而将多结果集转为 Map 类型值。因为并不是所有语句都需要参数，所以这些方法都重载成不需要参数的形式。  
 
-A Cursor offers the same results as a List, except it fetches data lazily using an Iterator.
+Cursor提供与List相同的结果，除了它使用Iterator惰性获取数据。
 
-```
+```java
 try (Cursor<MyEntity> entities = session.selectCursor(statement, param)) {
    for (MyEntity entity:entities) {
       // process one entity
@@ -2737,9 +2708,9 @@ try (Cursor<MyEntity> entities = session.selectCursor(statement, param)) {
 }
 ```
 
-The value returned by the insert, update and delete methods indicate the number of rows affected by the statement.
+insert，update和delete方法返回的值表示该语句影响的行数。
 
-```
+```java
 <T> T selectOne(String statement)
 <E> List<E> selectList(String statement)
 <T> Cursor<T> selectCursor(String statement)
@@ -2751,7 +2722,7 @@ int delete(String statement)
 
 最后，还有 select 方法的三个高级版本，它们允许你限制返回行数的范围，或者提供自定义结果控制逻辑，这通常在数据集合庞大的情形下使用。
 
-```
+```java
 <E> List<E> selectList (String statement, Object parameter, RowBounds rowBounds)
 <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds)
 <K,V> Map<K,V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowbounds)
@@ -2761,7 +2732,7 @@ void select (String statement, Object parameter, RowBounds rowBounds, ResultHand
 
 RowBounds 参数会告诉 MyBatis 略过指定数量的记录，还有限制返回结果的数量。RowBounds 类有一个构造方法来接收 offset 和 limit，另外，它们是不可二次赋值的。
 
-```
+```java
 int offset = 100;
 int limit = 25;
 RowBounds rowBounds = new RowBounds(offset, limit);
@@ -2771,11 +2742,11 @@ RowBounds rowBounds = new RowBounds(offset, limit);
 
 ResultHandler 参数允许你按你喜欢的方式处理每一行。你可以将它添加到 List 中、创建 Map 和 Set，或者丢弃每个返回值都可以，它取代了仅保留执行语句过后的总结果列表的死板结果。你可以使用 ResultHandler 做很多事，并且这是 MyBatis 自身内部会使用的方法，以创建结果集列表。
 
-Since 3.4.6, ResultHandler passed to a CALLABLE statement is used on every REFCURSOR output parameter of the stored procedure if there is any.
+从3.4.6开始，传递给CALLABLE语句的ResultHandler用于存储过程的每个REFCURSOR输出参数（如果有）。
 
 它的接口很简单。
 
-```
+```java
 package org.apache.ibatis.session;
 public interface ResultHandler<T> {
   void handleResult(ResultContext<? extends T> context);
@@ -2793,7 +2764,7 @@ ResultContext 参数允许你访问结果对象本身、被创建的对象数目
 
 有一个方法可以刷新（执行）存储在 JDBC 驱动类中的批量更新语句。当你将 `ExecutorType.BATCH` 作为 `ExecutorType` 使用时可以采用此方法。
 
-```
+```java
 List<BatchResult> flushStatements()
 ```
 
@@ -2801,7 +2772,7 @@ List<BatchResult> flushStatements()
 
 控制事务作用域有四个方法。当然，如果你已经设置了自动提交或你正在使用外部事务管理器，这就没有任何效果了。然而，如果你正在使用 JDBC 事务管理器，由Connection 实例来控制，那么这四个方法就会派上用场：  
 
-```
+```java
 void commit()
 void commit(boolean force)
 void rollback()
@@ -2824,19 +2795,19 @@ Mybatis 使用到了两种缓存：本地缓存（local cache）和二级缓存�
 
 你可以随时调用以下方法来清空本地缓存：
 
-```
+```java
 void clearCache()
 ```
 
 ##### 确保 SqlSession 被关闭
 
-```
+```java
 void close()
 ```
 
 你必须保证的最重要的事情是你要关闭所打开的任何 session。保证做到这点的最佳方式是下面的工作模式:
 
-```
+```java
 SqlSession session = sqlSessionFactory.openSession();
 try {
     // following 3 lines pseudocod for "doing some work"
@@ -2851,7 +2822,7 @@ try {
 
 还有，如果你正在使用jdk 1.7以上的版本还有MyBatis 3.2以上的版本，你可以使用try-with-resources语句：
 
-```
+```java
 try (SqlSession session = sqlSessionFactory.openSession()) {
     // following 3 lines pseudocode for "doing some work"
     session.insert(...);
@@ -2863,13 +2834,13 @@ try (SqlSession session = sqlSessionFactory.openSession()) {
 
 注意 就像 SqlSessionFactory，你可以通过调用当前使用中的 SqlSession 的 getConfiguration 方法来获得 Configuration 实例。
 
-```
+```java
 Configuration getConfiguration()
 ```
 
 ##### 使用映射器
 
-```
+```java
 <T> T getMapper(Class<T> type)
 ```
 
@@ -2877,7 +2848,7 @@ Configuration getConfiguration()
 
 因此，一个更通用的方式来执行映射语句是使用映射器类。一个映射器类就是一个仅需声明与 SqlSession 方法相匹配的方法的接口类。下面的示例展示了一些方法签名以及它们是如何映射到 SqlSession 上的。
 
-```
+```java
 public interface AuthorMapper {
   // (Author) selectOne("selectAuthor",5);
   Author selectAuthor(int id);
@@ -2938,11 +2909,11 @@ public interface AuthorMapper {
 | `@ResultType`                            | `方法` | N/A                                      | 此注解在使用了结果处理器的情况下使用。在这种情况下，返回类型为 void，所以 Mybatis 必须有一种方式决定对象的类型，用于构造每行数据。如果有 XML 的结果映射，请使用 `@ResultMap`注解。如果结果类型在 XML 的 `<select>` 节点中指定了，就不需要其他的注解了。其他情况下则使用此注解。比如，如果 @Select 注解在一个将使用结果处理器的方法上，那么返回类型必须是 void 并且这个注解（或者@ResultMap）必选。这个注解仅在方法返回类型是 void 的情况下生效。 |
 | `@Flush`                                 | `方法` | N/A                                      | 如果使用了这个注解，定义在 Mapper 接口中的方法能够调用 `SqlSession#flushStatements()` 方法。（Mybatis 3.3及以上） |
 
-##### 映射申明样例
+##### 映射声明样例
 
 这个例子展示了如何使用 @SelectKey 注解来在插入前读取数据库序列的值：
 
-```
+```java
 @Insert("insert into table3 (id, name) values(#{nameId}, #{name})")
 @SelectKey(statement="call next value for TestSequence", keyProperty="nameId", before=true, resultType=int.class)
 int insertTable3(Name name);
@@ -2950,7 +2921,7 @@ int insertTable3(Name name);
 
 这个例子展示了如何使用 @SelectKey 注解来在插入后读取数据库识别列的值：
 
-```
+```java
 @Insert("insert into table2 (name) values(#{name})")
 @SelectKey(statement="call identity()", keyProperty="nameId", before=false, resultType=int.class)
 int insertTable2(Name name);
@@ -2958,14 +2929,14 @@ int insertTable2(Name name);
 
 这个例子展示了如何使用 `@Flush` 注解去调用 `SqlSession#flushStatements()`：
 
-```
+```java
 @Flush
 List<BatchResult> flush();
 ```
 
 这些例子展示了如何通过指定 @Result 的 id 属性来命名结果集：
 
-```
+```java
 @Results(id = "userResult", value = {
   @Result(property = "id", column = "uid", id = true),
   @Result(property = "firstName", column = "first_name"),
@@ -2985,7 +2956,7 @@ Company getCompanyById(Integer id);
 
 这个例子展示了单一参数使用 @SqlProvider 注解：
 
-```
+```java
 @SelectProvider(type = UserSqlBuilder.class, method = "buildGetUsersByName")
 List<User> getUsersByName(String name);
 
@@ -3005,7 +2976,7 @@ class UserSqlBuilder {
 
 这个例子展示了多参数使用 @SqlProvider 注解：
 
-```
+```java
 @SelectProvider(type = UserSqlBuilder.class, method = "buildGetUsersByName")
 List<User> getUsersByName(
     @Param("name") String name, @Param("orderByColumn") String orderByColumn);
@@ -3037,7 +3008,7 @@ class UserSqlBuilder {
 
 This example shows usage the default implementation of `ProviderMethodResolver`(available since MyBatis 3.5.1 or later):
 
-```
+```java
 @SelectProvider(type = UserSqlProvider.class)
 List<User> getUsersByName(String name);
 
@@ -3063,7 +3034,7 @@ class UserSqlProvider implements ProviderMethodResolver {
 
 Java程序员面对的最痛苦的事情之一就是在Java代码中嵌入SQL语句。这么来做通常是由于SQL语句需要动态来生成-否则可以将它们放到外部文件或者存储过程中。正如你已经看到的那样，MyBatis在它的XML映射特性中有一个强大的动态SQL生成方案。但有时在Java代码内部创建SQL语句也是必要的。此时，MyBatis有另外一个特性可以帮到你，在减少典型的加号,引号,新行,格式化问题和嵌入条件来处理多余的逗号或 AND 连接词之前。事实上，在Java代码中来动态生成SQL代码就是一场噩梦。例如：
 
-```
+```java
 String sql = "SELECT P.ID, P.USERNAME, P.PASSWORD, P.FULL_NAME, "
 "P.LAST_NAME,P.CREATED_ON, P.UPDATED_ON " +
 "FROM PERSON P, ACCOUNT A " +
@@ -3081,7 +3052,7 @@ String sql = "SELECT P.ID, P.USERNAME, P.PASSWORD, P.FULL_NAME, "
 
 MyBatis 3提供了方便的工具类来帮助解决该问题。使用SQL类，简单地创建一个实例来调用方法生成SQL语句。上面示例中的问题就像重写SQL类那样：
 
-```
+```java
 private String selectPersonSql() {
   return new SQL() {{
     SELECT("P.ID, P.USERNAME, P.PASSWORD, P.FULL_NAME");
@@ -3110,7 +3081,7 @@ private String selectPersonSql() {
 
 这里给出一些示例：
 
-```
+```java
 // Anonymous inner class
 public String deletePersonSql() {
   return new SQL() {{
@@ -3191,9 +3162,9 @@ public String updatePersonSql() {
 | `INTO_COLUMNS(String...)`                | Appends columns phrase to an insert statement. This should be call INTO_VALUES() with together. |
 | `INTO_VALUES(String...)`                 | Appends values phrase to an insert statement. This should be call INTO_COLUMNS() with together. |
 
-Since version 3.4.2, you can use variable-length arguments as follows:
+从版本3.4.2开始，您可以使用可变长度参数，如下所示：
 
-```
+```java
 public String selectPersonSql() {
   return new SQL()
     .SELECT("P.ID", "A.USERNAME", "A.PASSWORD", "P.FULL_NAME", "D.DEPARTMENT_NAME", "C.COMPANY_NAME")
@@ -3234,17 +3205,17 @@ public String updatePersonSql() {
 
 SelectBuilder 和 SqlBuilder 类并不神奇，但是知道它们如何工作也是很重要的。 SelectBuilder 使用 SqlBuilder 使用了静态导入和ThreadLocal变量的组合来开启整洁语法，可以很容易地和条件交错。使用它们，静态导入类的方法即可，就像这样(一个或其它，并非两者):
 
-```
+```java
 import static org.apache.ibatis.jdbc.SelectBuilder.*;
 ```
 
-```
+```java
 import static org.apache.ibatis.jdbc.SqlBuilder.*;
 ```
 
 这就允许像下面这样来创建方法：
 
-```
+```java
 /* DEPRECATED */
 public String selectBlogsSql() {
   BEGIN(); // Clears ThreadLocal variable
@@ -3278,8 +3249,6 @@ private String selectPersonSql() {
 
 ## 日志
 
-​     
-
 Mybatis 的内置日志工厂提供日志功能，内置日志工厂将日志交给以下其中一种工具作代理：
 
 - SLF4J
@@ -3288,34 +3257,25 @@ Mybatis 的内置日志工厂提供日志功能，内置日志工厂将日志交
 - Log4j
 - JDK logging
 
-​     
-
-MyBatis 内置日志工厂基于运行时自省机制选择合适的日志工具。它会使用第一个查找得到的工具（按上文列举的顺序查找）。如果一个都未找到，日志功能就会被禁用。
-
-​     
+MyBatis 内置日志工厂基于运行时自省机制选择合适的日志工具。它会使用第一个查找得到的工具（按上文列举的顺序查找）。如果一个都未找到，日志功能就会被禁用。     
 
 不少应用服务器（如 Tomcat 和 WebShpere）的类路径中已经包含 Commons Logging，所以在这种配置环境下的 MyBatis 会把它作为日志工具，记住这点非常重要。这将意味着，在诸如 WebSphere 的环境中，它提供了 Commons Logging 的私有实现，你的 Log4J 配置将被忽略。MyBatis 将你的 Log4J 配置忽略掉是相当令人郁闷的（事实上，正是因为在这种配置环境下，MyBatis 才会选择使用 Commons Logging 而不是 Log4J）。如果你的应用部署在一个类路径已经包含 Commons Logging 的环境中，而你又想使用其它日志工具，你可以通过在 MyBatis 配置文件 mybatis-config.xml 里面添加一项 setting 来选择别的日志工具。
 
-```
+```xml
 <configuration>
   <settings>
     ...
     <setting name="logImpl" value="LOG4J"/>
     ...
   </settings>
-</configuration>
-      
+</configuration>  
 ```
-
-​     
 
 logImpl 可选的值有：SLF4J、LOG4J、LOG4J2、JDK_LOGGING、COMMONS_LOGGING、STDOUT_LOGGING、NO_LOGGING，或者是实现了接口 `org.apache.ibatis.logging.Log` 的，且构造方法是以字符串为参数的类的完全限定名。（译者注：可以参考org.apache.ibatis.logging.slf4j.Slf4jImpl.java的实现）
 
-​     
-
 你也可以调用如下任一方法来使用日志工具：
 
-```
+```java
 org.apache.ibatis.logging.LogFactory.useSlf4jLogging();
 org.apache.ibatis.logging.LogFactory.useLog4JLogging();
 org.apache.ibatis.logging.LogFactory.useJdkLogging();
@@ -3323,19 +3283,13 @@ org.apache.ibatis.logging.LogFactory.useCommonsLogging();
 org.apache.ibatis.logging.LogFactory.useStdOutLogging();
 ```
 
-​     
-
 如果你决定要调用以上某个方法，请在调用其它 MyBatis 方法之前调用它。另外，仅当运行时类路径中存在该日志工具时，调用与该日志工具对应的方法才会生效，否则 MyBatis 一概忽略。如你环境中并不存在 Log4J，你却调用了相应的方法，MyBatis 就会忽略这一调用，转而以默认的查找顺序查找日志工具。
-
-​     
 
 关于 SLF4J、Apache Commons Logging、Apache Log4J 和 JDK Logging 的 API 介绍不在本文档介绍范围内。不过，下面的例子可以作为一个快速入门。关于这些日志框架的更多信息，可以参考以下链接：
 
 - [Apache Commons Logging](http://commons.apache.org/logging)
 - [Apache Log4j](http://logging.apache.org/log4j/)
 - [JDK Logging API](http://java.sun.com/j2se/1.4.1/docs/guide/util/logging/)
-
-​     
 
 ### 日志配置
 
@@ -3353,7 +3307,7 @@ org.apache.ibatis.logging.LogFactory.useStdOutLogging();
 
 配置 Log4J 比较简单，假如你需要记录这个映射器接口的日志：        
 
-```
+```java
 package org.mybatis.example;
 public interface BlogMapper {
   @Select("SELECT * FROM blog WHERE id = #{id}")
@@ -3396,7 +3350,7 @@ log4j.logger.org.mybatis.example=DEBUG
 
 要记录日志的是类似下面的映射器文件而不是映射器接口又该怎么做呢？
 
-```
+```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
