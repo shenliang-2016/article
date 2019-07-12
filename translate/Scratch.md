@@ -213,17 +213,17 @@ public static void main(String[] args) {
 }
 ```
 
-Now `ServiceConfig` is loosely coupled with respect to the concrete `DefaultRepositoryConfig`, and built-in IDE tooling is still useful: You can easily get a type hierarchy of `RepositoryConfig` implementations. In this way, navigating `@Configuration`classes and their dependencies becomes no different than the usual process of navigating interface-based code.
+现在，`ServiceConfig`与具体的`DefaultRepositoryConfig`松散耦合，内置的IDE工具仍然很有用：您可以轻松获得`RepositoryConfig`实现的类型层次结构。通过这种方式，导航`@Configurationclasses`及其依赖项与导航基于接口的代码的常规过程没有什么不同。
 
-> If you want to influence the startup creation order of certain beans, consider declaring some of them as @Lazy (for creation on first access instead of on startup) or as @DependsOn certain other beans (making sure that specific other beans are created before the current bean, beyond what the latter’s direct dependencies imply).
+> 如果要影响某些bean的启动创建顺序，请考虑将其中一些声明为`@Lazy`（用于在首次访问时创建而不是在启动时）或`@DependsOn`某些其他bean（确保在创建当前的bean之前创建特定的其他bean，超出两者的直接依赖性所暗示的）。
 
-##### Conditionally Include `@Configuration` Classes or `@Bean` Methods
+##### 有条件地包含`@Configuration`类或`@Bean`方法
 
-It is often useful to conditionally enable or disable a complete `@Configuration` class or even individual `@Bean` methods, based on some arbitrary system state. One common example of this is to use the `@Profile` annotation to activate beans only when a specific profile has been enabled in the Spring `Environment` (see [Bean Definition Profiles](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-definition-profiles) for details).
+基于某些任意系统状态，有条件地启用或禁用整个的`@Configuration`类甚至单个`@Bean`方法通常很有用。一个常见的例子是，只有在Spring `Environment` 中启用了特定的配置文件时才使用`@Profile`注解来激活bean（有关详细信息，请参阅[Bean定义配置文件](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-definition-profiles) ）。
 
-The `@Profile` annotation is actually implemented by using a much more flexible annotation called [`@Conditional`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/Conditional.html). The `@Conditional` annotation indicates specific `org.springframework.context.annotation.Condition` implementations that should be consulted before a `@Bean` is registered.
+`@Profile`注解实际上是通过使用更灵活的注解 [`@Conditional`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/Conditional.html) 实现的。`@Conditional`注解表示在注册`@Bean`之前应该参考的特定`org.springframework.context.annotation.Condition`实现。
 
-Implementations of the `Condition` interface provide a `matches(…)` method that returns `true` or `false`. For example, the following listing shows the actual `Condition` implementation used for `@Profile`:
+`Condition`接口的实现提供了一个返回`true`或`false`的`matches(...)`方法。例如，以下列表显示了用于`@Profile`的实际`Condition`实现：
 
 ```java
 @Override
@@ -244,21 +244,21 @@ public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata)
 }
 ```
 
-See the [`@Conditional`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/Conditional.html) javadoc for more detail.
+参考 [`@Conditional`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/Conditional.html) 文档获取更多细节。
 
-##### Combining Java and XML Configuration
+##### 结合 Java 和 XML 配置
 
-Spring’s `@Configuration` class support does not aim to be a 100% complete replacement for Spring XML. Some facilities, such as Spring XML namespaces, remain an ideal way to configure the container. In cases where XML is convenient or necessary, you have a choice: either instantiate the container in an “XML-centric” way by using, for example, `ClassPathXmlApplicationContext`, or instantiate it in a “Java-centric” way by using `AnnotationConfigApplicationContext` and the `@ImportResource` annotation to import XML as needed.
+Spring的`@Configuration`类支持并非旨在成为Spring XML的100％完全替代品。某些工具，如Spring XML命名空间，仍然是配置容器的理想方法。在XML方便或必要的情况下，您可以选择：使用例如`ClassPathXmlApplicationContext`以“以XML为中心”的方式实例化容器，或者使用`AnnotationConfigApplicationContext`，并使用`@ImportResource`注解，根据需要导入XML，以“以Java为中心”的方式实例化它。
 
-###### XML-centric Use of `@Configuration` Classes
+###### 以XML为中心使用`@Configuration`类
 
-It may be preferable to bootstrap the Spring container from XML and include `@Configuration` classes in an ad-hoc fashion. For example, in a large existing codebase that uses Spring XML, it is easier to create `@Configuration` classes on an as-needed basis and include them from the existing XML files. Later in this section, we cover the options for using `@Configuration` classes in this kind of “XML-centric” situation.
+最好从XML引导Spring容器，并以ad-hoc方式包含`@Configuration`类。例如，在使用Spring XML的大型现有代码库中，可以根据需要更轻松地创建`@Configuration`类，并将其包含在现有XML文件中。在本节的后面部分，我们将介绍在这种“以XML为中心”的情况下使用`@Configuration`类的选项。
 
-Declaring `@Configuration` classes as plain Spring `<bean/>` elements
+将`@Configuration`类声明为普通的Spring `<bean/>`元素
 
-Remember that `@Configuration` classes are ultimately bean definitions in the container. In this series examples, we create a `@Configuration` class named `AppConfig` and include it within `system-test-config.xml` as a `<bean/>` definition. Because`<context:annotation-config/>` is switched on, the container recognizes the `@Configuration` annotation and processes the `@Bean` methods declared in `AppConfig` properly.
+请记住，`@Configuration`类是容器中最终的bean定义。在本系列示例中，我们创建一个名为`AppConfig`的`@Configuration`类，并将其作为`<bean/>`定义包含在`system-test-config.xml`中。由于`<context:annotation-config/>`已打开，容器会识别`@Configuration`注解并正确处理`AppConfig`中声明的`@Bean`方法。
 
-The following example shows an ordinary configuration class in Java:
+以下示例显示了Java中的普通配置类：
 
 ```java
 @Configuration
@@ -279,7 +279,7 @@ public class AppConfig {
 }
 ```
 
-The following example shows part of a sample `system-test-config.xml` file:
+以下示例显示了示例`system-test-config.xml`文件的一部分：
 
 ```xml
 <beans>
@@ -297,7 +297,7 @@ The following example shows part of a sample `system-test-config.xml` file:
 </beans>
 ```
 
-The following example shows a possible `jdbc.properties` file:
+以下示例显示了可能的`jdbc.properties`文件：
 
 ```
 jdbc.url=jdbc:hsqldb:hsql://localhost/xdb
@@ -313,13 +313,13 @@ public static void main(String[] args) {
 }
 ```
 
-> In system-test-config.xml file, the AppConfig <bean/> does not declare an id element. While it would be acceptable to do so, it is unnecessary, given that no other bean ever refers to it, and it is unlikely to be explicitly fetched from the container by name. Similarly, the DataSource bean is only ever autowired by type, so an explicit bean id is not strictly required.
+> 在`system-test-config.xml`文件中，`AppConfig` `<bean/>`不声明id元素。虽然这样做是可以接受的，但是没有必要，因为没有其他bean引用它，并且不太可能通过名称从容器中明确地获取它。类似地，`DataSource` bean只是按类型自动装配，因此不严格要求显式的bean id。
 
-Using <context:component-scan/> to pick up `@Configuration` classes
+使用 <context:component-scan/> 获取 `@Configuration` 类
 
-Because `@Configuration` is meta-annotated with `@Component`, `@Configuration`-annotated classes are automatically candidates for component scanning. Using the same scenario as describe in the previous example, we can redefine `system-test-config.xml` to take advantage of component-scanning. Note that, in this case, we need not explicitly declare`<context:annotation-config/>`, because `<context:component-scan/>` enables the same functionality.
+因为`@Configuration`是使用`@Component`进行元注解的，所以`@Configuration`注解类自动成为组件扫描的候选者。使用与前一个示例中描述的相同的方案，我们可以重新定义`system-test-config.xml`以利用组件扫描。请注意，在这种情况下，我们不需要显式声明`<context:annotation-config/>`，因为`<context:annotation-config/>`启用相同的功能。
 
-The following example shows the modified `system-test-config.xml` file:
+以下示例显示了已修改的`system-test-config.xml`文件：
 
 ```xml
 <beans>
@@ -335,9 +335,9 @@ The following example shows the modified `system-test-config.xml` file:
 </beans>
 ```
 
-###### `@Configuration` Class-centric Use of XML with `@ImportResource`
+###### `@Configuration` 类为中心使用 XML 和 `@ImportResource`
 
-In applications where `@Configuration` classes are the primary mechanism for configuring the container, it is still likely necessary to use at least some XML. In these scenarios, you can use `@ImportResource` and define only as much XML as you need. Doing so achieves a “Java-centric” approach to configuring the container and keeps XML to a bare minimum. The following example (which includes a configuration class, an XML file that defines a bean, a properties file, and the `main` class) shows how to use the `@ImportResource` annotation to achieve “Java-centric” configuration that uses XML as needed:
+在`@Configuration`类是配置容器的主要机制的应用程序中，仍然可能需要使用一些XML。在这些场景中，您可以使用`@ImportResource`并根据需要定义尽可能多的XML。这样做可以实现“以Java为中心”的方法来配置容器并将XML保持在最低限度。以下示例（包括配置类，定义bean的XML文件，属性文件和`main`类）显示了如何使用`@ImportResource`注解来实现根据需要使用XML的“以Java为中心”的配置：
 
 ```java
 @Configuration
