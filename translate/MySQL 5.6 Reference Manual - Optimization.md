@@ -468,30 +468,30 @@ SELECT * FROM t1, t2
   AND (t2.key1 = t1.some_col OR t2.key2 = t1.some_col2);
 ```
 
-> Note
+> 注意：
 >
-> The Index Merge optimization algorithm has the following known limitations:
+> 索引合并优化算法具有以下已知限制：
 >
-> - If your query has a complex `WHERE` clause with deep [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and)/[`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) nesting and MySQL does not choose the optimal plan, try distributing terms using the following identity transformations:
+> - 如果你的查询包含复杂的`WHERE`子句，其中包含很深的[`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and)/[`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 嵌套，而MySQL并没有选择相应的优化方案，请尝试将该嵌套进行如下等价转化：
 >
 >   ```sql
 >   (x AND y) OR z => (x OR z) AND (y OR z)
 >   (x OR y) AND z => (x AND z) OR (y AND z)
 >   ```
 >
-> - Index Merge is not applicable to full-text indexes.
+> - 索引合并不适用于全文本索引。
 
-In [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output, the Index Merge method appears as [`index_merge`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_index_merge) in the `type` column. In this case, the `key` column contains a list of indexes used, and `key_len`contains a list of the longest key parts for those indexes.
+在 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出中，索引合并方法作为 [`index_merge`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_index_merge) 出现的`type`列中。这种情况下，`key`列包含一个使用到的索引列表，而`key_len`包含这些索引中最常的索引部分的列表。
 
-The Index Merge access method has several algorithms, which are displayed in the `Extra` field of [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output:
+索引合并访问方法包含几种算法，展现在 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出的`Extra`列中：
 
 - `Using intersect(...)`
 - `Using union(...)`
 - `Using sort_union(...)`
 
-The following sections describe these algorithms in greater detail. The optimizer chooses between different possible Index Merge algorithms and other access methods based on cost estimates of the various available options.
+下面章节详细描述了这些算法。优化器根据各种可用选项的成本估算在不同的可能索引合并算法和其他访问方法之间进行选择。
 
-Use of Index Merge is subject to the value of the `index_merge`, `index_merge_intersection`, `index_merge_union`, and `index_merge_sort_union` flags of the[`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) system variable. See [Section 8.9.2, “Switchable Optimizations”](https://dev.mysql.com/doc/refman/5.6/en/switchable-optimizations.html). By default, all those flags are `on`. To enable only certain algorithms, set `index_merge` to`off`, and enable only such of the others as should be permitted.
+索引合并的使用受制于 `index_merge`, `index_merge_intersection`, `index_merge_union`, 和 `index_merge_sort_union` 等几个 [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) 系统变量标记的值。参考 [Section 8.9.2, “Switchable Optimizations”](https://dev.mysql.com/doc/refman/5.6/en/switchable-optimizations.html) 。默认情况下，所有这些标记值都为`on`。想要只启用某种算法，设置`index_merge`为`off`，并只启用想要启用的其它算法。
 
 - [Index Merge Intersection Access Algorithm](https://dev.mysql.com/doc/refman/5.6/en/index-merge-optimization.html#index-merge-intersection)
 - [Index Merge Union Access Algorithm](https://dev.mysql.com/doc/refman/5.6/en/index-merge-optimization.html#index-merge-union)
