@@ -497,19 +497,19 @@ SELECT * FROM t1, t2
 - [Index Merge Union Access Algorithm](https://dev.mysql.com/doc/refman/5.6/en/index-merge-optimization.html#index-merge-union)
 - [Index Merge Sort-Union Access Algorithm](https://dev.mysql.com/doc/refman/5.6/en/index-merge-optimization.html#index-merge-sort-union)
 
-##### Index Merge Intersection Access Algorithm
+**索引合并交集访问算法**
 
-This access algorithm is applicable when a `WHERE` clause is converted to several range conditions on different keys combined with [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and), and each condition is one of the following:
+这种访问算法适用于当`WHERE`子句被转化为由 [`AND`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_and) 连接的不同键上的若干范围条件，同时每个条件都是下列之一：
 
-- An *N*-part expression of this form, where the index has exactly *N* parts (that is, all index parts are covered):
+* 此形式的*N*-part表达式，其中索引具有正好*N*个部分（即，所有索引部分都被覆盖）：
 
-  ```sql
-  key_part1 = const1 AND key_part2 = const2 ... AND key_partN = constN
+- ```sql
+key_part1 = const1 AND key_part2 = const2 ... AND key_partN = constN
   ```
+  
+- 任何范围条件都是在`InnoDB`表的主键上。
 
-- Any range condition over the primary key of an `InnoDB` table.
-
-Examples:
+例子：
 
 ```sql
 SELECT * FROM innodb_table
@@ -519,33 +519,33 @@ SELECT * FROM tbl_name
   WHERE key1_part1 = 1 AND key1_part2 = 2 AND key2 = 2;
 ```
 
-The Index Merge intersection algorithm performs simultaneous scans on all used indexes and produces the intersection of row sequences that it receives from the merged index scans.
+索引合并交集算法在所有用到的索引上执行模拟扫描，同时产生它从合并之后的索引扫描查询得到的行数据序列交集。
 
-If all columns used in the query are covered by the used indexes, full table rows are not retrieved ([`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output contains `Using index` in `Extra` field in this case). Here is an example of such a query:
+如果查询中用到的所有列都被用到的索引覆盖，则不会检索所有的行（这种情况下 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出结果中`Extra`列包含`Using index`）。下面是这种查询的例子：
 
 ```sql
 SELECT COUNT(*) FROM t1 WHERE key1 = 1 AND key2 = 1;
 ```
 
-If the used indexes do not cover all columns used in the query, full rows are retrieved only when the range conditions for all used keys are satisfied.
+如果使用的索引未涵盖查询中使用的所有列，则仅在所有使用的键的范围条件都被满足时才检索所有行。
 
-If one of the merged conditions is a condition over the primary key of an `InnoDB` table, it is not used for row retrieval, but is used to filter out rows retrieved using other conditions.
+如果其中一个合并条件是`InnoDB`表的主键上的条件，则它不用于行检索，而是用于过滤掉使用其他条件检索的行。
 
-##### Index Merge Union Access Algorithm
+**索引合并并集访问算法**
 
-The criteria for this algorithm are similar to those for the Index Merge intersection algorithm. The algorithm is applicable when the table's `WHERE` clause is converted to several range conditions on different keys combined with [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or), and each condition is one of the following:
+此算法的规则类似于索引合并交集算法。此算法适用于当表的`WHERE`子句被转化为若干由 [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 连接的不同键上的若干范围条件，同时每个条件是下列之一：
 
-- An *N*-part expression of this form, where the index has exactly *N* parts (that is, all index parts are covered):
+- 此形式的*N*-part表达式，其中索引具有正好*N*个部分（即，所有索引部分都被覆盖）：
 
   ```sql
   key_part1 = const1 AND key_part2 = const2 ... AND key_partN = constN
   ```
 
-- Any range condition over a primary key of an `InnoDB` table.
+- 任何范围条件都是在`InnoDB`表的主键上。
 
-- A condition for which the Index Merge intersection algorithm is applicable.
+- 索引合并交集算法适用的条件。
 
-Examples:
+例子：
 
 ```sql
 SELECT * FROM t1
@@ -556,11 +556,11 @@ SELECT * FROM innodb_table
      OR (key3 = 'foo' AND key4 = 'bar') AND key5 = 5;
 ```
 
-##### Index Merge Sort-Union Access Algorithm
+**索引合并有序并集访问算法**
 
-This access algorithm is applicable when the `WHERE` clause is converted to several range conditions combined by [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or), but the Index Merge union algorithm is not applicable.
+此算法适用于当表的`WHERE`子句被转化为若干由 [`OR`](https://dev.mysql.com/doc/refman/5.6/en/logical-operators.html#operator_or) 连接的不同键上的若干范围条件，但是索引合并并集算法不适用。
 
-Examples:
+例子：
 
 ```sql
 SELECT * FROM tbl_name
@@ -570,4 +570,108 @@ SELECT * FROM tbl_name
   WHERE (key_col1 > 10 OR key_col2 = 20) AND nonkey_col = 30;
 ```
 
-The difference between the sort-union algorithm and the union algorithm is that the sort-union algorithm must first fetch row IDs for all rows and sort them before returning any rows.
+有序并集算法与并集算法的区别在于，有序并集算法必须首先获取行主键并在返回任何行之前对其进行排序。
+
+#### 8.2.1.4 引擎条件下推优化
+
+此优化改进未索引的列与常量直接比较的效率。这种情况下，该条件会被“下推”给存储引擎去解析。此优化只能被 [`NDB`](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster.html) 存储引擎使用。
+
+对于NDB Cluster，此优化可以消除在集群的数据节点和发出查询的MySQL服务器之间通过网络发送不匹配行的需要，并且可以将查询速度提高5到10倍，相对于条件下推可用但不使用的情况。
+
+假设NDB Cluster表定义如下：
+
+```sql
+CREATE TABLE t1 (
+    a INT,
+    b INT,
+    KEY(a)
+) ENGINE=NDB;
+```
+
+条件下推可以用于查询，例如此处展示的查询，其中包括非索引列和常量之间的比较：
+
+```sql
+SELECT a, b FROM t1 WHERE b = 10;
+```
+
+条件下推的使用可以在 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 的输出中看到：
+
+```sql
+mysql> EXPLAIN SELECT a,b FROM t1 WHERE b = 10\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t1
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 10
+        Extra: Using where with pushed condition
+```
+
+然而，条件下推不能被用于下面两个查询：
+
+```sql
+SELECT a,b FROM t1 WHERE a = 10;
+SELECT a,b FROM t1 WHERE b + 1 = 10;
+```
+
+条件下推不适用于第一个查询，因为列`a`上存在索引。（索引访问方法将更有效，因此将优先于选择条件下推。）条件下推不能用于第二个查询，因为涉及非索引列`b`的比较是间接的。（但是，如果要在`WHERE`子句中将`b + 1 = 10`修改`b = 9`，则可以应用条件下推。）
+
+当使用`>`或`<`运算符将索引列与常量进行比较时，也可以使用条件下推：
+
+```sql
+mysql> EXPLAIN SELECT a, b FROM t1 WHERE a < 2\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t1
+         type: range
+possible_keys: a
+          key: a
+      key_len: 5
+          ref: NULL
+         rows: 2
+        Extra: Using where with pushed condition
+```
+
+条件下推支持的其他比较包括以下内容：
+
+- `column [NOT] LIKE pattern`
+
+  其中*pattern* 必须是包含待匹配的模式的字符串字面量；其语法参见 [Section 12.5.1, “String Comparison Functions and Operators”](https://dev.mysql.com/doc/refman/5.6/en/string-comparison-functions.html).
+
+- `column IS [NOT] NULL`
+
+- `column IN (value_list)`
+
+  *value_list* 中的每个元素都必须是字面值常量。
+
+- `column BETWEEN constant1 AND constant2`
+
+  *constant1* and *constant2* 都必须是字面值常量。
+
+In all of the cases in the preceding list, it is possible for the condition to be converted into the form of one or more direct comparisons between a column and a constant.
+
+Engine condition pushdown is enabled by default. To disable it at server startup, set the [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) system variable. For example, in a `my.cnf` file, use these lines:
+
+```ini
+[mysqld]
+optimizer_switch=engine_condition_pushdown=off
+```
+
+At runtime, disable condition pushdown like this:
+
+```sql
+SET optimizer_switch='engine_condition_pushdown=off';
+```
+
+**Limitations.**  Engine condition pushdown is subject to the following limitations:
+
+- Condition pushdown is supported only by the [`NDB`](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster.html) storage engine.
+- Columns may be compared with constants only; however, this includes expressions which evaluate to constant values.
+- Columns used in comparisons cannot be of any of the [`BLOB`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) or [`TEXT`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) types.
+- A string value to be compared with a column must use the same collation as the column.
+- Joins are not directly supported; conditions involving multiple tables are pushed separately where possible. Use extended [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output to determine which conditions are actually pushed down. See [Section 8.8.3, “Extended EXPLAIN Output Format”](https://dev.mysql.com/doc/refman/5.6/en/explain-extended.html).
