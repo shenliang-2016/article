@@ -653,25 +653,26 @@ possible_keys: a
 
   *constant1* and *constant2* 都必须是字面值常量。
 
-In all of the cases in the preceding list, it is possible for the condition to be converted into the form of one or more direct comparisons between a column and a constant.
+在前面列表中的所有情况中，查询条件可以转换为列和常量之间的一个或多个直接比较的形式。
 
-Engine condition pushdown is enabled by default. To disable it at server startup, set the [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) system variable. For example, in a `my.cnf` file, use these lines:
+默认情况下引擎条件下推是开启的。要在服务器启动时禁用它，请设置 [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) 系统变量。例如，在`my.cnf`文件中，使用以下行：
 
 ```ini
 [mysqld]
 optimizer_switch=engine_condition_pushdown=off
 ```
 
-At runtime, disable condition pushdown like this:
+在运行时，禁用条件下推，如下所示：
 
 ```sql
 SET optimizer_switch='engine_condition_pushdown=off';
 ```
 
-**Limitations.**  Engine condition pushdown is subject to the following limitations:
+**局限性**  引擎条件下推有以下局限性：
 
-- Condition pushdown is supported only by the [`NDB`](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster.html) storage engine.
-- Columns may be compared with constants only; however, this includes expressions which evaluate to constant values.
-- Columns used in comparisons cannot be of any of the [`BLOB`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) or [`TEXT`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) types.
-- A string value to be compared with a column must use the same collation as the column.
-- Joins are not directly supported; conditions involving multiple tables are pushed separately where possible. Use extended [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output to determine which conditions are actually pushed down. See [Section 8.8.3, “Extended EXPLAIN Output Format”](https://dev.mysql.com/doc/refman/5.6/en/explain-extended.html).
+- 引擎条件下推仅由 [`NDB`](https://dev.mysql.com/doc/refman/5.6/en/mysql-cluster.html) 存储引擎支持。
+- 列只能与常量值比较，包括其值可以解析为常量的表达式。
+- 用于比较的列不能是 [`BLOB`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) 或者 [`TEXT`](https://dev.mysql.com/doc/refman/5.6/en/blob.html) 类型。
+- 要与列进行比较的字符串值必须使用与列相同的排序规则。
+- 不直接支持联接；涉及多个表的条件在可能的情况下分别下推。使用扩展的 [`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出来确定实际下推了哪些条件。请参见 [Section 8.8.3, “Extended EXPLAIN Output Format”](https://dev.mysql.com/doc/refman/5.6/en/explain-extended.html) 。
+
