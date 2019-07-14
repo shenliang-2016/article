@@ -4925,3 +4925,120 @@ public class DefaultDataConfig {
 
 您可以使用`Environment`上的`setDefaultProfiles()`或者声明性地使用`spring.profiles.default`属性来更改默认配置文件的名称。
 
+#### 1.13.2 `PropertySource` 抽象
+
+Spring 的`Environment`抽象提供了属性源的层级结构上的搜索操作。考虑下面的列表：
+
+```java
+ApplicationContext ctx = new GenericApplicationContext();
+Environment env = ctx.getEnvironment();
+boolean containsMyProperty = env.containsProperty("my-property");
+System.out.println("Does my environment contain the 'my-property' property? " + containsMyProperty);
+```
+
+在上面的代码片段中，我们看到一种高层次的方法，询问 Spring 是否`my-property`属性已经为当前环境定义。为了回答这个问题，`Environment`对象执行一个 [`PropertySource`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/core/env/PropertySource.html) 对象集合上的搜索操作。一个`PropertySource`是对任何键值对形式的属性源的一个简单的抽象，Spring 的 [`StandardEnvironment`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/core/env/StandardEnvironment.html) 通过两个`PropertySource`对象配置，一个表达JVM系统属性集合（`System.getProperties()`），另一个表示系统环境变量集合（`System.getenv()`）。
+
+> 这些默认的属性源存在于`StandardEnvironment`中，存在于独立安装的应用中。[`StandardServletEnvironment`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/web/context/support/StandardServletEnvironment.html) 添加了额外的默认属性源，包括 servlet 配置和 servlet 上下文参数。它可以有选择地启用 [`JndiPropertySource`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/jndi/JndiPropertySource.html) 。参考相关文档或获取更多细节。
+
+具体来说，当你使用`StandardEnvironment`，调用`env.containsProperty("my-property")`返回`true`，如果一个`my-property`系统属性或者`my-property`环境变量存在于运行时中。
+
+> 该搜索是层级化执行的。默认地，系统属性优先级高于环境变量。因此，如果`my-property`属性当调用`env.getProperty("my-property")`调用时被同时设置在两个地方，则系统属性值胜出并被返回。注意，同名属性的值不是合并，而是直接由更高优先级的属性值覆盖。
+>
+> 对普通的`StandardServletEnvironment`，完整的层级如下，顶层的属性源具有最高的优先级：
+>
+> 1. ServletConfig 参数 (如果适用 — 比如，在 `DispatcherServlet` 上下文中)
+> 2. ServletContext 参数 (web.xml 上下文参数实体)
+> 3. JNDI 环境变量 (`java:comp/env/` 实体)
+> 4. JVM 系统属性 (`-D` 命令行参数)
+> 5. JVM 系统环境 (操作系统环境变量)
+
+最重要的是，整个机制是可配置的。您可能希望将自定义的属性源集成到此搜索中。为此，实现并实例化您自己的`PropertySource`并将其添加到当前`Environment`的`PropertySources`集合中。以下示例显示了如何执行此操作：
+
+```java
+ConfigurableApplicationContext ctx = new GenericApplicationContext();
+MutablePropertySources sources = ctx.getEnvironment().getPropertySources();
+sources.addFirst(new MyPropertySource());
+```
+
+在上面的代码中，添加了`MyPropertySource`，在搜索中具有最高优先级。如果它包含`my-property`属性，则检测并返回该属性，优先于任何其他`PropertySource`中的任何`my-property`属性。[`MutablePropertySources`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/core/env/MutablePropertySources.html) API暴露了一些允许精确操作属性源集的方法。
+
+#### 1.13.3 使用`@PropertySource`
+
+[`@PropertySource`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/annotation/PropertySource.html) 注解提供了一种方便而且声明式的机制来向 Spring `Environment`中添加`PropertySource`。
+
+给定名为`app.properties`的文件包含键值对`testbean.name=myTestBean`，下面的`@Configuration`类使用`@PropertySource`，这种方式调用`testBean.getName()`返回`myTestBean`：
+
+```java
+@Configuration
+@PropertySource("classpath:/com/myco/app.properties")
+public class AppConfig {
+
+    @Autowired
+    Environment env;
+
+    @Bean
+    public TestBean testBean() {
+        TestBean testBean = new TestBean();
+        testBean.setName(env.getProperty("testbean.name"));
+        return testBean;
+    }
+}
+```
+
+出现在 `@PropertySource` 资源位置中任何 `${…}` 占位符基于已经注册到当前环境中的属性源集合被解析，如下面例子所示：
+
+```java
+@Configuration
+@PropertySource("classpath:/com/${my.placeholder:default/path}/app.properties")
+public class AppConfig {
+
+    @Autowired
+    Environment env;
+
+    @Bean
+    public TestBean testBean() {
+        TestBean testBean = new TestBean();
+        testBean.setName(env.getProperty("testbean.name"));
+        return testBean;
+    }
+}
+```
+
+假设`my.placeholder`存在于已注册的其中一个属性源中（例如，系统属性或环境变量），则占位符将解析为相应的值。如果没有，那么`default/path`用作默认值。如果未指定缺省值且无法解析属性，则抛出`IllegalArgumentException`。
+
+> 根据Java 8惯例，`@PropertySource`注解是可重复的。但是，所有这些`@PropertySource`注解都需要在同一级别声明，可以直接在配置类上声明，也可以在同一个自定义注解中作为元注解声明。不建议混合直接注解和元注解，因为直接注解有效地覆盖了元注解。
+
+#### 1.13.4 语句中的占位符解析
+
+从历史上看，元素中占位符的值只能基于JVM系统属性或环境变量进行解析。不过如今已不再是这种情况。因为`Environment`抽象集成在整个容器中，所以很容易通过它来解决占位符的解析。 这意味着您可以以任何您喜欢的方式配置解析过程。您可以更改搜索系统属性和环境变量的优先级，或完全删除它们。您也可以根据需要将自己的属性源添加到混合中。
+
+具体而言，无论`customer`属性在哪里定义，只要在`Environment`中可以使用它，以下语句就可以工作：
+
+```xml
+<beans>
+    <import resource="com/bank/service/${customer}-config.xml"/>
+</beans>
+```
+
+### 1.14 注册 `LoadTimeWeaver`
+
+Spring使用`LoadTimeWeaver`在类加载到Java虚拟机（JVM）时动态转换类。
+
+要启用加载时编织，可以将`@EnableLoadTimeWeaving`添加到一个`@Configuration`类中，如以下示例所示：
+
+```java
+@Configuration
+@EnableLoadTimeWeaving
+public class AppConfig {
+}
+```
+
+或者，对于XML配置，您可以使用`context:load-time-weaver`元素：
+
+```xml
+<beans>
+    <context:load-time-weaver/>
+</beans>
+```
+
+一旦为`ApplicationContext`配置，那个`ApplicationContext`中的任何bean都可以实现`LoadTimeWeaverAware`，从而接收对加载时编织器实例的引用。这与 [Spring的JPA支持](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#orm-jpa) 结合使用时特别有用。加载时编织可能是JPA类转换所必需的。有关更多详细信息，请参阅[`LocalContainerEntityManagerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/orm/jpa/LocalContainerEntityManagerFactoryBean.html) 文档。有关AspectJ加载时编织的更多信息，请参阅[Spring Framework中使用AspectJ进行加载时编织](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 。
