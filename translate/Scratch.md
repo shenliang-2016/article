@@ -1,22 +1,10 @@
-### 1.14 注册 `LoadTimeWeaver`
+### 1.15 `ApplicationContext`的附加功能
 
-Spring使用`LoadTimeWeaver`在类加载到Java虚拟机（JVM）时动态转换类。
+As discussed in the [chapter introduction](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans), the `org.springframework.beans.factory` package provides basic functionality for managing and manipulating beans, including in a programmatic way. The `org.springframework.context` package adds the[`ApplicationContext`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/ApplicationContext.html) interface, which extends the `BeanFactory` interface, in addition to extending other interfaces to provide additional functionality in a more application framework-oriented style. Many people use the `ApplicationContext` in a completely declarative fashion, not even creating it programmatically, but instead relying on support classes such as `ContextLoader` to automatically instantiate an `ApplicationContext` as part of the normal startup process of a Java EE web application.
 
-要启用加载时编织，可以将`@EnableLoadTimeWeaving`添加到一个`@Configuration`类中，如以下示例所示：
+To enhance `BeanFactory` functionality in a more framework-oriented style, the context package also provides the following functionality:
 
-```java
-@Configuration
-@EnableLoadTimeWeaving
-public class AppConfig {
-}
-```
-
-或者，对于XML配置，您可以使用`context:load-time-weaver`元素：
-
-```xml
-<beans>
-    <context:load-time-weaver/>
-</beans>
-```
-
-一旦为`ApplicationContext`配置，那个`ApplicationContext`中的任何bean都可以实现`LoadTimeWeaverAware`，从而接收对加载时编织器实例的引用。这与 [Spring的JPA支持](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#orm-jpa) 结合使用时特别有用。加载时编织可能是JPA类转换所必需的。有关更多详细信息，请参阅[`LocalContainerEntityManagerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/orm/jpa/LocalContainerEntityManagerFactoryBean.html) 文档。有关AspectJ加载时编织的更多信息，请参阅[Spring Framework中使用AspectJ进行加载时编织](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 。
+- Access to messages in i18n-style, through the `MessageSource` interface.
+- Access to resources, such as URLs and files, through the `ResourceLoader` interface.
+- Event publication, namely to beans that implement the `ApplicationListener` interface, through the use of the `ApplicationEventPublisher` interface.
+- Loading of multiple (hierarchical) contexts, letting each be focused on one particular layer, such as the web layer of an application, through the `HierarchicalBeanFactory` interface.
