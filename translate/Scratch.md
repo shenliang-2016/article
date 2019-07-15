@@ -1,26 +1,78 @@
-## 隔离特定于语言的数据
+### 关于 ResourceBundle 类
 
-必须根据最终用户的语言和区域的惯例来定制特定于语言环境的数据。用户界面显示的文本是区域设置特定数据的最明显示例。例如，在美国使用“Cancel”按钮的应用程序将在德国具有“Abbrechen”按钮。在其他国家/地区，此按钮将包含其他标签。显然你不想硬编码这个按钮标签。如果你能自动为给定的`Locale`获取正确的标签，那不是很好吗？幸运的是，只要您在`ResourceBundle`中隔离特定于语言环境的对象，就可以。
+**ResourceBundle 如何关联到 Locale**
 
-在本课程中，您将学习如何创建和访问`ResourceBundle`对象。如果您急于查看一些编码示例，请继续查看本课程的最后两节。然后，您可以回到前两个部分以获取有关`ResourceBundle`对象的一些概念性信息。
+从概念上讲，每个`ResourceBundle`是一组共享相同基本名称的相关子类。下面的列表显示了一组相关的子类。`ButtonLabel`是基本名称。基本名称后面的字符表示语言代码，国家/地区代码和`Locale`的变体。例如，`ButtonLabel_en_GB`匹配由英语（`en`）的语言代码和英国的国家代码（`GB`）指定的`Locale`。
 
-[关于 ResourceBundle 类](https://docs.oracle.com/javase/tutorial/i18n/resbundle/concept.html)
+```
+ButtonLabel
+ButtonLabel_de
+ButtonLabel_en_GB
+ButtonLabel_fr_CA_UNIX
+```
 
-`ResourceBundle`对象包含特定于语言环境的对象。当您需要特定于语言环境的对象时，可以从`ResourceBundle`获取它，该`ResourceBundle`返回与最终用户的`Locale`匹配的对象。本节介绍`ResourceBundle`如何与`Locale`相关，并描述`ResourceBundle`子类。
+要选择适当的`ResourceBundle`，请调用`ResourceBundle.getBundle`方法。下面的示例为与语言为“法语”，国家为“加拿大”和平台为UNIX匹配的`Locale`选择`ButtonLabel``ResourceBundle`。
 
-[准备使用 ResourceBundle](https://docs.oracle.com/javase/tutorial/i18n/resbundle/prepare.html)
+```java
+Locale currentLocale = new Locale("fr", "CA", "UNIX");
+ResourceBundle introLabels = ResourceBundle.getBundle(
+                                 "ButtonLabel", currentLocale);
+```
 
-在创建`ResourceBundle`对象之前，您应该做一些计划。首先，确定程序中特定于语言环境的对象。然后将它们组织成类别并相应地将它们存储在不同的`ResourceBundle`对象中。
+如果指定的`Locale`的`ResourceBundle`类不存在，`getBundle`尝试找到最接近的匹配。例如，如果`ButtonLabel_fr_CA_UNIX`是所需的类，默认的`Locale`是`en_US`，`getBundle`将按以下顺序查找类：
 
-[用属性文件作为 ResourceBundle 的后备](https://docs.oracle.com/javase/tutorial/i18n/resbundle/propfile.html)
+```
+ButtonLabel_fr_CA_UNIX
+ButtonLabel_fr_CA
+ButtonLabel_fr
+ButtonLabel_en_US
+ButtonLabel_en
+ButtonLabel
+```
 
-如果您的应用程序包含需要翻译成各种语言的`String`对象，则可以将这些`String`对象存储在`PropertyResourceBundle`中，该对象由一组属性文件备份。由于属性文件是简单的文本文件，因此翻译人员可以创建和维护这些文件。您不必更改源代码。在本节中，您将学习如何设置备份`PropertyResourceBundle`的属性文件。
+请注意，`getBundle`在选择基类（`ButtonLabel`）之前，根据默认的`Locale`查找类。如果`getBundle`在前面的类列表中找不到匹配项，它会抛出一个`MissingResourceException`。为避免抛出此异常，应始终提供不带后缀的基类。
 
-[使用 ListResourceBundle](https://docs.oracle.com/javase/tutorial/i18n/resbundle/list.html)
+**`ListResourceBundle` 和 `PropertyResourceBundle`子类**
 
-`ListResourceBundle`类是`ResourceBundle`的子类，它使用列表管理特定于语言环境的对象。`ListResourceBundle`由类文件支持，这意味着每次需要支持其他语言环境时，您必须编写和编译新的源文件。但是，`ListResourceBundle`对象很有用，因为与属性文件不同，它们可以存储任何类型的特定于语言环境的对象。通过单步执行示例程序，本节演示了如何使用`ListResourceBundle`。
+抽象类`ResourceBundle`有两个子类：`PropertyResourceBundle`和`ListResourceBundle`。
 
-[自定义 Resource Bundle 加载](https://docs.oracle.com/javase/tutorial/i18n/resbundle/control.html)
+`PropertyResourceBundle`由属性文件支持。属性文件是包含可翻译文本的纯文本文件。属性文件不是Java源代码的一部分，它们只能包含`String`对象的值。如果需要存储其他类型的对象，请使用`ListResourceBundle`。 [使用属性文件备份ResourceBundle](https://docs.oracle.com/javase/tutorial/i18n/resbundle/propfile.html) 部分向您展示了如何使用`PropertyResourceBundle`。
 
-本节介绍了改进`ResourceBundle.getBundle`工厂灵活性的新功能。`ResourceBundle.Control`类与用于加载资源包的工厂方法协作。这允许将资源包加载过程的每个步骤及其高速缓存控制视为单独的方法。
+`ListResourceBundle`类使用方便的列表管理资源。每个`ListResourceBundle`都由一个类文件支持。您可以将任何特定于语言环境的对象存储在`ListResourceBundle`中。要添加对其他`Locale`的支持，请创建另一个源文件并将其编译为类文件。 [使用ListResourceBundle](https://docs.oracle.com/javase/tutorial/i18n/resbundle/list.html) 部分有一个您可能会觉得有帮助的编码示例。
 
+`ResourceBundle`类很灵活。 如果您首先将特定于语言环境的`String`对象放在`PropertyResourceBundle`中，然后决定使用`ListResourceBundle`，那么对您的代码没有任何影响。例如，以下对`getBundle`的调用将为适当的`Locale`检索`ResourceBundle`，无论`ButtonLabel`是由类还是属性文件备份：
+
+```java
+ResourceBundle introLabels = ResourceBundle.getBundle(
+                                 "ButtonLabel", currentLocale);
+```
+
+**键值对**
+
+`ResourceBundle`对象包含一组键值对。当你想从`ResourceBundle`中检索值时，你指定键，它必须是`String`。该值是特定于语言环境的对象。以下示例中的键是`OkKey`和`CancelKey`字符串：
+
+```java
+class ButtonLabel_en extends ListResourceBundle {
+    // English version
+    public Object[][] getContents() {
+        return contents;
+    }
+    static final Object[][] contents = {
+        {"OkKey", "OK"},
+        {"CancelKey", "Cancel"},
+    };
+}
+```
+
+要从`ResourceBundle`检索`OK` `String`，您可以在调用`getString`时指定相应的键：
+
+```java
+String okLabel = ButtonLabel.getString("OkKey");
+```
+
+属性文件包含键值对。键位于等号的左侧，值位于右侧。每对都在单独一行上。值可以仅表示“String”对象。以下示例显示名为`ButtonLabel.properties`的属性文件的内容：
+
+```
+OkKey = OK
+CancelKey = Cancel
+```
