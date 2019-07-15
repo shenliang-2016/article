@@ -4862,9 +4862,9 @@ XML中的对应物是`<beans>`元素的`profile`属性。我们之前的示例�
 >     xmlns:jdbc="http://www.springframework.org/schema/jdbc"
 >     xmlns:jee="http://www.springframework.org/schema/jee"
 >     xsi:schemaLocation="...">
-> 
+>
 >     <!-- other bean definitions -->
-> 
+>
 >     <beans profile="production">
 >         <beans profile="us-east">
 >             <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/datasource"/>
@@ -5042,3 +5042,15 @@ public class AppConfig {
 ```
 
 一旦为`ApplicationContext`配置，那个`ApplicationContext`中的任何bean都可以实现`LoadTimeWeaverAware`，从而接收对加载时编织器实例的引用。这与 [Spring的JPA支持](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#orm-jpa) 结合使用时特别有用。加载时编织可能是JPA类转换所必需的。有关更多详细信息，请参阅[`LocalContainerEntityManagerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/orm/jpa/LocalContainerEntityManagerFactoryBean.html) 文档。有关AspectJ加载时编织的更多信息，请参阅[Spring Framework中使用AspectJ进行加载时编织](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 。
+
+### 1.15 `ApplicationContext`的附加功能
+
+如在 [章节介绍](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans) 中所述， `org.springframework.beans.factory` 包提供了基本的管理和操作 beans 的功能，包括编程方式。`org.springframework.context` 包添加了[`ApplicationContext`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/ApplicationContext.html) 接口，扩展了`BeanFactory`接口，同时继承了其它接口来通过面向应用框架的方式提供额外的功能性。很多人采用完全的声明式形式使用`ApplicationContext`，而不是通过编程方式创建它，而是依赖于`ContextLoader`等支持类来自动实例化`ApplicationContext`，作为Java EE Web应用程序正常启动过程的一部分。
+
+要以更加面向框架的方式增强`BeanFactory`的功能性，`org.springframework.context`包也提供了下面的功能：
+
+- 通过`MessageSource`接口访问i18n风格的消息。
+- 通过`ResourceLoader`接口访问URL和文件等资源。
+- 事件发布，即通过使用`ApplicationEventPublisher`接口实现`ApplicationListener`接口的bean。
+- 加载多个（分层）上下文，让每个上下文通过`HierarchicalBeanFactory`接口聚焦于一个特定层，例如应用程序的Web层。
+
