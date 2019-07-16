@@ -1,106 +1,123 @@
-### 使用属性文件作为 ResourceBundle 后备
+### 定制化 Resource Bundle 加载
 
-本小节逐步讲解名为 [`PropertiesDemo`](https://docs.oracle.com/javase/tutorial/i18n/resbundle/examples/PropertiesDemo.java) 的示例程序。
+在本课程的前面部分，您学习了如何创建和访问`ResourceBundle`类的对象。本节将扩展您的知识并解释如何从`ResourceBundle.Control`类功能中获益。
 
-**1. 创建默认 Properties 文件**
+创建`ResourceBundle.Control`以指定如何查找和实例化资源包。它定义了一组回调方法，这些方法在资源包加载过程中由`ResourceBundle.getBundle`工厂方法调用。
 
-属性文件是一个简单的文本文件。你可以使用任何文本编辑器创建并维护属性文件。
-
-你应该始终都创建默认属性文件。文件名以你的`ResourceBundle`基本名称开头并以`.properties`作为后缀。在`PropertiesDemo`程序中，该基本名称是`LabelBundle`。因而默认属性文件就叫做`LabelsBundle.properties`。该文件包含以下行：
-
-```
-# This is the default LabelsBundle.properties file
-s1 = computer
-s2 = disk
-s3 = monitor
-s4 = keyboard
-```
-
-请注意，在前面的文件中，注释行以井号（＃）开头。其他行包含键值对。键位于等号的左侧，值位于右侧。例如，`s2`是与值`disk`对应的键。键是任意的。我们可以叫它`s2`或者其他东西，比如`msg5`或`diskID`。但是，一旦定义，键就不应该改变，因为它在源代码中被引用。值可能会更改。实际上，当本地化程序员创建新属性文件以容纳其他语言时，他们会将值翻译为各种语言。
-
-**2. 按需创建额外的 Properties 文件**
-
-要支持其他语言环境，本地化程序员将创建一个包含已翻译值的新属性文件。不需要更改源代码，因为您的程序引用了键而不是值。
-
-例如，要添加对德语的支持，您的本地化程序员将转换`LabelsBundle.properties`中的值，并将它们放在名为`LabelsBundle_de.properties`的文件中。请注意，此文件的名称（如默认文件的名称）以基本名称`LabelsBundle`开头，以`.properties`后缀结尾。但是，由于此文件适用于特定的`Locale`，因此基本名称后跟语言代码（de）。`LabelsBundle_de.properties`的内容如下：
-
-```
-# This is the LabelsBundle_de.properties file
-s1 = Computer
-s2 = Platte
-s3 = Monitor
-s4 = Tastatur
-```
-
-`PropertiesDemo` 示例程序连同下面3个属性文件一起发布：
-
-```
-LabelsBundle.properties
-LabelsBundle_de.properties
-LabelsBundle_fr.properties
-```
-
-**3. 指定 Locale**
-
-`PropertiesDemo` 程序创建 `Locale` 对象如下：
+与前面描述的`ResourceBundle.getBundle`方法不同，此`ResourceBundle.getBundle`方法使用指定的基本名称，默认语言环境和指定的控件定义资源包。
 
 ```java
-Locale[] supportedLocales = {
-    Locale.FRENCH,
-    Locale.GERMAN,
-    Locale.ENGLISH
-};
+public static final ResourceBundle getBundle(
+    String baseName,
+    ResourceBundle.Control cont
+    // ...
 ```
 
-这些`Locale`对象应与前两个步骤中创建的属性文件匹配。例如，`Locale.FRENCH`对象对应于`LabelsBundle_fr.properties`文件。`Locale.ENGLISH`没有匹配的`LabelsBundle_en.properties`文件，因此将使用默认文件。
+指定的控件提供资源包加载过程的信息。
 
-**4. 创建 ResourceBundle**
+以下示例程序`RBControl.java`说明了如何为中文语言环境定义自己的搜索路径。
 
-此步骤显示`Locale`，属性文件和`ResourceBundle`的关联方式。要创建`ResourceBundle`，请调用`getBundle`方法，指定基本名称和`Locale`：
+**1. 创建 `properties` 文件**
+
+如前所述，您可以从类或属性文件加载资源。 这些文件包含以下语言环境的说明：
+
+- `RBControl.properties` – 全局
+- `RBControl_zh.properties` – 只用于语言：简体中文
+- `RBControl_zh_cn.properties` – 只用于区域：中国
+- `RBControl_zh_hk.properties` – 只用于区域：香港
+- `RBControl_zh_tw.properties` – 台湾
+
+在此示例中，应用程序为香港地区创建新的区域设置。
+
+**2. 创建 `ResourceBundle` 实例**
+
+与上一节中的示例一样，此应用程序通过调用`getBundle`方法创建`ResourceBundle`实例：
 
 ```java
-ResourceBundle labels = ResourceBundle.getBundle("LabelsBundle", currentLocale);
+private static void test(Locale locale) {
+    ResourceBundle rb = ResourceBundle.getBundle(
+                            "RBControl",
+                            locale,
+                            new ResourceBundle.Control() {
+                                    // ...
+                            }
+                        );
 ```
 
-`getBundle`方法首先查找与基本名称和`Locale`匹配的类文件。如果找不到类文件，则检查属性文件。在`PropertiesDemo`程序中，我们使用属性文件而不是类文件来支持`ResourceBundle`。当`getBundle`方法找到正确的属性文件时，它返回一个`PropertyResourceBundle`对象，该对象包含属性文件中的键值对。
+`getBundle`方法使用`RBControl`前缀搜索属性文件。但是，此方法包含`Control`参数，该参数驱动搜索`Chineese`区域设置的过程。
 
-**5. 获取本地化的文本**
+**3. 调用 `getCandidateLocales` 方法**
 
-要从`ResourceBundle`检索已翻译的值，请按如下方式调用`getString`方法：
-
-```java
-String value = labels.getString(key);
-```
-
-`getString`返回的`String`对应于指定的键。如果存在指定区域设置的属性文件，则`String`使用正确的语言。
-
-**6. 遍历所有的键**
-
-此步骤是可选的。调试程序时，您可能希望获取`ResourceBundle`中所有键的值。`getKeys`方法返回`ResourceBundle`中所有键的`Enumeration`。您可以遍历`Enumeration`并使用`getString`方法获取每个值。以下代码行来自`PropertiesDemo`程序，展示了如何完成此操作：
+`getCandidateLocales`方法返回`Locales`对象的列表，作为基本名称和语言环境的候选语言环境。
 
 ```java
-ResourceBundle labels = ResourceBundle.getBundle("LabelsBundle", currentLocale);
-Enumeration bundleKeys = labels.getKeys();
-
-while (bundleKeys.hasMoreElements()) {
-    String key = (String)bundleKeys.nextElement();
-    String value = labels.getString(key);
-    System.out.println("key = " + key + ", " + "value = " + value);
+new ResourceBundle.Control() {
+    @Override
+    public List<Locale> getCandidateLocales(
+                            String baseName,
+                            Locale locale) {
+                // ...                                        
+    }
 }
 ```
 
-**7. 运行示例程序**
+默认实现返回`Locale`对象的列表，如下所示：`Locale(language, country)` 。
 
-运行`PropertiesDemo`程序会生成以下输出。前三行显示`getString`为各种`Locale`对象返回的值。当使用`getKeys`方法迭代键时，程序显示最后四行。
+但是，重写此方法以实现以下特定行为：
+
+```java
+if (baseName == null)
+    throw new NullPointerException();
+
+if (locale.equals(new Locale("zh", "HK"))) {
+    return Arrays.asList(
+               locale,
+               Locale.TAIWAN,
+               // no Locale.CHINESE here
+               Locale.ROOT);
+} else if (locale.equals(Locale.TAIWAN)) {
+    return Arrays.asList(
+               locale,
+               // no Locale.CHINESE here
+               Locale.ROOT);
+}
+```
+
+请注意，候选语言环境序列的最后一个元素必须是根区域设置。
+
+**4. 调用 `test` 类**
+
+为下面4个不同的区域调用`test`类：
+
+```java
+public static void main(String[] args) {
+    test(Locale.CHINA);
+    test(new Locale("zh", "HK"));
+    test(Locale.TAIWAN);
+    test(Locale.CANADA);
+}
+```
+
+**5. 运行示例程序**
+
+你将看到程序输出如下：
 
 ```
-Locale = fr, key = s2, value = Disque dur
-Locale = de, key = s2, value = Platte
-Locale = en, key = s2, value = disk
-
-key = s4, value = Clavier
-key = s3, value = Moniteur
-key = s2, value = Disque dur
-key = s1, value = Ordinateur
+locale: zh_CN
+        region: China
+        language: Simplified Chinese
+locale: zh_HK
+        region: Hong Kong
+        language: Traditional Chinese
+locale: zh_TW
+        region: Taiwan
+        language: Traditional Chinese
+locale: en_CA
+        region: global
+        language: English
 ```
+
+请注意，新创建的分配了香港地区，因为它是在相应的属性文件中指定的。繁体中文被指定为台湾语言。
+
+在`RBControl`示例中没有使用`ResourceBundle.Control`类的另外两个有趣的方法，但它们值得提及。`getTimeToLive`方法用于确定资源包在缓存中可以存在多长时间。如果缓存中资源包的时间限制已过期，则调用`needsReload`方法以确定是否需要重新加载资源包。
 

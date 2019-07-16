@@ -5438,3 +5438,210 @@ key = s2, value = Disque dur
 key = s1, value = Ordinateur
 ```
 
+### 使用 ListResourceBundle
+
+本节说明了`ListResourceBundle`对象与名为`ListDemo`的示例程序的使用。下面的文本解释了创建`ListDemo`程序所涉及的每个步骤，以及支持它的`ListResourceBundle`子类。
+
+**1. 创建 ListResourceBundle 子类**
+
+`ListResourceBundle`由类文件备份。因此，第一步是为每个受支持的`Locale`创建一个类文件。在`ListDemo`程序中，`ListResourceBundle`的基本名称是`StatsBundle`。由于`ListDemo`支持三个`Locale`对象，因此它需要以下三个类文件：
+
+```
+StatsBundle_en_CA.class
+StatsBundle_fr_FR.class
+StatsBundle_ja_JP.class
+```
+
+日本的`StatsBundle`类在后面的源代码中定义。请注意，通过将语言和国家/地区代码附加到`ListResourceBundle`的基本名称来构造类名。在类内部，使用键值对初始化二维内容数组。键是每对中的第一个要素：`GDP`，`Population`和`Literacy`。键必须是`String`对象，并且它们在`StatsBundle`集合中的每个类中必须相同。值可以是任何类型的对象。在此示例中，值是两个`Integer`对象和一个`Double`对象。
+
+```java
+import java.util.*;
+public class StatsBundle_ja_JP extends ListResourceBundle {
+    public Object[][] getContents() {
+        return contents;
+    }
+
+    private Object[][] contents = {
+        { "GDP", new Integer(21300) },
+        { "Population", new Integer(125449703) },
+        { "Literacy", new Double(0.99) },
+    };
+}
+```
+
+**2. 指定 Locale**
+
+`ListDemo` 程序定义 `Locale` 对象如下：
+
+```java
+Locale[] supportedLocales = {
+    new Locale("en", "CA"),
+    new Locale("ja", "JP"),
+    new Locale("fr", "FR")
+};
+```
+
+每个`Locale`对象对应一个`StatsBundle`类。例如，使用`ja`和`JP`代码定义的日语语言环境与`StatsBundle_ja_JP.class`匹配。
+
+**3. 创建 ResourceBundle**
+
+要创建`ListResourceBundle`，请调用`getBundle`方法。以下代码行指定类的基本名称（`StatsBundle`）和`Locale`：
+
+```java
+ResourceBundle stats = ResourceBundle.getBundle("StatsBundle", currentLocale);
+```
+
+`getBundle`方法搜索名称以`StatsBundle`开头的类，后面跟着指定`Locale`的语言和国家/地区代码。如果使用`ja`和`JP`代码创建`currentLocale`，则`getBundle`返回对应于`StatsBundle_ja_JP`类的`ListResourceBundle`。
+
+**4. 获取本地化的对象**
+
+现在该程序具有适当`Locale`的`ListResourceBundle`，它可以通过其键获取本地化对象。以下代码行通过使用`Literacy`键参数调用`getObject`来检索识字率。由于`getObject`返回一个对象，因此将其强制转换为`Double`：
+
+```java
+Double lit = (Double)stats.getObject("Literacy");
+```
+
+**5. 运行示例程序**
+
+`ListDemo` 程序打印它通过 `getBundle` 方法获取到的数据：
+
+```
+Locale = en_CA
+GDP = 24400
+Population = 28802671
+Literacy = 0.97
+
+Locale = ja_JP
+GDP = 21300
+Population = 125449703
+Literacy = 0.99
+
+Locale = fr_FR
+GDP = 20200
+Population = 58317450
+Literacy = 0.99
+```
+
+### 定制化 Resource Bundle 加载
+
+在本课程的前面部分，您学习了如何创建和访问`ResourceBundle`类的对象。本节将扩展您的知识并解释如何从`ResourceBundle.Control`类功能中获益。
+
+创建`ResourceBundle.Control`以指定如何查找和实例化资源包。它定义了一组回调方法，这些方法在资源包加载过程中由`ResourceBundle.getBundle`工厂方法调用。
+
+与前面描述的`ResourceBundle.getBundle`方法不同，此`ResourceBundle.getBundle`方法使用指定的基本名称，默认语言环境和指定的控件定义资源包。
+
+```java
+public static final ResourceBundle getBundle(
+    String baseName,
+    ResourceBundle.Control cont
+    // ...
+```
+
+指定的控件提供资源包加载过程的信息。
+
+以下示例程序`RBControl.java`说明了如何为中文语言环境定义自己的搜索路径。
+
+**1. 创建 `properties` 文件**
+
+如前所述，您可以从类或属性文件加载资源。 这些文件包含以下语言环境的说明：
+
+- `RBControl.properties` – 全局
+- `RBControl_zh.properties` – 只用于语言：简体中文
+- `RBControl_zh_cn.properties` – 只用于区域：中国
+- `RBControl_zh_hk.properties` – 只用于区域：香港
+- `RBControl_zh_tw.properties` – 台湾
+
+在此示例中，应用程序为香港地区创建新的区域设置。
+
+**2. 创建 `ResourceBundle` 实例**
+
+与上一节中的示例一样，此应用程序通过调用`getBundle`方法创建`ResourceBundle`实例：
+
+```java
+private static void test(Locale locale) {
+    ResourceBundle rb = ResourceBundle.getBundle(
+                            "RBControl",
+                            locale,
+                            new ResourceBundle.Control() {
+                                    // ...
+                            }
+                        );
+```
+
+`getBundle`方法使用`RBControl`前缀搜索属性文件。但是，此方法包含`Control`参数，该参数驱动搜索`Chineese`区域设置的过程。
+
+**3. 调用 `getCandidateLocales` 方法**
+
+`getCandidateLocales`方法返回`Locales`对象的列表，作为基本名称和语言环境的候选语言环境。
+
+```java
+new ResourceBundle.Control() {
+    @Override
+    public List<Locale> getCandidateLocales(
+                            String baseName,
+                            Locale locale) {
+                // ...                                        
+    }
+}
+```
+
+默认实现返回`Locale`对象的列表，如下所示：`Locale(language, country)` 。
+
+但是，重写此方法以实现以下特定行为：
+
+```java
+if (baseName == null)
+    throw new NullPointerException();
+
+if (locale.equals(new Locale("zh", "HK"))) {
+    return Arrays.asList(
+               locale,
+               Locale.TAIWAN,
+               // no Locale.CHINESE here
+               Locale.ROOT);
+} else if (locale.equals(Locale.TAIWAN)) {
+    return Arrays.asList(
+               locale,
+               // no Locale.CHINESE here
+               Locale.ROOT);
+}
+```
+
+请注意，候选语言环境序列的最后一个元素必须是根区域设置。
+
+**4. 调用 `test` 类**
+
+为下面4个不同的区域调用`test`类：
+
+```java
+public static void main(String[] args) {
+    test(Locale.CHINA);
+    test(new Locale("zh", "HK"));
+    test(Locale.TAIWAN);
+    test(Locale.CANADA);
+}
+```
+
+**5. 运行示例程序**
+
+你将看到程序输出如下：
+
+```
+locale: zh_CN
+        region: China
+        language: Simplified Chinese
+locale: zh_HK
+        region: Hong Kong
+        language: Traditional Chinese
+locale: zh_TW
+        region: Taiwan
+        language: Traditional Chinese
+locale: en_CA
+        region: global
+        language: English
+```
+
+请注意，新创建的分配了香港地区，因为它是在相应的属性文件中指定的。繁体中文被指定为台湾语言。
+
+在`RBControl`示例中没有使用`ResourceBundle.Control`类的另外两个有趣的方法，但它们值得提及。`getTimeToLive`方法用于确定资源包在缓存中可以存在多长时间。如果缓存中资源包的时间限制已过期，则调用`needsReload`方法以确定是否需要重新加载资源包。
+
