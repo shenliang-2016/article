@@ -1,4 +1,4 @@
-# 目录
+## 目录
 
 - [8.1 优化概览](https://dev.mysql.com/doc/refman/5.6/en/optimize-overview.html)
 - [8.2 SQL 语句优化](https://dev.mysql.com/doc/refman/5.6/en/statement-optimization.html)
@@ -504,9 +504,9 @@ SELECT * FROM t1, t2
 * 此形式的*N*-part表达式，其中索引具有正好*N*个部分（即，所有索引部分都被覆盖）：
 
 - ```sql
-key_part1 = const1 AND key_part2 = const2 ... AND key_partN = constN
+  key_part1 = const1 AND key_part2 = const2 ... AND key_partN = constN
   ```
-  
+
 - 任何范围条件都是在`InnoDB`表的主键上。
 
 例子：
@@ -724,3 +724,85 @@ SET optimizer_switch = 'index_condition_pushdown=on';
 ```
 
 See [Section 8.9.2, “Switchable Optimizations”](https://dev.mysql.com/doc/refman/5.6/en/switchable-optimizations.html).
+
+#### 8.2.1.6 嵌套循环连接算法
+
+MySQL 使用嵌套循环算法或者其变体执行表连接。
+
+- [嵌套循环连接算法](https://dev.mysql.com/doc/refman/5.6/en/nested-loop-joins.html#nested-loop-join-algorithm)
+- [块嵌套循环连接算法](https://dev.mysql.com/doc/refman/5.6/en/nested-loop-joins.html#block-nested-loop-join-algorithm)
+
+##### 嵌套循环连接算法
+
+简单的嵌套循环算法（NLJ）从第一个表中循环读取行，每次循环读取一行，将每一行传递给嵌套循环，该嵌套循环处理连接的下一个表。这个嵌套过程重复多少次取决于连接的表的数量。
+
+假定连接3个表`t1`，`t2`和`t3`，该连接将以下面的连接类型被执行：
+
+```
+Table   Join Type
+t1      range
+t2      ref
+t3      ALL
+```
+
+如果使用简单的 NLJ 算法，则该连接将会被如下处理：
+
+```java
+for each row in t1 matching range {
+  for each row in t2 matching reference key {
+    for each row in t3 {
+      if row satisfies join conditions, send to client
+    }
+  }
+}
+```
+
+由于 HLJ 算法每次都将一行数据从外层循环传入内层循环，显然就会读取内层循环处理的表很多次。
+
+##### 块嵌套循环连接算法
+
+块嵌套循环（BNL）连接算法使用从外层循环读取而来的表行数据的缓冲来减少内层循环中表的读取次数。比如，如果10行数据被读取缓冲，然后该缓冲被传入下一层内循环，则内层循环读取的每一行都能与所有这10行数据进行比较。这就将内层循环读取表的次数降低了一个数量级。
+
+MySQL 连接缓冲具有这些特点：
+
+- 连接缓冲可以被用在类型为 [`ALL`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_all) 或者 [`index`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_index) (换句话说，当不能使用任何可能的键，并且分别完成数据或索引行的完全扫描时)，或者 [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range) 的连接上。连接缓冲同样适用于外连接，具体细节参见 [Section 8.2.1.11, “Block Nested-Loop and Batched Key Access Joins”](https://dev.mysql.com/doc/refman/5.6/en/bnl-bka-optimization.html) 。
+- 永远不会为第一个非常量表分配连接缓冲区，即使连接类型是 [`ALL`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_all) 或者 [`index`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_index).
+- 连接缓冲区只会保存连接相关的列，而不是整行。
+- [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 系统变量决定了用于处理每个查询的每个连接缓冲区的大小。
+- 为每个可以被缓冲的连接分配缓冲区，因此一个给定的查询可能会使用多个连接缓冲区来处理。
+- 连接缓冲区在执行连接之前分配，在查询完成之后释放。
+
+上面描述的例子连接使用了 NLJ 算法（没有缓冲），如果使用连接缓冲，就会是下面这个样子：
+
+```java
+for each row in t1 matching range {
+  for each row in t2 matching reference key {
+    store used columns from t1, t2 in join buffer
+    if buffer is full {
+      for each row in t3 {
+        for each t1, t2 combination in join buffer {
+          if row satisfies join conditions, send to client
+        }
+      }
+      empty join buffer
+    }
+  }
+}
+
+if buffer is not empty {
+  for each row in t3 {
+    for each t1, t2 combination in join buffer {
+      if row satisfies join conditions, send to client
+    }
+  }
+}
+```
+
+如果`S`表示连接缓冲区中存储的每个`t1, t2`组合的大小，而`C`表示缓冲区中这种租车的数量，则表`t3`被扫描的次数就是：
+
+```
+(S * C)/join_buffer_size + 1
+```
+
+`t3`表扫描次数会随着  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 值的增大而减小，极限是  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 大到足以容纳所有的行组合。此时，继续增大  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 就不再能获得任何速度提升。
+
