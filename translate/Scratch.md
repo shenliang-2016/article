@@ -1,44 +1,61 @@
-#### 1.15.3 低级资源的方便访问
+### 1.16 `BeanFactory`
 
-为了优化对应用上下文的理解和使用，你应该熟悉 Spring 的`Resource`抽象，如 [Resources](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources) 中所描述。
+`BeanFactory` API 提供了 Spring IoC 功能的底层基础。它确定的契约被广泛用于与 Spring 的其它部分或者相关的第三方框架集成，同时它的`DefaultListableBeanFactory`实现是更高层次的`GenericApplicationContext`容器中的一个关键代理。
 
-一个应用上下文是一个`ResourceLoader`，它可以被用来加载`Resource`对象。`Resource`对象本质上是功能丰富版本的 JDK `java.net.URL`类。事实上，`Resource`的实现适当地包装了一个`java.net.URL`实例。`Resource`对象能够从几乎任何地方透明地获取低级资源，包括从类路径、文件系统位置、任何以标准 URL 或者其它变体描述的位置。如果资源位置字符串是一个简单路径，没有任何特殊前缀，那么这些资源的来源就是特定的，而且适合于实际应用的上下文类型。
+`BeanFactory`以及相关的接口（比如`BeanFactoryAware`，`InitializingBean`，`DisposableBean`）都是其它框架组件的重要的集成点。不需要任何注解甚至是反射，它们允许容器和它的组件之间非常有效的交叉。应用层面的 beans 可以使用相同的回调接口，但是通常更倾向于使用声明式依赖注，要么通过注解，要么通过编程式配置。
 
-你可以配置一个部署到应用上下文中的 bean 来实现特殊的回调接口，`ResourceLoaderAware`，会在初始化时刻被自动回调，此时应用上下文本身被作为`ResourceLoader`被传入。你也可以暴露`Resource`类型的属性，以便访问静态资源。它们像其它所有属性一样被注入。您可以为这些`Resource`属性指定简单的`String`路径，并在部署Bean时依赖从这些文本字符串到实际`Resource`对象的自动转换。
+注意，核心`BeanFactory` API 层级和它的`DefaultListableBeanFactory`实现不会对配置格式或者注解应用到的所有组件做任何假定。所有这些风格都通过扩展（例如`XmlBeanDefinitionReader`和`AutowiredAnnotationBeanPostProcessor`）进行，并作为核心元数据表示在共享`BeanDefinition`对象上运行。这是使Spring的容器如此灵活和可扩展的本质。
 
-提供给`ApplicationContext`构造器的位置路径是实际的资源字符串，或者是其简单形式，根据特定的上下文实现，各种形式都会被恰当地处理。比如，`ClassPathXmlApplicationContext`将简单位置路径作为类路径位置。你也可以在位置路径（资源字符串）上使用特定的前缀来强制定义从类路径或者 URL 加载，而不管实际的上下文类型。
+#### 1.16.1. `BeanFactory` 还是 `ApplicationContext`?
 
-#### 1.15.4 Web 应用的 ApplicationContext 方便实例化
+本节介绍`BeanFactory`和`ApplicationContext`容器级别之间的差异以及对引导的影响。
 
-您可以使用例如`ContextLoader`以声明方式创建`ApplicationContext`实例。当然，您也可以使用其中一个`ApplicationContext`实现以编程方式创建`ApplicationContext`实例。
+您应该使用`ApplicationContext`，除非您有充分的理由不这样做，使用`GenericApplicationContext`及其子类`AnnotationConfigApplicationContext`作为自定义引导的常见实现。这些是Spring用于所有常见目的的核心容器的主要入口点：加载配置文件，触发类路径扫描，以编程方式注册bean定义和带注解的类，以及（从5.0开始）注册功能bean定义。
 
-您可以使用`ContextLoaderListener`注册`ApplicationContext`，如以下示例所示：
+因为`ApplicationContext`包含`BeanFactory`的所有功能，所以通常建议使用`BeanFactory`，除了需要完全控制bean处理的场景之外。在`ApplicationContext`（例如`GenericApplicationContext`实现）中，按惯例检测到几种bean（即，通过bean名称或bean类型 - 特别是后处理器），而普通的`DefaultListableBeanFactory`对任何特殊bean都是不可知的。
 
-```xml
-<context-param>
-    <param-name>contextConfigLocation</param-name>
-    <param-value>/WEB-INF/daoContext.xml /WEB-INF/applicationContext.xml</param-value>
-</context-param>
+对于许多扩展容器功能，例如注解处理和AOP代理， [`BeanPostProcessor` extension point](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-extension-bpp) 是必不可少的。如果仅使用普通的`DefaultListableBeanFactory`，则默认情况下不会检测到并激活此类后处理器。这种情况可能令人困惑，因为您的bean配置实际上没有任何问题。相反，在这种情况下，容器需要通过额外的设置完全自举。
 
-<listener>
-    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-</listener>
+下表列出了`BeanFactory`和`ApplicationContext`接口和实现提供的特性：
+
+| Feature                                  | `BeanFactory` | `ApplicationContext` |
+| ---------------------------------------- | ------------- | -------------------- |
+| Bean instantiation/wiring                | Yes           | Yes                  |
+| Integrated lifecycle management          | No            | Yes                  |
+| Automatic `BeanPostProcessor` registration | No            | Yes                  |
+| Automatic `BeanFactoryPostProcessor` registration | No            | Yes                  |
+| Convenient `MessageSource` access (for internalization) | No            | Yes                  |
+| Built-in `ApplicationEvent` publication mechanism | No            | Yes                  |
+
+要使用`DefaultListableBeanFactory`显式注册bean后处理器，您需要以编程方式调用`addBeanPostProcessor`，如以下示例所示：
+
+```java
+DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+// populate the factory with bean definitions
+
+// now register any needed BeanPostProcessor instances
+factory.addBeanPostProcessor(new AutowiredAnnotationBeanPostProcessor());
+factory.addBeanPostProcessor(new MyBeanPostProcessor());
+
+// now start using the factory
 ```
 
-侦听器检查`contextConfigLocation`参数。如果参数不存在，则侦听器将`/WEB-INF/applicationContext.xml`用作默认值。当参数确实存在时，侦听器使用预定义的分隔符（逗号，分号和空格）分隔`String`，并将值用作搜索应用程序上下文的位置。同时还支持Ant样式的路径模式。示例是`/WEB-INF/*Context.xml`（对于名称以`Context.xml`结尾且位于`WEB-INF`目录中的所有文件）和`/WEB-INF/**/*Context.xml`（对于所有 `WEB-INF`的任何子目录中的此类文件）。
+要将`BeanFactoryPostProcessor`应用于普通的`DefaultListableBeanFactory`，需要调用其`postProcessBeanFactory`方法，如以下示例所示：
 
-#### 1.15.5 以 Java EE RAR 文件形式部署 Spring `ApplicationContext` 
+```java
+DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(factory);
+reader.loadBeanDefinitions(new FileSystemResource("beans.xml"));
 
-可以将Spring `ApplicationContext`部署为RAR文件，将上下文及其所有必需的bean类和库JAR封装在Java EE RAR部署单元中。这相当于引导能够访问Java EE服务器设施的独立`ApplicationContext`（仅托管在Java EE环境中）。RAR部署是部署无头WAR文件的一种更自然的替代方案 - 实际上是一个没有任何HTTP入口点的WAR文件，仅用于在Java EE环境中引导Spring `ApplicationContext`。
+// bring in some property values from a Properties file
+PropertyPlaceholderConfigurer cfg = new PropertyPlaceholderConfigurer();
+cfg.setLocation(new FileSystemResource("jdbc.properties"));
 
-RAR部署非常适用于不需要HTTP入口点但仅包含消息端点和预定作业的应用程序上下文。在这样的上下文中，Bean可以使用应用程序服务器资源，例如JTA事务管理器和JNDI绑定的JDBC `DataSource`实例以及JMS `ConnectionFactory`实例，并且还可以通过Spring的标准事务管理以及JNDI和JMX支持工具向平台的JMX服务器注册。应用程序组件还可以通过Spring的`TaskExecutor`抽象与应用程序服务器的JCA `WorkManager`进行交互。
+// now actually do the replacement
+cfg.postProcessBeanFactory(factory);
+```
 
-有关RAR部署中涉及的配置详细信息，请参阅 [`SpringContextResourceAdapter`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/jca/context/SpringContextResourceAdapter.html) 类的javadoc。
+在这两种情况下，显式注册步骤都不方便，这就是为什么各种`ApplicationContext`变体优先于Spring支持的应用程序中的普通`DefaultListableBeanFactory`，尤其是在典型企业设置中依赖`BeanFactoryPostProcessor`和`BeanPostProcessor`实例来扩展容器功能时。
 
-对于将Spring `ApplicationContext`简单部署为Java EE RAR文件：
-
-1. 将所有应用程序类打包到一个RAR文件（这是一个具有不同文件扩展名的标准JAR文件）。将所有必需的库JAR添加到RAR存档的根目录中。添加`META-INF/ra.xml`部署描述符（如 [javadoc for `SpringContextResourceAdapter`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/jca/context/SpringContextResourceAdapter.html) 所示）和相应的Spring XML bean定义文件（通常是`META-INF/applicationContext.xml`）。
-2. 将生成的RAR文件放入应用程序服务器的部署目录中。
-
-> 这种RAR部署单元通常是独立的。它们不会将组件暴露给外部世界，甚至不会暴露给同一应用程序的其他模块。与基于RAR的`ApplicationContext`的交互通常通过与其他模块共享的JMS目标进行。例如，基于RAR的`ApplicationContext`还可以调度一些作业或对文件系统（或类似物）中的新文件作出反应。如果它需要允许来自外部的同步访问，它可以（例如）导出RMI端点，这可以由同一台机器上的其他应用程序模块使用。
+> `AnnotationConfigApplicationContext`具有注册的所有通用注释后处理器，并且可以通过配置注解（例如`@EnableTransactionManagement`）引入其他处理器。在Spring的基于注解的配置模型的抽象级别，bean后处理器的概念变成仅仅是内部容器细节。
 
