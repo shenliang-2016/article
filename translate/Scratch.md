@@ -1,210 +1,229 @@
-## 格式化
+#### 1.15.2 标准事件和自定义事件
 
-本课程介绍如何格式化数字、日期、时间和文本消息。因为终端用户能够看到这些数据元素，它们的格式必须符合各种自然传统。跟随下面的例子你将学会如何做到：
+`ApplicationContext`中的事件处理通过`ApplicationEvent`类和`ApplicationListener`接口提供。如果一个实现了`ApplicationListener`接口的 bean 部署到上下文中，每当有`ApplicationEvent`被发布到`ApplicationContext`中时，该 bean 就会被通知到。本质上，这就是一个标准的观察者设计模式。
 
-- 以语言敏感的方式格式化数据元素
-- 保持代码的语言无关性
-- 避免为特殊的语言编写格式化程序
+> 在 Spring 4.2 中，事件基础设施已经被显著改进，提供了一个 [annotation-based model](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#context-functionality-events-annotation) 和发布任意事件的能力 (也就是说，事件对象甚至都不需要扩展自 `ApplicationEvent`)。当这种对象被发布，Spring 会将它包装成一个事件。
 
-**[数字和货币](https://docs.oracle.com/javase/tutorial/i18n/format/numberintro.html)**
+下表描述了 Spring 提供的标准事件：
 
-本涨价解释了如何使用 `NumberFormat`, `DecimalFormat`, 和 `DecimalFormatSymbols` 类。
+| Event                   | Explanation                              |
+| ----------------------- | ---------------------------------------- |
+| `ContextRefreshedEvent` | 初始化或刷新`ApplicationContext`时发布（例如，通过使用`ConfigurableApplicationContext`接口上的`refresh()`方法）。这里，“已初始化”意味着加载所有bean，检测并激活后处理器bean，预先实例化单例，并且`ApplicationContext`对象已准备好使用。只要上下文尚未关闭，而所选的`ApplicationContext`实际支持这种“热”刷新，就可以多次触发刷新。例如，`XmlWebApplicationContext`支持热刷新，但`GenericApplicationContext`不支持。 |
+| `ContextStartedEvent`   | 通过使用`ConfigurableApplicationContext`接口上的`start()`方法启动`ApplicationContext`时发布。这里，“已启动”表示所有`Lifecycle`bean都会收到明确的启动信号。通常，此信号用于在显式停止后重新启动Bean，但它也可用于启动尚未为自动启动配置的组件（例如，尚未在初始化时启动的组件）。 |
+| `ContextStoppedEvent`   | 通过使用`ConfigurableApplicationContext`接口上的`stop()`方法停止`ApplicationContext`时发布。这里，“已停止”表示所有`Lifecycle`bean都会收到明确的停止信号。可以通过`start()`调用重新启动已停止的上下文。 |
+| `ContextClosedEvent`    | 通过使用`ConfigurableApplicationContext`接口上的`close()`方法关闭`ApplicationContext`时发布。这里，“关闭”意味着所有单例bean都被销毁。封闭的环境达到了生命的终点。它无法刷新或重新启动。 |
+| `RequestHandledEvent`   | 一个特定于Web的事件，告诉所有bean已经为HTTP请求提供服务。请求完成后发布此事件。此事件仅适用于使用Spring的`DispatcherServlet`的Web应用程序。 |
 
-**[日期和时间](https://docs.oracle.com/javase/tutorial/i18n/format/dateintro.html)**
-
-------
-
-**版本提示：** 本章节使用了`java.util`包中的日期和时间 APIs 。而`java.time` APIs 在 JDK 8 中可用，提供了全面的日期和时间模型，是对`java.util`包中相关类的重大改进。`java.time` APIs 描述参见 [Date Time](https://docs.oracle.com/javase/tutorial/datetime/index.html) 章节。[Legacy Date-Time Code](https://docs.oracle.com/javase/tutorial/datetime/iso/legacy.html) 页面可能会有特殊意义。
-
-------
-
-本章节聚焦在 `DateFormat`, `SimpleDateFormat`, 和 `DateFormatSymbols` 类。
-
-**[消息](https://docs.oracle.com/javase/tutorial/i18n/format/messageintro.html)**
-
-本节介绍`MessageFormat`和`ChoiceFormat`类如何帮助您解决格式化文本消息时可能遇到的一些问题。
-
-### 数字和货币
-
-程序以与语言环境无关的方式存储和操作数字。在显示或打印数字之前，程序必须将其转换为区域设置敏感格式的字符串。例如，在法国，数字123456.78的格式应为123 456,78，在德国则应为123.456,78。在本节中，您将学习如何使程序独立于小数点，千位分隔符和其他格式设置属性的语言环境约定。
-
-**[使用预定义格式](https://docs.oracle.com/javase/tutorial/i18n/format/numberFormat.html)**
-
-使用`NumberFormat`类提供的工厂方法，您可以获取数字，货币和百分比的特定于语言环境的格式。
-
-**[使用模式格式化](https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html)**
-
-使用`DecimalFormat`类，您可以使用`String`模式指定数字的格式。`DecimalFormatSymbols`类允许您修改格式符号，如小数分隔符和减号。
-
-#### 使用预定义格式
-
-通过调用由 [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 类提供的方法，你可以根据 [`Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) 格式化数字、货币和百分比。接下来举例说明格式化技术的程序名为 [`NumberFormatDemo.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/NumberFormatDemo.java) 。
-
-**数字**
-
-你可以使用 [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 方法来格式化基本类型的数字，比如`double`，以及它们对应的包装对象，比如 [`Double`](https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html) 。
-
-下面的例子代码根据 [`Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) 格式化 [`Double`](https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html) ，调用 [`getNumberInstance`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html#getNumberInstance-java.util.Locale-) 方法返回一个特定于语言的 [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 实例。其中的 [`format`](https://docs.oracle.com/javase/8/docs/api/java/text/Format.html#format-java.lang.Object-) 方法接受 [`Double`](https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html) 作为参数并返回 [`String`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html) 形式的格式化数字。
+你还可以创建并发布自定义事件，下面的例子展示了一个简单的类，它扩展了 Spring 的`ApplicationEvent`基类：
 
 ```java
-static public void displayNumber(Locale currentLocale) {
+public class BlackListEvent extends ApplicationEvent {
 
-    Integer quantity = new Integer(123456);
-    Double amount = new Double(345987.246);
-    NumberFormat numberFormatter;
-    String quantityOut;
-    String amountOut;
+    private final String address;
+    private final String content;
 
-    numberFormatter = NumberFormat.getNumberInstance(currentLocale);
-    quantityOut = numberFormatter.format(quantity);
-    amountOut = numberFormatter.format(amount);
-    System.out.println(quantityOut + "   " + currentLocale.toString());
-    System.out.println(amountOut + "   " + currentLocale.toString());
+    public BlackListEvent(Object source, String address, String content) {
+        super(source);
+        this.address = address;
+        this.content = content;
+    }
+
+    // accessor and other methods...
 }
 ```
 
-此示例打印以下内容，它显示了相同数字的格式如何随`Locale`而变化：
-
-```
-123 456   fr_FR
-345 987,246   fr_FR
-123.456   de_DE
-345.987,246   de_DE
-123,456   en_US
-345,987.246   en_US
-```
-
-**使用阿拉伯数字以外的数字形状**
-
-默认情况下，当文本包含数字值时，将使用阿拉伯数字显示这些值。如果首选其他`Unicode`数字形状，请使用 [`java.awt.font.NumericShaper`](https://docs.oracle.com/javase/8/docs/api/java/awt/font/NumericShaper.html) 类。`NumericShaper` API使您可以在任何`Unicode`数字形状中显示内部表示为ASCII值的数值。 有关详细信息，请参阅 [将拉丁数字转换为其他Unicode数字](https://docs.oracle.com/javase/tutorial/i18n/text/shapedDigits.html) 。
-
-此外，某些区域设置具有变体代码，这些代码指定使用Unicode数字形状代替阿拉伯数字，例如泰语的区域设置。有关更多信息，请参阅 [创建区域设置](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html) 中的 [变体代码](https://docs.oracle.com/javase/tutorial/i18n/locale/create.html#variant-code) 部分。
-
-**货币**
-
-如果您正在编写业务应用程序，则可能需要格式化和显示货币。您可以使用与数字相同的方式格式化货币，但调用 [`getCurrencyInstance`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html#getCurrencyInstance-java.util.Locale-) 以创建格式化器除外。当您调用 [`format`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html#format-double-) 方法时，它返回一个 [`String`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html) ，其中包含格式化的数字和相应的货币符号。
-
-下面的例子代码展示了如何以特定于语言的方式格式化货币：
+为了发布一个自定义`ApplicationEvent`，请调用`ApplicationEventPublisher`上的`publishEvent`方法。典型地，这通过创建一个实现`ApplicationEventPublisherAware`接口并将其注册为 Spring 的 bean 的方式来实现。下面的例子展示了这样一个类：
 
 ```java
-static public void displayCurrency( Locale currentLocale) {
+public class EmailService implements ApplicationEventPublisherAware {
 
-    Double currencyAmount = new Double(9876543.21);
-    Currency currentCurrency = Currency.getInstance(currentLocale);
-    NumberFormat currencyFormatter = 
-        NumberFormat.getCurrencyInstance(currentLocale);
+    private List<String> blackList;
+    private ApplicationEventPublisher publisher;
 
-    System.out.println(
-        currentLocale.getDisplayName() + ", " +
-        currentCurrency.getDisplayName() + ": " +
-        currencyFormatter.format(currencyAmount));
+    public void setBlackList(List<String> blackList) {
+        this.blackList = blackList;
+    }
+
+    public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
+
+    public void sendEmail(String address, String content) {
+        if (blackList.contains(address)) {
+            publisher.publishEvent(new BlackListEvent(this, address, content));
+            return;
+        }
+        // send email...
+    }
 }
 ```
 
-上面程序输出：
+在配置时，Spring容器检测到`EmailService`实现`ApplicationEventPublisherAware`并自动调用`setApplicationEventPublisher()`。实际上，传入的参数是Spring容器本身。您正在通过其`ApplicationEventPublisher`接口与应用程序上下文进行交互。
 
-```
-French (France), Euro: 9 876 543,21 €
-German (Germany), Euro: 9.876.543,21 €
-English (United States), US Dollar: $9,876,543.21
-```
-
-乍一看，这个输出可能看起来不对，因为数值都是一样的。当然，9 876 543,21€ 不等于 $9,876,543.21。但是，请记住， [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 类不知道汇率。属于 [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 类的方法格式化货币但不转换它们。
-
-请注意， [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 类的设计使得任何给定货币永远不会有多个 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 实例。因此，没有公共构造函数。如前面的代码示例所示，您使用 [`getInstance`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getInstance-java.util.Locale-) 方法获取 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 实例。
-
-例子 [`InternationalizedMortgageCalculator.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/InternationalizedMortgageCalculator.java) 同样举例说明了如何使用 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 类。（注意这个示例代码不会转化货币值。）下面使用 en-US 语言设置：
-
-![Mortgage Calculator, en-US locale](https://docs.oracle.com/javase/tutorial/figures/i18n/format/mortgage-calculator-en-us.jpg)
-
-下面使用了 en-UK 语言设置：
-
-![Mortgage Calculator, en-UK locale](https://docs.oracle.com/javase/tutorial/figures/i18n/format/mortgage-calculator-en-uk.jpg)
-
-例子 [`InternationalizedMortgageCalculator.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/InternationalizedMortgageCalculator.java) 需要以下资源文件：
-
-- [`resources/Resources.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources.properties)
-- [`resources/Resources_ar.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources_ar.properties)
-- [`resources/Resources_fr.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources_fr.properties)
-
-[`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 类包含其它方法可以检索其它货币相关信息：
-
-- [`getAvailableCurrencies`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getAvailableCurrencies--) : 返回 JDK 中所有可用的货币
-
-- [`getCurrencyCode`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getCurrencyCode--) : 返回 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 实例的 ISO 4217 数字代码
-
-- [`getSymbol`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getSymbol--) : 返回 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 实例的符号。您可以选择将 [`Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) 对象指定为参数。请考虑以下摘录：
-
-  ```java
-  Locale enGBLocale = 
-      new Locale.Builder().setLanguage("en").setRegion("GB").build();
-
-  Locale enUSLocale =
-      new Locale.Builder().setLanguage("en").setRegion("US").build();
-
-  Currency currencyInstance = Currency.getInstance(enUSLocale);
-
-  System.out.println(
-      "Symbol for US Dollar, en-US locale: " +
-      currencyInstance.getSymbol(enUSLocale));
-
-  System.out.println(
-      "Symbol for US Dollar, en-UK locale: " +
-      currencyInstance.getSymbol(enGBLocale));
-  ```
-
-  输出如下：
-
-  ```
-  Symbol for US Dollar, en-US locale: $
-  Symbol for US Dollar, en-UK locale: USD
-  ```
-
-  这个例子展示了货币符号会随着语言设置而变化。
-
-- [`getDisplayName`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getDisplayName--) : 返回 [`Currency`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html) 实例的显示名称。与 [`getSymbol`](https://docs.oracle.com/javase/8/docs/api/java/util/Currency.html#getSymbol--) 方法一样，您可以选择指定 [`Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) 对象。
-
-**对ISO 4217货币代码的可扩展支持**
-
-[ISO 4217](http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/currency_codes.htm) 是国际标准组织发布的标准。它指定三个字母的代码（和等效的三位数字代码）来表示货币和资金。该标准由外部机构维护，独立于Java SE平台发布。
-
-假设一个国家换用不同的货币，ISO 4217维护机构就会发布货币更新。要实现此更新，从而在运行时取代默认货币，请创建名为`*<JAVA_HOME>*/lib/currency.properties`的属性文件。此文件包含ISO 3166国家/地区代码的键/值对以及ISO 4217货币数据。值部分由三个以逗号分隔的ISO 4217货币值组成：字母代码，数字代码和次要单元。 以散列字符（＃）开头的任何行都被视为注释行。 例如：
-
-```
-# Sample currency property for Canada
-CA=CAD,124,2
-```
-
-`CAD`代表加元，`124`是加元的数字代码，`2`是次要单位，是货币表示小数货币所需的小数位数。例如，以下属性文件将默认加拿大货币取代为没有任何小于一美元的单位的加元：
-
-```
-CA=CAD,124,0
-```
-
-**百分比**
-
-您还可以使用 [`NumberFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html) 类的方法来设置百分比的格式。要获取特定于语言环境的格式化程序，请调用 [`getPercentInstance`](https://docs.oracle.com/javase/8/docs/api/java/text/NumberFormat.html#getPercentInstance-java.util.Locale-) 方法。使用此格式化程序，小数部分（例如0.75）显示为75％。
-
-以下代码示例显示如何格式化百分比。
+要接收自定义`ApplicationEvent`，您可以创建一个实现`ApplicationListener`的类并将其注册为Spring bean。 以下示例显示了这样一个类：
 
 ```java
-static public void displayPercent(Locale currentLocale) {
+public class BlackListNotifier implements ApplicationListener<BlackListEvent> {
 
-    Double percent = new Double(0.75);
-    NumberFormat percentFormatter;
-    String percentOut;
+    private String notificationAddress;
 
-    percentFormatter = NumberFormat.getPercentInstance(currentLocale);
-    percentOut = percentFormatter.format(percent);
-    System.out.println(percentOut + "   " + currentLocale.toString());
+    public void setNotificationAddress(String notificationAddress) {
+        this.notificationAddress = notificationAddress;
+    }
+
+    public void onApplicationEvent(BlackListEvent event) {
+        // notify appropriate parties via notificationAddress...
+    }
 }
 ```
 
-这个例子输出：
+请注意，`ApplicationListener`通常使用自定义事件的类型进行参数化（前面示例中为`BlackListEvent`）。这意味着`onApplicationEvent()`方法可以保持类型安全，从而避免任何向下转换的需要。您可以根据需要注册任意数量的事件侦听器，但请注意，默认情况下，事件侦听器会同步接收事件。这意味着`publishEvent()`方法将阻塞，直到所有侦听器都已完成对事件的处理。这种同步和单线程方法的一个优点是，当侦听器接收到事件时，如果事务上下文可用，它将在发布者的事务上下文内运行。如果需要另一个事件发布策略，请参阅Spring的 [`ApplicationEventMulticaster`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/context/event/ApplicationEventMulticaster.html) 接口的javadoc。
 
+以下示例显示了用于注册和配置上述每个类的bean定义：
+
+```xml
+<bean id="emailService" class="example.EmailService">
+    <property name="blackList">
+        <list>
+            <value>known.spammer@example.org</value>
+            <value>known.hacker@example.org</value>
+            <value>john.doe@example.org</value>
+        </list>
+    </property>
+</bean>
+
+<bean id="blackListNotifier" class="example.BlackListNotifier">
+    <property name="notificationAddress" value="blacklist@example.org"/>
+</bean>
 ```
-75 %   fr_FR
-75%   de_DE
-75%   en_US
+
+总而言之，当调用`emailService` bean的`sendEmail()`方法时，如果有任何应列入黑名单的电子邮件消息，则会发布`BlackListEvent`类型的自定义事件。`blackListNotifier` bean注册为`ApplicationListener`，并接收`BlackListEvent`，此时它可以通知相关方。
+
+> Spring的事件机制是为在同一应用程序上下文中的Spring bean之间的简单通信而设计的。但是，对于更复杂的企业集成需求，单独维护的 [Spring Integration](https://projects.spring.io/spring-integration/) 项目为构建基于众所周知的Spring编程模型的轻量级，[pattern-oriented](https://www.enterpriseintegrationpatterns.com/)，事件驱动的体系结构提供了完整的支持。
+
+##### 基于注解的事件监听器
+
+从Spring 4.2开始，您可以使用`EventListener`注解在托管bean的任何公共方法上注册事件侦听器。`BlackListNotifier`可以重写如下：
+
+```java
+public class BlackListNotifier {
+
+    private String notificationAddress;
+
+    public void setNotificationAddress(String notificationAddress) {
+        this.notificationAddress = notificationAddress;
+    }
+
+    @EventListener
+    public void processBlackListEvent(BlackListEvent event) {
+        // notify appropriate parties via notificationAddress...
+    }
+}
 ```
+
+方法签名再次声明它侦听的事件类型，但这次使用灵活的名称并且没有实现特定的侦听器接口。只要实际事件类型在其实现层次结构中解析通用参数，也可以通过泛型缩小事件类型范围。
+
+如果您的方法应该监听多个事件，或者您不想根据参数进行定义，那么也可以在注解本身上指定事件类型。以下示例显示了如何执行此操作：
+
+```java
+@EventListener({ContextStartedEvent.class, ContextRefreshedEvent.class})
+public void handleContextStart() {
+    ...
+}
+```
+
+还可以通过使用定义 [`SpEL`expression](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#expressions) 的注解的`condition`属性来添加额外的运行时过滤，该属性应匹配以实际调用特定事件的方法。
+
+以下示例显示了仅当事件的`content`属性等于`my-event`时，才能重写我们的通知程序以进行调用：
+
+```java
+@EventListener(condition = "#blEvent.content == 'my-event'")
+public void processBlackListEvent(BlackListEvent blEvent) {
+    // notify appropriate parties via notificationAddress...
+}
+```
+
+每个`SpEL`表达式都针对专用上下文进行评估。下表列出了可用于上下文的项目，以便您可以将它们用于条件事件处理：
+
+| Name            | Location           | Description                              | Example                                  |
+| --------------- | ------------------ | ---------------------------------------- | ---------------------------------------- |
+| Event           | root object        | 实际的 `ApplicationEvent` 。                 | `#root.event`                            |
+| Arguments array | root object        | 用来调用目标的参数（作为数组）。                         | `#root.args[0]`                          |
+| *Argument name* | evaluation context | 所有方法参数的名称。如果，由于某种原因，该名称不可用（比如，不存在调试信息），该参数名称也可以在`#a<#arg>`下面找到，其中`#arg`代表参数下标（从0开始）。 | `#blEvent` 或者 `#a0` (你也可以使用 `#p0` 或者 `#p<#arg>`记号作为别名) |
+
+请注意，即使您的方法签名实际引用已发布的任意对象， `#root.event` 也允许您访问基础事件。
+
+如果您需要发布作为处理其他事件的结果的事件，则可以更改方法签名以返回应发布的事件，如以下示例所示：
+
+```java
+@EventListener
+public ListUpdateEvent handleBlackListEvent(BlackListEvent event) {
+    // notify appropriate parties via notificationAddress and
+    // then publish a ListUpdateEvent...
+}
+```
+
+>   [异步监听器](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#context-functionality-events-async) 不支持此功能。
+
+这个新方法为上面方法处理的每个`BlackListEvent`发布一个新的`ListUpdateEvent`。如果需要发布多个事件，则可以返回事件集合。
+
+##### 异步监听器
+
+如果你希望特定监听器异步处理事件，可以复用 [regular `@Async` support](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/integration.html#scheduling-annotation-support-async) 。下面是例子：
+
+```java
+@EventListener
+@Async
+public void processBlackListEvent(BlackListEvent event) {
+    // BlackListEvent is processed in a separate thread
+}
+```
+
+使用异步监听器时注意以下限制：
+
+- 如果事件监听器抛出 `Exception`，它并不会传播给调用者。参考 `AsyncUncaughtExceptionHandler` 获取更多细节。
+- 这种事件监听器不能发送回复。如果你需要发送另外一个事件作为某个事件处理的结果，注入[`ApplicationEventPublisher`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/aop/interceptor/AsyncUncaughtExceptionHandler.html) 来手动发送它。
+
+##### 监听器排序
+
+如果需要在另一个侦听器之前调用一个侦听器，则可以将`@Order`注解添加到方法声明中，如以下示例所示：
+
+```java
+@EventListener
+@Order(42)
+public void processBlackListEvent(BlackListEvent event) {
+    // notify appropriate parties via notificationAddress...
+}
+```
+
+##### 泛型事件
+
+您还可以使用泛型来进一步定义事件的结构。考虑使用`EntityCreatedEvent <T>`，其中`T`是创建的实际实体的类型。例如，您可以创建以下侦听器定义以仅接收`Person`的`EntityCreatedEvent`：
+
+```java
+@EventListener
+public void onPersonCreated(EntityCreatedEvent<Person> event) {
+    ...
+}
+```
+
+由于类型擦除，仅当被触发的事件解析了事件侦听器过滤器的泛型参数时（即类`PersonCreatedEvent`类扩展了`EntityCreatedEvent <Person> {...}`），这才起作用。
+
+在某些情况下，如果所有事件都遵循相同的结构，这可能会变得相当繁琐（前面示例中的事件应该如此）。在这种情况下，您可以实现`ResolvableTypeProvider`来在超出运行时环境提供的范围时指导框架。以下事件显示了如何执行此操作：
+
+```java
+public class EntityCreatedEvent<T> extends ApplicationEvent implements ResolvableTypeProvider {
+
+    public EntityCreatedEvent(T entity) {
+        super(entity);
+    }
+
+    @Override
+    public ResolvableType getResolvableType() {
+        return ResolvableType.forClassWithGenerics(getClass(), ResolvableType.forInstance(getSource()));
+    }
+}
+```
+
+> 这不仅可以用于 `ApplicationEvent` ，还可以用于任何你作为事件发送的对象。
 
