@@ -678,32 +678,35 @@ SET optimizer_switch='engine_condition_pushdown=off';
 
 #### 8.2.1.5 索引条件下推优化
 
-Index Condition Pushdown (ICP) is an optimization for the case where MySQL retrieves rows from a table using an index. Without ICP, the storage engine traverses the index to locate rows in the base table and returns them to the MySQL server which evaluates the `WHERE` condition for the rows. With ICP enabled, and if parts of the `WHERE` condition can be evaluated by using only columns from the index, the MySQL server pushes this part of the `WHERE` condition down to the storage engine. The storage engine then evaluates the pushed index condition by using the index entry and only if this is satisfied is the row read from the table. ICP can reduce the number of times the storage engine must access the base table and the number of times the MySQL server must access the storage engine.
+索引条件下推（ICP）是对MySQL使用索引从表中检索行的情况的优化。如果没有ICP，存储引擎会遍历索引以查找基表中的行，并将它们返回给MySQL服务器，该服务器会评估行的`WHERE`条件。启用ICP后，如果能只使用索引中的列来评估`WHERE`条件的某些部分，MySQL服务器会将`WHERE`条件的这一部分推送到存储引擎。然后，存储引擎使用索引条目评估推送的索引条件，并且仅当满足该条件时才从表中读取行。ICP可以减少存储引擎必须访问基表的次数以及MySQL服务器必须访问存储引擎的次数。
 
-Applicability of the Index Condition Pushdown optimization is subject to these conditions:
+索引条件下推优化的适用性受到以下条件的限制：
 
-- ICP is used for the [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range), [`ref`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_ref), [`eq_ref`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_eq_ref), and [`ref_or_null`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_ref_or_null) access methods when there is a need to access full table rows.
-- ICP can be used for [`InnoDB`](https://dev.mysql.com/doc/refman/5.6/en/innodb-storage-engine.html) and [`MyISAM`](https://dev.mysql.com/doc/refman/5.6/en/myisam-storage-engine.html) tables. (Exception: ICP is not supported with partitioned tables in MySQL 5.6; this issue is resolved in MySQL 5.7.)
-- For `InnoDB` tables, ICP is used only for secondary indexes. The goal of ICP is to reduce the number of full-row reads and thereby reduce I/O operations. For `InnoDB` clustered indexes, the complete record is already read into the `InnoDB` buffer. Using ICP in this case does not reduce I/O.
-- Conditions that refer to subqueries cannot be pushed down.
-- Conditions that refer to stored functions cannot be pushed down. Storage engines cannot invoke stored functions.
-- Triggered conditions cannot be pushed down. (For information about triggered conditions, see [Section 8.2.2.3, “Optimizing Subqueries with the EXISTS Strategy”](https://dev.mysql.com/doc/refman/5.6/en/subquery-optimization-with-exists.html).)
+- ICP 被用于 [`range`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_range), [`ref`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_ref), [`eq_ref`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_eq_ref), 和 [`ref_or_null`](https://dev.mysql.com/doc/refman/5.6/en/explain-output.html#jointype_ref_or_null) 访问方法，当需要访问完整表行时。
+- ICP 能够被用于 [`InnoDB`](https://dev.mysql.com/doc/refman/5.6/en/innodb-storage-engine.html) 和 [`MyISAM`](https://dev.mysql.com/doc/refman/5.6/en/myisam-storage-engine.html) 表。（例外：MySQL 5.6 分区表不支持 ICP，此问题在 MySQL 5.7 中已经得到解决。）
+- 对于`InnoDB`表，ICP仅用于二级索引。ICP的目标是减少全行读取的数量，从而减少I/O操作。对于`InnoDB`聚簇索引，完整记录已经读入`InnoDB`缓冲区。在这种情况下使用ICP不会降低I/O。
+- 引用子查询的条件不能下推。
+- 引用存储函数的条件不能被下推。存储引擎无法调用存储函数。
+- 触发条件不能被下推。（有关触发条件的更多信息，参考  [Section 8.2.2.3, “Optimizing Subqueries with the EXISTS Strategy”](https://dev.mysql.com/doc/refman/5.6/en/subquery-optimization-with-exists.html) ）
 
-To understand how this optimization works, first consider how an index scan proceeds when Index Condition Pushdown is not used:
+为了理解这种优化的工作原理，首先考虑不使用索引下推优化时的索引扫描过程：
 
-1. Get the next row, first by reading the index tuple, and then by using the index tuple to locate and read the full table row.
-2. Test the part of the `WHERE` condition that applies to this table. Accept or reject the row based on the test result.
+1. 获取下一行，首先读取索引元组，然后使用索引元组找到并读取整个表行。
+2. 测试适用于此表的`WHERE`条件的一部分。根据测试结果接受或拒绝该行。
 
-Using Index Condition Pushdown, the scan proceeds like this instead:
+使用了索引下推后，扫描过程变成：
 
-1. Get the next row's index tuple (but not the full table row).
-2. Test the part of the `WHERE` condition that applies to this table and can be checked using only index columns. If the condition is not satisfied, proceed to the index tuple for the next row.
-3. If the condition is satisfied, use the index tuple to locate and read the full table row.
-4. Test the remaining part of the `WHERE` condition that applies to this table. Accept or reject the row based on the test result.
+1. 获取下一行的索引元组（但不是完整的表行）。
 
-[`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) output shows `Using index condition` in the `Extra` column when Index Condition Pushdown is used. It does not show `Using index` because that does not apply when full table rows must be read.
+2. 测试适用于此表、并且只能使用索引列进行检查的`WHERE`条件的一部分。如果不满足条件，则继续下一行的索引元组。
 
-Suppose that a table contains information about people and their addresses and that the table has an index defined as `INDEX (zipcode, lastname, firstname)`. If we know a person's `zipcode` value but are not sure about the last name, we can search like this:
+3. 如果满足条件，使用索引元组查找并读取整个表行。
+
+4. 测试适用于此表的`WHERE`条件的剩余部分。根据测试结果接受或拒绝该行。
+
+[`EXPLAIN`](https://dev.mysql.com/doc/refman/5.6/en/explain.html) 输出显式 `Using index condition` 在 `Extra` 列中，当使用索引条件下推时。它不显示 `Using index` 因为当所有的表行都必须被读取时索引就是不适用的。
+
+假设一个表包含有关人员及其地址的信息，并且该表的索引定义为`INDEX(zipcode，lastname，firstname)`。如果我们知道一个人的`zipcode`值但不确定姓氏，我们可以像这样搜索：
 
 ```sql
 SELECT * FROM people
@@ -712,18 +715,18 @@ SELECT * FROM people
   AND address LIKE '%Main Street%';
 ```
 
-MySQL can use the index to scan through people with `zipcode='95054'`. The second part (`lastname LIKE '%etrunia%'`) cannot be used to limit the number of rows that must be scanned, so without Index Condition Pushdown, this query must retrieve full table rows for all people who have `zipcode='95054'`.
+MySQL可以使用索引来扫描`zipcode ='95054'`的人。第二部分（`lastname LIKE'％etrunia％'`）不能用于限制必须扫描的行数，因此如果没有索引条件下推，此查询必须为所有拥有`zipcode ='95054'`的人检索完整的表行。
 
-With Index Condition Pushdown, MySQL checks the `lastname LIKE '%etrunia%'` part before reading the full table row. This avoids reading full rows corresponding to index tuples that match the `zipcode` condition but not the `lastname` condition.
+使用索引条件下推后，MySQL在读取整个表行之前检查`lastname LIKE'％etrunia％'`部分。这样可以避免读取与`zipcode`条件匹配但不符合`lastname`条件的索引元组对应的完整行。
 
-Index Condition Pushdown is enabled by default. It can be controlled with the [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) system variable by setting the`index_condition_pushdown` flag:
+默认情况下启用索引条件下推。可以通过设置`index_condition_pushdown`标志通过 [`optimizer_switch`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_optimizer_switch) 系统变量来控制它：
 
 ```sql
 SET optimizer_switch = 'index_condition_pushdown=off';
 SET optimizer_switch = 'index_condition_pushdown=on';
 ```
 
-See [Section 8.9.2, “Switchable Optimizations”](https://dev.mysql.com/doc/refman/5.6/en/switchable-optimizations.html).
+参考 [Section 8.9.2, “Switchable Optimizations”](https://dev.mysql.com/doc/refman/5.6/en/switchable-optimizations.html) 。
 
 #### 8.2.1.6 嵌套循环连接算法
 
@@ -806,3 +809,343 @@ if buffer is not empty {
 
 `t3`表扫描次数会随着  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 值的增大而减小，极限是  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 大到足以容纳所有的行组合。此时，继续增大  [`join_buffer_size`](https://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_join_buffer_size) 就不再能获得任何速度提升。
 
+#### 8.2.1.7 嵌套连接优化
+
+表达表连接的语法允许嵌套连接。下面讨论中提到的连接语法与 SQL 标准相比得到了扩展。后者仅接受*table_reference*，而不是一对括号内的列表。如果我们将*table_reference*项列表中的每个逗号视为等同于内连接，则这是一个保守的扩展。例如：
+
+```sql
+SELECT * FROM t1 LEFT JOIN (t2, t3, t4)
+                 ON (t2.a=t1.a AND t3.b=t1.b AND t4.c=t1.c)
+```
+
+等价于：
+
+```sql
+SELECT * FROM t1 LEFT JOIN (t2 CROSS JOIN t3 CROSS JOIN t4)
+                 ON (t2.a=t1.a AND t3.b=t1.b AND t4.c=t1.c)
+```
+
+In MySQL, `CROSS JOIN` is syntactically equivalent to `INNER JOIN`; they can replace each other. In standard SQL, they are not equivalent. `INNER JOIN` is used with an `ON` clause; `CROSS JOIN` is used otherwise.
+
+In general, parentheses can be ignored in join expressions containing only inner join operations. Consider this join expression:
+
+```sql
+t1 LEFT JOIN (t2 LEFT JOIN t3 ON t2.b=t3.b OR t2.b IS NULL)
+   ON t1.a=t2.a
+```
+
+After removing parentheses and grouping operations to the left, that join expression transforms into this expression:
+
+```sql
+(t1 LEFT JOIN t2 ON t1.a=t2.a) LEFT JOIN t3
+    ON t2.b=t3.b OR t2.b IS NULL
+```
+
+Yet, the two expressions are not equivalent. To see this, suppose that the tables `t1`, `t2`, and `t3` have the following state:
+
+- Table `t1` contains rows `(1)`, `(2)`
+- Table `t2` contains row `(1,101)`
+- Table `t3` contains row `(101)`
+
+In this case, the first expression returns a result set including the rows `(1,1,101,101)`, `(2,NULL,NULL,NULL)`, whereas the second expression returns the rows `(1,1,101,101)`, `(2,NULL,NULL,101)`:
+
+```sql
+mysql> SELECT *
+       FROM t1
+            LEFT JOIN
+            (t2 LEFT JOIN t3 ON t2.b=t3.b OR t2.b IS NULL)
+            ON t1.a=t2.a;
++------+------+------+------+
+| a    | a    | b    | b    |
++------+------+------+------+
+|    1 |    1 |  101 |  101 |
+|    2 | NULL | NULL | NULL |
++------+------+------+------+
+
+mysql> SELECT *
+       FROM (t1 LEFT JOIN t2 ON t1.a=t2.a)
+            LEFT JOIN t3
+            ON t2.b=t3.b OR t2.b IS NULL;
++------+------+------+------+
+| a    | a    | b    | b    |
++------+------+------+------+
+|    1 |    1 |  101 |  101 |
+|    2 | NULL | NULL |  101 |
++------+------+------+------+
+```
+
+In the following example, an outer join operation is used together with an inner join operation:
+
+```sql
+t1 LEFT JOIN (t2, t3) ON t1.a=t2.a
+```
+
+That expression cannot be transformed into the following expression:
+
+```sql
+t1 LEFT JOIN t2 ON t1.a=t2.a, t3
+```
+
+For the given table states, the two expressions return different sets of rows:
+
+```sql
+mysql> SELECT *
+       FROM t1 LEFT JOIN (t2, t3) ON t1.a=t2.a;
++------+------+------+------+
+| a    | a    | b    | b    |
++------+------+------+------+
+|    1 |    1 |  101 |  101 |
+|    2 | NULL | NULL | NULL |
++------+------+------+------+
+
+mysql> SELECT *
+       FROM t1 LEFT JOIN t2 ON t1.a=t2.a, t3;
++------+------+------+------+
+| a    | a    | b    | b    |
++------+------+------+------+
+|    1 |    1 |  101 |  101 |
+|    2 | NULL | NULL |  101 |
++------+------+------+------+
+```
+
+Therefore, if we omit parentheses in a join expression with outer join operators, we might change the result set for the original expression.
+
+More exactly, we cannot ignore parentheses in the right operand of the left outer join operation and in the left operand of a right join operation. In other words, we cannot ignore parentheses for the inner table expressions of outer join operations. Parentheses for the other operand (operand for the outer table) can be ignored.
+
+The following expression:
+
+```sql
+(t1,t2) LEFT JOIN t3 ON P(t2.b,t3.b)
+```
+
+Is equivalent to this expression for any tables `t1,t2,t3` and any condition `P` over attributes `t2.b` and `t3.b`:
+
+```sql
+t1, t2 LEFT JOIN t3 ON P(t2.b,t3.b)
+```
+
+Whenever the order of execution of join operations in a join expression (*joined_table*) is not from left to right, we talk about nested joins. Consider the following queries:
+
+```sql
+SELECT * FROM t1 LEFT JOIN (t2 LEFT JOIN t3 ON t2.b=t3.b) ON t1.a=t2.a
+  WHERE t1.a > 1
+
+SELECT * FROM t1 LEFT JOIN (t2, t3) ON t1.a=t2.a
+  WHERE (t2.b=t3.b OR t2.b IS NULL) AND t1.a > 1
+```
+
+Those queries are considered to contain these nested joins:
+
+```sql
+t2 LEFT JOIN t3 ON t2.b=t3.b
+t2, t3
+```
+
+In the first query, the nested join is formed with a left join operation. In the second query, it is formed with an inner join operation.
+
+In the first query, the parentheses can be omitted: The grammatical structure of the join expression will dictate the same order of execution for join operations. For the second query, the parentheses cannot be omitted, although the join expression here can be interpreted unambiguously without them. In our extended syntax, the parentheses in `(t2, t3)` of the second query are required, although theoretically the query could be parsed without them: We still would have unambiguous syntactical structure for the query because `LEFT JOIN` and `ON` play the role of the left and right delimiters for the expression `(t2,t3)`.
+
+The preceding examples demonstrate these points:
+
+- For join expressions involving only inner joins (and not outer joins), parentheses can be removed and joins evaluated left to right. In fact, tables can be evaluated in any order.
+- The same is not true, in general, for outer joins or for outer joins mixed with inner joins. Removal of parentheses may change the result.
+
+
+
+```sql
+SELECT * FROM T1 INNER JOIN T2 ON P1(T1,T2)
+                 INNER JOIN T3 ON P2(T2,T3)
+  WHERE P(T1,T2,T3)
+```
+
+Here, `P1(T1,T2)` and `P2(T3,T3)` are some join conditions (on expressions), whereas `P(T1,T2,T3)` is a condition over columns of tables `T1,T2,T3`.
+
+The nested-loop join algorithm would execute this query in the following manner:
+
+```clike
+FOR each row t1 in T1 {
+  FOR each row t2 in T2 such that P1(t1,t2) {
+    FOR each row t3 in T3 such that P2(t2,t3) {
+      IF P(t1,t2,t3) {
+         t:=t1||t2||t3; OUTPUT t;
+      }
+    }
+  }
+}
+```
+
+The notation `t1||t2||t3` indicates a row constructed by concatenating the columns of rows `t1`, `t2`, and `t3`. In some of the following examples, `NULL` where a table name appears means a row in which `NULL` is used for each column of that table. For example, `t1||t2||NULL` indicates a row constructed by concatenating the columns of rows `t1` and `t2`, and `NULL` for each column of `t3`. Such a row is said to be `NULL`-complemented.
+
+
+
+Now consider a query with nested outer joins:
+
+```sql
+SELECT * FROM T1 LEFT JOIN
+              (T2 LEFT JOIN T3 ON P2(T2,T3))
+              ON P1(T1,T2)
+  WHERE P(T1,T2,T3)
+```
+
+For this query, modify the nested-loop pattern to obtain:
+
+```clike
+FOR each row t1 in T1 {
+  BOOL f1:=FALSE;
+  FOR each row t2 in T2 such that P1(t1,t2) {
+    BOOL f2:=FALSE;
+    FOR each row t3 in T3 such that P2(t2,t3) {
+      IF P(t1,t2,t3) {
+        t:=t1||t2||t3; OUTPUT t;
+      }
+      f2=TRUE;
+      f1=TRUE;
+    }
+    IF (!f2) {
+      IF P(t1,t2,NULL) {
+        t:=t1||t2||NULL; OUTPUT t;
+      }
+      f1=TRUE;
+    }
+  }
+  IF (!f1) {
+    IF P(t1,NULL,NULL) {
+      t:=t1||NULL||NULL; OUTPUT t;
+    }
+  }
+}
+```
+
+In general, for any nested loop for the first inner table in an outer join operation, a flag is introduced that is turned off before the loop and is checked after the loop. The flag is turned on when for the current row from the outer table a match from the table representing the inner operand is found. If at the end of the loop cycle the flag is still off, no match has been found for the current row of the outer table. In this case, the row is complemented by `NULL` values for the columns of the inner tables. The result row is passed to the final check for the output or into the next nested loop, but only if the row satisfies the join condition of all embedded outer joins.
+
+In the example, the outer join table expressed by the following expression is embedded:
+
+```sql
+(T2 LEFT JOIN T3 ON P2(T2,T3))
+```
+
+For the query with inner joins, the optimizer could choose a different order of nested loops, such as this one:
+
+```clike
+FOR each row t3 in T3 {
+  FOR each row t2 in T2 such that P2(t2,t3) {
+    FOR each row t1 in T1 such that P1(t1,t2) {
+      IF P(t1,t2,t3) {
+         t:=t1||t2||t3; OUTPUT t;
+      }
+    }
+  }
+}
+```
+
+For queries with outer joins, the optimizer can choose only such an order where loops for outer tables precede loops for inner tables. Thus, for our query with outer joins, only one nesting order is possible. For the following query, the optimizer evaluates two different nestings. In both nestings, `T1` must be processed in the outer loop because it is used in an outer join. `T2` and `T3` are used in an inner join, so that join must be processed in the inner loop. However, because the join is an inner join, `T2` and `T3` can be processed in either order.
+
+```sql
+SELECT * T1 LEFT JOIN (T2,T3) ON P1(T1,T2) AND P2(T1,T3)
+  WHERE P(T1,T2,T3)
+```
+
+One nesting evaluates `T2`, then `T3`:
+
+```clike
+FOR each row t1 in T1 {
+  BOOL f1:=FALSE;
+  FOR each row t2 in T2 such that P1(t1,t2) {
+    FOR each row t3 in T3 such that P2(t1,t3) {
+      IF P(t1,t2,t3) {
+        t:=t1||t2||t3; OUTPUT t;
+      }
+      f1:=TRUE
+    }
+  }
+  IF (!f1) {
+    IF P(t1,NULL,NULL) {
+      t:=t1||NULL||NULL; OUTPUT t;
+    }
+  }
+}
+```
+
+The other nesting evaluates `T3`, then `T2`:
+
+```clike
+FOR each row t1 in T1 {
+  BOOL f1:=FALSE;
+  FOR each row t3 in T3 such that P2(t1,t3) {
+    FOR each row t2 in T2 such that P1(t1,t2) {
+      IF P(t1,t2,t3) {
+        t:=t1||t2||t3; OUTPUT t;
+      }
+      f1:=TRUE
+    }
+  }
+  IF (!f1) {
+    IF P(t1,NULL,NULL) {
+      t:=t1||NULL||NULL; OUTPUT t;
+    }
+  }
+}
+```
+
+When discussing the nested-loop algorithm for inner joins, we omitted some details whose impact on the performance of query execution may be huge. We did not mention so-called “pushed-down” conditions. Suppose that our `WHERE` condition `P(T1,T2,T3)` can be represented by a conjunctive formula:
+
+```clike
+P(T1,T2,T2) = C1(T1) AND C2(T2) AND C3(T3).
+```
+
+In this case, MySQL actually uses the following nested-loop algorithm for the execution of the query with inner joins:
+
+```clike
+FOR each row t1 in T1 such that C1(t1) {
+  FOR each row t2 in T2 such that P1(t1,t2) AND C2(t2)  {
+    FOR each row t3 in T3 such that P2(t2,t3) AND C3(t3) {
+      IF P(t1,t2,t3) {
+         t:=t1||t2||t3; OUTPUT t;
+      }
+    }
+  }
+}
+```
+
+You see that each of the conjuncts `C1(T1)`, `C2(T2)`, `C3(T3)` are pushed out of the most inner loop to the most outer loop where it can be evaluated. If `C1(T1)` is a very restrictive condition, this condition pushdown may greatly reduce the number of rows from table `T1`passed to the inner loops. As a result, the execution time for the query may improve immensely.
+
+For a query with outer joins, the `WHERE` condition is to be checked only after it has been found that the current row from the outer table has a match in the inner tables. Thus, the optimization of pushing conditions out of the inner nested loops cannot be applied directly to queries with outer joins. Here we must introduce conditional pushed-down predicates guarded by the flags that are turned on when a match has been encountered.
+
+Recall this example with outer joins:
+
+```clike
+P(T1,T2,T3)=C1(T1) AND C(T2) AND C3(T3)
+```
+
+For that example, the nested-loop algorithm using guarded pushed-down conditions looks like this:
+
+```clike
+FOR each row t1 in T1 such that C1(t1) {
+  BOOL f1:=FALSE;
+  FOR each row t2 in T2
+      such that P1(t1,t2) AND (f1?C2(t2):TRUE) {
+    BOOL f2:=FALSE;
+    FOR each row t3 in T3
+        such that P2(t2,t3) AND (f1&&f2?C3(t3):TRUE) {
+      IF (f1&&f2?TRUE:(C2(t2) AND C3(t3))) {
+        t:=t1||t2||t3; OUTPUT t;
+      }
+      f2=TRUE;
+      f1=TRUE;
+    }
+    IF (!f2) {
+      IF (f1?TRUE:C2(t2) && P(t1,t2,NULL)) {
+        t:=t1||t2||NULL; OUTPUT t;
+      }
+      f1=TRUE;
+    }
+  }
+  IF (!f1 && P(t1,NULL,NULL)) {
+      t:=t1||NULL||NULL; OUTPUT t;
+  }
+}
+```
+
+In general, pushed-down predicates can be extracted from join conditions such as `P1(T1,T2)` and `P(T2,T3)`. In this case, a pushed-down predicate is guarded also by a flag that prevents checking the predicate for the `NULL`-complemented row generated by the corresponding outer join operation.
+
+Access by key from one inner table to another in the same nested join is prohibited if it is induced by a predicate from the `WHERE`condition.
