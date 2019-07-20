@@ -5462,7 +5462,7 @@ RAR部署非常适用于不需要HTTP入口点但仅包含消息端点和预定�
 
 注意，核心`BeanFactory` API 层级和它的`DefaultListableBeanFactory`实现不会对配置格式或者注解应用到的所有组件做任何假定。所有这些风格都通过扩展（例如`XmlBeanDefinitionReader`和`AutowiredAnnotationBeanPostProcessor`）进行，并作为核心元数据表示在共享`BeanDefinition`对象上运行。这是使Spring的容器如此灵活和可扩展的本质。
 
-#### 1.16.1. `BeanFactory` 还是 `ApplicationContext`?
+#### 1.16.1 `BeanFactory` 还是 `ApplicationContext`?
 
 本节介绍`BeanFactory`和`ApplicationContext`容器级别之间的差异以及对引导的影响。
 
@@ -5527,11 +5527,11 @@ cfg.postProcessBeanFactory(factory);
 - [Resources 作为依赖](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources-as-dependencies)
 - [应用上下文和资源路径](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources-app-ctx)
 
-### 2.1. 介绍
+### 2.1  介绍
 
 Java 的标准`java.net.URL`类和用来处理各种 URL 前缀的标准处理器，很不幸，并不非常能够胜任对所有低层次资源的访问。例如，没有标准化的 URL 实现可用于访问需要从类路径或相对于`ServletContext`获取的资源。虽然可以为专用的 URL 前缀注册新的处理程序（类似于`http:`这样的前缀的现有处理程序），但这通常非常复杂，并且 URL 接口仍然缺少一些理想的功能，例如检查被指向的资源存在的方法。
 
-### 2.2. Resource 接口
+### 2.2  Resource 接口
 
 Spring的`Resource`接口旨在成为一个更有能力的接口，用于抽象对低级资源的访问。以下清单显示了`Resource`接口定义：
 
@@ -5591,7 +5591,7 @@ Spring 包含下列 `Resource` 实现：
 - [`InputStreamResource`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources-implementations-inputstreamresource)
 - [`ByteArrayResource`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources-implementations-bytearrayresource)
 
-#### 2.3.1. `UrlResource`
+#### 2.3.1 `UrlResource`
 
 `UrlResource`包装`java.net.URL`，可用于访问通常可通过 URL 访问的任何对象，例如文件，HTTP目标，FTP目标等。所有 URL 都具有标准化的字符串表示，以便使用适当的标准化前缀来指示另一个URL类型。这包括 `file:` 用于访问文件系统路径，`http:` 用于通过HTTP协议访问资源，`ftp:`用于通过FTP访问资源，以及其他。
 
@@ -5615,13 +5615,13 @@ Spring 包含下列 `Resource` 实现：
 
 它始终支持流访问和 URL 访问，但只有在Web应用程序存档被解压之后且资源实际位于文件系统上时才允许`java.io.File`访问。无论它是解压到在文件系统上还是直接从JAR或其他地方（如数据库）访问，实际上都依赖于Servlet容器。
 
-#### 2.3.5. `InputStreamResource`
+#### 2.3.5 `InputStreamResource`
 
 `InputStreamResource`是给定`InputStream`的`Resource`实现。只有在没有适用的特定`Resource`实现时才应该使用它。特别是，在可能的情况下，应该优先考虑使用`ByteArrayResource`或任何基于文件的`Resource`实现。
 
 与其他`Resource`实现相比，这是已经打开的资源的描述符。因此，它从`isOpen()`返回`true`。如果需要将资源描述符保留在某处或者需要多次读取流，请不要使用它。
 
-#### 2.3.6. `ByteArrayResource`
+#### 2.3.6 `ByteArrayResource`
 
 这是给定字节数组的`Resource`实现。它为给定的字节数组创建一个`ByteArrayInputStream`。
 
@@ -5690,7 +5690,7 @@ public interface ResourceLoaderAware {
 
 在应用程序组件中，您还可以依赖自动装配`ResourceLoader`作为实现`ResourceLoaderAware`接口的替代方法。“传统的”构造函数和`byType`自动装配模式（如 [自动装配协作者](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-factory-autowire) 中所述）能够分别为构造函数参数或 setter 方法参数提供`ResourceLoader`。为了获得更大的灵活性（包括自动装配字段和多参数方法的能力），请考虑使用基于注解的自动装配功能。在这种情况下，只要字段，构造函数或方法带有`@Autowired`注解，`ResourceLoader`就自动注入一个字段，构造函数参数或方法参数，它们需要`ResourceLoader`类型。有关更多信息，请参阅 [使用`@Autowired`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-autowired-annotation) 。
 
-### 2.6. Resources as Dependencies
+### 2.6  Resources as Dependencies
 
 如果 bean 本身将通过某种动态过程确定并提供资源路径，那么 bean 使用`ResourceLoader`接口加载资源可能是有意义的。例如，考虑加载某种模板，其中所需的特定资源取决于用户的角色。如果资源是静态的，那么完全消除`ResourceLoader`接口的使用是有意义的，让 bean 暴露它需要的`Resource`属性，并期望它们被注入其中。
 
