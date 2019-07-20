@@ -825,29 +825,29 @@ SELECT * FROM t1 LEFT JOIN (t2 CROSS JOIN t3 CROSS JOIN t4)
                  ON (t2.a=t1.a AND t3.b=t1.b AND t4.c=t1.c)
 ```
 
-In MySQL, `CROSS JOIN` is syntactically equivalent to `INNER JOIN`; they can replace each other. In standard SQL, they are not equivalent. `INNER JOIN` is used with an `ON` clause; `CROSS JOIN` is used otherwise.
+在MySQL中，`CROSS JOIN`在语法上等同于`INNER JOIN`；他们可以互相替换。在标准SQL中，它们不等效。`INNER JOIN`与`ON`子句一起使用；否则使用`CROSS JOIN`。
 
-In general, parentheses can be ignored in join expressions containing only inner join operations. Consider this join expression:
+通常，在仅包含内部联接操作的联接表达式中可以忽略括号。考虑这个连接表达式：
 
 ```sql
 t1 LEFT JOIN (t2 LEFT JOIN t3 ON t2.b=t3.b OR t2.b IS NULL)
    ON t1.a=t2.a
 ```
 
-After removing parentheses and grouping operations to the left, that join expression transforms into this expression:
+删除括号并将操作分组到左侧后，该连接表达式将转换为此表达式：
 
 ```sql
 (t1 LEFT JOIN t2 ON t1.a=t2.a) LEFT JOIN t3
     ON t2.b=t3.b OR t2.b IS NULL
 ```
 
-Yet, the two expressions are not equivalent. To see this, suppose that the tables `t1`, `t2`, and `t3` have the following state:
+然而，这两个表达并不相同。为了看到这一点，假设表`t1`，`t2`和`t3`具有以下状态：
 
-- Table `t1` contains rows `(1)`, `(2)`
-- Table `t2` contains row `(1,101)`
-- Table `t3` contains row `(101)`
+- 表 `t1` 包含行 `(1)`, `(2)`
+- 表 `t2` 包含行 `(1,101)`
+- 表 `t3` 包含行 `(101)`
 
-In this case, the first expression returns a result set including the rows `(1,1,101,101)`, `(2,NULL,NULL,NULL)`, whereas the second expression returns the rows `(1,1,101,101)`, `(2,NULL,NULL,101)`:
+在这种情况下，第一个表达式返回一个结果集，包括行`(1,1,101,101)`，`(2，NULL，NULL，NULL)`，而第二个表达式返回行`(1,1,101,101)`，`(2，NULL，NULL，101)`：
 
 ```sql
 mysql> SELECT *
@@ -874,19 +874,19 @@ mysql> SELECT *
 +------+------+------+------+
 ```
 
-In the following example, an outer join operation is used together with an inner join operation:
+在以下示例中，外部联接操作与内部联接操作一起使用：
 
 ```sql
 t1 LEFT JOIN (t2, t3) ON t1.a=t2.a
 ```
 
-That expression cannot be transformed into the following expression:
+该表达式无法转换为以下表达式：
 
 ```sql
 t1 LEFT JOIN t2 ON t1.a=t2.a, t3
 ```
 
-For the given table states, the two expressions return different sets of rows:
+对于给定的表状态，这两个表达式返回不同的行集：
 
 ```sql
 mysql> SELECT *
@@ -908,23 +908,23 @@ mysql> SELECT *
 +------+------+------+------+
 ```
 
-Therefore, if we omit parentheses in a join expression with outer join operators, we might change the result set for the original expression.
+因此，如果我们在带有外连接运算符的连接表达式中省略括号，我们可能会更改原始表达式的结果集。
 
-More exactly, we cannot ignore parentheses in the right operand of the left outer join operation and in the left operand of a right join operation. In other words, we cannot ignore parentheses for the inner table expressions of outer join operations. Parentheses for the other operand (operand for the outer table) can be ignored.
+更准确地说，我们不能忽略左外连接操作的右操作数和右连接操作的左操作数中的括号。换句话说，我们不能忽略外连接操作的内部表表达式的括号。可以忽略其他操作数（外部表的操作数）的括号。
 
-The following expression:
+以下表达式：
 
 ```sql
 (t1,t2) LEFT JOIN t3 ON P(t2.b,t3.b)
 ```
 
-Is equivalent to this expression for any tables `t1,t2,t3` and any condition `P` over attributes `t2.b` and `t3.b`:
+对于任何表`t1，t2，t3`以及属性`t2.b`和`t3.b`上的任何条件`P`等效于此表达式：
 
 ```sql
 t1, t2 LEFT JOIN t3 ON P(t2.b,t3.b)
 ```
 
-Whenever the order of execution of join operations in a join expression (*joined_table*) is not from left to right, we talk about nested joins. Consider the following queries:
+每当连接表达式（*joined_table*）中的连接操作的执行顺序不是从左到右时，我们就讨论嵌套连接。请考虑以下查询：
 
 ```sql
 SELECT * FROM t1 LEFT JOIN (t2 LEFT JOIN t3 ON t2.b=t3.b) ON t1.a=t2.a
@@ -934,23 +934,21 @@ SELECT * FROM t1 LEFT JOIN (t2, t3) ON t1.a=t2.a
   WHERE (t2.b=t3.b OR t2.b IS NULL) AND t1.a > 1
 ```
 
-Those queries are considered to contain these nested joins:
+这些查询被认为包含这些嵌套连接：
 
 ```sql
 t2 LEFT JOIN t3 ON t2.b=t3.b
 t2, t3
 ```
 
-In the first query, the nested join is formed with a left join operation. In the second query, it is formed with an inner join operation.
+在第一个查询中，嵌套连接由左连接操作形成。在第二个查询中，它由内部联接操作形成。
 
-In the first query, the parentheses can be omitted: The grammatical structure of the join expression will dictate the same order of execution for join operations. For the second query, the parentheses cannot be omitted, although the join expression here can be interpreted unambiguously without them. In our extended syntax, the parentheses in `(t2, t3)` of the second query are required, although theoretically the query could be parsed without them: We still would have unambiguous syntactical structure for the query because `LEFT JOIN` and `ON` play the role of the left and right delimiters for the expression `(t2,t3)`.
+在第一个查询中，可以省略括号：连接表达式的语法结构将指示连接操作的相同执行顺序。对于第二个查询，不能省略括号，尽管这里的连接表达式可以在没有它们的情况下明确解释。在我们的扩展语法中，第二个查询的`(t2，t3)`中的括号是必需的，虽然理论上可以在没有它们的情况下解析查询：我们仍然会为查询提供明确的语法结构，因为`LEFT JOIN`和`ON `为表达式`(t2,t3)`扮演左右分隔符的角色。
 
-The preceding examples demonstrate these points:
+上面的例子指出了下面几点：
 
-- For join expressions involving only inner joins (and not outer joins), parentheses can be removed and joins evaluated left to right. In fact, tables can be evaluated in any order.
-- The same is not true, in general, for outer joins or for outer joins mixed with inner joins. Removal of parentheses may change the result.
-
-
+ - 对于仅涉及内部联接（而不是外部联接）的联接表达式，可以删除括号并从左到右计算联接。实际上，可以按任何顺序评估表。
+ - 通常，对于外连接或与内连接混合的外连接，情况并非如此。删除括号可能会改变结果。
 
 ```sql
 SELECT * FROM T1 INNER JOIN T2 ON P1(T1,T2)
@@ -958,11 +956,11 @@ SELECT * FROM T1 INNER JOIN T2 ON P1(T1,T2)
   WHERE P(T1,T2,T3)
 ```
 
-Here, `P1(T1,T2)` and `P2(T3,T3)` are some join conditions (on expressions), whereas `P(T1,T2,T3)` is a condition over columns of tables `T1,T2,T3`.
+这里，`P1(T1,T2)` 和 `P2(T3,T3)`是一些连接条件（在表达式上），而 `P(T1,T2,T3)`是表 `T1,T2,T3`的列的条件。
 
-The nested-loop join algorithm would execute this query in the following manner:
+嵌套循环连接算法将以下列方式执行此查询：
 
-```clike
+```
 FOR each row t1 in T1 {
   FOR each row t2 in T2 such that P1(t1,t2) {
     FOR each row t3 in T3 such that P2(t2,t3) {
@@ -974,11 +972,9 @@ FOR each row t1 in T1 {
 }
 ```
 
-The notation `t1||t2||t3` indicates a row constructed by concatenating the columns of rows `t1`, `t2`, and `t3`. In some of the following examples, `NULL` where a table name appears means a row in which `NULL` is used for each column of that table. For example, `t1||t2||NULL` indicates a row constructed by concatenating the columns of rows `t1` and `t2`, and `NULL` for each column of `t3`. Such a row is said to be `NULL`-complemented.
+符号`t1||t2||t3`表示通过连接行`t1`，`t2`和`t3`的列构造的行。在下面的一些示例中，出现表名位置处的`NULL`表示一行，其中`NULL`用于该表的每一列。例如，`t1||t2||NULL`表示通过连接`t1`和`t2`的列以及`t3`的每列的`NULL`构造的行。这样的行被称为`NULL`补充。
 
-
-
-Now consider a query with nested outer joins:
+现在考虑使用嵌套外连接的查询：
 
 ```sql
 SELECT * FROM T1 LEFT JOIN
@@ -987,7 +983,7 @@ SELECT * FROM T1 LEFT JOIN
   WHERE P(T1,T2,T3)
 ```
 
-For this query, modify the nested-loop pattern to obtain:
+对于此查询，修改嵌套循环模式以获取：
 
 ```clike
 FOR each row t1 in T1 {
@@ -1016,15 +1012,15 @@ FOR each row t1 in T1 {
 }
 ```
 
-In general, for any nested loop for the first inner table in an outer join operation, a flag is introduced that is turned off before the loop and is checked after the loop. The flag is turned on when for the current row from the outer table a match from the table representing the inner operand is found. If at the end of the loop cycle the flag is still off, no match has been found for the current row of the outer table. In this case, the row is complemented by `NULL` values for the columns of the inner tables. The result row is passed to the final check for the output or into the next nested loop, but only if the row satisfies the join condition of all embedded outer joins.
+通常，对于外连接操作中第一个内部表的任何嵌套循环，引入一个在循环之前关闭并在循环之后检查的标志。当对于来自外部表的当前行，找到与表示内部操作数的表的匹配时，该标志被打开。如果在循环周期结束时标志仍然关闭，则找不到外部表的当前行的匹配项。在这种情况下，行由内部表的列的`NULL`值补充。结果行将传递给输出的最终检查或下一个嵌套循环，但前提是该行满足所有嵌入外连接的连接条件。
 
-In the example, the outer join table expressed by the following expression is embedded:
+在该示例中，嵌入了由以下表达式表示的外连接表：
 
 ```sql
 (T2 LEFT JOIN T3 ON P2(T2,T3))
 ```
 
-For the query with inner joins, the optimizer could choose a different order of nested loops, such as this one:
+对于具有内部联接的查询，优化程序可以选择不同的嵌套循环顺序，例如：
 
 ```clike
 FOR each row t3 in T3 {
@@ -1038,14 +1034,14 @@ FOR each row t3 in T3 {
 }
 ```
 
-For queries with outer joins, the optimizer can choose only such an order where loops for outer tables precede loops for inner tables. Thus, for our query with outer joins, only one nesting order is possible. For the following query, the optimizer evaluates two different nestings. In both nestings, `T1` must be processed in the outer loop because it is used in an outer join. `T2` and `T3` are used in an inner join, so that join must be processed in the inner loop. However, because the join is an inner join, `T2` and `T3` can be processed in either order.
+对于具有外连接的查询，优化器只能选择这样的顺序，其中外部表的循环位于内部表的循环之前。因此，对于具有外连接的查询，只能有一个嵌套顺序。对于以下查询，优化程序将评估两种不同的嵌套。在两个嵌套中，必须在外部循环中处理`T1`，因为它在外部连接中使用。`T2`和`T3`用于内连接，因此必须在内循环中处理连接。但是，因为连接是内连接，所以可以按任何顺序处理`T2`和`T3`。
 
 ```sql
 SELECT * T1 LEFT JOIN (T2,T3) ON P1(T1,T2) AND P2(T1,T3)
   WHERE P(T1,T2,T3)
 ```
 
-One nesting evaluates `T2`, then `T3`:
+一个嵌套评估`T2`，然后是`T3`：
 
 ```clike
 FOR each row t1 in T1 {
@@ -1066,7 +1062,7 @@ FOR each row t1 in T1 {
 }
 ```
 
-The other nesting evaluates `T3`, then `T2`:
+另一个嵌套评估`T3`，然后是`T2`：
 
 ```clike
 FOR each row t1 in T1 {
@@ -1089,11 +1085,13 @@ FOR each row t1 in T1 {
 
 When discussing the nested-loop algorithm for inner joins, we omitted some details whose impact on the performance of query execution may be huge. We did not mention so-called “pushed-down” conditions. Suppose that our `WHERE` condition `P(T1,T2,T3)` can be represented by a conjunctive formula:
 
+在讨论内部联接的嵌套循环算法时，我们省略了一些细节，这些细节对查询执行性能的影响可能很大。我们没有提到所谓的“下推”条件。假设我们的`WHERE`条件`P(T1，T2，T3)`可以用一个连接公式表示：
+
 ```clike
 P(T1,T2,T2) = C1(T1) AND C2(T2) AND C3(T3).
 ```
 
-In this case, MySQL actually uses the following nested-loop algorithm for the execution of the query with inner joins:
+在这种情况下，MySQL实际上使用以下嵌套循环算法来执行带有内连接的查询：
 
 ```clike
 FOR each row t1 in T1 such that C1(t1) {
@@ -1107,17 +1105,17 @@ FOR each row t1 in T1 such that C1(t1) {
 }
 ```
 
-You see that each of the conjuncts `C1(T1)`, `C2(T2)`, `C3(T3)` are pushed out of the most inner loop to the most outer loop where it can be evaluated. If `C1(T1)` is a very restrictive condition, this condition pushdown may greatly reduce the number of rows from table `T1`passed to the inner loops. As a result, the execution time for the query may improve immensely.
+你会看到每个合取器 `C1(T1)`, `C2(T2)`, `C3(T3)` 被推出最内层循环到最外层循环，可以在那里对其进行评估。如果`C1(T1)`是一个非常严格的条件，这种情况下推可能会大大减少从表`T1`到内循环的行数。结果，查询的执行时间可能会大大改善。
 
-For a query with outer joins, the `WHERE` condition is to be checked only after it has been found that the current row from the outer table has a match in the inner tables. Thus, the optimization of pushing conditions out of the inner nested loops cannot be applied directly to queries with outer joins. Here we must introduce conditional pushed-down predicates guarded by the flags that are turned on when a match has been encountered.
+对于具有外连接的查询，只有在发现外表中的当前行在内表中具有匹配项之后才会检查`WHERE`条件。因此，从内嵌套循环中推出条件的优化不能直接应用于具有外连接的查询。这里我们必须引入条件下推谓词，这些谓词由遇到匹配时打开的标志保护。
 
-Recall this example with outer joins:
+回想一下外连接的这个例子：
 
 ```clike
 P(T1,T2,T3)=C1(T1) AND C(T2) AND C3(T3)
 ```
 
-For that example, the nested-loop algorithm using guarded pushed-down conditions looks like this:
+对于该示例，使用受保护的下推条件的嵌套循环算法如下所示：
 
 ```clike
 FOR each row t1 in T1 such that C1(t1) {
@@ -1146,6 +1144,7 @@ FOR each row t1 in T1 such that C1(t1) {
 }
 ```
 
-In general, pushed-down predicates can be extracted from join conditions such as `P1(T1,T2)` and `P(T2,T3)`. In this case, a pushed-down predicate is guarded also by a flag that prevents checking the predicate for the `NULL`-complemented row generated by the corresponding outer join operation.
+通常，可以从诸如 `P1(T1,T2)` 和 `P(T2,T3)` 的连接条件中提取下推谓词。在这种情况下，下推谓词也受到一个标志的保护，该标志阻止检查由相应的外连接操作生成的`NULL`补充行的谓词。
 
-Access by key from one inner table to another in the same nested join is prohibited if it is induced by a predicate from the `WHERE`condition.
+如果由`WHERE`条件中的谓词引起，则禁止在同一嵌套连接中通过键从一个内部表访问另一个内部表。
+
