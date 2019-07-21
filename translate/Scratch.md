@@ -55,11 +55,11 @@ ApplicationContext ctx = new ClassPathXmlApplicationContext(
 
 #### 2.7.2 应用上下文构造器资源路径中的通配符
 
-The resource paths in application context constructor values may be simple paths (as shown earlier), each of which has a one-to-one mapping to a target `Resource` or, alternately, may contain the special "classpath*:" prefix or internal Ant-style regular expressions (matched by using Spring’s `PathMatcher` utility). Both of the latter are effectively wildcards.
+应用程序上下文构造函数值中的资源路径可以是简单路径（如前所示），每个路径都与目标`Resource`进行一对一映射，或者可以包含特殊的`classpath*:`前缀或内部 Ant 风格的正则表达式（使用Spring的`PathMatcher`实用程序进行匹配）。 后两者都是有效的通配符。
 
-One use for this mechanism is when you need to do component-style application assembly. All components can 'publish' context definition fragments to a well-known location path, and, when the final application context is created using the same path prefixed with `classpath*:`, all component fragments are automatically picked up.
+此机制的一个用途是当您需要进行基于组件风格的应用程序组装时。所有组件都可以将上下文定义片段“发布”到一个众所周知的位置路径，并且当使用前缀为`classpath*:`的相同路径创建最终应用程序上下文时，将自动拾取所有组件片段。
 
-Note that this wildcarding is specific to the use of resource paths in application context constructors (or when you use the `PathMatcher` utility class hierarchy directly) and is resolved at construction time. It has nothing to do with the `Resource` type itself. You cannot use the `classpath*:` prefix to construct an actual `Resource`, as a resource points to just one resource at a time.
+请注意，此通配符特定于在应用程序上下文构造函数中使用资源路径（或当直接使用`PathMatcher`实用程序类层次结构时），并在构造时解析。它与`Resource`类型本身无关。您不能使用`classpath*:`前缀来构造实际的`Resource`，因为一个资源对象一次只指向一个资源。
 
 ##### Ant-style Patterns
 
