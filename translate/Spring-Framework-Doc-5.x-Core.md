@@ -5666,12 +5666,12 @@ Resource template = ctx.getResource("https://myhost.com/resource/path/myTemplate
 
 下表总结了将`String`对象转换为`Resource`对象的策略：
 
-| Prefix     | Example                          | Explanation                                                  |
-| :--------- | :------------------------------- | :----------------------------------------------------------- |
-| classpath: | `classpath:com/myapp/config.xml` | 从类路径加载。                                               |
+| Prefix     | Example                          | Explanation                              |
+| :--------- | :------------------------------- | :--------------------------------------- |
+| classpath: | `classpath:com/myapp/config.xml` | 从类路径加载。                                  |
 | file:      | `file:///data/config.xml`        | 作为 `URL` 从文件系统加载。参考 [`FileSystemResource` Caveats](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#resources-filesystemresource-caveats) 。 |
-| http:      | `https://myserver/logo.png`      | 作为 `URL` 加载。                                            |
-| (none)     | `/data/config.xml`               | 依赖底层的 `ApplicationContext`。                            |
+| http:      | `https://myserver/logo.png`      | 作为 `URL` 加载。                             |
+| (none)     | `/data/config.xml`               | 依赖底层的 `ApplicationContext`。              |
 
 ### 2.5 `ResourceLoaderAware` 接口
 
@@ -5864,5 +5864,209 @@ ctx.getResource("file:///some/resource/path/myTemplate.txt");
 // force this FileSystemXmlApplicationContext to load its definition via a UrlResource
 ApplicationContext ctx =
     new FileSystemXmlApplicationContext("file:///conf/context.xml");
+```
+
+## 3. 验证，数据绑定和类型转化
+
+将验证视为业务逻辑有利有弊，Spring 提供了针对验证（以及数据绑定）的设计，避免了这种麻烦。特别地，验证逻辑不应该与 web 层耦合，并应该便于本地化，同时应该可以插入任何可用的验证器。考虑到这些问题，Spring 提供了一个基本的`Validator`接口，它在应用的各个层次都非常有用。
+
+数据绑定主要用来将用户输入动态绑定到应用的域模型（或者你用来处理用户输入的随便什么对象）。Spring 提供了一个合适的名字`DataBinder`来完成这项任务。`Validator`和`DataBinder`组成`validation`包，主要用于 MVC 框架中，但是并不局限于此。
+
+`BeanWrapper`是 Spring 框架的一个基础概念，被用在很多地方。不过，可能你并不需要直接使用`BeanWrapper`。由于这是参考文档，我们觉得还是应该对它进行一些介绍比较合适。我们在这一章中解释`BeanWrapper`，因为，如果你正打算使用它，最大的可能性是你正在尝试将数据绑定到对象。
+
+Spring 的`DataBinder`和低级`BeanWrapper`都使用了`PropertyEditorSupport`实现来转化和格式化属性值。`PropertyEditor`和`PropertyEditorSupport`类型都是 JavaBeans 规范的一部分，都在本章节中解释。Spring 3 引入了`cort.convert`包，该包提供了通用的类型转化工具，以及一个高级的格式化包用来格式化 UI 字段值。你可以使用这些包作为`PropertyEditorSupport`实现的更简单的替代品。它们也在本章中讨论。
+
+> JSR-303/JSR-349 Bean Validation
+>
+> 在版本 4.0 中，Spring 框架支持 Bean 验证 1.0（JSR-303）和 Bean 验证 1.1（JSR-349）用于设置支持并将它们与 Spring 的`Validator`接口进行了适配。
+>
+> 应用可以选择全局一次性启用 Bean 验证，如 [Spring Validation](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#validation-beanvalidation) 所描述，然后在所有需要验证的地方使用。
+>
+> 应用程序也可以为每个`DataBinder`实例注册额外的 Spring `Validator`实例，如 [Configuring a `DataBinder`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#validation-binder) 中所述。通过这种方式，可以在不使用注解的情况下插入验证逻辑。
+
+### 3.1 使用 Spring 的`Validator`接口进行验证
+
+Spring 的特性`Validator`接口让你用来验证对象。`Validator`接口通过使用`Errors`对象来做到这一点，在验证过程中，验证器可以通过`Errors`对象报告验证失败。
+
+考虑下面的例子：
+
+```java
+public class Person {
+
+    private String name;
+    private int age;
+
+    // the usual getters and setters...
+}
+```
+
+下面的例子为`Person`类提供验证行为，通过实现`org.springframework.validation.Validator`接口的下面的两个方法：
+
+- `supports(Class)`: 这个 `Validator` 是否能够验证给定的 `Class`实例？
+- `validate(Object, org.springframework.validation.Errors)`: 验证给定的对象，如果验证失败，通过给定的`Errors`对象报告失败信息。
+
+实现一个`Validator`是非常直接的想法，特别是当你知道 Spring 也提供了`ValidationUtils`帮助类。下面例子为`Person`实例提供了`Validator`实现：
+
+```java
+public class PersonValidator implements Validator {
+
+    /**
+     * This Validator validates *only* Person instances
+     */
+    public boolean supports(Class clazz) {
+        return Person.class.equals(clazz);
+    }
+
+    public void validate(Object obj, Errors e) {
+        ValidationUtils.rejectIfEmpty(e, "name", "name.empty");
+        Person p = (Person) obj;
+        if (p.getAge() < 0) {
+            e.rejectValue("age", "negativevalue");
+        } else if (p.getAge() > 110) {
+            e.rejectValue("age", "too.darn.old");
+        }
+    }
+}
+```
+
+`ValidationUtils`类上的`static rejectIfEmpty(...)`方法用来拒绝`name`属性，如果它是`null`或者空字符串。更多细节参考 [`ValidationUtils`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/validation/ValidationUtils.html) 文档。
+
+虽然可以实现一个`Validator`类来验证"富"对象中的每个嵌套对象，但最好将每个嵌套对象类的验证逻辑封装在自己的`Validator`实现中。“富”对象的一个简单示例是`Customer`，它由两个`String`属性（第一个和第二个名称）和一个复杂的`Address`对象组成。`Address`对象可以独立于`Customer`对象使用，因此实现了不同的`AddressValidator`。如果您希望`CustomerValidator`重用`AddressValidator`类中包含的逻辑，则可以在`CustomerValidator`中依赖注入或实例化`AddressValidator`，如以下示例所示：
+
+```java
+public class CustomerValidator implements Validator {
+
+    private final Validator addressValidator;
+
+    public CustomerValidator(Validator addressValidator) {
+        if (addressValidator == null) {
+            throw new IllegalArgumentException("The supplied [Validator] is " +
+                "required and must not be null.");
+        }
+        if (!addressValidator.supports(Address.class)) {
+            throw new IllegalArgumentException("The supplied [Validator] must " +
+                "support the validation of [Address] instances.");
+        }
+        this.addressValidator = addressValidator;
+    }
+
+    /**
+     * This Validator validates Customer instances, and any subclasses of Customer too
+     */
+    public boolean supports(Class clazz) {
+        return Customer.class.isAssignableFrom(clazz);
+    }
+
+    public void validate(Object target, Errors errors) {
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "firstName", "field.required");
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "surname", "field.required");
+        Customer customer = (Customer) target;
+        try {
+            errors.pushNestedPath("address");
+            ValidationUtils.invokeValidator(this.addressValidator, customer.getAddress(), errors);
+        } finally {
+            errors.popNestedPath();
+        }
+    }
+}
+```
+
+验证错误将报告给传递给验证程序的`Errors`对象。对于Spring Web MVC，您可以使用`<spring:bind />`标记来检查错误消息，但您也可以自己检查`Errors`对象。有关它提供的方法的更多信息可以在 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframeworkvalidation/Errors.html) 中找到。
+
+### 3.2 解析错误码为错误信息
+
+上面介绍了数据绑定和验证。本章节涵盖对应于验证失败的输出信息。在上一章节中的例子中，我们拒绝了`name`和`age`字段。如果我们希望使用`MessageSource`来输出错误消息，则可以在拒绝字段（例子中是`name`和`age`）时使用错误编码。当我们调用（直接或者间接调用，比如使用`ValidationUtils`类）`rejectValue`或者`Errors`接口中的任何一个其它的`reject`方法。底层实现不仅注册你传入的错误编码，同时还注册了大量额外的错误编码。`MessgeCodesResolver`确定`Errors`接口注册的错误编码。默认地，使用`DefaultMessageCodesResolver`，它不仅注册你给出的错误编码和相应的错误消息，同时还注册包含你传入该`reject`方法的字段名称的消息。因此，如果你通过使用`rejectValue("age", "too.darn.old")`来拒绝字段，除了`too.darn.old`编码，Spring 同时注册了`too.darn.old.age`和`too.darn.old.age.int`（前者包含字段名称而后者包含字段类型）。这样做是为了方便在定位错误消息时帮助开发人员。
+
+有关`MessageCodesResolver`和默认策略的更多细节参见 [`MessageCodesResolver`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/validation/MessageCodesResolver.html) 和 [`DefaultMessageCodesResolver`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/validation/DefaultMessageCodesResolver.html) 文档。
+
+### 3.3 Bean 操纵和 `BeanWrapper`
+
+`org.springframework.beans`包遵循 JavaBeans 标准。所谓的 JavaBean 是这样的类：拥有默认的无参构造器，遵行如下字段命名约定，名为`bingoMadness`的字段有相应的 setter 方法`setBingoMadness(...)`和 getter 方法`getBingoMadness()`。更多信息参考 [javabeans](https://docs.oracle.com/javase/8/docs/api/java/beans/package-summary.html) 。
+
+beans 包中一个相当重要的类是`BeanWrapper`接口和它相应的实现`BeanWrapperImpl` 。从官方文档可知，`BeanWrapper`提供了设置和获取属性值（单个或者批量）、获取属性描述符、查询属性以确定它们是否可读或者可写等功能。同时，`BeanWrapper`提供了嵌套属性支持，开启了任意深度的子属性设置功能。`BeanWrapper`还支持添加标准 JavaBeans `PropertyChangeListeners`和`VetoableChangeListeners`的能力，而且不需要目标类中提供支持代码。最后，`BeanWrapper`提供了设定索引属性的支持。`BeanWrapper`通常不会直接由应用代码使用，而是通常由`DataBinder`和`BeanFactory`使用。
+
+`BeanWrapper`的工作方式部分如其名称表示：它包装 bean 以对该 bean 执行操作，例如设置和检索属性。
+
+#### 3.3.1 设定和获取基本属性和嵌套属性
+
+设置和获取属性是通过使用`setPropertyValue`，`setPropertyValues`，`getPropertyValue`和`getPropertyValues`方法完成的，这些方法带有几个重载变体。Springs javadoc更详细地描述了它们。JavaBeans规范具有指示对象属性的约定。下表显示了这些约定的一些示例：
+
+| 表达式                    | 解释                                       |
+| ---------------------- | ---------------------------------------- |
+| `name`                 | 指示对应于 `getName()` 或者 `isName()` 和 `setName(..)` 方法的属性 `name` 。 |
+| `account.name`         | 指示属性 `account`上的对应于 `getAccount().setName()` 或者 `getAccount().getName()`方法的嵌套属性 `name` 。 |
+| `account[2]`           | 只是索引属性 `account` 的第三个元素。索引属性可以是类型 `array`, `list`, 或者其它自然有序集合。 |
+| `account[COMPANYNAME]` | 指示由`account` Map属性的`COMPANYNAME`键索引的映射条目的值。 |
+
+（如果您不打算直接使用`BeanWrapper`，那么下一部分对您来说并不重要。如果您只使用`DataBinder`和`BeanFactory`及其默认实现，那么您应该跳到 [PropertyEditors](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-beans-conversion) 部分。）
+
+以下两个示例类使用`BeanWrapper`来获取和设置属性：
+
+```java
+public class Company {
+
+    private String name;
+    private Employee managingDirector;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Employee getManagingDirector() {
+        return this.managingDirector;
+    }
+
+    public void setManagingDirector(Employee managingDirector) {
+        this.managingDirector = managingDirector;
+    }
+}
+```
+
+```java
+public class Employee {
+
+    private String name;
+
+    private float salary;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public float getSalary() {
+        return salary;
+    }
+
+    public void setSalary(float salary) {
+        this.salary = salary;
+    }
+}
+```
+
+以下代码片段显示了如何检索和操作实例化的 `Companies` 和 `Employees`的某些属性的一些示例：
+
+```java
+BeanWrapper company = new BeanWrapperImpl(new Company());
+// setting the company name..
+company.setPropertyValue("name", "Some Company Inc.");
+// ... can also be done like this:
+PropertyValue value = new PropertyValue("name", "Some Company Inc.");
+company.setPropertyValue(value);
+
+// ok, let's create the director and tie it to the company:
+BeanWrapper jim = new BeanWrapperImpl(new Employee());
+jim.setPropertyValue("name", "Jim Stravinsky");
+company.setPropertyValue("managingDirector", jim.getWrappedInstance());
+
+// retrieving the salary of the managingDirector through the company
+Float salary = (Float) company.getPropertyValue("managingDirector.salary");
 ```
 
