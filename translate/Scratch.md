@@ -67,19 +67,19 @@ public class SomethingBeanInfo extends SimpleBeanInfo {
 }
 ```
 
-##### Registering Additional Custom `PropertyEditor` Implementations
+##### 注册额外的自定义 `PropertyEditor` 实现
 
-When setting bean properties as string values, a Spring IoC container ultimately uses standard JavaBeans `PropertyEditor`implementations to convert these strings to the complex type of the property. Spring pre-registers a number of custom `PropertyEditor` implementations (for example, to convert a class name expressed as a string into a `Class` object). Additionally, Java’s standard JavaBeans `PropertyEditor` lookup mechanism lets a `PropertyEditor` for a class be named appropriately and placed in the same package as the class for which it provides support, so that it can be found automatically.
+当使用字符串值设置 bean 属性时，Spring IoC 容器最终使用标准的 JavaBeans`PropertyEditor`实现将这些字符串转化为属性的复杂类型。Spring 预注册了一系列的自定义`PropertyEditor`实现（比如，转化表示类名的字符串为`Class`对象）。更进一步，Java 的标准 JavaBeans`PropertyEditor`查找机制要求一个类的`PropertyEditor`应该被合适地命名，并放在它所支持的类同一个包中，从而保证它可以被自动发现。
 
-If there is a need to register other custom `PropertyEditors`, several mechanisms are available. The most manual approach, which is not normally convenient or recommended, is to use the `registerCustomEditor()` method of the`ConfigurableBeanFactory` interface, assuming you have a `BeanFactory` reference. Another (slightly more convenient) mechanism is to use a special bean factory post-processor called `CustomEditorConfigurer`. Although you can use bean factory post-processors with `BeanFactory` implementations, the `CustomEditorConfigurer` has a nested property setup, so we strongly recommend that you use it with the `ApplicationContext`, where you can deploy it in similar fashion to any other bean and where it can be automatically detected and applied.
+如果需要注册其它自定义`PropertyEditor`，存在几种机制可以使用。手动程度最高的方法，通常不方便也不推荐，是使用`ConfigurableBeanFactory`接口的`registerCustomEditor()`方法，假定你拥有一个`BeanFactory`引用。另一种机制（稍微方便一点）使用一种特殊的 bean 工厂后处理器，名为`CustomEditorConfigurer`。尽管你可以与`BeanFactory`实现一起使用 bean 工厂后处理器，`CustomEditorConfigurer`拥有一个嵌套属性设置，因而我们强烈推荐你将其和`ApplicationContext`一起使用，此时你可以与所有其它 bean 一样部署它，它同样可以被自动侦测并应用。
 
-Note that all bean factories and application contexts automatically use a number of built-in property editors, through their use a `BeanWrapper` to handle property conversions. The standard property editors that the `BeanWrapper` registers are listed in the [previous section](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-beans-conversion). Additionally, `ApplicationContexts` also override or add additional editors to handle resource lookups in a manner appropriate to the specific application context type.
+注意，所有 bean 工厂和应用上下文都会自动使用一系列内建的属性编辑器，通过它们使用`BeanWrapper`处理属性转化。上一章节中列出了`BeanWrapper`注册的标准属性编辑器。另外，`ApplicationContext`也覆盖或者添加了额外的编辑器来处理资源，这些资源按照特定与应用上下文类型的方式查找。
 
-Standard JavaBeans `PropertyEditor` instances are used to convert property values expressed as strings to the actual complex type of the property. You can use `CustomEditorConfigurer`, a bean factory post-processor, to conveniently add support for additional `PropertyEditor` instances to an `ApplicationContext`.
+标准 JavaBeans`PropertyEditor`实例被用来将表示为字符串的属性值转化为实际的属性复杂类型。你可以使用`CustomEditorConfigurer`，这是一个 bean 工厂后处理器，来方便地向`ApplicationContext`添加额外的`PropertyEditor`支持。
 
-Consider the following example, which defines a user class called `ExoticType` and another class called `DependsOnExoticType`, which needs `ExoticType` set as a property:
+考虑下面的例子，定义了一个名为`ExoticType`的用户类以及另外一个类`DependsOnExoticType`，它需要`ExoticType`实例设定为属性：
 
-```
+```java
 package example;
 
 public class ExoticType {
@@ -101,17 +101,17 @@ public class DependsOnExoticType {
 }
 ```
 
-When things are properly set up, we want to be able to assign the type property as a string, which a `PropertyEditor` converts into an actual `ExoticType` instance. The following bean definition shows how to set up this relationship:
+正确设置后，我们希望能够将`type`属性指定为字符串，`PropertyEditor`将其转换为实际的`ExoticType`实例。以下bean定义显示了如何设置此关系：
 
-```
+```xml
 <bean id="sample" class="example.DependsOnExoticType">
     <property name="type" value="aNameForExoticType"/>
 </bean>
 ```
 
-The `PropertyEditor` implementation could look similar to the following:
+`PropertyEditor`实现大概是下面这个样子：
 
-```
+```java
 // converts string representation to ExoticType object
 package example;
 
@@ -123,9 +123,9 @@ public class ExoticTypeEditor extends PropertyEditorSupport {
 }
 ```
 
-Finally, the following example shows how to use `CustomEditorConfigurer` to register the new `PropertyEditor` with the`ApplicationContext`, which will then be able to use it as needed:
+最后，下面的示例演示如何使用`CustomEditorConfigurer`向`ApplicationIntext`注册新的`PropertyEditor`，然后可以根据需要使用它：
 
-```
+```xml
 <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
     <property name="customEditors">
         <map>
@@ -135,13 +135,13 @@ Finally, the following example shows how to use `CustomEditorConfigurer` to regi
 </bean>
 ```
 
-###### Using `PropertyEditorRegistrar`
+###### 使用 `PropertyEditorRegistrar`
 
-Another mechanism for registering property editors with the Spring container is to create and use a `PropertyEditorRegistrar`. This interface is particularly useful when you need to use the same set of property editors in several different situations. You can write a corresponding registrar and reuse it in each case. `PropertyEditorRegistrar` instances work in conjunction with an interface called `PropertyEditorRegistry`, an interface that is implemented by the Spring `BeanWrapper` (and `DataBinder`). `PropertyEditorRegistrar` instances are particularly convenient when used in conjunction with `CustomEditorConfigurer`(described [here](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-beans-conversion-customeditor-registration)), which exposes a property called `setPropertyEditorRegistrars(..)`. `PropertyEditorRegistrar` instances added to a `CustomEditorConfigurer` in this fashion can easily be shared with `DataBinder` and Spring MVC controllers. Furthermore, it avoids the need for synchronization on custom editors: A `PropertyEditorRegistrar` is expected to create fresh `PropertyEditor` instances for each bean creation attempt.
+使用 Spring 容器注册属性编辑器的另一种机制是创建和使用`PropertyEditorRegistrar`。当您需要在几种不同情况下使用同一组属性编辑器时，此接口特别有用。您可以编写相应的注册器，并在每种情况下重复使用它。`PropertyEditorRegistrar`实例与名为`PropertyEditorRegistry`的接口一起工作，该接口由 Spring `BeanWrapper`（和`DataBinder`）实现。`PropertyEditorRegistrar`实例在与`CustomEditorConfigurer`（[此处](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-beans-conversion-customeditor-registration) 描述）结合使用时特别方便，它公开了一个名为`setPropertyEditorRegistrars(..)`的方法。以这种方式添加到`CustomEditorConfigurer`的`PropertyEditorRegistrar`实例可以很容易地与`DataBinder`和 Spring MVC 控制器共享。此外，它避免了在自定义编辑器上进行同步的需要：`PropertyEditorRegistrar`需要为每个 bean 创建尝试创建新的`PropertyEditor`实例。
 
-The following example shows how to create your own `PropertyEditorRegistrar` implementation:
+下面的例子展示了如何创建你自己的`PropertyEditorRegistrar`实现：
 
-```
+```java
 package com.foo.editors.spring;
 
 public final class CustomPropertyEditorRegistrar implements PropertyEditorRegistrar {
@@ -156,11 +156,11 @@ public final class CustomPropertyEditorRegistrar implements PropertyEditorRegist
 }
 ```
 
-See also the `org.springframework.beans.support.ResourceEditorRegistrar` for an example `PropertyEditorRegistrar`implementation. Notice how in its implementation of the `registerCustomEditors(..)` method ,it creates new instances of each property editor.
+另请参阅`org.springframework.beans.support.ResourceEditorRegistrar`以获取`PropertyEditorRegistrar`实现示例。请注意，在实现 `registerCustomEditors(..)` 方法时，它会创建每个属性编辑器的新实例。
 
-The next example shows how to configure a `CustomEditorConfigurer` and inject an instance of our`CustomPropertyEditorRegistrar` into it:
+下一个示例显示如何配置`CustomEditorConfigurer`并将我们的`CustomPropertyEditorRegistrar`实例注入其中：
 
-```
+```xml
 <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
     <property name="propertyEditorRegistrars">
         <list>
@@ -173,9 +173,9 @@ The next example shows how to configure a `CustomEditorConfigurer` and inject an
     class="com.foo.editors.spring.CustomPropertyEditorRegistrar"/>
 ```
 
-Finally (and in a bit of a departure from the focus of this chapter for those of you using [Spring’s MVC web framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc)), using `PropertyEditorRegistrars` in conjunction with data-binding `Controllers` (such as `SimpleFormController`) can be very convenient. The following example uses a `PropertyEditorRegistrar` in the implementation of an `initBinder(..)` method:
+最后（与本章的重点有所不同，对于那些使用 [Spring的MVC Web框架](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc) 的人来说），使用`PropertyEditorRegistrars`和数据绑定 `Controllers`（如`SimpleFormController`）会非常方便。以下示例在`initBinder(..)`方法的实现中使用`PropertyEditorRegistrar`：
 
-```
+```java
 public final class RegisterUserController extends SimpleFormController {
 
     private final PropertyEditorRegistrar customPropertyEditorRegistrar;
@@ -193,4 +193,5 @@ public final class RegisterUserController extends SimpleFormController {
 }
 ```
 
-This style of `PropertyEditor` registration can lead to concise code (the implementation of `initBinder(..)` is only one line long) and lets common `PropertyEditor` registration code be encapsulated in a class and then shared amongst as many `Controllers`as needed.
+这种`PropertyEditor`注册方式会导致简洁的代码（`initBinder(..)`的实现只有一行），并允许将公共`PropertyEditor`注册代码封装在一个类中，然后在所需的 `Controllers`之间共享。
+
