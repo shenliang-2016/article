@@ -69,3 +69,169 @@ apt-get install -y nginx
 
 你刚刚创建的文件指示`apt`包管理系统使用 NGINX 官方代码仓库。下载命令之后的命令下载 NGINX GPG 包签名密钥并将其导入`apt` 。提供签名给`apt`系统就使得后者可以验证来自远程仓库的包。`apt-get-update`命令指示`apt`系统根据它所知道的仓库刷新它的包列表。刷新包列表之后，你可以从 NGINX 官方仓库安装 NGINX 开源代码。安装之后，最后一条命令启动 NGINX 。
 
+## 1.2 在 RedHat/CentOS 上安装
+
+### 问题
+
+你需要在 RedHat 或者 CentOS 上安装 NGINX 开源代码。
+
+### 解决方案
+
+创建一个名为`/etc/yum.repos.d/nginx.repo`的文件包含以下内容：
+
+````shell
+[nginx]
+name=nginx repo
+baseurl=http://nginx.org/packages/mainline/OS/OSRELEASE/$basearch/
+gpgcheck=0
+enabled=1
+````
+
+修改文件，将其中 URL 末尾的`OS`替换为`rhel`或者`centos`，取决于你采用哪种发行版。同时，以你的发行版版本替换其中的`OSRELEASE`，版本 6.x 对应于`6`，版本 7.x 对应于`7` 。然后，运行下面的命令：
+
+````shell
+yum -y install nginx
+systemctl enable nginx
+systemctl start nginx
+firewall-cmd --permanent --zone=public --add-port=80/tcp
+firewall-cmd --reload
+````
+
+### 讨论
+
+你刚刚创建的文件指示`yum`包管理系统利用官方 NGINX 开源代码包仓库。接下来的命令从官方仓库安装 NGINX 开源代码，并指示`systemd`在系统启动时启动 NGINX，然后告诉它现在启动 NGINX。防火墙民工为 TCP 协议开放`80`端口，这是 HTTP 协议的默认端口。最后的命令重新加载防火墙以使设置生效。
+
+## 1.3 安装 NGINX Plus
+
+### 问题
+
+你需要安装 NGINX Plus。
+
+### 解决方案
+
+访问 http://cs.nginx.com/repo_setup 。从下拉菜单中选择你的操作系统，然后跟着安装向导操作。安装过程类似于安装开源代码。不过你还需要安装一个证书以认证身份来访问 NGINX Plus 仓库。
+
+### 讨论
+
+NGINX 确保此仓库中的安装向导始终最新。根据你的操作系统和版本不同，这些向导略有不同，但是其共同之处是：你需要登录 NGINX 门户下载提供给您的证书和密钥才能通过身份认证访问 NGINX Plus 仓库。
+
+## 1.4 验证安装
+
+### 问题
+
+你希望验证 NGINX 安装并确认版本。
+
+### 解决方案
+
+你可以验证已经安装的 NGINX 并确认它的版本，通过下面的命令：
+
+````shell
+$ nginx -v
+nginx version: nginx/1.15.3
+````
+
+如这个例子所示，响应展示了版本。
+
+你可以确认 NGINX 正在运行，通过使用以下命令：
+
+````shell
+$ ps -ef | grep nginx
+root	1738	1		0	19:54	?	00:00:00	nginx: master process
+nginx	1739	1738	0	19:54	?	00:00:00	nginx: worker process
+````
+
+`ps`命令列出运行中的进程。将结果通过管道传递给`grep`命令，你可以在输出中搜索特定的单词。这个例子使用`grep`搜索`nginx`。结果显示有两个运行中的进程，一个`master`和一个`worker`。如果 NGINX 正在运行，你将始终都能看到一个`master`进程和一个或者多个`worker`进程。有关启动 NGINX 的指引请看下一章节。要将 NGINX 作为守护进程启动，请使用 `init.d`或者`systemd`方法。
+
+为了验证 NGINX 可以正确响应请求，使用你的浏览器向你的机器发出请求，或者使用`curl`：
+
+````shell
+$ curl localhost
+````
+
+你将看到 NGINX 默认的欢迎页面。
+
+### 讨论
+
+`nginx`命令允许你与 NGINX 二进制包交互以确认版本、列出已安装模块、测试配置以及向`master`进程发送信号等。NGINX 必须保持运行以服务请求。`ps`命令是确定 NGINX 当前是作为守护进程还是前台程序在运行的万全之策。随着 NGINX 默认提供的配置使得 NGINX 运行一个端口`80`上的静态站点 HTTP 服务器。你可以通过创建一个 HTTP 请求到`localhost`地址上的机器来测试这个默认站点，当然请求主机的 IP 或者主机名也可以。
+
+## 1.5 关键文件，命令，和名录
+
+### 问题
+
+你需要理解重要的 NGINX 目录和命令。
+
+### 解决方案
+
+#### NGINX 文件和目录
+
+*/etc/nginx/*
+
+​	此目录是 NGINX 服务器的默认配置根目录。在这里你将发现决定 NGINX 行为的配置文件。
+
+*/etc/nginx/nginx.conf*
+
+​	此文件是 NGINX 服务使用的默认配置的入口点。该配置文件设置全局设定，诸如`worker`进程、新能调优、日志、模块动态加载、以及对其它 NGINX 配置文件的引用。在默认配置中，此文件包含顶级`http`块，其中包括下面描述的目录中所有的配置文件。
+
+*/etc/nginx/conf.d/*
+
+​	此目录包含默认 HTTP 服务器配置文件。此目录中以`.conf`结尾的文件都包含在*/etc/nginx/nginx.conf*文件中的顶级`http`块中。这是使用`include`语句来组织你的配置文件以降低配置复杂度的最佳实践。在某些包仓库中，此目录被命名为*sites-enabled*，同时配置文件链接自名为*sites-available*的目录，不过这个传统已经过时了。
+
+*/var/log/nginx/*
+
+​	此目录是默认的 NGINX 日志文件位置。此目录中你可以发现一个*access.log*文件和一个*error.log*文件。前者包含对应于每个达到 NGINX 的请求的数据实体。如果调试模块启用，后者包含错误事件和相关的调试信息。
+
+#### NGINX 命令
+
+`nginx -h`
+
+​	展示 NGINX 帮助菜单。
+
+`nginx -v`
+
+​	展示 NGINX 版本。
+
+`nginx -V`
+
+​	展示 NGINX 版本，构建信息以及配置参数，其中展示构建进入 NGINX 二进制包的模块。
+
+`nginx -t`
+
+​	测试 NGINX 配置。
+
+`nginx -T`
+
+​	测试 NGINX 配置并打印验证过的配置到屏幕。此命令在寻求支持时非常有用。
+
+`nginx -s signal`
+
+​	`-s`标记发送一个信号给 NGINX `master`进程。你可以发送信号诸如`stop`，`quit`，`reload`，以及`reopen`。其中`stop`信号立即停止 NGINX 进程。`quit`信号在 NGINX 进程处理完当前请求之后才会停止它。`reload`信号重新加载配置。`reopen`信号指示 NGINX 重新打开日志文件。
+
+### 讨论
+
+理解和这些关键文件、目录以及命令之后，你就已经准备好了开始使用 NGINX 。有了这些认识，你可以修改默认配置文件同时测试你的修改通过使用`nginx -t`命令。如果你测试通过，你也将知道如何指示 NGINX 来重新加载配置文件，使用`nginx -s reload`命令。
+
+## 1.6 提供静态内容服务
+
+### 问题
+
+你需要使用 NGINX 提供静态内容服务。
+
+### 解决方案
+
+重写*/etc/nginx/conf.d/default.conf*文件中的默认 HTTP 服务器配置，改为下面的 NGINX 配置：
+
+````
+server {
+	listen 80 default_server;
+	server_name www.example.com;
+
+	location / {
+		root /usr/share/nginx/html;
+		# alias /usr/share/nginx/html;
+		index index.html index.htm;
+	}
+}
+````
+
+### 讨论
+
