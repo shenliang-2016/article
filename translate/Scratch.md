@@ -1,19 +1,19 @@
 ## 5. Spring 的面向切面编程
 
-Aspect-oriented Programming (AOP) complements Object-oriented Programming (OOP) by providing another way of thinking about program structure. The key unit of modularity in OOP is the class, whereas in AOP the unit of modularity is the aspect. Aspects enable the modularization of concerns (such as transaction management) that cut across multiple types and objects. (Such concerns are often termed “crosscutting” concerns in AOP literature.)
+面向切面编程（AOP）通过提供另外一种设计程序结构的思路而称为了面向对象编程（OOP）的有效补充。OOP 中程序模块化的关键单元是类，而在 AOP 中模块化的单元变成了切面。切面实现了跨越多种类型和对象的“关注点”（例如事务管理）的模块化。（这些关注点在 AOP 文献中通常被称为“横切”问题。）
 
-One of the key components of Spring is the AOP framework. While the Spring IoC container does not depend on AOP (meaning you do not need to use AOP if you don’t want to), AOP complements Spring IoC to provide a very capable middleware solution.
+AOP 框架是 Spring 的一个关键组成部分。尽管 Spring IoC 容器并不依赖 AOP（意思是如果你不想用 AOP 就可以不用），AOP 还是通过提供相当强力的中间件功能解决方案而称为 Spring IoC 容器的有效补充。
 
-> Spring AOP with AspectJ pointcuts
+> 使用 AspectJ 切入点的 Spring AOP
 >
-> Spring provides simple and powerful ways of writing custom aspects by using either a [schema-based approach](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-schema) or the [@AspectJ annotation style](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj). Both of these styles offer fully typed advice and use of the AspectJ pointcut language while still using Spring AOP for weaving.
+> Spring 提供简单而强大的方法来写入自定义切面，通过使用  [schema-based approach](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-schema) 或者 [@AspectJ annotation style](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj) 。这两种风格都提供了充足的类型建议并使用 AspectJ 切入点语言，同时仍然使用 Spring AOP 来织入。
 >
-> This chapter discusses the schema- and @AspectJ-based AOP support. The lower-level AOP support is discussed in [the following chapter](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-api).
+> 本章节讨论基于`schema`和`@AspectJ`的 AOP 支持。低级的 AOP 支持在 [下一章](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-api) 中讨论。
 
-AOP is used in the Spring Framework to:
+AOP 在 Spring Framework 框架中用来：
 
-- Provide declarative enterprise services. The most important such service is [declarative transaction management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#transaction-declarative).
-- Let users implement custom aspects, complementing their use of OOP with AOP.
+- 提供声明式企业服务。此类服务中最重要的就是 [声明式事务管理](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#transaction-declarative) 。
+- 允许用户实现自己的切面，让大家可以使用 AOP 补充 OOP。
 
-> If you are interested only in generic declarative services or other pre-packaged declarative middleware services such as pooling, you do not need to work directly with Spring AOP, and can skip most of this chapter.
+> 如果您只对通用声明性服务或其他预先打包的声明性中间件服务（如池化服务）感兴趣，则无需直接使用 Spring AOP，并且可以跳过本章的大部分内容。
 
