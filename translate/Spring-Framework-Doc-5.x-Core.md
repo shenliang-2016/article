@@ -6667,3 +6667,228 @@ public interface FormatterRegistrar {
 #### 3.5.5 在 Spring MVC 中配置格式化
 
 参考 Spring MVC 中的 [Conversion and Formatting](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc-config-conversion) 。
+
+### 3.6 配置全局日期和时间格式
+
+默认情况下，没有`@DateTimeFormat`注解修饰的日期和时间字段使用`DateFormate.SHORT`风格从`String`转换而来。如果你愿意，你可以通过定义你自己的全局格式来改变这种行为。
+
+要这样做，你需要确保 Spring 没有注册默认格式化器。你应该手动注册所有的格式化器。使用`org.springframework.format.datetime.joda.JodaTimeFormatterRegistrar`或者`org.springframework.format.datetime.DateFormatterRegistrar`类，取决于你是否使用 Joda-Time 类库。
+
+比如，下面的 Java 配置注册一个全局的`yyyyMMdd`格式（例子没有依赖 Joda-Time 类库）：
+
+```java
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public FormattingConversionService conversionService() {
+
+        // Use the DefaultFormattingConversionService but do not register defaults
+        DefaultFormattingConversionService conversionService = new DefaultFormattingConversionService(false);
+
+        // Ensure @NumberFormat is still supported
+        conversionService.addFormatterForFieldAnnotation(new NumberFormatAnnotationFormatterFactory());
+
+        // Register date conversion with a specific global format
+        DateFormatterRegistrar registrar = new DateFormatterRegistrar();
+        registrar.setFormatter(new DateFormatter("yyyyMMdd"));
+        registrar.registerFormatters(conversionService);
+
+        return conversionService;
+    }
+}
+```
+
+如果你更习惯使用基于 XML 的配置，你可以使用`FormattingConversionServiceFactoryBean`，下面的例子展示了如何做（这里的时间使用了 Joda Time）：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd>
+
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="registerDefaultFormatters" value="false" />
+        <property name="formatters">
+            <set>
+                <bean class="org.springframework.format.number.NumberFormatAnnotationFormatterFactory" />
+            </set>
+        </property>
+        <property name="formatterRegistrars">
+            <set>
+                <bean class="org.springframework.format.datetime.joda.JodaTimeFormatterRegistrar">
+                    <property name="dateFormatter">
+                        <bean class="org.springframework.format.datetime.joda.DateTimeFormatterFactoryBean">
+                            <property name="pattern" value="yyyyMMdd"/>
+                        </bean>
+                    </property>
+                </bean>
+            </set>
+        </property>
+    </bean>
+</beans>
+```
+
+> Joda-Time 提供了单独的特别类型来表示`date`，`time` 以及 `date-time` 值。`JodaTimeFormatterRegistrar`的`dateFormatter`，`timeFormatter`以及`dateTimeFormatter`属性应该被用于为每种类型配置不同的格式。`DateTimeFormatterFactoryBean`提供了创建格式化器的方便方法。
+>
+> 如果你使用 Spring MVC，记得显式配置使用的类型转换服务。对基于 Java 的`@Configuration`，这意味着扩展`WebMvcConfigurationSupport`类并重载`mvcConversionService()`方法。对 XML ，你应该使用`mvc:annotation-driven`元素的`conversion-service`属性。参考 [Conversion and Formatting](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc-config-conversion) 了解更多细节。
+
+### 3.7 Spring 校验
+
+Spring 3 引入了若干对它的校验支持的增强机制。首先，JSR-303 Bean 校验 API 被完整支持。其次，当使用编程方式时，Spring 的`DateBinder`能够校验对象并绑定它们。第三，Spring MVC 已经支持声明式`@Controller`输入校验。
+
+#### 3.7.1 JSR-303 Bean Validation API 概览
+
+JSR-303 标准化了 Java 平台的验证约束声明和元数据。通过使用此API，您可以使用声明性验证约束来注解域模型属性，并且运行时会强制执行它们。您可以使用许多内置约束，还可以定义自己的自定义约束。
+
+请考虑以下示例，该示例显示了一个具有两个属性的简单`PersonForm`模型：
+
+```java
+public class PersonForm {
+    private String name;
+    private int age;
+}
+```
+
+JSR-303允许您为这些属性定义声明性验证约束，如以下示例所示：
+
+```java
+public class PersonForm {
+
+    @NotNull
+    @Size(max=64)
+    private String name;
+
+    @Min(0)
+    private int age;
+}
+```
+
+当JSR-303 Validator验证此类的实例时，将强制执行这些约束。
+
+有关JSR-303和JSR-349的一般信息，请参阅  [Bean Validation website](https://beanvalidation.org/) 网站。有关默认参考实现的特定功能的信息，请参阅 [Hibernate Validator](https://www.hibernate.org/412.html) 文档。要学习如何将bean验证提供程序设置为Spring bean，请继续阅读。
+
+#### 3.7.2 配置 Bean Validation Provider
+
+Spring提供对Bean Validation API的完全支持。这包括方便地支持将JSR-303或JSR-349 Bean Validation提供程序作为Spring bean引导。这允许您在应用程序中需要验证的任何地方注入`javax.validation.ValidatorFactory`或`javax.validation.Validator`。
+
+您可以使用`LocalValidatorFactoryBean`将默认Validator配置为Spring bean，如以下示例所示：
+
+```xml
+<bean id="validator"
+    class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
+```
+
+前面示例中的基本配置通过使用其默认引导机制触发bean验证以进行初始化。JSR-303或JSR-349提供程序（例如Hibernate Validator）应该存在于类路径中并自动检测。
+
+##### 注入校验器
+
+`LocalValidatorFactoryBean`实现了`javax.validation.ValidatorFactory`和`javax.validation.Validator`，以及Spring的`org.springframework.validation.Validator`。您可以将这些接口中的任何一个引用注入到需要调用验证逻辑的bean中。
+
+如果您希望直接使用Bean Validation API，则可以注入对`javax.validation.Validator`的引用，如以下示例所示：
+
+```java
+import javax.validation.Validator;
+
+@Service
+public class MyService {
+
+    @Autowired
+    private Validator validator;
+```
+
+你可以注入 `org.springframework.validation.Validator` 引用，如果你的 bean需要 Spring 校验 API，如下面例子所示：
+
+```java
+import org.springframework.validation.Validator;
+
+@Service
+public class MyService {
+
+    @Autowired
+    private Validator validator;
+}
+```
+
+##### 配置自定义约束
+
+每个bean验证约束由两部分组成：
+
+- 声明约束及其可配置属性的`@Constraint`注解。
+- 实现约束行为的`javax.validation.ConstraintValidator`接口的实现。
+
+要将声明与实现相关联，每个`@Constraint`注解都引用相应的`ConstraintValidator`实现类。在运行时，`ConstraintValidatorFactory`在域模型中遇到约束注解时实例化引用的实现。
+
+默认情况下，`LocalValidatorFactoryBean`配置一个`SpringConstraintValidatorFactory`，它使用Spring创建`ConstraintValidator`实例。这使得自定义`ConstraintValidators`可以像任何其他Spring bean一样受益于依赖注入。
+
+以下示例显示了一个自定义的`@Constraint`声明，后跟一个使用Spring进行依赖项注入的关联`ConstraintValidator`实现：
+
+```java
+@Target({ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy=MyConstraintValidator.class)
+public @interface MyConstraint {
+}
+```
+
+```java
+import javax.validation.ConstraintValidator;
+
+public class MyConstraintValidator implements ConstraintValidator {
+
+    @Autowired;
+    private Foo aDependency;
+
+    ...
+}
+```
+
+如上面例子所示，`ConstraintValidator`实现可以像其它 Spring bean 那样通过`@Autowired`注解进行依赖注入。
+
+##### Spring 驱动的方法校验
+
+您可以通过`MethodValidationPostProcessor` bean定义将Bean Validation 1.1支持（以及作为自定义扩展，通过Hibernate Validator 4.3 支持）的方法验证功能集成到Spring上下文中，如下所示：
+
+```xml
+<bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor"/>
+```
+
+要获得Spring驱动的方法验证资格，所有目标类都需要使用Spring的`@Validated`注解进行修饰。（或者，您也可以声明要使用的验证组。）请参阅 [`MethodValidationPostProcessor`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/validation/beanvalidation/MethodValidationPostProcessor.html) 文档以获取有关Hibernate Validator和Bean Validation 1.1提供程序的设置详细信息。
+
+##### 附加配置选项
+
+对于大多数情况，默认的`LocalValidatorFactoryBean`配置就足够了。从消息插补到遍历解析，各种Bean Validation构造有许多配置选项。有关这些选项的更多信息，请参见 [`LocalValidatorFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/validation/beanvalidation/LocalValidatorFactoryBean.html) 的文档。
+
+#### 3.7.3 配置 `DataBinder`
+
+从Spring 3开始，您可以使用`Validator`配置`DataBinder`实例。配置完成后，您可以通过调用`binder.validate()`来调用`Validator`。任何验证`Errors`都会自动添加到绑定器的`BindingResult`中。
+
+以下示例说明如何在绑定到目标对象后以编程方式使用`DataBinder`来调用验证逻辑：
+
+```java
+Foo target = new Foo();
+DataBinder binder = new DataBinder(target);
+binder.setValidator(new FooValidator());
+
+// bind to the target object
+binder.bind(propertyValues);
+
+// validate the target object
+binder.validate();
+
+// get BindingResult that includes any validation errors
+BindingResult results = binder.getBindingResult();
+```
+
+您还可以通过`dataBinder.addValidators`和`dataBinder.replaceValidators`配置具有多个`Validator`实例的`DataBinder`。当将全局配置的bean验证与在`DataBinder`实例上本地配置的Spring Validator组合时，这非常有用。 请参阅 [[validation-mvc-configuring\]](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#validation-mvc-configuring) 。
+
+#### 3.7.4. Spring MVC 3 校验
+
+参考 Spring MVC 章节中的 [Validation](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc-config-validation) 。
+
+## 4. Spring 表达式语言 SpEL
+
+略
+
