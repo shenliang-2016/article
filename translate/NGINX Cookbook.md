@@ -465,3 +465,54 @@ upstream backend {
 
 ### 解决方案
 
+使用`sticky learn`指令来发现并跟踪由上游应用创建额 cookies：
+
+````
+upstream backend {
+	server backend1.example.com:8080;
+	server backend2.example.com:8081;
+	
+	sticky learn
+			create=$upstream_cookie_cookiename
+			lookup=$cookie_cookiename
+			zone=client_session:2m;
+}
+````
+
+这个例子指示 NGINX 通过在响应头中寻找名为`COOKIENAME`的 cookie 寻找并追踪会话，同时通过在请求头中寻找相同 cookie 以探查现有的会话。会话`affinity`被存储在一个共享存储区域，该区域大小为 2 MB，大约可以跟踪 16000 个会话。cookie 的名称将始终都是特定于应用的。通用的 cookie 名称，比如`jsessionid`或者`phpsessionid`，通常会默认设置在应用或者应用服务器配置中。
+
+### 讨论
+
+当应用创建它们自己的会话状态 cookies 时，NGINX Plus 在请求响应中发现并追踪它们。当`sticky`指令被提供`learn`参数时，这种类型的 cookie 跟踪被执行。用于 cookies 跟踪的共享存储随着`zone`参数指定，包括名称和大小。NGINX Plus 被指示在来自上游服务器的响应中寻找 cookies，通过指定`create`参数，同时搜索事先注册的服务器`affinity`使用`lookup`参数。这些参数的值就是由 HTTP 模块暴露出来的变量。
+
+## 2.7 粘性路由
+
+### 问题
+
+你需要对持久的会话被 NGINX Plus 路由到上游服务器的过程进行细粒度控制。
+
+### 解决方案
+
+使用携带`route`参数的`sticky`指令以使用有关请求路由的变量：
+
+````
+map $cookie_jsessionid $route_cookie {
+	~.+\.(?P<route>\w+)$ $route;
+}
+
+map $request_uri $route_uri {
+	~jsessionid=.+\.(?P<route>\w+)$ $route;
+}
+
+upstream backend {
+	server backend1.example.com route=a;
+	server backend2.example.com route=b;
+	
+	sticky route $route_cookie $route_uri;
+}
+````
+
+此示例尝试提取Java会话ID，方法是首先从cookie中通过将Java会话ID cookie的值映射到具有第一个`map`块的变量，然后通过在请求URI中查看名为`jsessionid`的参数来将值映射到使用第二个`map`块的变量。带有`route`参数的`sticky`指令被传入任意数量的变量。第一个非零或非空值用于路由。如果使用`jsessionid` cookie，请求将被路由到`backend1`；如果使用URI参数，请求将路由到`backend2`。虽然此示例基于Java通用会话ID，但同样适用于其他会话技术（如`phpsessionid`）或应用程序为会话ID生成的任何保证唯一的标识符。
+
+### 讨论
+
