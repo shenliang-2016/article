@@ -1,224 +1,338 @@
-##### 组合切入点表达式
+#### 5.4.4 声明增强
 
-你可以通过使用`&&`，`||`以及`!`组合切入点表达式。你还可以使用名称指代切入点表达式。下面的例子展示了 3 个切入点表达式：
+增强与切入点表达式相互关联，在由切入点匹配的方法执行之前、之后或者周围执行。切入点表达式可以时一个命名切入点的引用，也可以是在正确的位置声明的切入点表达式。
 
-```java
-@Pointcut("execution(public * *(..))")
-private void anyPublicOperation() {} 
+##### 前置增强
 
-@Pointcut("within(com.xyz.someapp.trading..*)")
-private void inTrading() {} 
-
-@Pointcut("anyPublicOperation() && inTrading()")
-private void tradingOperation() {} 
-
-```
-
-* `anyPublicOperation` 如果方法执行连接点表示所有公共方法的执行则匹配成功。
-* `inTrading` 如果方法执行在`trading`模块中则匹配成功。
-* `tradingOperation` 如果方法执行表示任何`trading`模块中公共方法则匹配成功。
-
-如前所示，最好从较小的命名组件构建更复杂的切入点表达式。当按名称引用切入点时，将应用常规Java可见性规则（您可以看到相同类型的`private`切入点，层次结构中的受`protected`切入点，任何位置的`public`切入点等）。可见性不会影响切入点匹配。
-
-##### 共享通用切入点定义
-
-在使用企业应用程序时，开发人员通常希望从几个方面引用应用程序的模块和特定的操作集。我们建议定义一个“SystemArchitecture”切面，捕获为此目的常见的切入点表达式。这样的切面通常类似于以下示例：
+你可以在一个切面中声明前置增强，通过使用`@Before`注解：
 
 ```java
-package com.xyz.someapp;
-
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.Before;
 
 @Aspect
-public class SystemArchitecture {
+public class BeforeExample {
 
-    /**
-     * A join point is in the web layer if the method is defined
-     * in a type in the com.xyz.someapp.web package or any sub-package
-     * under that.
-     */
-    @Pointcut("within(com.xyz.someapp.web..*)")
-    public void inWebLayer() {}
-
-    /**
-     * A join point is in the service layer if the method is defined
-     * in a type in the com.xyz.someapp.service package or any sub-package
-     * under that.
-     */
-    @Pointcut("within(com.xyz.someapp.service..*)")
-    public void inServiceLayer() {}
-
-    /**
-     * A join point is in the data access layer if the method is defined
-     * in a type in the com.xyz.someapp.dao package or any sub-package
-     * under that.
-     */
-    @Pointcut("within(com.xyz.someapp.dao..*)")
-    public void inDataAccessLayer() {}
-
-    /**
-     * A business service is the execution of any method defined on a service
-     * interface. This definition assumes that interfaces are placed in the
-     * "service" package, and that implementation types are in sub-packages.
-     *
-     * If you group service interfaces by functional area (for example,
-     * in packages com.xyz.someapp.abc.service and com.xyz.someapp.def.service) then
-     * the pointcut expression "execution(* com.xyz.someapp..service.*.*(..))"
-     * could be used instead.
-     *
-     * Alternatively, you can write the expression using the 'bean'
-     * PCD, like so "bean(*Service)". (This assumes that you have
-     * named your Spring service beans in a consistent fashion.)
-     */
-    @Pointcut("execution(* com.xyz.someapp..service.*.*(..))")
-    public void businessService() {}
-
-    /**
-     * A data access operation is the execution of any method defined on a
-     * dao interface. This definition assumes that interfaces are placed in the
-     * "dao" package, and that implementation types are in sub-packages.
-     */
-    @Pointcut("execution(* com.xyz.someapp.dao.*.*(..))")
-    public void dataAccessOperation() {}
+    @Before("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doAccessCheck() {
+        // ...
+    }
 
 }
 ```
 
-您可以在需要切入点表达式的任何位置引用此类切面中定义的切入点。例如，要使服务层成为事务性的，您可以编写以下内容：
+如果我们使用一个就地切入点表达式，我们就可以重写前面的例子。如下面例子所示：
 
-```xml
-<aop:config>
-    <aop:advisor
-        pointcut="com.xyz.someapp.SystemArchitecture.businessService()"
-        advice-ref="tx-advice"/>
-</aop:config>
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 
-<tx:advice id="tx-advice">
-    <tx:attributes>
-        <tx:method name="*" propagation="REQUIRED"/>
-    </tx:attributes>
-</tx:advice>
+@Aspect
+public class BeforeExample {
+
+    @Before("execution(* com.xyz.myapp.dao.*.*(..))")
+    public void doAccessCheck() {
+        // ...
+    }
+
+}
 ```
 
-`<aop:config>` and `<aop:advisor>`元素在 [Schema-based AOP Support](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-schema) 中讨论。事务元素在 [Transaction Management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#transaction) 中讨论、
+##### 返回之后的增强
 
-##### 例子
+返回之后的增强当匹配到的方法执行正常返回之后才会运行。你可以使用`@AfterReturning`注解来声明它：
 
-Spring AOP 用户大部分情况下会可能使用 `execution` 切入点指示符。执行表达式的格式如下：
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.AfterReturning;
+
+@Aspect
+public class AfterReturningExample {
+
+    @AfterReturning("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doAccessCheck() {
+        // ...
+    }
+
+}
+```
+
+> 你可以同时拥有多个增强声明（以及其它成员），都存在于同一个切面中。我们在这些例子中只展示一个增强声明以聚焦于单个增强的影响。
+
+有时候，你需要访问增强体内部以获取时机的方法执行返回值。你可以使用绑定返回值的`@AfterReturning`形式来进行访问，如下面例子所示：
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.AfterReturning;
+
+@Aspect
+public class AfterReturningExample {
+
+    @AfterReturning(
+        pointcut="com.xyz.myapp.SystemArchitecture.dataAccessOperation()",
+        returning="retVal")
+    public void doAccessCheck(Object retVal) {
+        // ...
+    }
+
+}
+```
+
+在`returning`属性中使用的名称必须对应于增强方法中的参数名称。当一个方法执行返回，该返回值就会被传递给增强方法作为其中对应参数的值。一个`returning`子句还限制了仅仅匹配那些返回特定类型值的方法执行（这种情况下，`Object`将匹配所有类型返回值）。
+
+请注意，当使用返回后增强时不可能返回完全不同的引用。
+
+##### 抛出异常后增强
+
+抛出异常后增强当匹配的方法执行抛出异常退出后才会执行。你可以通过使用`@AfterThrowing`注解来声明它。如下面例子所示：
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.AfterThrowing;
+
+@Aspect
+public class AfterThrowingExample {
+
+    @AfterThrowing("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doRecoveryActions() {
+        // ...
+    }
+
+}
+```
+
+通常，你可能会希望仅仅在给定类型的异常抛出时才执行增强，同时可能还需要再增强体中访问被抛出的异常。你可以使用`throwing`属性来同时限制匹配（如果需要 - 另外使用`Throwable`作为异常类型）和绑定被抛出的异常到一个增强参数。下面的例子展示了这种做法：
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.AfterThrowing;
+
+@Aspect
+public class AfterThrowingExample {
+
+    @AfterThrowing(
+        pointcut="com.xyz.myapp.SystemArchitecture.dataAccessOperation()",
+        throwing="ex")
+    public void doRecoveryActions(DataAccessException ex) {
+        // ...
+    }
+
+}
+```
+
+`throwing`属性中使用的名称必须对应于增强方法中使用的参数名称。当一个方法执行由于抛出异常而退出时，该异常被传递给增强方法作为相应参数的值。`throwing`子句还限制仅仅匹配抛出特定类型异常（例子中是`DataAccessException`）的方法执行。
+
+##### 后置（最终）增强
+
+后置（最终）增强当匹配的方法执行退出后执行。通过`@After`注解声明。后置增强必须准备好处理正常和异常两种返回情况。典型用法是用来释放资源或者类似目的。下面的例子展示了如何使用：
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.After;
+
+@Aspect
+public class AfterFinallyExample {
+
+    @After("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doReleaseLock() {
+        // ...
+    }
+
+}
+```
+
+##### 环绕增强
+
+最后一种增强是环绕增强。环绕增强环绕着匹配的方法执行而执行。它有机会同时在方法执行之前和之后执行，同时决定何时、如何以及甚至是方法实际上是否能够真的执行。环绕增强通常被使用在你需要以线程安全的方式在方法执行之前或者之后进行状态共享的情况，比如启动和停止定时器。请记住，始终使用能够满足你真实需求的最小能力的增强形式（也就是说，如果前置增强够用，就不要使用环绕增强）。
+
+环绕增强使用`@Around`注解声明。增强方法的第一个参数必须是`ProceedingJoinPoint`。在增强体内部，在`ProceedingJoinPoint`上调用`proceed()`将导致被增强的方法的执行。该`proceed`方法还可以传入一个`Object[]`。该数组中的值被作为被增强方法执行的参数。
+
+> 使用`Object[]`调用时，`proceed`的行为与由 AspectJ 编译器编译的环绕增强的行为略有不同。对于使用传统 AspectJ 语言编写的环绕增强，传递给`proceed`的参数数量必须与传递给环绕增强的参数数量（不是基础连接点所采用的参数数量）相匹配，并且传递给的值基于给定的参数位置取代了值绑定到的实体的连接点的原始值（如果现在没有意义，请不要担心）。Spring 采用的方法更简单，与其基于代理的仅执行语义更好地匹配。只是在下面情况下才需要了解这种差异：如果编译为 Spring 编写的 @AspectJ 切面并使用 AspectJ 编译器和编织器参数使用`proceed`。有一种方法可以编写在 Spring AOP 和 AspectJ 上100％兼容的切面，这将在下面的 [增强参数](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-params) 部分中讨论。
+
+下面的例子展示了如何使用环绕增强：
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.ProceedingJoinPoint;
+
+@Aspect
+public class AroundExample {
+
+    @Around("com.xyz.myapp.SystemArchitecture.businessService()")
+    public Object doBasicProfiling(ProceedingJoinPoint pjp) throws Throwable {
+        // start stopwatch
+        Object retVal = pjp.proceed();
+        // stop stopwatch
+        return retVal;
+    }
+
+}
+```
+
+环绕增强的返回值是方法的调用者能够看到的返回值。比如，一个简单的缓存切面能够从缓存返回一个值，如果缓存中有该值。如果缓存中没有则调用`proceed()`方法。注意`proceed`可能被调用一次、多次、或者根本不是在环绕增强的内部。所有这些情况都是合法的。
+
+##### 增强参数
+
+Spring 提供了完整类型的增强，意味着你应该在增强签名中声明你需要的参数类型，而不是始终使用`Object[]`数组。稍后我们将看到如何使得参数和其它上下文值在增强体中可用。首先，我们看看如何编写通用增强，该增强能够查找到目前正在被增强的方法。
+
+###### 访问当前`JoinPoint`
+
+任何增强方法可用声明，作为它的第一个参数，一个`org.aspectj.lang.JoinPoint`类型的参数。注意，环绕增强需要声明第一个参数类型为`ProceedingJoinPoint`，它是`JoinPoint`的子类）。`JoinPoint`接口提供了一些有用的方法：
+
+- `getArgs()`: 返回方法参数。
+- `getThis()`: 返回代理对象。
+- `getTarget()`: 返回目标对象。
+- `getSignature()`: 返回被增强的方法的描述。
+- `toString()`: 打印被增强的方法的有用的描述。
+
+参考 [javadoc](https://www.eclipse.org/aspectj/doc/released/runtime-api/org/aspectj/lang/JoinPoint.html) 获取更多细节。
+
+###### 传递参数给增强
+
+我们已经看到如何绑定返回值或者异常值（使用返回后或者抛出后增强）。为了使得参数值对增强体可用，你可以使用`args`绑定形式。如果你使用参数名称替换参数表达式中的一个类型名称，则当增强被调用时，相应的参数被作为参数值传递。举个例子说明这种情况。假定你希望增强采用`Account`对象作为第一个参数的`DAO`操作的执行，同时你需要访问增强体中的账户数据。你可以像下面例子这样做：
+
+```java
+@Before("com.xyz.myapp.SystemArchitecture.dataAccessOperation() && args(account,..)")
+public void validateAccount(Account account) {
+    // ...
+}
+```
+
+切入点表达式的`args(account...)`部分服务于两个目的。首先，它限制仅匹配那些携带至少一个参数的方法的执行，同时对应于该形式参数的实际参数就是`Account`实例。其次，它通过参数`account`使得实际的`Account`对象对增强是可用的。
+
+另外一种写法是声明当它匹配到一个连接点时“提供”该`Account`对象值的切入点，然后而可以从增强引用命名的切入点。如下面例子所示：
+
+```java
+@Pointcut("com.xyz.myapp.SystemArchitecture.dataAccessOperation() && args(account,..)")
+private void accountDataAccessOperation(Account account) {}
+
+@Before("accountDataAccessOperation(account)")
+public void validateAccount(Account account) {
+    // ...
+}
+```
+
+参考 AspectJ 编程向导获取更多细节。
+
+代理对象(`this`)，目标对象(`target`)，以及注解(`@within`，`@target`，`@annotation`，以及`@args`)都能以类似的方式绑定。接下来的两个例子展示了如何匹配由`@Auditable`注解修饰的方法的执行并提取审计代码：
+
+两个例子中的第一个展示了`@Auditable`注解的定义：
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Auditable {
+    AuditCode value();
+}
+```
+
+第二个例子展示了匹配`@Auditable`方法执行的增强：
+
+```java
+@Before("com.xyz.lib.Pointcuts.anyPublicMethod() && @annotation(auditable)")
+public void audit(Auditable auditable) {
+    AuditCode code = auditable.value();
+    // ...
+}
+```
+
+###### 增强参数和泛型
+
+
+
+Spring AOP can handle generics used in class declarations and method parameters. Suppose you have a generic type like the following:
 
 ```
-execution(modifiers-pattern? ret-type-pattern declaring-type-pattern?name-pattern(param-pattern)
-            throws-pattern?)
+public interface Sample<T> {
+    void sampleGenericMethod(T param);
+    void sampleGenericCollectionMethod(Collection<T> param);
+}
 ```
 
-除了返回类型模式（前面代码片段中的`ret-type-pattern`），名称模式和参数模式之外的所有部分都是可选的。返回类型模式确定方法的返回类型必须是什么才能匹配连接点。`*`最常用作返回类型模式。它匹配任何返回类型。仅当方法返回给定类型时，完全限定类型名称才匹配。名称模式与方法名称匹配。您可以使用`*`通配符作为名称模式的全部或部分。如果指定声明类型模式，请包含一个尾随的`.`以将其连接到名称模式组件。参数模式稍微复杂一些：`()`匹配一个不带参数的方法，而`(..)`匹配任何数量（零个或多个）参数。`(*)`模式匹配一个采用任何类型的一个参数的方法。 `(*，String)`匹配一个带两个参数的方法。第一个可以是任何类型，而第二个必须是`String`。有关详细信息，请参阅AspectJ编程指南的 [语言语义](https://www.eclipse.org/aspectj/doc/released/progguide/semantics-pointcuts.html) 部分。
+You can restrict interception of method types to certain parameter types by typing the advice parameter to the parameter type for which you want to intercept the method:
 
-下面的例子展示了一些常见的切入点表达式：
+```
+@Before("execution(* ..Sample+.sampleGenericMethod(*)) && args(param)")
+public void beforeSampleMethod(MyType param) {
+    // Advice implementation
+}
+```
 
-- 任何`public`方法的执行：
+This approach does not work for generic collections. So you cannot define a pointcut as follows:
 
-  ```java
-  execution(public * *(..))
+```
+@Before("execution(* ..Sample+.sampleGenericCollectionMethod(*)) && args(param)")
+public void beforeSampleMethod(Collection<MyType> param) {
+    // Advice implementation
+}
+```
+
+To make this work, we would have to inspect every element of the collection, which is not reasonable, as we also cannot decide how to treat `null` values in general. To achieve something similar to this, you have to type the parameter to `Collection<?>` and manually check the type of the elements.
+
+###### Determining Argument Names
+
+The parameter binding in advice invocations relies on matching names used in pointcut expressions to declared parameter names in advice and pointcut method signatures. Parameter names are not available through Java reflection, so Spring AOP uses the following strategy to determine parameter names:
+
+- If the parameter names have been explicitly specified by the user, the specified parameter names are used. Both the advice and the pointcut annotations have an optional `argNames` attribute that you can use to specify the argument names of the annotated method. These argument names are available at runtime. The following example shows how to use the `argNames`attribute:
+
+  ```
+  @Before(value="com.xyz.lib.Pointcuts.anyPublicMethod() && target(bean) && @annotation(auditable)",
+          argNames="bean,auditable")
+  public void audit(Object bean, Auditable auditable) {
+      AuditCode code = auditable.value();
+      // ... use code and bean
+  }
   ```
 
-- 任何方法名以`set`开头的方法的执行：
+  If the first parameter is of the `JoinPoint`, `ProceedingJoinPoint`, or `JoinPoint.StaticPart` type, you can leave out the name of the parameter from the value of the `argNames` attribute. For example, if you modify the preceding advice to receive the join point object, the `argNames` attribute need not include it:
 
-  ```java
-  execution(* set*(..))
+  ```
+  @Before(value="com.xyz.lib.Pointcuts.anyPublicMethod() && target(bean) && @annotation(auditable)",
+          argNames="bean,auditable")
+  public void audit(JoinPoint jp, Object bean, Auditable auditable) {
+      AuditCode code = auditable.value();
+      // ... use code, bean, and jp
+  }
   ```
 
-- 任何由`AccountService`接口定义的方法的执行：
+  The special treatment given to the first parameter of the `JoinPoint`, `ProceedingJoinPoint`, and `JoinPoint.StaticPart` types is particularly convenient for advice instances that do not collect any other join point context. In such situations, you may omit the `argNames` attribute. For example, the following advice need not declare the `argNames` attribute:
 
-  ```java
-  execution(* com.xyz.service.AccountService.*(..))
+  ```
+  @Before("com.xyz.lib.Pointcuts.anyPublicMethod()")
+  public void audit(JoinPoint jp) {
+      // ... use jp
+  }
   ```
 
-- 在`service`包中定义的任何方法的执行：
+- Using the `'argNames'` attribute is a little clumsy, so if the `'argNames'` attribute has not been specified, Spring AOP looks at the debug information for the class and tries to determine the parameter names from the local variable table. This information is present as long as the classes have been compiled with debug information ( `'-g:vars'` at a minimum). The consequences of compiling with this flag on are: (1) your code is slightly easier to understand (reverse engineer), (2) the class file sizes are very slightly bigger (typically inconsequential), (3) the optimization to remove unused local variables is not applied by your compiler. In other words, you should encounter no difficulties by building with this flag on.
 
-  ```java
-  execution(* com.xyz.service.*.*(..))
-  ```
+> If an @AspectJ aspect has been compiled by the AspectJ compiler (ajc) even without the debug information, you need not add the `argNames` attribute, as the compiler retain the needed information.
 
-- 在`service`包及其子包中定义的任何方法的执行：
+- If the code has been compiled without the necessary debug information, Spring AOP tries to deduce the pairing of binding variables to parameters (for example, if only one variable is bound in the pointcut expression, and the advice method takes only one parameter, the pairing is obvious). If the binding of variables is ambiguous given the available information, an `AmbiguousBindingException` is thrown.
+- If all of the above strategies fail, an `IllegalArgumentException` is thrown.
 
-  ```java
-  execution(* com.xyz.service..*.*(..))
-  ```
+###### Proceeding with Arguments
 
-- `service`包内部任何连接点（仅 Spring AOP 中的方法执行）：
+We remarked earlier that we would describe how to write a `proceed` call with arguments that works consistently across Spring AOP and AspectJ. The solution is to ensure that the advice signature binds each of the method parameters in order. The following example shows how to do so:
 
-  ```java
-  within(com.xyz.service.*)
-  ```
+```
+@Around("execution(List<Account> find*(..)) && " +
+        "com.xyz.myapp.SystemArchitecture.inDataAccessLayer() && " +
+        "args(accountHolderNamePattern)")
+public Object preProcessQueryPattern(ProceedingJoinPoint pjp,
+        String accountHolderNamePattern) throws Throwable {
+    String newPattern = preProcess(accountHolderNamePattern);
+    return pjp.proceed(new Object[] {newPattern});
+}
+```
 
-- `service`包及其子包内部任何连接点（仅 Spring AOP 中的方法执行）：
+In many cases, you do this binding anyway (as in the preceding example).
 
-  ```java
-  within(com.xyz.service..*)
-  ```
+##### Advice Ordering
 
-- 实现了`AccountService`接口的代理中的任何连接点（仅 Spring AOP 中的方法执行）：
+What happens when multiple pieces of advice all want to run at the same join point? Spring AOP follows the same precedence rules as AspectJ to determine the order of advice execution. The highest precedence advice runs first “on the way in” (so, given two pieces of before advice, the one with highest precedence runs first). “On the way out” from a join point, the highest precedence advice runs last (so, given two pieces of after advice, the one with the highest precedence will run second).
 
-  ```java
-  this(com.xyz.service.AccountService)
-  ```
-  
-> `this`更常用于绑定形式。有关如何在增强体中使得代理对象可用，请参阅 [声明增强](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-advice) 部分。
+When two pieces of advice defined in different aspects both need to run at the same join point, unless you specify otherwise, the order of execution is undefined. You can control the order of execution by specifying precedence. This is done in the normal Spring way by either implementing the `org.springframework.core.Ordered` interface in the aspect class or annotating it with the `Order` annotation. Given two aspects, the aspect returning the lower value from `Ordered.getValue()` (or the annotation value) has the higher precedence.
 
-* 目标对象实现了`AccountService`接口的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  target(com.xyz.service.AccountService)
-  ```
-
-> 您还可以在以绑定形式使用“@target”。有关如何在增强体中使得注解对象可用，请参阅 [声明增强](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-advice) 部分。
-
-- 声明的目标对象类型拥有`@Transactional`注解的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  @within(org.springframework.transaction.annotation.Transactional)
-  ```
-
-> 您还可以在以绑定形式使用“@within”。有关如何在增强体中使得注解对象可用，请参阅 [声明增强](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-advice) 部分。
-
-- 执行的方法拥有`@Transactional`注解的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  @annotation(org.springframework.transaction.annotation.Transactional)
-  ```
-
-> 您还可以在以绑定形式使用“@annotation”。有关如何在增强体中使得注解对象可用，请参阅 [声明增强](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-advice) 部分。
-
-- 携带单独一个参数，该参数的运行时类型拥有`@Classified`注解的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  @args(com.xyz.security.Classified)
-  ```
-
-> 您还可以在以绑定形式使用“@args”。有关如何在增强体中使得注解对象可用，请参阅 [声明增强](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-advice) 部分。
-
-- 名为`tradeServcie`的 Spring bean 上的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  bean(tradeService)
-  ```
-
-- 名称匹配到通配符表达式`*Service`的 Spring bean 上的任何连接点（仅 Spring AOP 中的方法执行）：
-
-  ```java
-  bean(*Service)
-  ```
-
-##### 编写好的切入点
-
-在编译期，AspectJ处理切入点以优化匹配性能。检查代码并确定每个连接点是否（静态地或动态地）匹配给定切入点是一个代价高昂的过程。（动态匹配意味着无法通过静态分析完全确定匹配，并且在代码中放置测试以确定代码运行时是否存在实际匹配）。在第一次遇到切入点声明时，AspectJ会将其重写为匹配过程的最佳形式。这是什么意思？基本上，切入点在 DNF（析取范式）中重写，并且切入点的组件被排序，以便首先检查那些评估更方便的组件。这意味着您不必担心了解各种切入点指示符的性能，并且可以在切入点声明中以任何顺序提供它们。
-
-但是，AspectJ只能使用它所被告知的内容。为了获得最佳匹配性能，您应该考虑它们要实现的目标，并在定义中尽可能缩小匹配的搜索空间。现有的指示符自然分为三组：`kinded`，`scoping`和`contextual`：
-
-- Kinded 指示符选择特定类型的连接点: `execution`, `get`, `set`, `call`, 和 `handler`。
-- Scoping 指示符选择一组感兴趣的连接点，可能包含许多类: `within` 和 `withincode`。
-- Contextual 指示符基于上下文匹配（以及可选绑定）: `this`, `target`, 和 `@annotation`。
-
-一个写得很好的切入点应至少包括前两种类型（`kinded`和`scoping`）。您可以包含上下文指示符以基于连接点上下文进行匹配，或者绑定该上下文以在增强中使用。由于额外的处理和分析，仅提供一个`kinded`指示符或仅提供上下文指示符，但可能会影响编织性能（使用的时间和内存）。范围界定指示符非常快速匹配，使用它们意味着AspectJ可以非常快速地解除不应进一步处理的连接点组。如果可能，一个好的切入点应该总是包含一个。
-
+When two pieces of advice defined in the same aspect both need to run at the same join point, the ordering is undefined (since there is no way to retrieve the declaration order through reflection for javac-compiled classes). Consider collapsing such advice methods into one advice method per join point in each aspect class or refactor the pieces of advice into separate aspect classes that you can order at the aspect level.
