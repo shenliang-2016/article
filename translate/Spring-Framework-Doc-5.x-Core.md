@@ -7645,3 +7645,31 @@ public Object preProcessQueryPattern(ProceedingJoinPoint pjp,
 当在不同切面定义的两条增强都需要在同一个连接点上运行时，除非另行指定，否则执行顺序是不确定的。您可以通过指定优先级来控制执行顺序。这是通过在方法类中实现`org.springframework.core.Ordered`接口或使用`@Order`注解对其进行修饰来以常规Spring方式完成的。给定两个切面，从`Ordered.getValue()`（或注解值）返回较低值的切面具有较高的优先级。
 
 当在同一切面中定义的两条增强都需要在同一个连接点上运行时，排序是未定义的（因为无法通过反射为`javac`编译的类检索声明顺序）。考虑将这些增强方法折叠到每个切面类中每个连接点的一个增强方法中，或者将这些增强重构为可以在切面级别排序的单独切面类。
+
+#### 5.4.5 引入
+
+引入（在AspectJ中称为类型间声明）使切面能够声明被增强对象实现给定接口，并代表这些对象提供该接口的实现。
+
+您可以使用`@DeclareParents`注解进行引入。此注解用于声明匹配类型具有新父类（给定名称名称）。例如，给定名为`UsageTracked`的接口和名为`DefaultUsageTracked`的接口的实现，以下切面声明服务接口的所有实现者也实现`UsageTracked`接口（例如，通过JMX公开统计信息）：
+
+```java
+@Aspect
+public class UsageTracking {
+
+    @DeclareParents(value="com.xzy.myapp.service.*+", defaultImpl=DefaultUsageTracked.class)
+    public static UsageTracked mixin;
+
+    @Before("com.xyz.myapp.SystemArchitecture.businessService() && this(usageTracked)")
+    public void recordUsage(UsageTracked usageTracked) {
+        usageTracked.incrementUseCount();
+    }
+
+}
+```
+
+要实现的接口由注解字段的类型确定。`@DeclareParents`注解的`value`属性是 AspectJ 类型模式。任何匹配类型的 bean 都实现`UsageTracked`接口。请注意，在前面示例的前置增强中，服务 bean 可以直接用作`UsageTracked`接口的实现。如果以编程方式访问 bean，您将编写以下内容：
+
+```java
+UsageTracked usageTracked = (UsageTracked) context.getBean("myService");
+```
+
