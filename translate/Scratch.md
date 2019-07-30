@@ -239,44 +239,44 @@ public void audit(Auditable auditable) {
 
 ###### 增强参数和泛型
 
-
+Spring AOP 能够处理类声明和方法参数中使用的泛型。假设你如下的泛型类型：
 
 Spring AOP can handle generics used in class declarations and method parameters. Suppose you have a generic type like the following:
 
-```
+```java
 public interface Sample<T> {
     void sampleGenericMethod(T param);
     void sampleGenericCollectionMethod(Collection<T> param);
 }
 ```
 
-You can restrict interception of method types to certain parameter types by typing the advice parameter to the parameter type for which you want to intercept the method:
+你可以限制拦截的方法的类型为某种参数类型，通过类型化增强参数为你想要拦截的方法的参数类型：
 
-```
+```java
 @Before("execution(* ..Sample+.sampleGenericMethod(*)) && args(param)")
 public void beforeSampleMethod(MyType param) {
     // Advice implementation
 }
 ```
 
-This approach does not work for generic collections. So you cannot define a pointcut as follows:
+这种方法对泛型集合无效。因此你可以如下定义一个切入点：
 
-```
+```java
 @Before("execution(* ..Sample+.sampleGenericCollectionMethod(*)) && args(param)")
 public void beforeSampleMethod(Collection<MyType> param) {
     // Advice implementation
 }
 ```
 
-To make this work, we would have to inspect every element of the collection, which is not reasonable, as we also cannot decide how to treat `null` values in general. To achieve something similar to this, you have to type the parameter to `Collection<?>` and manually check the type of the elements.
+为了使这种写法可以工作，我们必须检查集合的每个元素，看看哪个是无意义的，因为我们也没办法确定应该如何处理`null`值。为了得到类似的效果，你必须类型化`Collection<?>`参数并手动检查元素类型。
 
-###### Determining Argument Names
+###### 确定参数名称
 
-The parameter binding in advice invocations relies on matching names used in pointcut expressions to declared parameter names in advice and pointcut method signatures. Parameter names are not available through Java reflection, so Spring AOP uses the following strategy to determine parameter names:
+增强调用中绑定的参数取决于在声明增强中和切入点方法签名中声明参数名称的切入点表达式中使用的匹配到的名称。参数名称无法通过 Java 反射获取，因此 Spring AOP 使用下面的策略来确定参数名称：
 
-- If the parameter names have been explicitly specified by the user, the specified parameter names are used. Both the advice and the pointcut annotations have an optional `argNames` attribute that you can use to specify the argument names of the annotated method. These argument names are available at runtime. The following example shows how to use the `argNames`attribute:
+- 如果参数名称已经由用户显式指出，则使用指定的参数名称。增强和切入点注解都拥有可选的`argNames`属性，你可以使用它来指定被注解修饰的方法的参数名称。这些参数名称在运行时可用。下面的例子展示了如何使用`argNames`属性：
 
-  ```
+  ```java
   @Before(value="com.xyz.lib.Pointcuts.anyPublicMethod() && target(bean) && @annotation(auditable)",
           argNames="bean,auditable")
   public void audit(Object bean, Auditable auditable) {
@@ -285,9 +285,9 @@ The parameter binding in advice invocations relies on matching names used in poi
   }
   ```
 
-  If the first parameter is of the `JoinPoint`, `ProceedingJoinPoint`, or `JoinPoint.StaticPart` type, you can leave out the name of the parameter from the value of the `argNames` attribute. For example, if you modify the preceding advice to receive the join point object, the `argNames` attribute need not include it:
+  如果第一个参数是`JoinPoint`，`ProceedingJoinPoint`，或者`JoinPoint.Staticpart`类型，你就可以忽略来自`argNames`属性的参数名称。比如，如果你修改上面的增强来接受连接点对象，则`argNames`属性不需要包含它：
 
-  ```
+  ```java
   @Before(value="com.xyz.lib.Pointcuts.anyPublicMethod() && target(bean) && @annotation(auditable)",
           argNames="bean,auditable")
   public void audit(JoinPoint jp, Object bean, Auditable auditable) {
@@ -296,27 +296,27 @@ The parameter binding in advice invocations relies on matching names used in poi
   }
   ```
 
-  The special treatment given to the first parameter of the `JoinPoint`, `ProceedingJoinPoint`, and `JoinPoint.StaticPart` types is particularly convenient for advice instances that do not collect any other join point context. In such situations, you may omit the `argNames` attribute. For example, the following advice need not declare the `argNames` attribute:
+  给与类型为`JoinPoint`，`ProceedingJoinPoint`，以及`JoinPoint.StaticPart`的第一个参数特殊对待，对那些不收集任何其它连接点上下文的增强实例特别方便。这种情况下，你可以忽略`argNames`属性。比如，下面的增强不需要声明`argNames`属性：
 
-  ```
+  ```java
   @Before("com.xyz.lib.Pointcuts.anyPublicMethod()")
   public void audit(JoinPoint jp) {
       // ... use jp
   }
   ```
 
-- Using the `'argNames'` attribute is a little clumsy, so if the `'argNames'` attribute has not been specified, Spring AOP looks at the debug information for the class and tries to determine the parameter names from the local variable table. This information is present as long as the classes have been compiled with debug information ( `'-g:vars'` at a minimum). The consequences of compiling with this flag on are: (1) your code is slightly easier to understand (reverse engineer), (2) the class file sizes are very slightly bigger (typically inconsequential), (3) the optimization to remove unused local variables is not applied by your compiler. In other words, you should encounter no difficulties by building with this flag on.
+- 使用`argNames`属性有点笨拙，因此如果未指定`argNames`属性，Spring AOP 会查看该类的调试信息，并尝试从局部变量表中确定参数名称。只要已使用调试信息（至少为`-g:vars`）编译类，就会显示此信息。使用此标志进行编译的后果是：（1）您的代码稍微容易理解（逆向工程），（2）类文件大小略大（通常无关紧要），（3）删除未使用的本地变量的优化未由编译器执行。换句话说，通过使用此标志构建，您应该不会遇到任何困难。
 
-> If an @AspectJ aspect has been compiled by the AspectJ compiler (ajc) even without the debug information, you need not add the `argNames` attribute, as the compiler retain the needed information.
+> 如果一个 @AspectJ 切面已经由 AspectJ 编译器（ajc）编译，即使没有调试信息，你也不需要添加`argNames`属性，因为编译器维护了必需的信息。
 
-- If the code has been compiled without the necessary debug information, Spring AOP tries to deduce the pairing of binding variables to parameters (for example, if only one variable is bound in the pointcut expression, and the advice method takes only one parameter, the pairing is obvious). If the binding of variables is ambiguous given the available information, an `AmbiguousBindingException` is thrown.
-- If all of the above strategies fail, an `IllegalArgumentException` is thrown.
+- If the code has been compiled without the necessary debug information, Spring AOP tries to deduce the pairing of binding variables to parameters (for example, if only one variable is bound in the pointcut expression, and the advice method takes only one parameter, the pairing is obvious). If the binding of variables is ambiguous given the available information, an `AmbiguousBindingException` is thrown.如果代码编译时没有必要的调试信息，Spring AOP会尝试推断绑定变量与参数的配对（例如，如果只有一个变量绑定在切入点表达式中，并且增强方法只接受一个参数，那么配对很明显）。如果给定可用信息中变量的绑定是不明确的，则抛出`AmbiguousBindingException`。
+- 如果上面所有的策略都失败，则抛出`IllegalArgumentException`异常。
 
-###### Proceeding with Arguments
+###### 继续论证
 
-We remarked earlier that we would describe how to write a `proceed` call with arguments that works consistently across Spring AOP and AspectJ. The solution is to ensure that the advice signature binds each of the method parameters in order. The following example shows how to do so:
+我们之前讨论过，我们将描述如何使用在Spring AOP和AspectJ中一致工作的参数编写一个`proceed`调用。解决方案是确保增强签名按顺序绑定每个方法参数。以下示例显示了如何执行此操作：
 
-```
+```java
 @Around("execution(List<Account> find*(..)) && " +
         "com.xyz.myapp.SystemArchitecture.inDataAccessLayer() && " +
         "args(accountHolderNamePattern)")
@@ -327,12 +327,12 @@ public Object preProcessQueryPattern(ProceedingJoinPoint pjp,
 }
 ```
 
-In many cases, you do this binding anyway (as in the preceding example).
+很多情况下，你无论如何都要执行这种绑定（如上面例子所示）。
 
-##### Advice Ordering
+##### 增强排序
 
-What happens when multiple pieces of advice all want to run at the same join point? Spring AOP follows the same precedence rules as AspectJ to determine the order of advice execution. The highest precedence advice runs first “on the way in” (so, given two pieces of before advice, the one with highest precedence runs first). “On the way out” from a join point, the highest precedence advice runs last (so, given two pieces of after advice, the one with the highest precedence will run second).
+当多条增强都想在同一个连接点运行时会发生什么？Spring AOP遵循与AspectJ相同的优先级规则来确定增强执行的顺序。在连接点的执行入口处，最高优先级的增强首先开始执行（因此，给出两条前置增强，优先级最高的增强首先运行）。在连接点执行出口处，最高优先级增强最后运行（因此，给定两条后置增强，具有最高优先级的增强将后运行）。
 
-When two pieces of advice defined in different aspects both need to run at the same join point, unless you specify otherwise, the order of execution is undefined. You can control the order of execution by specifying precedence. This is done in the normal Spring way by either implementing the `org.springframework.core.Ordered` interface in the aspect class or annotating it with the `Order` annotation. Given two aspects, the aspect returning the lower value from `Ordered.getValue()` (or the annotation value) has the higher precedence.
+当在不同切面定义的两条增强都需要在同一个连接点上运行时，除非另行指定，否则执行顺序是不确定的。您可以通过指定优先级来控制执行顺序。这是通过在方法类中实现`org.springframework.core.Ordered`接口或使用`@Order`注解对其进行修饰来以常规Spring方式完成的。给定两个切面，从`Ordered.getValue()`（或注解值）返回较低值的切面具有较高的优先级。
 
-When two pieces of advice defined in the same aspect both need to run at the same join point, the ordering is undefined (since there is no way to retrieve the declaration order through reflection for javac-compiled classes). Consider collapsing such advice methods into one advice method per join point in each aspect class or refactor the pieces of advice into separate aspect classes that you can order at the aspect level.
+当在同一切面中定义的两条增强都需要在同一个连接点上运行时，排序是未定义的（因为无法通过反射为`javac`编译的类检索声明顺序）。考虑将这些增强方法折叠到每个切面类中每个连接点的一个增强方法中，或者将这些增强重构为可以在切面级别排序的单独切面类。
