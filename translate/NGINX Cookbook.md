@@ -734,3 +734,57 @@ location / {
 
 ### 解决方案
 
+NGINX 官方开源代码包仓库，第一章中安装 NGINX 时配置的那个，提供了一个名为`nginx-module-geoip`的包。当使用 NGINX Plus 包仓库时，该包名为`nginx-plus-module-geoip`。这些包安装 GeoIP 模块的动态版本。
+
+RHEL/CentOS NGINX 开源代码：
+
+````
+# yum install nginx-module-geoup
+````
+
+Debian/Ubuntu NGINX 开源代码：
+
+````
+# apt-get install nginx-module-geoip
+````
+
+RHEL/CentOS NGINX Plus：
+
+````
+# yum install nginx-plus-module-geoip
+````
+
+Debian/Ubuntu NGINX Plus：
+
+````
+# apt-get install nginx-plus-module-geoip
+````
+
+下载 GeoIP 国家城市数据库并解压：
+
+````bash
+# mkdir /etc/nginx/geoip
+# cd /etc/nginx/geoip
+# wget "http://geolite.maxmind.com/\download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
+# gunzip GeoIP.dat.gz
+# wget "http://geolite.maxmind.com/\download/geoip/database/GeoLiteCity.dat.gz"
+# gunzip GeoLiteCity.dat.gz
+````
+
+这一系列命令在 */etc/nginx* 目录下创建一个 *geoip* 目录，移动到这个新的目录，下载并解压包。
+
+本地磁盘上建立了国家城市 GeoIP 数据库，现在你就可以构建 NGINX GeoIP 模块来使用它们基于客户端 IP 地址来暴露内置变量：
+
+````
+load_module "/usr/lib64/nginx/modules/ngx_http_geoip_module.so";
+
+http {
+  geoip_country /etc/nginx/geoip/GeoIP.dat;
+  geoip_city /etc/nginx/geoip/GeoLiteCity.dat;
+}
+````
+
+`load_module`指令从它的文件系统路径下动态加载模块。`load_module`指令只在主上下文中有效。`geoip_country`指令使用文件`GeoIP.dat`文件的路径，该文件包含 IP 地址和国家编码之间映射的数据库，仅在 HTTP 上下文中可用。
+
+### 讨论
+
