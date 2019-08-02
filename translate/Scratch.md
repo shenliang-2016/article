@@ -1,274 +1,160 @@
-#### 5.5.3 声明增强
+#### 5.5.4 引入
 
-基于模式的 AOP 支持使用 @AspectJ 风格支持的相同的 5 种增强，同时它们具有完全相同的语义。
+引入（在 AspectJ 中被称为类型间声明）允许切面声明被增强的对象实现一个给定的接口并代表那些对象提供该接口的实现。
 
-##### 前置增强
-
-前置增强运行在匹配的方法执行之前。它在`<aop:aspect>`元素中使用 <aop:before> 元素声明，如下所示：
+你可以在`aop:aspect`中使用`aop:declare-parents`元素来创建一个引入。你可以使用`aop:declare-parents`元素来声明匹配类型拥有一个新的父类（通过名称）。比如，给定一个名为`UsageTracked`以及一个名为`DefaultUsageTracked`接口的实现。下面的切面声明所有服务接口的实现同时也实现了接口`UsageTracked`。（例如为了通过 JMX 暴露统计信息）
 
 ```xml
-<aop:aspect id="beforeExample" ref="aBean">
+<aop:aspect id="usageTrackerAspect" ref="usageTracking">
+
+    <aop:declare-parents
+        types-matching="com.xzy.myapp.service.*+"
+        implement-interface="com.xyz.myapp.service.tracking.UsageTracked"
+        default-impl="com.xyz.myapp.service.tracking.DefaultUsageTracked"/>
 
     <aop:before
-        pointcut-ref="dataAccessOperation"
-        method="doAccessCheck"/>
-
-    ...
-
-</aop:aspect>
-```
-
-这里，`dataAccessOperation`是定义在顶级（`<aop:config>`）的切入点的`id`。为了以行内形式定义该切入点，以`pointcut`属性替换`pointcut-ref`属性，如下所示：
-
-```xml
-<aop:aspect id="beforeExample" ref="aBean">
-
-    <aop:before
-        pointcut="execution(* com.xyz.myapp.dao.*.*(..))"
-        method="doAccessCheck"/>
-
-    ...
+        pointcut="com.xyz.myapp.SystemArchitecture.businessService()
+            and this(usageTracked)"
+            method="recordUsage"/>
 
 </aop:aspect>
 ```
 
-如我们在 @AspectJ 风格的讨论中提到的，使用命名的切入点可以显著改善代码的可读性。
-
-`method`属性指示一个方法（`doAccessCheck`），该方法提供增强的主体。该方法必须为包含该增强的切面元素引用的 bean 定义。在数据访问操作执行（由切入点表达式匹配的方法执行连接点）之前，切面 bean 上的`doAccessCheck`方法被调用。
-
-##### 返回之后增强
-
-当匹配到的方法正常执行完成之后才会执行返回之后增强。它的声明方式与前置增强一样。如下面例子所示：
-
-```xml
-<aop:aspect id="afterReturningExample" ref="aBean">
-
-    <aop:after-returning
-        pointcut-ref="dataAccessOperation"
-        method="doAccessCheck"/>
-
-    ...
-
-</aop:aspect>
-```
-
-如在 @AspectJ 风格中那样，你可以在增强主体中获取返回值。为了做到这一点，使用`returning`属性来指定返回值应该被传递给的参数的名称，如下面例子所示：
-
-```xml
-<aop:aspect id="afterReturningExample" ref="aBean">
-
-    <aop:after-returning
-        pointcut-ref="dataAccessOperation"
-        returning="retVal"
-        method="doAccessCheck"/>
-
-    ...
-
-</aop:aspect>
-```
-
-`doAccessCheck`方法必须声明一个参数名`retVal`。该参数的类型如`@AfterReturning`中描述的同样的方式约束匹配。比如，你可以如下声明方法签名：
+对应于`usageTracking`bean 的类将包含下面的方法：
 
 ```java
-public void doAccessCheck(Object retVal) {...
+public void recordUsage(UsageTracked usageTracked) {
+    usageTracked.incrementUseCount();
+}
 ```
 
-##### 抛出异常之后增强
-
-匹配的方法执行由于抛出异常而退出之后才会执行这种增强。定义形式如下：
-
-```xml
-<aop:aspect id="afterThrowingExample" ref="aBean">
-
-    <aop:after-throwing
-        pointcut-ref="dataAccessOperation"
-        method="doRecoveryActions"/>
-
-    ...
-
-</aop:aspect>
-```
-
-如在 @AspectJ 风格中那样，你可以在增强主体中获取抛出的异常。为了做到这一点，使用`throwing`属性来指定异常应该被传递给的参数的名称，如下面例子所示：
-
-```xml
-<aop:aspect id="afterThrowingExample" ref="aBean">
-
-    <aop:after-throwing
-        pointcut-ref="dataAccessOperation"
-        throwing="dataAccessEx"
-        method="doRecoveryActions"/>
-
-    ...
-
-</aop:aspect>
-```
-
-`doRecoveryActions`方法必须声明一个参数名`dataAccessEx`。该参数的类型如`@AfterThrowing`中描述的同样的方式约束匹配。比如，你可以如下声明方法签名：
+将要被实现的接口由`implement-interface`属性确定。`types-matching`属性的值是一个 AspectJ 类型模式。匹配类型的任何 bean 都实现了`UsageTracked`接口。注意，在上面例子中的前置增强中，服务 beans 能够直接被作为`UsageTracked`接口的实现使用。为了以编程方式访问 bean，你可以如下写：
 
 ```java
-public void doRecoveryActions(DataAccessException dataAccessEx) {...
+UsageTracked usageTracked = (UsageTracked) context.getBean("myService");
 ```
 
-##### 后置（最终）增强
+#### 5.5.5 切面实例化模型
 
-后置（最终）增强无论匹配的方法执行如何退出都会运行。你可以使用`after`元素，如下面例子所示：
+单例模型是唯一被支持的基于模式的切面的实例化模型。将来版本中可能会提供其它实例化模型的支持。
 
-```xml
-<aop:aspect id="afterFinallyExample" ref="aBean">
+#### 5.5.6 增强器
 
-    <aop:after
-        pointcut-ref="dataAccessOperation"
-        method="doReleaseLock"/>
+来自 Spring 中定义的 AOP 支持的“增强器”的概念并不直接等价于 AspectJ 中的概念。增强器类似于一个效地自包含的切面，只包含单一增强。该增强自己由一个 bean 表示，同时必须实现 [Advice Types in Spring](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-api-advice-types) 中描述的增强接口之一。增强器可以享受到 AspectJ 切入点表达式的优点。
 
-    ...
-
-</aop:aspect>
-```
-
-##### 环绕增强
-
-最后一种增强是环绕增强。环绕增强围绕匹配的方法执行运行。它有机会在方法执行之前和之后完成工作，并能够决定方法何时，如何，甚至方法实际上能否执行。环绕增强通常用于以线程安全的方式（例如，启动和停止计时器）在方法执行之前和之后共享状态。始终使用符合您要求的最不强大的增强形式。如果前置增强够用，就不要使用环绕增强。
-
-您可以使用`<aop:around>`元素声明环绕增强。`advice`方法的第一个参数必须是`ProceedingJoinPoint`类型。在增强的主体内，在`ProceedingJoinPoint`上调用`proceed()`会导致执行基础方法。也可以使用`Object[]`调用`proceed`方法。数组中的值在进行时用作方法执行的参数。有关使用`Object[]`调用`proceed`的说明，请参阅 [Around Advice](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-around-advice) 。以下示例显示如何在XML中声明环绕增强：
+Spring 通过`<aop:advisor>`元素支持增强器概念。你大部分情况下会发现它跟事务性增强结合使用，事务性增强在 Spring 中也有自己的命名空间支持。下面的例子展示了一个增强器：
 
 ```xml
-<aop:aspect id="aroundExample" ref="aBean">
+<aop:config>
 
-    <aop:around
+    <aop:pointcut id="businessService"
+        expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+
+    <aop:advisor
         pointcut-ref="businessService"
-        method="doBasicProfiling"/>
+        advice-ref="tx-advice"/>
 
-    ...
+</aop:config>
 
-</aop:aspect>
+<tx:advice id="tx-advice">
+    <tx:attributes>
+        <tx:method name="*" propagation="REQUIRED"/>
+    </tx:attributes>
+</tx:advice>
 ```
 
-`doBasicProfiling`增强的实现可以和 @AspectJ 例子中完全一样（当然是要去掉注解），如下面例子所示：
+如同前面例子中的`pointcut-ref`属性的使用，你也可以使用`pointcut`属性来定义一个内联切入点表达式。
+
+为了定义增强器的优先级以便增强可以参与排序，使用`order`属性来定义增强器的`Ordered`值。
+
+#### 5.5.7 AOP 模式示例
+
+本节展示如何使用模式支持重写来自 [An AOP Example](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-example) 的并发锁失败重试示例。
+
+业务服务的执行有时候会由于并发问题而失败（比如，死锁失败者）。如果该操作被重试，下一次很可能就会成功。对那些在这种情况下适合重试的业务服务（幂等操作，不需要将结果返回给用户以解决冲突），我们希望透明重试从而避免客户端看到`PessimisticLockingFailureException`。这是一个显然需要横切一个服务层中多个服务的需求，因此，可以通过一个切面来实现。
+
+因为我们希望重试操作，我们需要使用环绕增强以便我们可以多次调用`proceed`方法。下面的例子展示了基本的切面实现（它是一个使用了模式支持的常规 Java 类）：
 
 ```java
-public Object doBasicProfiling(ProceedingJoinPoint pjp) throws Throwable {
-    // start stopwatch
-    Object retVal = pjp.proceed();
-    // stop stopwatch
-    return retVal;
+public class ConcurrentOperationExecutor implements Ordered {
+
+    private static final int DEFAULT_MAX_RETRIES = 2;
+
+    private int maxRetries = DEFAULT_MAX_RETRIES;
+    private int order = 1;
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    public int getOrder() {
+        return this.order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public Object doConcurrentOperation(ProceedingJoinPoint pjp) throws Throwable {
+        int numAttempts = 0;
+        PessimisticLockingFailureException lockFailureException;
+        do {
+            numAttempts++;
+            try {
+                return pjp.proceed();
+            }
+            catch(PessimisticLockingFailureException ex) {
+                lockFailureException = ex;
+            }
+        } while(numAttempts <= this.maxRetries);
+        throw lockFailureException;
+    }
+
 }
 ```
 
-##### 增强参数
+注意该切面实现了`Ordered`接口，因此我们可以设定该切面的优先级高于事务增强（我们希望每次重试都有一个新的事务）。其中`maxRetries`和`order`属性都由 Spring 配置。主要的动作发生在`doConcurrentOperation`环绕增强方法中。我们尝试执行，如果发生`PessimistickLockingFailureException`而失败，我们重试，除非已经耗尽和全部的重试次数。
 
-基于模式的声明样式支持完全类型化的增强，方法与@AspectJ支持描述的方式相同 - 通过名称将切入点参数与增强方法参数相匹配。有关详细信息，请参阅 [Advice Parameters](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-params) 。如果您希望显式指定增强方法的参数名称（不依赖于前面描述的检测策略），可以使用`advice`元素的`arg-names`属性来实现，在增强注解中（如  [Determining Argument Names](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-params-names) 中所述），该属性的处理方式与`argNames`属性相同。以下示例显示如何在XML中指定参数名称：
+> 该类与 @AspectJ 示例中使用的类相同，但删除了注释。
+
+相应的 Spring 配置如下：
 
 ```xml
-<aop:before
-    pointcut="com.xyz.lib.Pointcuts.anyPublicMethod() and @annotation(auditable)"
-    method="audit"
-    arg-names="auditable"/>
+<aop:config>
+
+    <aop:aspect id="concurrentOperationRetry" ref="concurrentOperationExecutor">
+
+        <aop:pointcut id="idempotentOperation"
+            expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+
+        <aop:around
+            pointcut-ref="idempotentOperation"
+            method="doConcurrentOperation"/>
+
+    </aop:aspect>
+
+</aop:config>
+
+<bean id="concurrentOperationExecutor"
+    class="com.xyz.myapp.service.impl.ConcurrentOperationExecutor">
+        <property name="maxRetries" value="3"/>
+        <property name="order" value="100"/>
+</bean>
 ```
 
-`arg-names`属性接受一个逗号分隔的参数名称列表。
-
-以下稍微涉及的基于XSD的方法示例显示了一些与一系列强类型参数一起使用的环绕增强：
+请注意，目前为止，我们假设所有业务服务都是幂等的。如果不是这种情况，我们可以通过引入`Idempotent`注解并使用该注解来修饰服务操作的实现来优化切面，使其仅重试真正的幂等操作，如以下示例所示：
 
 ```java
-package x.y.service;
-
-public interface PersonService {
-
-    Person getPerson(String personName, int age);
-}
-
-public class DefaultFooService implements FooService {
-
-    public Person getPerson(String name, int age) {
-        return new Person(name, age);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Idempotent {
+    // marker annotation
 }
 ```
 
-接下来是切面。请注意，`profile(..)`方法接受多个强类型参数，第一个参数恰好是用于执行方法调用的连接点。此参数的存在表示 `profile(..)` 将被用作`around`增强，如以下示例所示：
-
-```java
-package x.y;
-
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.springframework.util.StopWatch;
-
-public class SimpleProfiler {
-
-    public Object profile(ProceedingJoinPoint call, String name, int age) throws Throwable {
-        StopWatch clock = new StopWatch("Profiling for '" + name + "' and '" + age + "'");
-        try {
-            clock.start(call.toShortString());
-            return call.proceed();
-        } finally {
-            clock.stop();
-            System.out.println(clock.prettyPrint());
-        }
-    }
-}
-```
-
-最后，以下示例XML配置会影响特定连接点的上面这个增强的执行：
+对切面进行更改以仅重试幂等操作涉及改进切入点表达式，以便只有`@Idempotent`操作匹配，如下所示：
 
 ```xml
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
-
-    <!-- this is the object that will be proxied by Spring's AOP infrastructure -->
-    <bean id="personService" class="x.y.service.DefaultPersonService"/>
-
-    <!-- this is the actual advice itself -->
-    <bean id="profiler" class="x.y.SimpleProfiler"/>
-
-    <aop:config>
-        <aop:aspect ref="profiler">
-
-            <aop:pointcut id="theExecutionOfSomePersonServiceMethod"
-                expression="execution(* x.y.service.PersonService.getPerson(String,int))
-                and args(name, age)"/>
-
-            <aop:around pointcut-ref="theExecutionOfSomePersonServiceMethod"
-                method="profile"/>
-
-        </aop:aspect>
-    </aop:config>
-
-</beans>
+<aop:pointcut id="idempotentOperation"
+        expression="execution(* com.xyz.myapp.service.*.*(..)) and
+        @annotation(com.xyz.myapp.service.Idempotent)"/>
 ```
-
-请考虑以下驱动程序脚本：
-
-```java
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import x.y.service.PersonService;
-
-public final class Boot {
-
-    public static void main(final String[] args) throws Exception {
-        BeanFactory ctx = new ClassPathXmlApplicationContext("x/y/plain.xml");
-        PersonService person = (PersonService) ctx.getBean("personService");
-        person.getPerson("Pengo", 12);
-    }
-}
-```
-
-使用这样的`Boot`类，我们将在标准输出上获得类似于以下内容的输出：
-
-```
-StopWatch 'Profiling for 'Pengo' and '12'': running time (millis) = 0
------------------------------------------
-ms     %     Task name
------------------------------------------
-00000  ?  execution(getFoo)
-```
-
-##### 增强顺序
-
-当多个增强需要在同一个连接点（执行方法）执行时，排序规则如 [Advice Ordering](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-ordering) 中所述。切面之间的优先级是通过将`Order`注解添加到支持该切面的 bean 上或通过让 bean 实现`Ordered`接口来确定的。
-
