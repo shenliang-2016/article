@@ -788,3 +788,113 @@ http {
 
 ### 讨论
 
+`geoip_country`和`geoip_city`指令暴露本模块中内置的一系列可用变量。`geoip_country`指令启用的变量允许你区分你的客户端的国家和地区。这些变量包括`$geoip_country_code`，`$geoip_country_code3`，以及`$geoip_country_name`。国家编码变量返回两个字母组成的国家编码。第二个变量返回三个字母组成的国家编码。国家名称变量返回完整的国家名称。
+
+`geoip_city`指令启用了很多变量。`geoip_city`指令启用与`geoip_country`指令相同的所有变量，只使用不同的名称，例如`$geoip_city_country_code`，`$geoip_city_country_code3`和`$geoip_city_country_name`。其他变量包括`$geoip_city`，`$geoip_city_continent_code`，`$geoip_latitude`，`$geoip_longitude`和`$geoip_postal_code`，所有这些都描述了它们返回的值。`$geoip_region`和`$geoip_region_name`描述区域，地区，州，省，联邦属地等。区域是双字母代码，其中`region name`是全名。`$geoip_area_code`（仅在美国有效）返回三位数的电话区号。
+
+利用这些变量，你可以记录有关你的客户端的信息。你可以有选择地将这些信息作为请求头或者变量传递给你的服务端应用，或者使用 NGINX 以特殊方法来路由你的流量。
+
+### 参考
+
+[GeoIP Update](https://github.com/maxmind/geoipupdate)
+
+## 3.3 基于国家限制访问
+
+### 问题
+
+你需要限制来自特定国家的访问来满足商业合同或者应用需求。
+
+### 解决方案
+
+将你希望阻止或者放行的国家编码映射到一个变量：
+
+````
+load_module
+	"/usr/lib64/nginx/modules/ngx_http_geoip_module.so";
+	
+http {
+  map $geoip_country_code $country_access {
+    "US"	0;
+    "RU"	0;
+    default	1;
+  }
+  ...
+}
+````
+
+这个映射将设置一个新的变量`$country_access`为`1`或者`0`。如果客户端 IP 地址来自 US 或者 Russia，该变量将被设置为`0`。对所有其它国家，该变量将被设置为`1`。
+
+现在，在你的`server`块中，我们将使用`if`语句来拒绝所有不是来自 US 或者 Russia 的访问：
+
+````
+server {
+  if($country_access = '1'){
+    retrurn 403;
+  }
+  ...
+}
+````
+
+如果`$country_access`变量被设置为`1`则这个`if`语句将得到`True`。此时，服务器将返回 403 unauthorized 响应。否者，服务器正常操作来响应请求。因此，这个`if`块的作用就是阻止所有不是来自 US 或者 Russia 的人的访问。
+
+### 讨论
+
+这是一个简短的例子，展示了如何只允许来自两个国家的访问。这个例子可以被扩展到适应你的实际生产需求。你可以使用相同的方法来基于任何由 GeoIP 模块启用的其它内置变量允许或者阻止特定的访问。
+
+## 3.4 寻找初始客户端
+
+### 问题
+
+因为 NGINX 前面存在其它代理，你需要寻找初始客户端 IP 地址
+
+### 解决方案
+
+使用`geoip_proxy`指令定义你的代理 IP 地址范围，使用`geoip_proxy_recursive`指令寻找初始 IP：
+
+````
+load_module "/usr/lib64/nginx/modules/ngx_http_geoip_module.so";
+
+http {
+  geoip_country /etc/nginx/geoip/GeoIP.dat;
+  geoip_city /etc/nginx/geoip/GeoLiteCity.dat;
+  geoip_proxy 10.0.16.0/26;
+  geoip_proxy_recursive on;
+  ...
+}
+````
+
+`geoip_proxy`指令定义了一个 CIDR(ClasslessInter-DomainRouting 无类别域间路由) 范围，我们的代理服务器运行其中，同时指示 NGINX 使用`X-Forwarded-For`头部来发现客户端 IP 地址。`geoip_proxy_recursive`指令指示 NGINX 递归遍历`X-Forwarded-For`头部来寻找已知的最后客户端 IP 。
+
+### 讨论
+
+如果你在 NGINX 前面使用其它的代理，你将发现 NGINX 会提取该代理的 IP 地址而不是客户端的。你可以使用`geoip_proxy`指令指示 NGINX 使用`X-Forwarded-For`头部，当来自给定 IP 范围的连接被打开。`geoip_proxy`指令使用一个地址或者一个 CIDR 范围。当 NGINX 前面存在多个代理来转发流量时，你可以使用`geoip_proxy_recursive`指令在`X-Forwarded-For`中递归查找地址来寻找初始客户端地址。你可能会想要在 NGINX 前面使用某些有用的负载均衡机制，比如 AWS ELB，Google 负载均衡器，或者 Azure 负载均衡器等。
+
+## 3.5 限制连接
+
+### 问题
+
+你需要基于预定义的键限制连接数量，比如客户端 IP 地址。
+
+### 解决方案
+
+创建一个共享存储区域来保存连接度量，同时使用`limit_conn`指令来限制打开连接：
+
+````
+http {
+  limit_conn_zone $binary_remote_addr zone=limitbyaddr:10m;
+  limit_conn_status 429;
+  ...
+  server {
+    ...
+    	limit_conn limitbyaddr 40;
+    ...
+  }
+}
+````
+
+此配置创建了一个名为`limit_byaddr`的共享存储区。使用的预定义的键是客户端 IP 地址的二进制形式。该共享存储区的大小被设置为10MB。`limit_conn`指令携带两个参数：`limit_conn_zone`名称和允许的连接数量。`limit_conn_status`设定当连接被限制时返回的响应状态码是 429，表示请求太多。`limit_conn`和`limit_conn_status`指令在 HTTP 、服务器以及位置上下文中可用，
+
+### 讨论
+
+基于键限制连接的数量能够被用于防御服务资源被滥用，以及保证为所有客户端公平的服务。需要注意的是，预定义的键意义重大。如我们在上面例子中那样，使用 IP 地址，可能会有风险，如果很多用户处在同一个子网中，共享同一个边界网关 IP 地址，比如当他们处于一个网络地址转换（NAT）后面时。这种情况下整个客户端组都会被限制。`limit_conn_zone`指令只在 HTTP 上下文中有效。你可以在 HTTP 上下文中使用任意数量的对 NGINX 可用的变量以便创建限制规则。使用能够在应用层面标识用户的的变量，比如会话 cookie，对于某些使用场景可能时更好的解决方案。`limit_conn_status`默认为`503`，服务不可用。你可能会更倾向于使用`429`，因为服务实际上是可用的，同时`500-level`响应标识服务端错误，而`400-level`响应表示客户端错误。
+
