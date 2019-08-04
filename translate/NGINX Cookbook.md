@@ -1090,3 +1090,32 @@ $ curl -XPURGE localhost/main.js
 
 ### 解决方案
 
+使用 NGINX `slice`指令以及它的内置参数来将缓存结果切分成片段：
+
+````
+proxy_cache_path /tmp/mycache keys_zone=mycache:10m;
+server {
+	...
+	proxy_cache mycache;
+	slice 1m;
+	proxy_cache_key $host$uri$is_args$args$slice_range;
+	proxy_set_header Range $slice_range;
+	proxy_http_version 1.1;
+	proxy_cache_valid 200 206 1h;
+	
+	location / {
+		proxy_path http://origin:80;
+	}
+}
+````
+
+### 讨论
+
+此配置定义了一个缓存区域并对服务器可用。`slice`指令然后被用来指示 NGINX 将响应切分为 1MB 的文件片段。缓存文件根据`proxy_cache_key`指令存储。注意名为`slice_range`的内置变量的使用。当向初始服务器发出请求时，相同的变量被用作请求头，同时请求的 HTTP 版本升级为 HTTP/1.1，因为 HTTP/1.0 不支持字节范围请求。为一个小时内的缓存验证设置响应状态码为`200`或者`206`，然后定义`location`和初始服务器。
+
+缓存切片模块我 HTML5 视频分发而开发，该场景使用了字节范围请求向浏览器传输伪流内容。默认地，NGINX 能够从它的缓存提供字节范围请求服务。如果一个请求的字节范围包含尚未缓存的内容，NGINX 将向初始服务器请求完整的文件。当你使用缓存切片模块时，NGINX 将会仅仅向初始服务器请求必需的文件片段。范围超过单个分片的范围请求，包括整个文件的请求，将会触发对每个需要片段的子请求，然后所有的片段都会被缓存起来。当所有的片段都被缓存之后，就会组装响应并发送到客户端，这就使得 NGINX 缓存和服务范围请求内容更加高效。缓存切片模块只应该用在不会改变的大文件的情况。NGINX 每次接收到来自初始服务器的片段后都会验证 ETag 。如果初始服务器上的 ETag 发生了变化，NGINX 就会取消该事务，因为缓存已经不可用了。如果内容没有变化同时文件更小，或者初始服务器能够处理缓存填充过程中的负载尖峰，那么更好的办法是使用下面参考资料中提到的文章中描述的缓存锁定模块。
+
+### 参考
+
+[Smart and Efficient Byte-Range Caching with NGINX & NGINX Plus](http://bit.ly/2DxGo1M)
+
