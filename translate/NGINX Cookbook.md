@@ -1119,3 +1119,61 @@ server {
 
 [Smart and Efficient Byte-Range Caching with NGINX & NGINX Plus](http://bit.ly/2DxGo1M)
 
+# 5 可编程性和自动化
+
+## 5.0 介绍
+
+可编程性指的是可以通过编程方式与其它系统交互的能力。NGINX Plus 的 API 提供了如下特性：通过 HTTP 接口与 NGINX Plus 的配置和行为交互的能力。此 API 提供了通过 HTTP 请求添加或者移除上游服务器来重新配置 NGINX Plus 的能力。NGINX Plus 中的键值存储功能支持另一层面的动态配置 - 您可以利用 HTTP 调用注入 NGINX Plus 可用于动态路由或控制流量的信息。本章将介绍通过同一 API 公开的 NGINX Plus API 和键值存储模块。
+
+配置管理工具自动化服务器的按照和配置过程，这在云计算时代是无价之宝。大规模 web 应用的工程师不再需要手动配置服务器，现在他们可以选用任何一种可用的配置管理工具。使用这些工具，工程师可以以一种可重复、可测试而且模块化的风格编写配置和代码，一次产生许多相同配置的服务器。本章节涵盖几种可用的配置管理工具，介绍如何使用它们安装 NGINX 并提供一个基本配置文件模板。这些例子非常基本但是仍然可以展示如何在每个平台上启动 NGINX 服务器。
+
+## 5.1 NGINX Plus API
+
+### 问题
+
+你有一个动态环境，同时需要在运行中重新配置 NGINX Plus。
+
+### 解决方案
+
+配置 NGINX Plus API 来允许通过 API 调用添加或者移除服务器：
+
+````
+upstream backend {
+	zone http_backend 64k;
+}
+server {
+	# ...
+	location /api {
+		api [write=on];
+		# Directives limiting access to the API
+		# See chapter 7
+	}
+	
+	location = /dashboard.html {
+		root	/usr/shar/nginx/html;
+	}
+}
+````
+
+这个 NGINX Plus 配置创建一个拥有一个共享存储区域的上游服务器，在`/api`的`location`块中启用 API ，同时为 NGINX Plus 的仪表盘提供一个`location`。
+
+你可以使用该 API 在服务器上线后将它们添加到服务器池中：
+
+````
+$ curl -X POST -d '{"server":"172.17.0.3"}' \
+	'http://nginx.local/api/3/http/upstreams/backend/servers/'
+
+{
+	"id":0,
+	"server":"172.17.0.3:80",
+	"weight":1,
+	"max_conns":0,
+	"max_fails":1,
+	"fail_timeout":"10s",
+	"slow_start":"0s",
+	"route":"",
+	"backup":false,
+	"down":false
+}
+````
+
