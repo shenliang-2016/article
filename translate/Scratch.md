@@ -1,160 +1,47 @@
-#### 5.5.4 引入
+### 5.6 选择何种 AOP 声明风格
 
-引入（在 AspectJ 中被称为类型间声明）允许切面声明被增强的对象实现一个给定的接口并代表那些对象提供该接口的实现。
+一旦你决定了切面是实现给定需求的最佳方案，接下来你将如何决定使用 Spring AOP 或者 AspectJ ？使用 AspectJ 语言（代码）风格，@AspectJ 注解风格还是 Spring XML 风格？这些决定受到很多因素影响，包括应用需求，开发工具以及团队对 AOP 的熟悉程度。
 
-你可以在`aop:aspect`中使用`aop:declare-parents`元素来创建一个引入。你可以使用`aop:declare-parents`元素来声明匹配类型拥有一个新的父类（通过名称）。比如，给定一个名为`UsageTracked`以及一个名为`DefaultUsageTracked`接口的实现。下面的切面声明所有服务接口的实现同时也实现了接口`UsageTracked`。（例如为了通过 JMX 暴露统计信息）
+#### 5.6.1 Spring AOP 还是完全使用 AspectJ?
 
-```xml
-<aop:aspect id="usageTrackerAspect" ref="usageTracking">
+使用满足需求的最简单的方案。Spring AOP 要比完全使用 AspectJ 要简单，因为不需要将 AspectJ 编译器和编织器引入你的开发和构建过程。如果你只需要增强 Spring beans 上的方法执行，Spring AOP 就是正确的选择。如果你需要增强不受 Spring 容器管理的对象（典型的，比如域对象），你就需要使用 AspectJ。当你希望增强简单方法之外的连接点（比如，字段的`get`或者`set`连接点等等）时，你也需要使用 AspectJ 。
 
-    <aop:declare-parents
-        types-matching="com.xzy.myapp.service.*+"
-        implement-interface="com.xyz.myapp.service.tracking.UsageTracked"
-        default-impl="com.xyz.myapp.service.tracking.DefaultUsageTracked"/>
+使用 AspectJ 时，您可以选择 AspectJ 语言语法（也称为“代码样式”）或 @AspectJ 注释样式。显然，如果您不使用Java 5+，则可以选择：使用代码样式。如果切面在您的设计中发挥重要作用，并且您能够使用 Eclipse 的 [AspectJ开发工具（AJDT）](https://www.eclipse.org/ajdt/) 插件，则 AspectJ 语言语法是首选选项。它更清晰，更简单，因为该语言是专门为编写切面而设计的。如果您不使用 Eclipse 或只有几个切面在您的应用程序中不起主要作用，您可能需要考虑使用 @AspectJ 样式，在 IDE 中坚持使用常规 Java 编译，并添加一个切面编织阶段到你的构建脚本。
 
-    <aop:before
-        pointcut="com.xyz.myapp.SystemArchitecture.businessService()
-            and this(usageTracked)"
-            method="recordUsage"/>
+#### 5.6.2 通过 @AspectJ 还是 XML 来使用 Spring AOP?
 
-</aop:aspect>
-```
+如果您选择使用 Spring AOP，则可以选择 @AspectJ 或 XML 风格。需要考虑各种权衡。
 
-对应于`usageTracking`bean 的类将包含下面的方法：
+XML 风格可能是现有 Spring 用户最熟悉的，并且由真正的 POJO 支持。当使用 AOP 作为配置企业服务的工具时，XML 可能是一个不错的选择（一个好的测试是你是否认为切入点表达式是你可能想要独立改变的配置的一部分）。使用 XML 风格，从您的配置可以更清楚地了解系统中存在哪些切面。
+
+XML 风格有两个缺点。首先，它没有将解决的需求的实现完全封装在一个地方。DRY 原则规定，系统中的任何知识都应该有单一，明确，权威的表示。使用 XML 风格时，有关如何实现需求的知识将分散到支持 bean 类的声明和配置文件中的 XML。使用 @AspectJ 风格时，此信息封装在单个模块中：切面。其次，XML 风格在它可以表达的内容方面比 @AspectJ 样式稍微受限：仅支持“单例”切面实例化模型，并且不可能组合在 XML 中声明的命名切入点。例如，在 @AspectJ 风格中，您可以编写如下内容：
 
 ```java
-public void recordUsage(UsageTracked usageTracked) {
-    usageTracked.incrementUseCount();
-}
+@Pointcut("execution(* get*())")
+public void propertyAccess() {}
+
+@Pointcut("execution(org.xyz.Account+ *(..))")
+public void operationReturningAnAccount() {}
+
+@Pointcut("propertyAccess() && operationReturningAnAccount()")
+public void accountPropertyAccess() {}
 ```
 
-将要被实现的接口由`implement-interface`属性确定。`types-matching`属性的值是一个 AspectJ 类型模式。匹配类型的任何 bean 都实现了`UsageTracked`接口。注意，在上面例子中的前置增强中，服务 beans 能够直接被作为`UsageTracked`接口的实现使用。为了以编程方式访问 bean，你可以如下写：
-
-```java
-UsageTracked usageTracked = (UsageTracked) context.getBean("myService");
-```
-
-#### 5.5.5 切面实例化模型
-
-单例模型是唯一被支持的基于模式的切面的实例化模型。将来版本中可能会提供其它实例化模型的支持。
-
-#### 5.5.6 增强器
-
-来自 Spring 中定义的 AOP 支持的“增强器”的概念并不直接等价于 AspectJ 中的概念。增强器类似于一个效地自包含的切面，只包含单一增强。该增强自己由一个 bean 表示，同时必须实现 [Advice Types in Spring](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-api-advice-types) 中描述的增强接口之一。增强器可以享受到 AspectJ 切入点表达式的优点。
-
-Spring 通过`<aop:advisor>`元素支持增强器概念。你大部分情况下会发现它跟事务性增强结合使用，事务性增强在 Spring 中也有自己的命名空间支持。下面的例子展示了一个增强器：
+在 XML 风格中，您可以声明前两个切入点：
 
 ```xml
-<aop:config>
+<aop:pointcut id="propertyAccess"
+        expression="execution(* get*())"/>
 
-    <aop:pointcut id="businessService"
-        expression="execution(* com.xyz.myapp.service.*.*(..))"/>
-
-    <aop:advisor
-        pointcut-ref="businessService"
-        advice-ref="tx-advice"/>
-
-</aop:config>
-
-<tx:advice id="tx-advice">
-    <tx:attributes>
-        <tx:method name="*" propagation="REQUIRED"/>
-    </tx:attributes>
-</tx:advice>
+<aop:pointcut id="operationReturningAnAccount"
+        expression="execution(org.xyz.Account+ *(..))"/>
 ```
 
-如同前面例子中的`pointcut-ref`属性的使用，你也可以使用`pointcut`属性来定义一个内联切入点表达式。
+XML 方法的缺点是您无法通过组合这些定义来定义`accountPropertyAccess`切入点。
 
-为了定义增强器的优先级以便增强可以参与排序，使用`order`属性来定义增强器的`Ordered`值。
+@AspectJ 风格支持额外的实例化模型和更丰富的切入点组合。它具有将切面保持为模块化单元的优点。它还具有以下优点：Spring AOP 和 AspectJ 都可以理解（并因此消耗）@AspectJ 切面。因此，如果您以后决定需要 AspectJ 的功能来实现其他要求，则可以轻松迁移到经典的 AspectJ 设置。总的来说，除了简单的企业服务配置之外，Spring 团队更喜欢 @AspectJ 风格的自定义切面。
 
-#### 5.5.7 AOP 模式示例
+### 5.7 混合切面类型
 
-本节展示如何使用模式支持重写来自 [An AOP Example](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ataspectj-example) 的并发锁失败重试示例。
+通过使用自动代理支持，模式定义的`<aop:aspect>`切面，`<aop:advisor>`声明的增强器，甚至是同一配置中其他风格的代理和拦截器，完全可以混合 @AspectJ 风格切面。所有这些都是通过使用相同的底层支持机制实现的，并且可以毫无困难地共存。
 
-业务服务的执行有时候会由于并发问题而失败（比如，死锁失败者）。如果该操作被重试，下一次很可能就会成功。对那些在这种情况下适合重试的业务服务（幂等操作，不需要将结果返回给用户以解决冲突），我们希望透明重试从而避免客户端看到`PessimisticLockingFailureException`。这是一个显然需要横切一个服务层中多个服务的需求，因此，可以通过一个切面来实现。
-
-因为我们希望重试操作，我们需要使用环绕增强以便我们可以多次调用`proceed`方法。下面的例子展示了基本的切面实现（它是一个使用了模式支持的常规 Java 类）：
-
-```java
-public class ConcurrentOperationExecutor implements Ordered {
-
-    private static final int DEFAULT_MAX_RETRIES = 2;
-
-    private int maxRetries = DEFAULT_MAX_RETRIES;
-    private int order = 1;
-
-    public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
-    public int getOrder() {
-        return this.order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    public Object doConcurrentOperation(ProceedingJoinPoint pjp) throws Throwable {
-        int numAttempts = 0;
-        PessimisticLockingFailureException lockFailureException;
-        do {
-            numAttempts++;
-            try {
-                return pjp.proceed();
-            }
-            catch(PessimisticLockingFailureException ex) {
-                lockFailureException = ex;
-            }
-        } while(numAttempts <= this.maxRetries);
-        throw lockFailureException;
-    }
-
-}
-```
-
-注意该切面实现了`Ordered`接口，因此我们可以设定该切面的优先级高于事务增强（我们希望每次重试都有一个新的事务）。其中`maxRetries`和`order`属性都由 Spring 配置。主要的动作发生在`doConcurrentOperation`环绕增强方法中。我们尝试执行，如果发生`PessimistickLockingFailureException`而失败，我们重试，除非已经耗尽和全部的重试次数。
-
-> 该类与 @AspectJ 示例中使用的类相同，但删除了注释。
-
-相应的 Spring 配置如下：
-
-```xml
-<aop:config>
-
-    <aop:aspect id="concurrentOperationRetry" ref="concurrentOperationExecutor">
-
-        <aop:pointcut id="idempotentOperation"
-            expression="execution(* com.xyz.myapp.service.*.*(..))"/>
-
-        <aop:around
-            pointcut-ref="idempotentOperation"
-            method="doConcurrentOperation"/>
-
-    </aop:aspect>
-
-</aop:config>
-
-<bean id="concurrentOperationExecutor"
-    class="com.xyz.myapp.service.impl.ConcurrentOperationExecutor">
-        <property name="maxRetries" value="3"/>
-        <property name="order" value="100"/>
-</bean>
-```
-
-请注意，目前为止，我们假设所有业务服务都是幂等的。如果不是这种情况，我们可以通过引入`Idempotent`注解并使用该注解来修饰服务操作的实现来优化切面，使其仅重试真正的幂等操作，如以下示例所示：
-
-```java
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Idempotent {
-    // marker annotation
-}
-```
-
-对切面进行更改以仅重试幂等操作涉及改进切入点表达式，以便只有`@Idempotent`操作匹配，如下所示：
-
-```xml
-<aop:pointcut id="idempotentOperation"
-        expression="execution(* com.xyz.myapp.service.*.*(..)) and
-        @annotation(com.xyz.myapp.service.Idempotent)"/>
-```
