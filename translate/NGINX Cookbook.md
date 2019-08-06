@@ -1177,3 +1177,96 @@ $ curl -X POST -d '{"server":"172.17.0.3"}' \
 }
 ````
 
+此`curl`调用向 NGINX Plus 发出一个请求，将一个新的服务器添加到后端上游服务器配置中。HTTP 方法是`POST`，请求体是一个 JSON 对象。NGINX Plus API 是 RESTful 的，因此，请求 URI 中包含若干参数。URI 格式如下：
+
+````
+/api/{version}/http/upstreams/{httpUpstreamName}/servers/
+````
+
+你可以通过 NGINX Plus API 列出上游服务器池中的服务器：
+
+````
+$ curl 'http://nginx.local/api/3/http/upstreams/backend/servers/'
+[
+  {
+    "id":0,
+ 	"server":"172.17.0.3:80",
+ 	"weight":1,
+ 	"max_conns":0,
+ 	"max_fails":1,
+ 	"fail_timeout":"10s",
+ 	"slow_start":"0s",
+ 	"route":"",
+ 	"backup":false,
+ 	"down":false
+  }
+]
+````
+
+这个例子中的`curl`调用向 NGINX Plus 发出了一个请求来列出名为`backend`的上游服务器池中的所有服务器。目前，我们只有在前一个`curl`调用中添加的那一台服务器。这个请求将返回一个上游服务器对象，包含服务器的所有可配置选项。
+
+使用 NGINX Plus API 排空来自某个上游服务器的连接，准备将该服务器优雅地从上游服务器资源池中移除。你可以在 2.8 章节中看到有关连接排空的更多细节。
+
+````
+$ curl -X PATCH -d '{"drain":true}' \
+	'http://nginx.local/api/3/http/upstreams/backend/servers/0'
+{
+ 	"id":0,
+ 	"server":"172.17.0.3:80",
+ 	"weight":1,
+ 	"max_conns":0,
+ 	"max_fails":1,
+ 	"fail_timeout":
+ 	"10s","slow_start":
+ 	"0s",
+ 	"route":"",
+ 	"backup":false,
+ 	"down":false,
+ 	"drain":true
+}
+````
+
+这个`curl`中，我们指定请求方法为`PATCH`，传递一个 JSON 体来指示它为某个服务器排空连接，同时将服务器 ID 附加在 URI 之后来指定服务器。我们可以发现列出的服务器中包含前面`curl`命令添加的那台服务器 ID。
+
+NGINX Plus 将开始排空连接。此过程可能持续到应用的会话关闭。为了确定你开始排空的服务器上目前还有多少活动的连接正在被服务，使用下面的调用查看正在被排空的服务器的`active`属性：
+
+````
+$ curl 'http://nginx.local/api/3/http/upstreams/backend'
+{
+ 	"zone" : "http_backend",
+ 	"keepalive" : 0,
+ 	"peers" : 
+ 	[
+ 		{
+			"backup" : false,
+ 			"id" : 0,
+ 			"unavail" : 0,
+ 			"name" : "172.17.0.3",
+ 			"requests" : 0,
+ 			"received" : 0,
+ 			"state" : "draining",
+ 			"server" : "172.17.0.3:80",
+ 			"active" : 0,
+ 			"weight" : 1,
+ 			"fails" : 0,
+			"sent" : 0,
+ 			"responses" : {
+ 				"4xx" : 0,
+ 				"total" : 0,
+ 				"3xx" : 0,
+ 				"5xx" : 0,
+ 				"2xx" : 0,
+ 				"1xx" : 0
+ 			},
+ 			"health_checks" : {
+ 				"checks" : 0,
+ 				"unhealthy" : 0,
+ 				"fails" : 0
+ 			},
+ 			"downtime" : 0
+ 		}
+ 	],
+ 	"zombies" : 0
+}
+````
+
