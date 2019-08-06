@@ -1330,3 +1330,40 @@ $ curl 'http://127.0.0.1/'
 OK
 ````
 
+现在将本地机器的 IP 地址添加到该键值对存储中，对应的值为`1`：
+
+````
+$ curl -X POST -d '{"127.0.0.1":"1"}' \
+	'http://127.0.0.1/api/3/httop/keyvals/blacklist'
+````
+
+此`curl`命令提交一个 HTTP POST 请求，携带一个包含一个键值对对象的 JSON 对象作为请求体，该键值对将被提交到`blacklist`共享存储区。键值对存储 API URI 的格式如下：
+
+````
+/api/{version}/http/keyvals/{httpKeyvalZoneName}
+````
+
+现在本地机器的 IP 地址已经被添加到名为`blacklist`的键值对区域中，对应值`1`。在下一个请求中，NGINX Plus 在该键值对区域内寻找`$remote_addr`，找到该条目，并将其值映射到变量`$num_failures`。此变量接下来在`if`语句中被评估。当变量拥有一个值时，`if` 语句评估结果为`true`，同时 NGINX Plus 返回 403 `Forbidden`状态码响应。
+
+````
+$ curl 'http://127.0.0.1'
+Forbidden
+````
+
+你可以更新或者删除该键，通过发出`PATCH`方法请求：
+
+````
+$ curl -X PATCH -d '{"127.0.0.1":null}' \
+	'http://127.0.0.1/api/3/http/keyvals/blacklist'
+````
+
+如果值为`null`则 NGINX Plus 将删除该键，同时请求将再次返回 200 `OK`。
+
+### 讨论
+
+键值对存储，作为 NGINX Plus 的独占特性，允许应用向 NGINX Plus 注入信息。在上面例子中，`$remote_addr`变量被用来创建动态黑名单。你可以已任何 NGINX Plus 可能拥有的变量来填充该键值对存储，比如会话 cookie，同时提供给 NGINX Plus 一个外部的值。在 NGINX Plus R16 中，该键值对存储是集群敏感的，也就是说，你只需要将你的键值对更新到一台 NGINX Plus 服务器上，所有集群中的服务器都会接收到这个信息。
+
+### 参考
+
+[Dynamic Bandwidth Limits](https://www.nginx.com/blog/dynamic-bandwidth-limits-nginx-plus-key-value-store/)
+
