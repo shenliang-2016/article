@@ -1270,3 +1270,63 @@ $ curl 'http://nginx.local/api/3/http/upstreams/backend'
 }
 ````
 
+当所有连接都被排空后，使用 NGINX Plus API 将该服务器从上游服务器资源池中移除：
+
+````
+$ curl -X DELETE \
+	'http://nginx.local/api/3/http/upstreams/backend/servers/0'
+[]
+````
+
+此`curl`命令向同一个 URI 发出一个`DELETE`方法请求来更新服务器状态。该`DELETE`方法指示 NGINX 移除该服务器。此 API 调用返回所有仍然留在服务器池中的的服务器和它们的 ID。因为我们是从一个空的服务器池开始，然后只通过 API 添加了一个服务器，接着排空连接，最后又移除了该服务器，现在我们重新拥有了一个空的服务器池。
+
+### 讨论
+
+NGINX Plus 独占 API 允许动态应用服务器在运行时将它们自己添加到 NGINX 配置中、或者从其中移除。当服务器上线时，它们可以将自己注册到服务器池中，NGINX 将开始向它们发送请求。当一个服务器需要被移除，它可以请求 NGINX Plus 排空它的连接，然后再它关闭之前将它从上游服务器池中移除。这就允许基础设施通过某些自动化机制动态扩容或者减配，而不需要人类参与。
+
+### 参考
+
+[NGINX Plus API Swagger Documentation](https://demo.nginx.com/swagger-ui/)
+
+## 5.2 键值对存储
+
+### 问题
+
+你需要 NGINX Plus 基于来自应用的输入来进行动态流量管理决策。
+
+### 解决方案
+
+建立集群敏感的键值对存储和 API ，然后添加键值对：
+
+````
+keyval_zone zone=blacklist:1M;
+keyval $remote_addr $num_failures zone=blacklist;
+
+server {
+  # ...
+  location / {
+    if($num_failures){
+      return 403 'Forbidden';
+    }
+    return 200 'OK';
+  }
+}
+server {
+  # ...
+  # Directives limiting access to the API
+  # See chapter 6
+  location /api {
+    api write=on;
+  }
+}
+````
+
+此 NGINX Plus 配置使用`keyval_zone`目录来构建一个名为`blacklist`的键值对存储共享存储区域，同时设定其大小上限为 1 MB。然后`keyval`指令将第一个参数`$remote_addr`的值映射到该区域中的一个新的名为`$num_failures`的变量。这个新的变量接下来会被用于确定 NGINX Plus 是否应该为请求返回 403 `Forbidden`状态码响应。
+
+使用此配置启动 NGINX Plus 服务器之后，你可以`curl`本地主机并期待接收到 200 `OK`响应：
+
+````
+$ curl 'http://127.0.0.1/'
+OK
+````
+
