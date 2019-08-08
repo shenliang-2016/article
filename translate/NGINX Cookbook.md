@@ -1367,3 +1367,99 @@ $ curl -X PATCH -d '{"127.0.0.1":null}' \
 
 [Dynamic Bandwidth Limits](https://www.nginx.com/blog/dynamic-bandwidth-limits-nginx-plus-key-value-store/)
 
+## 5.3 与 Puppet 一起安装
+
+### 问题
+
+你需要使用 Puppet 安装配置 NGINX 来管理 NGINX 配置，NGINX 配置被作为代码，并配合其它的 Puppet 配置。
+
+### 解决方案
+
+创建一个模块来安装 NGINX，管理你需要的文件，并确保 NGINX 正在运行：
+
+````
+class nginx {
+  package {"nginx": ensure => 'installed',}
+  service {"nginx":
+  	ensure => 'true',
+  	hasrestart => 'true',
+  	restart => '/etc/init.d/nginx reload',
+  }
+  file { "nginx.conf":
+    path => '/etc/nginx/nginx.conf',
+    require => Package['nginx'],
+    notify => Service['nginx'],
+    content => template('nginx/templates/nginx.conf.erb'),
+    user => 'root',
+    group => 'root',
+    mode => '0644';
+  }
+}
+````
+
+此模块使用包管理工具来确保 NGINX 包被安装。也保证 NGINX 正在运行而且在启动时 NGINX 是可用的。此配置使用`hasrestart`指令通知 Puppet 服务拥有一个重启命令，同时我们可以使用 NGINX reload 覆盖该`restart`命令。文件资源将管理并使用 Embedded Ruby(ERB) 模板语言模板化`nginx.conf`文件。由于`require`指令，该文件的模板化将在 NGINX 包被安装之后发生。不过，由于`notify`指令，文件资源将通知 NGINX 服务来重新加载。模板化的配置文件不包含在内。不过，它可以是简单地安装一个默认的 NGINX 配置文件，也可以是非常复杂地使用 ERB 或者 EPP 模板语言循环和变量替换。
+
+### 讨论
+
+Puppet 是基于 Ruby 编程语言的配置管理工具。模块由领域特定语言构建并通过为给定服务器定义配置的清单文件调用。Puppet 可以使用主从配置或者无主配置运行。使用 Puppet，清单运行在主服务器上，然后发送给从服务器。这一点很重要，因为它保证了从服务器仅仅被分发跟它有关的配置，而不会得到其它服务器的额外配置。有大量额高级公共模块对 Puppet 可用。从这些模块开始，将帮助你对配置文件的理解。来自 GitHub 的 voxpupuli 项目的一个公共 NGINX 模块将为你模板化配置文件。
+
+### 参考
+
+[Puppet Documentation](https://puppet.com/docs)
+
+[Puppet Package Documentation](https://puppet.com/docs/puppet/6.7/types/package.html)
+
+[Puppet Service Documentation](https://puppet.com/docs/puppet/6.7/types/service.html)
+
+[Puppet File Documentation](https://puppet.com/docs/puppet/6.7/types/file.html)
+
+[Puppet Templating Documentation](https://puppet.com/docs/puppet/6.7/lang_template.html)
+
+[Voxpupuli NGINX Module](https://github.com/voxpupuli/puppet-nginx)
+
+## 5.4 与 Chef 一起安装
+
+### 问题
+
+你需要使用 Chef 安装配置 NGINX 来管理 NGINX 配置，NGINX 配置被作为代码，并配合其它的 Chef 配置。
+
+### 解决方案
+
+使用配方创建一个菜谱来安装NGINX并通过模板配置配置文件，并确保在配置到位后重新加载NGINX。以下是一个示例配方：
+
+````
+package 'nginx' do
+ action :install
+end
+service 'nginx' do
+ supports :status => true, :restart => true, :reload => true
+ action [ :start, :enable ]
+end
+template 'nginx.conf' do
+ path "/etc/nginx.conf"
+ source "nginx.conf.erb"
+ owner 'root'
+ group 'root'
+ mode '0644'
+ notifies :reload, 'service[nginx]', :delayed
+end
+````
+
+`package`块安装 NGINX。`service`块确保 NGINX 被启动并且在系统启动时启动，然后向 Chef 的其它部分声明 NGINX 服务支持的操作。`template`模块模板化一个 ERB 文件并将其放在`/etc/nginx.conf`中，其中包含文件所有者和`root`组。`template`块还会设定`mode`为`644`并通知`nginx`服务`reload`，但会一直等到由`:delayed`语句声明的 Chef 运行结束。模板化配置文件不包括在内。但是，它可以像默认的 NGINX 配置文件一样简单，也可以使用 ERB 模板语言循环和变量替换而变得非常复杂。
+
+### 讨论
+
+Chef 是一个基于 Ruby 的配置管理工具。Chef 可以在 master-slave 或 solo 配置中运行，现在称为 Chef Zero。Chef 有一个非常大的社区，有许多名为超市的公共食谱。可以通过名为 Berkshelf 的命令行实用程序安装和维护超市的公共食谱。Chef 非常有强大，我们所展示的只是一个小样本。超市中的公共 NGINX 食谱非常灵活，提供了从包管理器或从源轻松安装 NGINX 的选项，以及编译和安装许多不同模块以及模板化基本配置的能力。
+
+### 参考
+
+[Chef documentation](https://docs.chef.io/)
+
+[Chef Package](https://docs.chef.io/resource_package.html)
+
+[Chef Service](https://docs.chef.io/resource_service.html)
+
+[Chef Template](https://docs.chef.io/resource_template.html)
+
+[Chef Supermarket for NGINX](https://supermarket.chef.io/cookbooks/nginx)
+
