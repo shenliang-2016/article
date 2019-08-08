@@ -1559,3 +1559,42 @@ SaltStack 是一个功能强大的配置管理工具，用于在 YAML 中定义�
 
 [Templating with Jinja](https://docs.saltstack.com/en/latest/topics/jinja/index.html)
 
+## 5.7 使用 Consul 模板化进行自动化配置
+
+### 问题
+
+您需要自动化 NGINX 配置，以通过使用 Consul 来响应您环境中的变化。
+
+### 解决方案
+
+使用`consul-template`守护进程和一个模板文件来模板化你选择的 NGINX 配置文件：
+
+````
+upstream backend { {{range service "app.backend"}}
+  server {{.Address}};{{end}}
+}
+````
+
+这个例子时一个 Consul 模板文件，用来模板化一个上游配置块。此模板将遍历 Consul 中标识为`app.backend`的节点。对于 Consul 中的每个节点，模板将生成携带该节点的IP地址的服务器指令。
+
+`consul-template`守护进程通过命令行运行，并且能够被用来在每次模板化的配置文件发生变化时重新加载 NGINX：
+
+````
+# consul-template -consul consul.example.internal -template \
+	template:/etc/nginx/conf.d/upstream.conf:"nginx -s reload"
+````
+
+此命令指示`consul-template`守护程序连接到`consul.example.internal`地址的 Consul 集群，并使用当前工作目录中名为*template*的文件对模板进行模板化并将生成的内容输出到*/etc/nginx/conf.d/upstream.conf*，然后每次模板文件更改时重新加载 NGINX。`-template`标志采用模板文件的字符串、输出位置和模板化过程发生后运行的命令。这三个变量用冒号分隔。如果正在运行的命令有空格，请确保将其用双引号括起来。 `-consul`标志告诉守护进程要连接的 Consul 集群。
+
+### 讨论
+
+Consul 是一个功能强大的服务发现工具和配置存储。Consul 在类似目录的结构中存储有关节点和键值对的信息，并允许进行 RESTful API交互。Consul 还在每个客户端上提供 DNS 接口，允许对连接到群集的节点进行域名查找。利用 Consul 集群的单独项目是`consul-template`守护程序。此工具模板化文件以响应 Consul 节点，服务或键值对中的更改。这使得 Consul 成为 NGINX 自动化的强大选择。使用`consul-template`，您还可以指示守护程序在更改模板后运行命令。有了这个，我们可以重新加载 NGINX 配置，让您的 NGINX 配置与您的环境一起活跃起来。使用 Consul，您可以在每个客户端上设置运行状况检查，以检查预期服务的运行状况。通过此故障检测，您可以相应地模拟 NGINX 配置，仅将流量发送到健康主机。
+
+###  参考
+
+[Consul Home Page](https://www.consul.io/)
+
+[Introduction to Consul Template](https://www.hashicorp.com/blog/introducing-consul-template.html)
+
+[Consul Template GitHub](https://github.com/hashicorp/consul-template)
+
