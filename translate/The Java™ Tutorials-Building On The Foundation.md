@@ -1311,7 +1311,7 @@ public class NameSort {
 
 **Comparators**
 
-What if you want to sort some objects in an order other than their natural ordering? Or what if you want to sort some objects that don't implement `Comparable`? To do either of these things, you'll need to provide a [`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html) — an object that encapsulates an ordering. Like the `Comparable` interface, the `Comparator` interface consists of a single method.
+如果您想按照自然顺序以外的顺序排序某些对象，该怎么办？或者，如果要对某些未实现`Comparable`的对象进行排序，该怎么办？要执行上述任一操作，您需要提供[`Comparator`](https://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html)  - 一个封装排序的对象。与`Comparable`接口一样，`Comparator`接口由单个方法组成。
 
 ```java
 public interface Comparator<T> {
@@ -4697,10 +4697,6 @@ j6Locale = new Locale("ja", "JP");
 可选的`variant`代码可用于进一步区分您的`Locale`。例如，变体代码可用于指示区域代码未涵盖的辩证差异。
 
 ------
-
-**Version Note:**  Prior to the Java SE 7 release, the variant code was sometimes used to identify differences that were not specific to the language or region. For example, it might have been used to identify differences between computing platforms, such as Windows or UNIX. Under the IETF BCP 47 standard, this use is discouraged.
-
-To define non-language-specific variations relevant to your environment, use the extensions mechanism, as explained in [BCP 47 Extensions](https://docs.oracle.com/javase/tutorial/i18n/locale/extensions.html).
 
 **版本说明：** 在Java SE 7发行版之前，变体代码有时用于识别不是特定于语言或区域的差异。例如，它可能已被用于识别计算平台之间的差异，例如Windows或UNIX。根据IETF BCP 47标准，不鼓励使用此标准。
 
