@@ -8532,3 +8532,127 @@ MyInterfaceType proxy = factory.getProxy();
 
 Spring 包含了一个精简的 AspectJ 切面库，作为`spring-aspects.jar`可以在你的发布版本中独立使用。你需要将其添加到你的类路径中以便使用其中的切面。[Using AspectJ to Dependency Inject Domain Objects with Spring](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-atconfigurable) 和 [Other Spring aspects for AspectJ](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-ajlib-other) 讨论该库的内容以及如何使用。[Configuring AspectJ Aspects by Using Spring IoC](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-configure) 讨论如何依赖注入使用 AspectJ 编译器织入的 AspectJ 切面。最后，[Load-time Weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 介绍使用 AspectJ 的 Spring 应用的加载时织入。
 
+#### 5.10.1 在使用 Spring 依赖注入的域对象中使用 AspectJ
+
+Spring 容器会实例化并配置定义你在应用上下文中定义的 beans。它也可能要求 bean 工厂配置一个预先存在的对象，给定包含需要应用的配置的 bean 定义的名称。`spring-aspects.jar`包含一个注解驱动的切面，它利用此能力来允许任意对象的依赖注入。这种支持希望被用于那些在任何容器控制范围之外创建的对象。域对象通常采用此策略，因为他们经常采用编程方式使用`new`操作符创建，或者作为查询结果由 ORM 工具创建。
+
+`@Configurable`注解将一个类标记为适合于 Spring 驱动的配置。在最简单的场景中，你可以只使用它作为标记注解，如下面例子所示：
+
+```java
+package com.xyz.myapp.domain;
+
+import org.springframework.beans.factory.annotation.Configurable;
+
+@Configurable
+public class Account {
+    // ...
+}
+```
+
+当以这种方式被用作标记注解时，Spring 配置被注解修饰的类型（`Account`，在此例子中）的新实例，通过使用名为全限定类型名（`com.xyz.myapp.domain.Account`）的 bean 定义（典型地是原型作用域）。由于 bean 默认名称是它的类型的全限定名，声明该原型的便捷方法是忽略其中的`id`属性，如下面例子所示：
+
+```xml
+<bean class="com.xyz.myapp.domain.Account" scope="prototype">
+    <property name="fundsTransferService" ref="fundsTransferService"/>
+</bean>
+```
+
+如果你想要显示指定要使用的原型 bean 定义的名称，你可以直接在注解里这么做，如下面例子所示：
+
+```java
+package com.xyz.myapp.domain;
+
+import org.springframework.beans.factory.annotation.Configurable;
+
+@Configurable("account")
+public class Account {
+    // ...
+}
+```
+
+Spring 现在会寻找名为`account`的 bean 定义并将其用于新的`Account`实例的配置。
+
+你也可以使用自动绑定来避免必须指定 bean 定义名称。为了使用 Spring 自动绑定，使用`@Configurable`注解的`autowire`属性。你可以指定`@Configurable(autowire=Autowire.BY_TYPE)`或者`@Configurable(autowire=Autowire.BY_NAME)`，前者表示按照类型自动绑定，后者按照名称自动绑定。作为替代方案，最好在字段或方法级别通过`@Autowired`或`@Inject`为`@Configurable` bean指定显式的注解驱动依赖注入（有关更多详细信息，请参阅 [基于注解的容器配置](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#beans-annotation-config) ）。
+
+最后，你可以开启 Spring 依赖检查，对新创建和配置的对象中的对象引用进行检查，使用`dependencyCheck`属性（比如，`@Configurable(autowire=Autowire.BY_NAME,dependencyCheck=ture`）。如果该属性设置为`true`，Spring 将在配置完成之后校验所有的属性（那些不是基本数据类型或者集合类型的属性）已经被设置。
+
+请注意，对其本身使用的注解不会做任何事情。`Spring-aspects.jar`中的`AnnotationBeanConfigurerAspect`作用于存在的注解。本质上，该切面意味着，“从使用`@Configurable`注解修饰的类型的新对象的初始化返回后，根据注解的属性使用 Spring 配置新创建的对象”。在此上下文中，“初始化”是指新实例化的对象（例如，使用`new`操作符实例化的对象）以及正在进行反序列化的`Serializable`对象（例如，通过[readResolve()](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html)）。
+
+> 上面段落中的一个关键短语是“实质上”。对于大多数情况，“从新对象初始化返回后”的确切语义很好。在此上下文中，“初始化之后”意味着在构造对象之后注入依赖项。这意味着依赖项不可用于类的构造函数体。如果希望在构造函数体执行之前注入依赖项，从而可以在构造函数体中使用，则需要在`@Configurable`声明中定义它，如下所示：
+>
+> ```java
+> @Configurable(preConstruction = true)
+> ```
+>
+> 你可以在  [AspectJ Programming Guide](https://www.eclipse.org/aspectj/doc/next/progguide/index.html) 中找到更多有关 AspectJ 中的各种切入点类型的语言语义的信息。
+
+为了使其工作，被注解修饰的类型必须使用 AspectJ 织入器织入。你可以在构建期使用 Ant 或者 Maven 任务来实现这一操作（参考  [AspectJ Development Environment Guide](https://www.eclipse.org/aspectj/doc/released/devguide/antTasks.html)），或者进行加载期织入（参考 [Load-time Weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw)）。`AnnotationBeanConfigurerAspect`自身许哟啊通过 Spring 配置（为了获得一个将被用来配置新对象的 bean 工厂的引用）。如果你使用基于 Java 的配置，你可以在任意`@Configuration`类上添加`@EnableSpringConfigured`，如下所示：
+
+```java
+@Configuration
+@EnableSpringConfigured
+public class AppConfig {
+}
+```
+
+如果你更喜欢基于 XML 的配置，Spring  [`context` namespace](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#xsd-schemas-context) 定义了一个方便的`context:spring-configured`元素，你可以如下使用：
+
+```xml
+<context:spring-configured/>
+```
+
+在配置切面之前创建的`@Configurable`对象的实例会导致向调试日志发出消息，并且不会发生对象的配置。一个示例可能是 Spring 配置中的 bean，它在 Spring 初始化时创建域对象。在这种情况下，您可以使用`depends-on` bean 属性手动指定 bean 依赖于配置切面。以下示例显示了如何使用`depends-on`属性：
+
+```xml
+<bean id="myService"
+        class="com.xzy.myapp.service.MyService"
+        depends-on="org.springframework.beans.factory.aspectj.AnnotationBeanConfigurerAspect">
+
+    <!-- ... -->
+
+</bean>
+```
+
+> 不要通过 bean 配置器切面激活`@Configurable`处理，除非你真的想在运行时依赖它的语义。特别是，请确保不要对使用容器注册为常规 Spring bean 的 bean 类使用`@Configurable`。这样做会导致双重初始化，一次通过容器，一次通过切面。
+
+##### 单元测试 `@Configurable` 对象
+
+`@Configurable`支持的目标之一是启用域对象的独立单元测试，而不会遇到与硬编码查找相关的困难。如果 AspectJ 没有织入`@Configurable`类型，则注解在单元测试期间没有影响。您可以在测试对象中设置模拟或存根属性引用，并当作真实对象进行逻辑处理。如果 AspectJ 织入了`@Configurable`类型，您仍然可以正常地在容器外部进行单元测试，但每次构造一个`@Configurable`对象时都会看到一条警告消息，表明它尚未由`Spring`配置。
+
+##### 使用多个应用上下文
+
+用于实现`@Configurable`支持的`AnnotationBeanConfigurerAspect`是 AspectJ 单例切面。单例切面的作用域范围与`static`成员的范围相同：每个类加载器都有一个切面实例来定义类型。这意味着，如果在同一个类加载器层次结构中定义多个应用程序上下文，则需要考虑在哪里定义`@EnableSpringConfigured` bean以及在类路径上放置`spring-aspects.jar`的位置。
+
+考虑一个典型的 Spring Web 应用程序配置，它具有共享的父应用程序上下文，它定义了公共业务服务，支持这些服务所需的一切，以及每个 servlet 的一个子应用程序上下文（包含特定于该 servlet 的定义）。所有这些上下文共存于同一个类加载器层次结构中，因此`AnnotationBeanConfigurerAspect`只能包含对其中一个的引用。在这种情况下，我们建议在共享（父）应用程序上下文中定义`@EnableSpringConfigured` bean。这定义了您可能希望注入域对象的服务。结果是，您无法使用`@Configurable`机制（可能不是您想要执行的操作）来配置域对象，并引用对子（特定于 servlet）上下文中定义的 bean 的引用。
+
+在同一容器中部署多个 Web 应用程序时，请确保每个 Web 应用程序使用自己的类加载器加载`spring-aspects.jar`中的类型（例如，将`spring-aspects.jar`放在`WEB-INF/lib`中）。如果`spring-aspects.jar`仅添加到容器范围的类路径中（因此由共享父类加载器加载），则所有 Web 应用程序共享相同的切面实例（可能不是您想要的）。
+
+#### 5.10.2 AspectJ 的其它 Spring 切面 
+
+除了`@Configurable`切面，`spring-aspects.jar`还包含一个 AspectJ 方面，您可以使用它来为使用`@Transactional`注解修饰的类型和方法驱动 Spring 的事务管理。这主要适用于希望在 Spring 容器之外使用 Spring Framework 的事务支持的用户。
+
+解释`@Transactional`注解的切面是`AnnotationTransactionAspect`。使用此切面时，必须注解实现类（或该类中的方法或两者），而不是类实现的接口（如果有）。AspectJ 遵循 Java 的规则，即接口上的注解不会被继承。
+
+类上的`@Transactional`注解指定了在类中执行任何公共操作的默认事务语义。
+
+类中方法的`@Transactional`注解会覆盖类注解（如果存在）给出的默认事务语义。可以注解任何可见性的方法，包括私有方法。 直接注解非公共方法是获得执行此类方法的事务划分的唯一方法。
+
+> 从 Spring Framework 4.2 开始， `spring-aspects` 提供了一个类似的切面来为标准 `javax.transaction.Transactional` 注解提供完全相同的功能特性。检查 `JtaAnnotationTransactionAspect` 获取更多细节。
+
+对于想要使用 Spring 配置和事务管理支持但不想（或不能）使用注解的 AspectJ 程序员，`spring-aspects.jar`还包含你可以扩展以提供自己的切入点定义的`abstract`切面。有关更多信息，请参阅`AbstractBeanConfigurerAspect`和`AbstractTransactionAspect`方面的源代码。作为示例，以下代码片段显示了如何编写切面来配置域模型中定义的所有对象实例，方法是使用与完全限定类名匹配的原型 bean 定义：
+
+```java
+public aspect DomainObjectConfiguration extends AbstractBeanConfigurerAspect {
+
+    public DomainObjectConfiguration() {
+        setBeanWiringInfoResolver(new ClassNameBeanWiringInfoResolver());
+    }
+
+    // the creation of a new bean (any object in the domain model)
+    protected pointcut beanCreation(Object beanInstance) :
+        initialization(new(..)) &&
+        SystemArchitecture.inDomainModel() &&
+        this(beanInstance);
+}
+```
+
