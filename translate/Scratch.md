@@ -1,70 +1,122 @@
-为了使其工作，被注解修饰的类型必须使用 AspectJ 织入器织入。你可以在构建期使用 Ant 或者 Maven 任务来实现这一操作（参考  [AspectJ Development Environment Guide](https://www.eclipse.org/aspectj/doc/released/devguide/antTasks.html)），或者进行加载期织入（参考 [Load-time Weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#aop-aj-ltw)）。`AnnotationBeanConfigurerAspect`自身许哟啊通过 Spring 配置（为了获得一个将被用来配置新对象的 bean 工厂的引用）。如果你使用基于 Java 的配置，你可以在任意`@Configuration`类上添加`@EnableSpringConfigured`，如下所示：
+#### 自定义格式
+
+你可以使用`DecimalFormat`类来格式化十进制数字为特定于语言区域的字符串。这个类允许你控制前导和尾随的`0`，前缀和后缀，组（千）分隔符，以及小数点的显示。如果你希望改变格式化符号，比如小数点，你可以结合使用`DecimalFormatSymbols`和`DecimalFormat`类。这些类提供了数字格式化的极大弹性，不过它们也会使你的代码变得复杂。
+
+下面将举例说明上述两个类的使用，下面的代码示例来自 [`DecimalFormatDemo`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/DecimalFormatDemo.java) 。
+
+**构建模式**
+
+你使用一个模式`String`来指定`DecimalFormat`的格式化属性。该模式决定了格式化之后的数字的样子。有关模式语法的完整描述，参考 [Number Format Pattern Syntax](https://docs.oracle.com/javase/tutorial/i18n/format/decimalFormat.html#numberpattern) 。
+
+下面的例子创建一个格式化器，通过传递一个模式`String`给一个`DecimalFormat`构造器。`format`方法接受一个`double`值作为参数并返回`String`形式的格式化数字：
 
 ```java
-@Configuration
-@EnableSpringConfigured
-public class AppConfig {
-}
+DecimalFormat myFormatter = new DecimalFormat(pattern);
+String output = myFormatter.format(value);
+System.out.println(value + " " + pattern + " " + output);
 ```
 
-如果你更喜欢基于 XML 的配置，Spring  [`context` namespace](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/core.html#xsd-schemas-context) 定义了一个方便的`context:spring-configured`元素，你可以如下使用：
+上面代码的输出在下面表中列出。`value`是一个数字，一个`double`，将要被格式化。`pattern`是一个`String`，指定格式化属性。`output`是一个`String`，表示格式化的数字。
 
-```xml
-<context:spring-configured/>
-```
+`DecimalFormatDemo` 程序的输出：
 
-在配置切面之前创建的`@Configurable`对象的实例会导致向调试日志发出消息，并且不会发生对象的配置。一个示例可能是 Spring 配置中的 bean，它在 Spring 初始化时创建域对象。在这种情况下，您可以使用`depends-on` bean 属性手动指定 bean 依赖于配置切面。以下示例显示了如何使用`depends-on`属性：
+| `value`    | `pattern`         | `output`    | 解释                                       |
+| ---------- | ----------------- | ----------- | ---------------------------------------- |
+| 123456.789 | ###,###.###       | 123,456.789 | 井号 (#) 代表一个数字，逗号是千分位分隔符的占位符，点号是小数点占位符。   |
+| 123456.789 | ###.##            | 123456.79   | `value` 小数点右边有3位数字，但是 `pattern` 只有两个。 `format` 方法通过舍入处理这种情况。 |
+| 123.78     | 000000.000        | 000123.780  | `pattern` 指定前导和尾随`0`，因为`0`替代了模式中的井号 (#)。 |
+| 12345.67   | $###,###.###      | $12,345.67  | `pattern` 中第一个字符是美元符号 ($)，注意它会直接出现在格式化 `output` 的最左边数字前面。 |
+| 12345.67   | \u00A5###,###.### | ¥12,345.67  | `pattern` 使用 Unicode 编码 00A5 指定货币符号为日元 (J¥)。 |
 
-```xml
-<bean id="myService"
-        class="com.xzy.myapp.service.MyService"
-        depends-on="org.springframework.beans.factory.aspectj.AnnotationBeanConfigurerAspect">
+**区域敏感的格式**
 
-    <!-- ... -->
-
-</bean>
-```
-
-> 不要通过 bean 配置器切面激活`@Configurable`处理，除非你真的想在运行时依赖它的语义。特别是，请确保不要对使用容器注册为常规 Spring bean 的 bean 类使用`@Configurable`。这样做会导致双重初始化，一次通过容器，一次通过切面。
-
-##### 单元测试 `@Configurable` 对象
-
-`@Configurable`支持的目标之一是启用域对象的独立单元测试，而不会遇到与硬编码查找相关的困难。如果 AspectJ 没有织入`@Configurable`类型，则注解在单元测试期间没有影响。您可以在测试对象中设置模拟或存根属性引用，并当作真实对象进行逻辑处理。如果 AspectJ 织入了`@Configurable`类型，您仍然可以正常地在容器外部进行单元测试，但每次构造一个`@Configurable`对象时都会看到一条警告消息，表明它尚未由`Spring`配置。
-
-##### 使用多个应用上下文
-
-用于实现`@Configurable`支持的`AnnotationBeanConfigurerAspect`是 AspectJ 单例切面。单例切面的作用域范围与`static`成员的范围相同：每个类加载器都有一个切面实例来定义类型。这意味着，如果在同一个类加载器层次结构中定义多个应用程序上下文，则需要考虑在哪里定义`@EnableSpringConfigured` bean以及在类路径上放置`spring-aspects.jar`的位置。
-
-考虑一个典型的 Spring Web 应用程序配置，它具有共享的父应用程序上下文，它定义了公共业务服务，支持这些服务所需的一切，以及每个 servlet 的一个子应用程序上下文（包含特定于该 servlet 的定义）。所有这些上下文共存于同一个类加载器层次结构中，因此`AnnotationBeanConfigurerAspect`只能包含对其中一个的引用。在这种情况下，我们建议在共享（父）应用程序上下文中定义`@EnableSpringConfigured` bean。这定义了您可能希望注入域对象的服务。结果是，您无法使用`@Configurable`机制（可能不是您想要执行的操作）来配置域对象，并引用对子（特定于 servlet）上下文中定义的 bean 的引用。
-
-在同一容器中部署多个 Web 应用程序时，请确保每个 Web 应用程序使用自己的类加载器加载`spring-aspects.jar`中的类型（例如，将`spring-aspects.jar`放在`WEB-INF/lib`中）。如果`spring-aspects.jar`仅添加到容器范围的类路径中（因此由共享父类加载器加载），则所有 Web 应用程序共享相同的切面实例（可能不是您想要的）。
-
-#### 5.10.2 AspectJ 的其它 Spring 切面 
-
-除了`@Configurable`切面，`spring-aspects.jar`还包含一个 AspectJ 方面，您可以使用它来为使用`@Transactional`注解修饰的类型和方法驱动 Spring 的事务管理。这主要适用于希望在 Spring 容器之外使用 Spring Framework 的事务支持的用户。
-
-解释`@Transactional`注解的切面是`AnnotationTransactionAspect`。使用此切面时，必须注解实现类（或该类中的方法或两者），而不是类实现的接口（如果有）。AspectJ 遵循 Java 的规则，即接口上的注解不会被继承。
-
-类上的`@Transactional`注解指定了在类中执行任何公共操作的默认事务语义。
-
-类中方法的`@Transactional`注解会覆盖类注解（如果存在）给出的默认事务语义。可以注解任何可见性的方法，包括私有方法。 直接注解非公共方法是获得执行此类方法的事务划分的唯一方法。
-
-> 从 Spring Framework 4.2 开始， `spring-aspects` 提供了一个类似的切面来为标准 `javax.transaction.Transactional` 注解提供完全相同的功能特性。检查 `JtaAnnotationTransactionAspect` 获取更多细节。
-
-对于想要使用 Spring 配置和事务管理支持但不想（或不能）使用注解的 AspectJ 程序员，`spring-aspects.jar`还包含你可以扩展以提供自己的切入点定义的`abstract`切面。有关更多信息，请参阅`AbstractBeanConfigurerAspect`和`AbstractTransactionAspect`方面的源代码。作为示例，以下代码片段显示了如何编写切面来配置域模型中定义的所有对象实例，方法是使用与完全限定类名匹配的原型 bean 定义：
+上面的例子为默认`Locale`创建一个`DecimalFormat`对象。如果你需要一个非默认`Locale`的`DecimalFormat`对象，你实例化一个`NumberFormat`然后将其转化为`DecimalFormat`。例子如下：
 
 ```java
-public aspect DomainObjectConfiguration extends AbstractBeanConfigurerAspect {
-
-    public DomainObjectConfiguration() {
-        setBeanWiringInfoResolver(new ClassNameBeanWiringInfoResolver());
-    }
-
-    // the creation of a new bean (any object in the domain model)
-    protected pointcut beanCreation(Object beanInstance) :
-        initialization(new(..)) &&
-        SystemArchitecture.inDomainModel() &&
-        this(beanInstance);
-}
+NumberFormat nf = NumberFormat.getNumberInstance(loc);
+DecimalFormat df = (DecimalFormat)nf;
+df.applyPattern(pattern);
+String output = df.format(value);
+System.out.println(pattern + " " + output + " " + loc.toString());
 ```
+
+运行前面的例子将产生下面的输出。格式化数字，下面结果中的第二列，随着`Locale`变化：
+
+```
+###,###.###      123,456.789     en_US
+###,###.###      123.456,789     de_DE
+###,###.###      123 456,789     fr_FR
+```
+
+到目前为止，这里讨论的格式模式遵循美国英语的惯例。例如，在模式`###,###.##`中，逗号是千位分隔符，句点表示小数点。如果最终用户没有接触到它，那么这个约定很好。但是，某些应用程序（如电子表格和报表生成器）允许最终用户定义自己的格式设置模式。对于这些应用程序，最终用户指定的格式模式应使用本地化表示法。在这些情况下，您需要在`DecimalFormat`对象上调用`applyLocalizedPattern`方法。
+
+**修改格式化符号**
+
+你可以使用 [DecimalFormatSymbols](https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormatSymbols.html) 类来改变由`format`方法产生而出现的格式化数字中的符号。这些符号包含小数点、千分位分隔符、负号、以及百分号等等。
+
+下面的例子展示了`DecimalFormatSymbols`类的使用，它将一个奇怪的格式应用于数字。不常见的格式是调用`setDecimalSeparator`、`setGroupingSeparator`以及`setGroupingSize`方法的结果。
+
+```java
+DecimalFormatSymbols unusualSymbols = new DecimalFormatSymbols(currentLocale);
+unusualSymbols.setDecimalSeparator('|');
+unusualSymbols.setGroupingSeparator('^');
+
+String strange = "#,##0.###";
+DecimalFormat weirdFormatter = new DecimalFormat(strange, unusualSymbols);
+weirdFormatter.setGroupingSize(4);
+
+String bizarre = weirdFormatter.format(12345.678);
+System.out.println(bizarre);
+
+```
+
+运行之后，输出下面这种包含栅栏的格式：
+
+```
+1^2345|678
+```
+
+**数字格式化模式语法**
+
+你可以设计自己的数字格式化模式，这些模式需要遵循下面的 BNF 图定义的规则：
+
+```
+pattern    := subpattern{;subpattern}
+subpattern := {prefix}integer{.fraction}{suffix}
+prefix     := '\\u0000'..'\\uFFFD' - specialCharacters
+suffix     := '\\u0000'..'\\uFFFD' - specialCharacters
+integer    := '#'* '0'* '0'
+fraction   := '0'* '#'*
+```
+
+其中使用的记号解释如下：
+
+| Notation  | Description        |
+| --------- | ------------------ |
+| `X*`      | 0 个或者多个 X          |
+| `(X | Y)` | X 或者 Y             |
+| `X..Y`    | 从 X 到 Y 的闭区间中的任意字符 |
+| `S - T`   | 存在于 S 而不存在于 T 中的字符 |
+| `{X}`     | X 是可选的             |
+
+在前面的 BNF 图中，第一个子模式指定了正数的格式。第二个子模式是可选的，指定负数的格式。
+
+虽然未在 BNF 图中注明，但逗号可能出现在整数部分内。
+
+在子模式中，您可以使用特殊符号指定格式。这些符号如下表所述：
+
+| Symbol | Description                              |
+| ------ | ---------------------------------------- |
+| 0      | 一个数字                                     |
+| #      | 一个数字，0 表示不存在                             |
+| .      | 小数点占位符                                   |
+| ,      | 千分位占位符                                   |
+| E      | 为指数格式分隔尾数和指数                             |
+| ;      | 分隔格式                                     |
+| -      | 默认符号前缀                                   |
+| %      | 乘以 100 并展示为百分数                           |
+| ?      | 乘以 1000 并展示位千分数                          |
+| ¤      | 货币符号，被货币记号替换。如果双重使用，则会被国际货币记号替换。如果在模式中使用，使用货币小数分隔符代替小数分隔符。 |
+| X      | 任何其他字符都可以在前缀或后缀中使用                       |
+| '      | 用来以单引号包括前缀或者后缀中的特殊字符                     |
 
