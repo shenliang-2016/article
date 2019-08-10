@@ -6848,3 +6848,118 @@ chalina
 luz
 llama
 ```
+
+#### 改进排序性能
+
+对很长的字符串进行排序通常会非常耗时。如果你的排序算法反复比较字符串，你就可以使用`CollationKey`类来加速排序过程。
+
+ [`CollationKey`](https://docs.oracle.com/javase/8/docs/api/java/text/CollationKey.html) 对象表示给定`String`和`Collator`的排序键。比较两个`CollationKey`对象涉及排序键的按位比较，并且比将`String`对象使用`Collator.compare`方法进行比较要快。但是，生成`CollationKey`对象需要时间。因此，如果要比较一个`String`，`Collator.compare`可以提供更好的性能。
+
+下面的例子使用一个`CollationKey`对象来排序一个单词数组。该例子的源代码是 [`KeysDemo.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/KeysDemo.java) 。
+
+`KeysDemo`程序在`main`方法中创建了一个`CollationKey`对象数组。为了创建`CollationKey`，你可以调用`Collator`对象上的`getCollationKey`方法。你只能比较来自同一个`Collator`的两个`CollationKey`对象。该`main`方法如下：
+
+```java
+static public void main(String[] args) {
+    Collator enUSCollator = Collator.getInstance(new Locale("en","US"));
+    String [] words = {
+        "peach",
+        "apricot",
+        "grape",
+        "lemon"
+    };
+
+    CollationKey[] keys = new CollationKey[words.length];
+
+    for (int k = 0; k < keys.length; k ++) {
+        keys[k] = enUSCollator. getCollationKey(words[k]);
+    }
+
+    sortArray(keys);
+    printArray(keys);
+}
+```
+
+`sortArray`方法调用`CollationKey.compareTo`方法。`compareTo`方法返回一个小于、等于或者大于0的整数，如果`keys[i]`对象值小于、等于或者大于`keys[j]`对象值。注意该程序比较`CollationKey`对象，而不是来自初始单词数组的`String`对象。下面是`sortArray`方法代码：
+
+```java
+public static void sortArray(CollationKey[] keys) {
+    CollationKey tmp;
+
+    for (int i = 0; i < keys.length; i++) {
+        for (int j = i + 1; j < keys.length; j++) {
+            if (keys[i].compareTo(keys[j]) > 0) {
+                tmp = keys[i];
+                keys[i] = keys[j];
+                keys[j] = tmp; 
+            }
+        }
+    }
+}
+```
+
+`KeysDemo`程序排序一个`CollationKey`对象数组，但是初始目标却是排序一个`String`对象数组。为了检索每个`CollationKey`所表示的`String`，该程序在`displayWords`方法中调用`getSourceString`，如下所示：
+
+```java
+static void displayWords(CollationKey[] keys) {
+    for (int i = 0; i < keys.length; i++) {
+        System.out.println(keys[i].getSourceString());
+    }
+}
+```
+
+ `displayWords` 方法打印如下内容：
+
+```
+apricot
+grape
+lemon
+peach
+```
+
+### Unicode
+
+*Unicode*是一种计算行业标准，旨在对全世界书面语言中使用的字符进行一致且唯一的编码。Unicode标准使用十六进制表示字符。例如，值 0x0041 表示拉丁字符 A。Unicode标准最初使用16位来设计字符，因为当时主要计算机是16位PC。
+
+创建Java语言规范时，接受Unicode标准，并将`char`原语定义为16位数据类型，十六进制范围内的字符从 0x0000 到 0xFFFF。
+
+由于16位编码支持2<sup>16</sup>（65,536）个字符，这不足以定义全世界使用的所有字符，因此Unicode标准扩展为 0x10FFFF，支持超过一百万个字符。Java编程语言中字符的定义无法从16位更改为32位，而不会导致数百万Java应用程序无法正常运行。为了纠正定义，开发了一种方案来处理无法以16位编码的字符。
+
+值超出16位范围且在 0x10000 到 0x10FFFF 范围内的字符称为*补充字符*，并定义为一对`char`值。
+
+本课程包含以下章节：
+
+- [术语](https://docs.oracle.com/javase/tutorial/i18n/text/terminology.html) - 解释代码点和其他术语。
+- [补充字符作为代理](https://docs.oracle.com/javase/tutorial/i18n/text/supplementaryChars.html) - 16位代理用于实现补充字符，这些补充字符不能作为单个原始`char`数据类型实现。
+- [字符和字符串API](https://docs.oracle.com/javase/tutorial/i18n/text/characterClass.html) -`Character`，`String`相关的 API 以及相关的类的列表。
+- [示例用法](https://docs.oracle.com/javase/tutorial/i18n/text/usage.html) - 提供了几个有用的代码片段。
+- [设计注意事项](https://docs.oracle.com/javase/tutorial/i18n/text/design.html) - 要记住[设计注意事项](https://docs.oracle.com/javase/tutorial/i18n/text/design.html)，以确保您的应用程序可以使用任何语言脚本。
+- [更多信息](https://docs.oracle.com/javase/tutorial/i18n/text/info.html) - 提供了更多资源的列表。
+
+#### 术语
+
+*字符*是具有语义值的最小文本单元。
+
+*字符集*是可能由多种语言使用的字符集合。例如，拉丁字符集由英语和大多数欧洲语言使用，尽管希腊语字符集仅由希腊语使用。
+
+*编码字符集*是一个字符集，其中每个字符被分配一个唯一的编号。
+
+*代码点*是可以在编码字符集中使用的值。代码点是32位`int`数据类型，其中低21位表示有效代码点值，高11位表示0。
+
+Unicode *代码单元*是一个16位的`char`值。例如，假设一个`String`包含字母“abc”，后跟 Deseret LONG I，用两个`char`值表示。该字符串包含四个字符，四个代码点，但包含五个代码单元。
+
+要以Unicode表示字符，十六进制值以字符串 U+ 为前缀。Unicode标准的有效代码点范围是 U+0000 到 U+10FFFF，包括端点。拉丁字符A的代码点值是 U+0041。代表欧元货币的字符 € 具有代码点值 U+20AC。 Deseret 字母表中的第一个字母 LONG I 的代码点值为 U+10400。
+
+下表显示了几个字符的代码点值：
+
+| Character       | Unicode Code Point | Glyph                                                        |
+| --------------- | ------------------ | ------------------------------------------------------------ |
+| Latin A         | U+0041             | ![The Latin character A](https://docs.oracle.com/javase/tutorial/figures/i18n/000041.gif) |
+| Latin sharp S   | U+00DF             | ![The Latin small letter sharp S](https://docs.oracle.com/javase/tutorial/figures/i18n/0000df.gif) |
+| Han for East    | U+6771             | ![The Han character for east, eastern or eastward](https://docs.oracle.com/javase/tutorial/figures/i18n/006771.gif) |
+| Deseret, LONG I | U+10400            | ![The Deseret capital letter long I](https://docs.oracle.com/javase/tutorial/figures/i18n/010400.gif) |
+
+如前所述，在 U+10000 到 U+10FFFF 范围内的字符被称为补充字符。从 U+0000 到 U+FFFF 的字符集有时被称为*基本多语言平面（BMP）*。
+
+更多术语可以在 [更多信息](https://docs.oracle.com/javase/tutorial/i18n/text/info.html) 页面上列出的*Unicode术语表*中找到。
+
