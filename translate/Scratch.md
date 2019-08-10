@@ -1,130 +1,164 @@
-### 消息
+#### 处理复数
 
-我们都喜欢使用那些可以让我们知道什么东西正在运行的程序。程序通常通过显示状态和错误消息来及时通知我们。当然，这些消息需要被转化以便于全世界的终端用户理解。 [Isolating Locale-Specific Data](https://docs.oracle.com/javase/tutorial/i18n/resbundle/index.html) 章节讨论转化文本消息。通常，将一个消息`String`放到`ResourceBundle`中之后你的任务就完成了。不过，如果你的消息中携带了变量数据，你就必须执行某些额外步骤来准备转化。
+如果复数和单数形式都可能，则消息中的单词可能会有所不同。使用`ChoiceFormat`类，您可以将数目映射到单词或短语，从而允许您构造语法正确的消息。
 
-*复合*消息包含变量数据。在下面的复合消息中，变量数据由下划线标出：
+在英语中，单词的复数和单数形式通常是不同的。当您构建包含数量的消息时，这可能会出现问题。例如，如果您的消息报告磁盘上的文件数，则可能存在以下变化：
 
-```html
-The disk named MyDisk contains 300 files.
-The current balance of account #34-09-222 is $2,745.72.
-405,390 people have visited your website since January 1, 2009.
-Delete all files older than 120 days.
+```
+There are no files on XDisk.
+There is one file on XDisk.
+There are 2 files on XDisk.
 ```
 
-您可能想通过连接短语和变量来构造前面列表中的最后一条消息，如下所示：
+解决此问题的最快方式就是创建如下的`MessageFormat`模式：
+
+```
+There are {0,number} file(s) on {1}.
+```
+
+很不幸，上面的模式产生的语法不正确：
+
+```
+There are 1 file(s) on XDisk.
+```
+
+你可以做的更好，你可以使用 [`ChoiceFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/ChoiceFormat.html) 类。在本节中你将看到如何处理消息中的复数。通过一个简单的例子[`ChoiceFormatDemo`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceFormatDemo.java) 逐步展示。该程序也使用了`MessageFormat`类，该类在上一节中讨论。
+
+**1. 定义消息模式**
+
+首先，标示消息中的变量：
+
+![Three lines of text, with the variables in each line highlighted.](https://docs.oracle.com/javase/tutorial/figures/i18n/i18n-3.gif)
+
+接下来，用参数替换消息中的变量，创建一个能够应用于`MessageFormat`对象的模式：
+
+```
+There {0} on {1}.
+```
+
+磁盘名称的参数，由`{1}`表示，很容易处理。你只需像处理`MessageFormat`模式中的其它`String`变量一样处理它们。此参数匹配参数值数组中下标为 1 的元素。
+
+处理参数`{0}`更加复杂一些，因为两个原因：
+
+* 参数替换过程会随着文件数量而有所不同。为了在运行时构建该阶段，你需要将文件数量映射到一个特定的`String`。比如，数量 1 映射到包含`is one file`短语的`String`。`ChoiceFormat`类允许你执行必要的映射。
+* 如果磁盘包含多个文件，该短语包含一个整数。`MessageFormat`类允许你在短语中插入一个整数。
+
+**2. 创建一个 ResourceBundle**
+
+因为消息文本必须被翻译，将它隔离到一个`ResourceBundle`中：
 
 ```java
-double numDays;
-ResourceBundle msgBundle;
-// ...
-String message = msgBundle.getString(
-                     "deleteolder" +
-                     numDays.toString() +
-                     msgBundle.getString("days"));
+ResourceBundle bundle = ResourceBundle.getBundle(
+    "ChoiceBundle", currentLocale);
 ```
 
-此方法在英语环境下工作良好，但是在那些动词放在句子末尾的语言环境中不行。因为消息中的词语的顺序是硬编码的，你的本地化器将无法为所有语言创建语法正确的翻译。
+例子程序使用属性文件支持`ResourceBundle`。[`ChoiceBundle_en_US.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceBundle_en_US.properties) 包含以下内容：
 
-当你需要使用复合消息时你应该如何编写你的本地化器？你可以使用`MessageFormat`类，就是本章节的主题。
+```
+pattern = There {0} on {1}.
+noFiles = are no files
+oneFile = is one file
+multipleFiles = are {2} files
+```
 
-------
+此属性文件的内容展示了消息将如何被构建和格式化。第一行包含`MessageFormat`模式。其它的行包含替换模式中的参数`{0}`的短语。对应于`multipleFiles`键的短语包含参数`{2}`，将被一个数字替换。
 
-**警告：**复合消息很难翻译，因为消息文本是分成若干片段的。如果你使用复合消息，本地化过程将更加耗时和消耗资源。因而你应该只在必要时才使用复合消息。
+这里是属性文件的法语版本， [`ChoiceBundle_fr_FR.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceBundle_fr_FR.properties) ：
 
-------
+```
+pattern = Il {0} sur {1}.
+noFiles = n'y a pas de fichiers
+oneFile = y a un fichier
+multipleFiles = y a {2} fichiers
+```
 
-**[处理复合消息](https://docs.oracle.com/javase/tutorial/i18n/format/messageFormat.html)**
+**3. 创建一个消息格式化器**
 
-一条复合消息可能包含若干种变量：日期、时间、字符串、数字、货币、以及百分数。为了以区域无关的形式格式化复合消息，你可以构建一个可应用于`MessageFormat`对象的模式。
-
-**[处理复数](https://docs.oracle.com/javase/tutorial/i18n/format/choiceFormat.html)**
-
-如果复数和单数单词形式都可能，则消息中的单词通常会有所不同。使用`ChoiceFormat`类，您可以将数字映射到单词或短语，从而允许您构造语法正确的消息。
-
-#### 处理复合消息
-
-一条复合消息可能包含若干种变量：日期、时间、字符串、数字、货币、以及百分数。为了以区域无关的形式格式化复合消息，你可以构建一个可应用于`MessageFormat`对象的模式，并将该模式存储到一个`ResourceBundle`种。
-
-接下来逐步分析例子程序，本节举例说明如何国际化一个复合消息。例子程序使用 [`MessageFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html) 类。例子程序的完整源码在文件 [`MessageFormatDemo.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/MessageFormatDemo.java) 中。德国区域的属性放在 [`MessageBundle_de_DE.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/MessageBundle_de_DE.properties) 文件中。
-
-**1. 标示消息中的变量**
-
-假定你想要国际化下面的消息：
-
-![The following line of text: At 1:15 on April 13, 1998, we detected 7 spaceships on the planet Mars.  The variable data (1:15, April 13,1998, 7, and Mars) have been underlined.](https://docs.oracle.com/javase/tutorial/figures/i18n/i18n-2.gif)
-
-注意，我们已经用下划线标出变量数据并且标示出将使用何种对象类型来表示该数据。
-
-**2. 将消息模式隔离到一个 ResourceBundle 中**
-
-将消息保存到名为`MessageBundle`的`ResouceBundle`中。如下所示：
+这一步实例化`MessageFormat`并设置它的`Locale`：
 
 ```java
-ResourceBundle messages =
-   ResourceBundle.getBundle("MessageBundle", currentLocale);
+MessageFormat messageForm = new MessageFormat("");
+messageForm.setLocale(currentLocale);
 ```
 
-该`ResouceBundle`由对应各种`Locale`的属性文件支持。因为该`ResourceBundle`名为`MessageBundle`，则用于 U.S.English 的属性文件名为`MessageBundle_en_US.properties`。该文件的内容如下：
+**4. 创建 Choice Formatter**
 
-```
-template = At {2,time,short} on {2,date,long}, \
-    we detected {1,number,integer} spaceships on \
-    the planet {0}.
-planet = Mars
-```
-
-属性文件的第一行包含了消息模式。如果你比较该模式与第一步中展示的消息文本，你将会发现消息文本中的每个变量都被大括号包围的参数替换了。每个参数都以称为参数号的数字开头，该数值对应于持有参数值的`Object`数组中元素的下标。注意，模式中的参数号并没有一定顺序。你可以讲参数放在模式中任何位置。唯一的要求就是参数号在参数值数组中有对应的元素。
-
-下一步讨论该参数值数组，但是首先让我们看看模式中每个参数。下表提供了有关参数的一些细节：
-
-| Argument             | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| `{2,time,short}`     | `Date`对象的时间部分，`short`风格指定`DateFormat.SHORT`格式化风格。 |
-| `{2,date,long}`      | `Date`对象的日期部分，同一个`Date`对象被用于时间和日期变量。在`Object`参数数组中持有该`Date`对象的元素的下标是 2。 |
-| `{1,number,integer}` | 一个`Number`对象，进一步使用`integer`数字样式限定。          |
-| `{0}`                | `ResourceBundle`中对应于`planet`键的`String`。               |
-
-有关参数语法的完整描述，参考 [`MessageFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html) 类的文档。
-
-**3. 设置消息参数**
-
-以下代码行为模式中的每个参数赋值。 `messageArguments`数组中元素的索引与模式中的参数号匹配。例如，索引1处的`Integer`元素对应于模式中的`{1,number,integer}`参数。因为它必须被翻译，元素0处的`String`对象将使用`getString`方法从`ResourceBundle`获取。以下是定义消息参数数组的代码：
+`ChoiceFormat`对象允许你选择，基于一个`double`数字，一个特定的`String`。该`double`数字的范围，以及它所映射到的`String`对象，在数组中指定：
 
 ```java
-Object[] messageArguments = {
-    messages.getString("planet"),
-    new Integer(7),
-    new Date()
+double[] fileLimits = {0,1,2};
+String [] fileStrings = {
+    bundle.getString("noFiles"),
+    bundle.getString("oneFile"),
+    bundle.getString("multipleFiles")
 };
 ```
 
-**4. 创建格式化器**
+`ChoiceFormat`将`double`数组中的每个元素映射到具有相同索引的`String`数组中的元素。在示例代码中，0 映射到通过调用`bundle.getString(“noFiles”)`返回的`String`。巧合的是，索引与`fileLimits`数组中的值相同。如果代码将`fileLimits[0]`设置为 7，那么`ChoiceFormat`会将数字 7 映射到`fileStrings[0]`。
 
-接下来，创建一个`MessageFormat`对象。你设定`Locale`因为消息包含`Date`和`Number`对象，应该给以区域敏感的方式格式化。
-
-```java
-MessageFormat formatter = new MessageFormat("");
-formatter.setLocale(currentLocale);
-```
-
-**5. 使用模式和参数格式化消息**
-
-此步骤显示模式，消息参数和格式化程序如何一起工作。首先，使用`getString`方法从`ResourceBundle`获取模式`String`。模式的关键是“模板”。使用`applyPattern`方法将模式`String`传递给格式化器。然后通过调用`format`方法使用消息参数数组格式化消息。 `format`方法返回的`String`已准备好显示。所有这一切都只需两行代码即可完成：
+在实例化`ChoiceFormat`时指定`double`和`String`数组：
 
 ```java
-formatter.applyPattern(messages.getString("template"));
-String output = formatter.format(messageArguments);
+ChoiceFormat choiceForm = new ChoiceFormat(fileLimits, fileStrings);
 ```
 
-**6. 运行例子程序**
+**5. 应用该模式**
 
-演示程序打印英语和德语语言环境的翻译消息，并正确格式化日期和时间变量。请注意，英语和德语动词（“detected”和“entdeckt”）位于相对于变量的不同位置：
+还记得你在第一步中创建的模式吗？是时候从`ResourceBundle`中获取它并将它应用于`MessageFormat`对象：
+
+```java
+String pattern = bundle.getString("pattern");
+messageForm.applyPattern(pattern);
+```
+
+**6. 分配该格式**
+
+这一步中你将第四步中创建的`ChoiceFormat`对象分配给`MessageFormat`对象：
+
+```java
+Format[] formats = {choiceForm, null, NumberFormat.getInstance()};
+messageForm.setFormats(formats);
+```
+
+`setFormats`方法将`Format`对象分配给消息模式中的参数。在调用`setFormats`方法之前，必须调用`applyPattern`方法。下表显示了`Format`数组的元素如何对应于消息模式中的参数：
+
+ `ChoiceFormatDemo` 程序的`Format` 数组
+
+| Array Element                | Pattern Argument |
+| ---------------------------- | ---------------- |
+| `choiceForm`                 | `{0}`            |
+| `null`                       | `{1}`            |
+| `NumberFormat.getInstance()` | `{2}`            |
+
+**7. 设置消息的参数和格式**
+
+在运行时，程序将变量分配给它传递给`MessageFormat`对象的参数数组。数组中的元素对应于模式中的参数。例如，`messageArgument[1]`映射到模式参数`{1}`，它是一个包含磁盘名称的`String`。在上一步中，程序将`ChoiceFormat`对象分配给模式的参数`{0}`。因此，分配给`messageArgument[0]`的数字决定了`ChoiceFormat`对象选择哪个`String`。如果`messageArgument[0]`大于或等于2，则包含短语`is {2} files`的`String`将替换模式中的参数`{0}`。分配给`messageArgument[2]`的数字将代替模式参数`{2}`。这是尝试这个过程的代码：
+
+```java
+Object[] messageArguments = {null, "XDisk", null};
+
+for (int numFiles = 0; numFiles < 4; numFiles++) {
+    messageArguments[0] = new Integer(numFiles);
+    messageArguments[2] = new Integer(numFiles);
+    String result = messageForm.format(messageArguments);
+    System.out.println(result);
+}
+```
+
+**8. 运行示例程序**
+
+将程序显示的消息与步骤2的`ResourceBundle`中的短语进行比较。请注意，`ChoiceFormat`对象选择正确的短语，`MessageFormat`对象用于构造正确的消息。 `ChoiceFormatDemo`程序的输出如下：
 
 ```
 currentLocale = en_US
-At 10:16 AM on July 31, 2009, we detected 7
-spaceships on the planet Mars.
-currentLocale = de_DE
-Um 10:16 am 31. Juli 2009 haben wir 7 Raumschiffe
-auf dem Planeten Mars entdeckt.
+There are no files on XDisk.
+There is one file on XDisk.
+There are 2 files on XDisk.
+There are 3 files on XDisk.
+
+currentLocale = fr_FR
+Il n'y a pas des fichiers sur XDisk.
+Il y a un fichier sur XDisk.
+Il y a 2 fichiers sur XDisk.
+Il y a 3 fichiers sur XDisk.
 ```
