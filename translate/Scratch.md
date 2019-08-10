@@ -1,164 +1,98 @@
-#### 处理复数
+## 使用文本
 
-如果复数和单数形式都可能，则消息中的单词可能会有所不同。使用`ChoiceFormat`类，您可以将数目映射到单词或短语，从而允许您构造语法正确的消息。
+几乎所有具有用户界面的程序都操纵文本。在国际市场上，您的程序显示的文本必须符合来自世界各地的语言规则。Java编程语言提供了许多类，可帮助您以与语言环境无关的方式处理文本。
 
-在英语中，单词的复数和单数形式通常是不同的。当您构建包含数量的消息时，这可能会出现问题。例如，如果您的消息报告磁盘上的文件数，则可能存在以下变化：
+[检查字符属性](https://docs.oracle.com/javase/tutorial/i18n/text/charintro.html)
 
-```
-There are no files on XDisk.
-There is one file on XDisk.
-There are 2 files on XDisk.
-```
+本章节解释如何使用`Character`比较方法来检测所有主要语言的字符属性。
 
-解决此问题的最快方式就是创建如下的`MessageFormat`模式：
+[比较字符串](https://docs.oracle.com/javase/tutorial/i18n/text/collationintro.html)
 
-```
-There are {0,number} file(s) on {1}.
-```
+本章节中你将学到如何使用`Collator`类执行区域无关的字符串比较。
 
-很不幸，上面的模式产生的语法不正确：
+[探测文本边界](https://docs.oracle.com/javase/tutorial/i18n/text/boundaryintro.html)
 
-```
-There are 1 file(s) on XDisk.
-```
+本章节展示`BreakIterator`类如何探测字符、词语、语句以及行边界。
 
-你可以做的更好，你可以使用 [`ChoiceFormat`](https://docs.oracle.com/javase/8/docs/api/java/text/ChoiceFormat.html) 类。在本节中你将看到如何处理消息中的复数。通过一个简单的例子[`ChoiceFormatDemo`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceFormatDemo.java) 逐步展示。该程序也使用了`MessageFormat`类，该类在上一节中讨论。
+[转化非Unicode文本](https://docs.oracle.com/javase/tutorial/i18n/text/convertintro.html)
 
-**1. 定义消息模式**
+世界各地的不同计算机系统以各种编码方案存储文本。本节介绍可帮助您在Unicode和其他编码之间转换文本的类。
 
-首先，标示消息中的变量：
+[正则化 API](https://docs.oracle.com/javase/tutorial/i18n/text/normalizerapi.html)
 
-![Three lines of text, with the variables in each line highlighted.](https://docs.oracle.com/javase/tutorial/figures/i18n/i18n-3.gif)
+本节解释如何使用正则化 API 来转化不同正则化形式的文本。
 
-接下来，用参数替换消息中的变量，创建一个能够应用于`MessageFormat`对象的模式：
+[通过 JTextComponent 类使用双向文本](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html)
 
-```
-There {0} on {1}.
-```
+本节讨论如何使用双向文本，该文本包含从左到右和从右到左两个方向运行的文本。
 
-磁盘名称的参数，由`{1}`表示，很容易处理。你只需像处理`MessageFormat`模式中的其它`String`变量一样处理它们。此参数匹配参数值数组中下标为 1 的元素。
+### 检查字符属性
 
-处理参数`{0}`更加复杂一些，因为两个原因：
+您可以根据字符的属性对字符进行分类。例如，X 是大写字母，4 是十进制数字。检查字符属性是验证最终用户输入的数据的常用方法。例如，如果您在线销售图书，您的订单输入屏幕应验证数量字段中的字符是否都是数字。
 
-* 参数替换过程会随着文件数量而有所不同。为了在运行时构建该阶段，你需要将文件数量映射到一个特定的`String`。比如，数量 1 映射到包含`is one file`短语的`String`。`ChoiceFormat`类允许你执行必要的映射。
-* 如果磁盘包含多个文件，该短语包含一个整数。`MessageFormat`类允许你在短语中插入一个整数。
-
-**2. 创建一个 ResourceBundle**
-
-因为消息文本必须被翻译，将它隔离到一个`ResourceBundle`中：
+不习惯编写全球化软件的开发人员可以通过将字符与字符常量进行比较来确定字符的属性。例如，他们可能会编写如下代码：
 
 ```java
-ResourceBundle bundle = ResourceBundle.getBundle(
-    "ChoiceBundle", currentLocale);
+char ch;
+//...
+
+// This code is WRONG!
+
+// check if ch is a letter
+if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
+    // ...
+
+// check if ch is a digit
+if (ch >= '0' && ch <= '9')
+    // ...
+
+// check if ch is a whitespace
+if ((ch == ' ') || (ch =='\n') || (ch == '\t'))
+    // ...
 ```
 
-例子程序使用属性文件支持`ResourceBundle`。[`ChoiceBundle_en_US.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceBundle_en_US.properties) 包含以下内容：
-
-```
-pattern = There {0} on {1}.
-noFiles = are no files
-oneFile = is one file
-multipleFiles = are {2} files
-```
-
-此属性文件的内容展示了消息将如何被构建和格式化。第一行包含`MessageFormat`模式。其它的行包含替换模式中的参数`{0}`的短语。对应于`multipleFiles`键的短语包含参数`{2}`，将被一个数字替换。
-
-这里是属性文件的法语版本， [`ChoiceBundle_fr_FR.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/ChoiceBundle_fr_FR.properties) ：
-
-```
-pattern = Il {0} sur {1}.
-noFiles = n'y a pas de fichiers
-oneFile = y a un fichier
-multipleFiles = y a {2} fichiers
-```
-
-**3. 创建一个消息格式化器**
-
-这一步实例化`MessageFormat`并设置它的`Locale`：
+上面的代码时错误的，因为它只能用于英语和很少几种其它语言。为了国际化该程序，改成如下形式：
 
 ```java
-MessageFormat messageForm = new MessageFormat("");
-messageForm.setLocale(currentLocale);
+char ch;
+// ...
+
+// This code is OK!
+
+if (Character.isLetter(ch))
+    // ...
+
+if (Character.isDigit(ch))
+    // ...
+
+if (Character.isSpaceChar(ch))
+    // ...
 ```
 
-**4. 创建 Choice Formatter**
+[`Character`](https://docs.oracle.com/javase/8/docs/api/java/lang/Character.html) 方法依赖 Unicode 标准来确定字符的属性。Unicode 是一种支持世界主要语言的16位字符编码。在Java编程语言中，`char`值表示 Unicode 字符。如果使用适当的`Character`方法检查`char`的属性，则代码将适用于所有主要语言。例如，如果字符是中文，德语，阿拉伯语或其他语言的字母，则`Character.isLetter`方法返回`true`。
 
-`ChoiceFormat`对象允许你选择，基于一个`double`数字，一个特定的`String`。该`double`数字的范围，以及它所映射到的`String`对象，在数组中指定：
+以下列表给出了一些最有用的`Character`比较方法。 `Character` API文档完全指定了方法。
+
+- `isDigit`
+- `isLetter`
+- `isLetterOrDigit`
+- `isLowerCase`
+- `isUpperCase`
+- `isSpaceChar`
+- `isDefined`
+
+`Character.getType`方法返回字符的 Unicode 类别。每个类别对应于`Character`类中定义的常量。例如，`getType`返回字符 A 的`Character.UPPERCASE_LETTER`常量。有关`getType`返回的类别常量的完整列表，请参阅[`Character`](https://docs.oracle.com /javase/8/docs/api/java/lang/Character.html) API文档。以下示例显示如何使用`getType`和`Character`类别常量。这些`if`语句中的所有表达式都是`true`：
 
 ```java
-double[] fileLimits = {0,1,2};
-String [] fileStrings = {
-    bundle.getString("noFiles"),
-    bundle.getString("oneFile"),
-    bundle.getString("multipleFiles")
-};
-```
+if (Character.getType('a') == Character.LOWERCASE_LETTER)
+    // ...
 
-`ChoiceFormat`将`double`数组中的每个元素映射到具有相同索引的`String`数组中的元素。在示例代码中，0 映射到通过调用`bundle.getString(“noFiles”)`返回的`String`。巧合的是，索引与`fileLimits`数组中的值相同。如果代码将`fileLimits[0]`设置为 7，那么`ChoiceFormat`会将数字 7 映射到`fileStrings[0]`。
+if (Character.getType('R') == Character.UPPERCASE_LETTER)
+    // ...
 
-在实例化`ChoiceFormat`时指定`double`和`String`数组：
+if (Character.getType('>') == Character.MATH_SYMBOL)
+    // ...
 
-```java
-ChoiceFormat choiceForm = new ChoiceFormat(fileLimits, fileStrings);
-```
-
-**5. 应用该模式**
-
-还记得你在第一步中创建的模式吗？是时候从`ResourceBundle`中获取它并将它应用于`MessageFormat`对象：
-
-```java
-String pattern = bundle.getString("pattern");
-messageForm.applyPattern(pattern);
-```
-
-**6. 分配该格式**
-
-这一步中你将第四步中创建的`ChoiceFormat`对象分配给`MessageFormat`对象：
-
-```java
-Format[] formats = {choiceForm, null, NumberFormat.getInstance()};
-messageForm.setFormats(formats);
-```
-
-`setFormats`方法将`Format`对象分配给消息模式中的参数。在调用`setFormats`方法之前，必须调用`applyPattern`方法。下表显示了`Format`数组的元素如何对应于消息模式中的参数：
-
- `ChoiceFormatDemo` 程序的`Format` 数组
-
-| Array Element                | Pattern Argument |
-| ---------------------------- | ---------------- |
-| `choiceForm`                 | `{0}`            |
-| `null`                       | `{1}`            |
-| `NumberFormat.getInstance()` | `{2}`            |
-
-**7. 设置消息的参数和格式**
-
-在运行时，程序将变量分配给它传递给`MessageFormat`对象的参数数组。数组中的元素对应于模式中的参数。例如，`messageArgument[1]`映射到模式参数`{1}`，它是一个包含磁盘名称的`String`。在上一步中，程序将`ChoiceFormat`对象分配给模式的参数`{0}`。因此，分配给`messageArgument[0]`的数字决定了`ChoiceFormat`对象选择哪个`String`。如果`messageArgument[0]`大于或等于2，则包含短语`is {2} files`的`String`将替换模式中的参数`{0}`。分配给`messageArgument[2]`的数字将代替模式参数`{2}`。这是尝试这个过程的代码：
-
-```java
-Object[] messageArguments = {null, "XDisk", null};
-
-for (int numFiles = 0; numFiles < 4; numFiles++) {
-    messageArguments[0] = new Integer(numFiles);
-    messageArguments[2] = new Integer(numFiles);
-    String result = messageForm.format(messageArguments);
-    System.out.println(result);
-}
-```
-
-**8. 运行示例程序**
-
-将程序显示的消息与步骤2的`ResourceBundle`中的短语进行比较。请注意，`ChoiceFormat`对象选择正确的短语，`MessageFormat`对象用于构造正确的消息。 `ChoiceFormatDemo`程序的输出如下：
-
-```
-currentLocale = en_US
-There are no files on XDisk.
-There is one file on XDisk.
-There are 2 files on XDisk.
-There are 3 files on XDisk.
-
-currentLocale = fr_FR
-Il n'y a pas des fichiers sur XDisk.
-Il y a un fichier sur XDisk.
-Il y a 2 fichiers sur XDisk.
-Il y a 3 fichiers sur XDisk.
+if (Character.getType('_') == Character.CONNECTOR_PUNCTUATION)
+    // ...
 ```
