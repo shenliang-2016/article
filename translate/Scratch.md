@@ -1,178 +1,144 @@
-### 转化非 Unicode 文本
+### 规范化文本
 
-在Java编程语言中，`char`值表示Unicode字符。Unicode是一种支持世界主要语言的16位字符编码。您可以在[Unicode Consortium网站](http://www.unicode.org/) 上了解有关Unicode标准的更多信息。
+*规范化*是一个过程，通过它您可以执行某些文本转换，使其可以以前所未有的方式进行协调。假设您想要搜索或排序文本，在这种情况下，您需要将该文本规范化以考虑应该表示为相同文本的代码点。
 
-很少有文本编辑器支持Unicode文本输入。我们用来编写本节代码示例的文本编辑器仅支持ASCII字符，限制为7位。为了表示不能用ASCII表示的Unicode字符，例如 ö，我们使用了`\uXXXX`转义序列。转义序列中的每个“X”都是十六进制数字。以下示例显示如何使用转义序列表示 ö 字符：
+什么可以规范化？当您需要转换使用变音符号的字符，更改所有字母大小写，分解连字或将半角片假名字符转换为全角字符等时，可以应用规范化。
 
-```java
-String str = "\u00F6";
-char c = '\u00F6';
-Character letter = new Character('\u00F6');
-```
+根据 [Unicode Standard Annex #15](http://www.unicode.org/reports/tr15/) ，Normalizer的API支持以下四种在 [`java.text.Normalizer.Form`](https://docs.oracle.com/javase/8/docs/api/java/text/Normalizer.Form.html) 中定义的Unicode文本规范化形式：
 
-世界各地的系统使用各种字符编码。目前，这些编码很少符合Unicode。因为您的程序需要Unicode中的字符，所以它从系统获取的文本数据必须转换为Unicode，反之亦然。当文本文件的编码与Java虚拟机的默认文件编码匹配时，文本文件中的数据将自动转换为Unicode。您可以通过使用它创建`OutputStreamWriter`并询问其规范名称来识别默认文件编码：
+ - 规范化形式D（NFD）：规范分解
+ - 规范化形式C（NFC）：规范分解，然后是规范组合
+ - 规范化形式KD（NFKD）：兼容性分解
+ - 规范化形式KC（NFKC）：兼容性分解，然后是规范组合
 
-```java
-OutputStreamWriter out = new OutputStreamWriter(new ByteArrayOutputStream());
-System.out.println(out.getEncoding());
-```
+让我们来看看如何通过使用这些规范化形式来规范化带有分音符的拉丁文小写字母“o”：
 
-如果默认文件编码与您要处理的文本数据的编码不同，则必须自己执行转换。处理来自其他国家/地区或计算平台的文本时，您可能需要执行此操作。
+| Original word | NFC     | NFD           | NFKC    | NFKD          |
+| ------------- | ------- | ------------- | ------- | ------------- |
+| "schön"       | "schön" | "scho\u0308n" | "schön" | "scho\u0308n" |
 
-本节讨论用于将非Unicode文本转换为Unicode的API。在使用这些API之前，您应该验证是否支持要转换为Unicode的字符编码。支持的字符编码列表不是Java编程语言规范的一部分。因此，API支持的字符编码可能随平台而变化。要查看Java Development Kit支持哪些编码，请参阅 [Supported Encodings](https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html) 文档。
+您可以注意到原始单词在 NFC 和 NFKC 中保持不变。这是因为使用 NFD 和 NFKD，复合字符被映射到它们的规范分解。但是对于 NFC 和 NFKC，如果可能的话，将组合字符序列映射到组合。由于没有用于分解的组合，因此它在 NFC 和 NFKC 中被分解。
 
-下面的内容描述了将非Unicode文本转换为Unicode的两种技术。您可以将非Unicode字节数组转换为`String`对象，反之亦然。或者，您可以在Unicode字符流和非Unicode文本的字节流之间进行转换。
+在下面的代码示例  [`NormSample.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/NormSample.java) 中，您还可以注意到另一个规范化功能。半宽和全宽片假名字符将具有相同的兼容性分解，因此是兼容性等价物。但是，它们不是规范的等价物。
 
-**[字节编码和字符串](https://docs.oracle.com/javase/tutorial/i18n/text/string.html)**
-
-本节介绍如何将非Unicode字节数组转换为`String`对象，反之亦然。
-
-**[字符和字节流](https://docs.oracle.com/javase/tutorial/i18n/text/stream.html)**
-
-在本节中，您将学习如何在Unicode字符流和非Unicode文本字节流之间进行转换。
-
-#### 字节编码和字符串
-
-如果字节数组包含非Unicode文本，则可以使用`String`构造函数方法之一将文本转换为Unicode。相反，您可以使用`String.getBytes`方法将`String`对象转换为非Unicode字符的字节数组。调用这些方法之一时，请将编码标识符指定为其中一个参数。
-
-下面的示例将在UTF-8和Unicode之间转换字符。UTF-8是Unicode的传输格式，对UNIX文件系统是安全的。该示例的完整源代码位于文件[`StringConverter.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/StringConverter.java) 中。
-
-`StringConverter`程序首先创建一个包含Unicode字符的`String`：
+为了确保您确实需要对文本进行规范化，可以使用`isNormalized`方法来确定给定的`char`值序列是否已规范化。如果此方法返回`false`，则表示您必须规范化此序列，并且应使用`normalize`方法，该方法根据指定的规范化形式规范化`char`值。例如，要将文本转换为规范的分解形式，您必须使用以下`normalize`方法：
 
 ```java
-String original = new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C");
+normalized_string = Normalizer.normalize(target_chars, Normalizer.Form.NFD);
 ```
 
-打印时，名为`original`的`String`显示为：
+此外，`normalize`方法会将重音重新排列为正确的规范顺序，因此您无需担心自己的重音重排。
 
-```
-AêñüC
-```
+以下示例表示一个应用程序，使您可以选择规范化形式和要规范化的模板：
 
-要将`String`对象转换为UTF-8，请调用`getBytes`方法并将相应的编码标识符指定为参数。 `getBytes`方法返回UTF-8格式的字节数组。要从非Unicode字节数组创建`String`对象，请使用`encoding`参数调用`String`构造函数。进行这些调用的代码包含在`try`块中，以防指定的编码不受支持：
+------
+
+**注意:**  如果您没有看到 applet 正在运行，则需要至少安装 [Java SE Development Kit (JDK) 7](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 版本。
+
+------
+
+此 applet 的完整代码在 [`NormSample.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/NormSample.java) 中。
+
+### 使用JTextComponent类的双向文本
+
+本节讨论如何使用 [`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 类处理双向文本。双向文本是包含从左到右和从右到左两个方向运行的文本的文本。双向文本的示例是包含数字（从左到右运行）的阿拉伯文本（从右向左运行）。显示和管理双向文本更加困难。但是 [`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 会为您处理这些问题。
+
+本节涵盖以下主题：
+
+- [确定双向文本的方向](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#directionality)
+- [显示和移动插入光标](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#displaying-and-moving-carets)
+- [命中测试](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#hit-testing)
+- [高亮选择](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#highlighting-selections)
+- [设置组件方向](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#setting-component-orientation)
+
+有关这些问题的更多信息，或者如果您希望在处理这些问题时有更多控制权，请参阅在 [2D Graphics](https://docs.oracle.com/javase/tutorial/2d/index.html) 中的 [Working with Bidirectional Text](https://docs.oracle.com/javase/tutorial/2d/text/textlayoutbidirectionaltext.html) 。
+
+**[确定双向文本方向]()**
+
+例子 [`BidiTextComponentDemo.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/BidiTextComponentDemo.java) ，基于 [`TextComponentDemo.java`](https://docs.oracle.com/javase/tutorial/uiswing/examples/components/index.html#TextComponentDemo) ，在 [`JTextPane`](https://docs.oracle.com/javase/8/docs/api/javax/swing/JTextPane.html) 对象中显示双向文本。大多数情况下，Java 平台能够确定双向 Unicode 文本的方向：
+
+![BidiTextComponentDemo.java](https://docs.oracle.com/javase/tutorial/figures/i18n/text/biditextcomponentdemo.jpg)
+
+**在JTextComponent对象中显式指定文本方向**
+
+你可以指定 [`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 对象的 [`Document`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/Document.html) 对象的方向。比如，下面的语句指定 [`JTextPane`](https://docs.oracle.com/javase/8/docs/api/javax/swing/JTextPane.html) 对象`textPane`中的文本方向为从右到左：
 
 ```java
-try {
-    byte[] utf8Bytes = original.getBytes("UTF8");
-    byte[] defaultBytes = original.getBytes();
-
-    String roundTrip = new String(utf8Bytes, "UTF8");
-    System.out.println("roundTrip = " + roundTrip);
-    System.out.println();
-    printBytes(utf8Bytes, "utf8Bytes");
-    System.out.println();
-    printBytes(defaultBytes, "defaultBytes");
-} 
-catch (UnsupportedEncodingException e) {
-    e.printStackTrace();
-}
+textPane.getDocument().putProperty(
+    TextAttribute.RUN_DIRECTION,
+    TextAttribute.RUN_DIRECTION_RTL);
 ```
 
-`StringConverter`程序打印出`utf8Bytes`和`defaultBytes`数组中的值以演示一个重要的点：转换后的文本的长度可能与源文本的长度不同。一些Unicode字符转换为单个字节，其他字符转换为成两字节或三字节字节。
-
-`printBytes`方法通过调用`byteToHex`方法显示字节数组，该方法在源文件中定义，[`UnicodeFormatter.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/UnicodeFormatter.java) 。这是`printBytes`方法：
+另外，你可以基于区域设置特定 Swing 组件的方向。比如，下面的语句基于区域`ar-SA`设定`textPane`对象的方向：
 
 ```java
-public static void printBytes(byte[] array, String name) {
-    for (int k = 0; k < array.length; k++) {
-        System.out.println(name + "[" + k + "] = " + "0x" +
-            UnicodeFormatter.byteToHex(array[k]));
-    }
-}
+Locale arabicSaudiArabia = 
+    new Locale.Builder().setLanguage("ar").setRegion("SA").build();
+
+textPane.setComponentOrientation(
+    ComponentOrientation.getOrientation(arabicSaudiArabia));
 ```
 
-接下来是`printBytes`方法的输出。请注意，在两个数组中，只有第一个和最后一个字节A和C字符相同：
+由于阿拉伯语的运行方向是从右到左，因此`textPane`对象中包含的文本的方向也是从右到左。
 
-```
-utf8Bytes[0] = 0x41
-utf8Bytes[1] = 0xc3
-utf8Bytes[2] = 0xaa
-utf8Bytes[3] = 0xc3
-utf8Bytes[4] = 0xb1
-utf8Bytes[5] = 0xc3
-utf8Bytes[6] = 0xbc
-utf8Bytes[7] = 0x43
-defaultBytes[0] = 0x41
-defaultBytes[1] = 0xea
-defaultBytes[2] = 0xf1
-defaultBytes[3] = 0xfc
-defaultBytes[4] = 0x43
-```
+有关更多信息，请参阅 [Setting Component Orientation](https://docs.oracle.com/javase/tutorial/i18n/text/bidi.html#setting-component-orientation) 一节。
 
-#### 字符和字节流
+**[显示和移动插入光标]()**
 
-`java.io`包提供了允许您在Unicode字符流和非Unicode文本的字节流之间进行转换的类。使用 [`InputStreamReader`](https://docs.oracle.com/javase/8/docs/api/java/io/InputStreamReader.html) 类，您可以将字节流转换为字符流。使用 [`OutputStreamWriter`](https://docs.oracle.com/javase/8/docs/api/java/io/OutputStreamWriter.html) 类将字符流转换为字节流。下图说明了转换过程：
+在可编辑文本中，插入符号用于以图形方式表示当前插入点，即文本中将插入新字符的位置。在 [`BidiTextComponentDemo.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/BidiTextComponentDemo.java) 示例中，插入符号包含一个小三角形，指向插入字符的显示方向。
 
-![This figure represents the conversion process](https://docs.oracle.com/javase/tutorial/figures/i18n/i18n-6.gif)
+默认情况下， [`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 对象创建一个键映射（类型为 [`Keymap`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/Keymap.html)），该键映射由所有[`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 实例共享为默认键映射。键映射允许应用程序将键击绑定到操作。默认键映射（对于支持插入符移动的[`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 对象）包括使用左右箭头键向前和向后移动插入符号之间的绑定，以支持在双向文本中移动插入符号。
 
-创建`InputStreamReader`和`OutputStreamWriter`对象时，指定要转换的字节编码。例如，要将UTF-8编码的文本文件转换为Unicode，您可以创建一个`InputStreamReader`，如下所示：
+**[命中测试]()**
+
+通常，设备空间中的位置必须转换为文本偏移量。例如，当用户在可选文本上单击鼠标时，鼠标的位置将转换为文本偏移并用作选择范围的一端。从逻辑上讲，这与定位插入符相反。
+
+您可以将插入符侦听器附加到 [`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 的实例。插入符号侦听器使您能够处理插入符号事件，这些事件在插入符号移动或文本组件中的选择发生更改时发生。使用 [`addCaretListener`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html#addCaretListener-javax.swing.event.CaretListener-) 方法附加插入符侦听器。有关更多信息，请参见 [How to Write a Caret Listener](https://docs.oracle.com/javase/tutorial/uiswing/events/caretlistener.html) 。
+
+**[高亮选择]()**
+
+所选字符范围由高亮区域以图形方式表示，高亮区域是以逆视频或不同背景颜色显示字形的区域。
+
+[`JTextComponent`](https://docs.oracle.com/javase/8/docs/api/javax/swing/text/JTextComponent.html) 对象实现逻辑高亮显示。这意味着所选字符在文本模型中始终是连续的，并且允许突出显示区域不连续。以下是逻辑高亮的示例：
+
+![BidiTextComponentDemo: logical highlighting](https://docs.oracle.com/javase/tutorial/figures/i18n/text/biditextcomponentdemo-selected.jpg)
+
+**[设置组件方向]()**
+
+Swing 的布局管理器了解区域设置如何影响UI，没有必要为每个区域设置创建新布局。例如，在文本从右向左流动的区域设置中，布局管理器将以相同的方向排列组件。
+
+示例 [`InternationalizedMortgageCalculator.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/InternationalizedMortgageCalculator.java) 已本地化为 English, United States; English, United Kingdom; French, France; French, Canada; and Arabic, Saudi Arabia。
+
+以下使用 en-US 语言环境：
+
+![Mortgage Calculator, en-US locale](https://docs.oracle.com/javase/tutorial/figures/i18n/format/mortgage-calculator-en-us.jpg)
+
+以下使用 ar-SA 语言环境：
+
+![Mortgage Calculator, ar-SA locale](https://docs.oracle.com/javase/tutorial/figures/i18n/format/mortgage-calculator-ar-sa.jpg)
+
+请注意，组件的布局方向与相应的区域设置相同：en-US从左到右，ar-SA从右到左。 [`InternationalizedMortgageCalculator.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/InternationalizedMortgageCalculator.java) 示例调用方法 [`applyComponentOrientation`](https://docs.oracle.com/javase/8/docs/api/java/awt/Component.html#applyComponentOrientation-java.awt.ComponentOrientation-) 和 [`getOrientation`](https://docs.oracle.com/javase/8/docs/api/java/awt/ComponentOrientation.html#getOrientation-java.util.Locale-) 以按区域设置指定其组件的方向：
 
 ```java
-FileInputStream fis = new FileInputStream("test.txt");
-InputStreamReader isr = new InputStreamReader(fis, "UTF8");
+private static JFrame frame;
+
+// ...
+
+private static void createAndShowGUI(Locale currentLocale) {
+
+    // Create and set up the window.
+    // ...
+    // Add contents to the window.
+    // ...
+    frame.applyComponentOrientation(
+        ComponentOrientation.getOrientation(currentLocale));
+    // ...
+  }
 ```
 
-如果省略编码标识符，`InputStreamReader`和`OutputStreamWriter`依赖于默认编码。您可以通过调用`getEncoding`方法来确定`InputStreamReader`或`OutputStreamWriter`使用的编码，如下所示：
+例子 [`InternationalizedMortgageCalculator.java`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/InternationalizedMortgageCalculator.java) 需要以下资源文件：
 
-```java
-InputStreamReader defaultReader = new InputStreamReader(fis);
-String defaultEncoding = defaultReader.getEncoding();
-```
-
-下面的示例向您展示了如何使用`InputStreamReader`和`OutputStreamWriter`类执行字符集转换。此示例的完整源代码位于[`StreamConverter.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/StreamConverter.java) 中。该程序显示日文字符。在尝试之前，请验证系统上是否安装了相应的字体。如果您使用的是与1.1版兼容的JDK软件，请复制`font.properties`文件，然后将其替换为`font.properties.ja`文件。
-
-`StreamConverter`程序将一个Unicode字符序列从`String`对象转换为以UTF-8编码的字节的`FileOutputStream`。执行转换的方法称为`writeOutput`：
-
-```java
-static void writeOutput(String str) {
-    try {
-        FileOutputStream fos = new FileOutputStream("test.txt");
-        Writer out = new OutputStreamWriter(fos, "UTF8");
-        out.write(str);
-        out.close();
-    } 
-    catch (IOException e) {
-        e.printStackTrace();
-    }
-}
-```
-
-`readInput`方法从`writeOutput`方法创建的文件中读取以UTF-8编码的字节。 `InputStreamReader`对象将UTF-8中的字节转换为Unicode，并将结果返回给`String`。 `readInput`方法如下：
-
-```java
-static String readInput() {
-    StringBuffer buffer = new StringBuffer();
-    try {
-        FileInputStream fis = new FileInputStream("test.txt");
-        InputStreamReader isr = new InputStreamReader(fis, "UTF8");
-        Reader in = new BufferedReader(isr);
-        int ch;
-        while ((ch = in.read()) > -1) {
-            buffer.append((char)ch);
-        }
-        in.close();
-        return buffer.toString();
-    } 
-    catch (IOException e) {
-        e.printStackTrace();
-        return null;
-    }
-}
-```
-
-`StreamConverter`程序的`main`方法调用`writeOutput`方法来创建以UTF-8编码的字节文件。 `readInput`方法读取相同的文件，将字节转换回Unicode。 这是`main`方法的源代码：
-
-```java
-public static void main(String[] args) {
-    String jaString = new String("\u65e5\u672c\u8a9e\u6587\u5b57\u5217");
-    writeOutput(jaString); 
-    String inputString = readInput();
-    String displayString = jaString + " " + inputString;
-    new ShowString(displayString, "Conversion Demo");
-}
-```
-
-原始字符串（`jaString`）应该与新创建的字符串（`inputString`）相同。为了显示两个字符串是相同的，程序将它们连接起来并用`ShowString`对象显示它们。 `ShowString`类显示带有`Graphics.drawString`方法的字符串。该类的源代码位于 [`ShowString.java`](https://docs.oracle.com/javase/tutorial/i18n/text/examples/ShowString.java) 中。当`StreamConverter`程序实例化`ShowString`时，会出现以下窗口。显示的字符重复验证两个字符串是否相同：
-
-![This is a screens hot of the StreamConverter program](https://docs.oracle.com/javase/tutorial/figures/i18n/conversion.gif)
+- [`resources/Resources.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources.properties)
+- [`resources/Resources_ar.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources_ar.properties)
+- [`resources/Resources_fr.properties`](https://docs.oracle.com/javase/tutorial/i18n/format/examples/resources/Resources_fr.properties)
 
