@@ -38,3 +38,21 @@
 
 ### 字段
 
+*字段*是类、接口、或者枚举值。 [`java.lang.reflect.Field`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html) 类中的方法能够获取字段的信息，比如字段名称、类型、修饰符、以及注解。（ [Classes](https://docs.oracle.com/javase/tutorial/reflect/class/index.html) 课程中 [Examining Class Modifiers and Types](https://docs.oracle.com/javase/tutorial/reflect/class/classModifiers.html) 章节描述了如何获取注解。）同时还有方法可以动态访问和修改字段值。这些内容都包含在以下章节中：
+
+- [获取字段类型](https://docs.oracle.com/javase/tutorial/reflect/member/fieldTypes.html) 描述如何获取字段声明和泛型类型
+- [获取并解析字段修饰符](https://docs.oracle.com/javase/tutorial/reflect/member/fieldModifiers.html) 展示如何获取字段声明中的修饰符部分，比如 `public` 或者 `transient`
+- [获取和设置字段值](https://docs.oracle.com/javase/tutorial/reflect/member/fieldValues.html) 举例说明如何访问字段值
+- [故障排除](https://docs.oracle.com/javase/tutorial/reflect/member/fieldTrouble.html) 描述可能会导致迷惑的常见代码错误
+
+当编写类似于类浏览器的应用程序时，查找哪些字段属于某个特定的类可能时很有用的。一个类的字段通过调用 [`Class.getFields()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getFields--) 方法来识别。 [`getFields()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getFields--) 方法返回一个 [`Field`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html) 对象数组，每个可访问的公共字段对应其中一个对象。
+
+如果公共字段是以下任何一个的成员，则可以访问该字段：
+
+- 这个类
+ - 这个类的超类
+ - 此类实现的接口
+ - 从此类实现的接口扩展的接口
+
+字段可以是类（实例）字段，例如 [`java.io.Reader.lock`](https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html#lock) ，静态字段，例如 [`java.lang.Integer.MAX_VALUE`](https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE)，或枚举常量，例如 [`java.lang.Thread.State.WAITING`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.State.html#WAITING) 。
+
