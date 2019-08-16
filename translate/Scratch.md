@@ -10,7 +10,7 @@
 
 方法 [`Field.getModifiers()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#getModifiers--) 可以被用来返回字段声明中的修饰符的集合的整数表示。该整数中表示修饰符的数据位定义在 [`java.lang.reflect.Modifier`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Modifier.html) 中。
 
-The [`FieldModifierSpy`](https://docs.oracle.com/javase/tutorial/reflect/member/example/FieldModifierSpy.java) example illustrates how to search for fields with a given modifier. It also determines whether the located field is synthetic (compiler-generated) or is an enum constant by invoking [`Field.isSynthetic()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isSynthetic--) and [`Field.isEnumCostant()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isEnumConstant--) respectively.
+ [`FieldModifierSpy`](https://docs.oracle.com/javase/tutorial/reflect/member/example/FieldModifierSpy.java) 示例展示了如何搜索使用给定修饰符的字段。它还能通过调用 [`Field.isSynthetic()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isSynthetic--) 来确定所定位的字段是否是合成的(编译器生成的)，通过调用[`Field.isEnumCostant()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isEnumConstant--) 确定字段是否是一个枚举常量。
 
 ```java
 import java.lang.reflect.Field;
@@ -72,28 +72,38 @@ public class FieldModifierSpy {
 }
 ```
 
-Sample output follows:
+上面的例子输出如下：
+
+$ *java FieldModifierSpy FieldModifierSpy volatile*
 
 ```
-$ java FieldModifierSpy FieldModifierSpy volatile
 Fields in Class 'FieldModifierSpy' containing modifiers:  volatile
 share    [ synthetic=false enum_constant=false ]
+```
 
-$ java FieldModifierSpy Spy public
+$ *java FieldModifierSpy Spy public*
+
+````
 Fields in Class 'Spy' containing modifiers:  public
 BLACK    [ synthetic=false enum_constant=true  ]
 WHITE    [ synthetic=false enum_constant=true  ]
+````
 
-$ java FieldModifierSpy FieldModifierSpy\$Inner final
+$ *java FieldModifierSpy FieldModifierSpy\$Inner final*
+
+````
 Fields in Class 'FieldModifierSpy$Inner' containing modifiers:  final
 this$0   [ synthetic=true  enum_constant=false ]
+````
 
-$ java FieldModifierSpy Spy private static final
+$ *java FieldModifierSpy Spy private static final*
+
+````
 Fields in Class 'Spy' containing modifiers:  private static final
 $VALUES  [ synthetic=true  enum_constant=false ]
+````
 
-```
+注意，某些字段没有在原始代码中声明，同样也被输出了出来。这是因为编译器将产生一些*合成字段*，这些字段在运行时会使用到。为了检测一个字段是否是合成字段，例子中调用了 [`Field.isSynthetic()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isSynthetic--) 。合成字段集合时编译器依赖的：但是常用的字段包括内部使用的`this$0`（比如作为非静态成员类的嵌套类），用于引用最外层的封闭类，枚举使用的`$VALUES`来实现隐式定义的静态方法`values()`。合成类成员的名称是未指定的，并且在不同编译器实现或发行版中可能不相同。这些和其他合成字段将包含在 [`Class.getDeclaredFields()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getDeclaredFields--) 返回的数组中，但不是由 [`Class.getField()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getField-java.lang.String-) 标识的，因为合成成员通常不是`public`的。
 
-Notice that some fields are reported even though they are not declared in the original code. This is because the compiler will generate some *synthetic fields* which are needed during runtime. To test whether a field is synthetic, the example invokes [`Field.isSynthetic()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html#isSynthetic--). The set of synthetic fields is compiler-dependent; however commonly used fields include `this$0` for inner classes (i.e. nested classes that are not static member classes) to reference the outermost enclosing class and `$VALUES` used by enums to implement the implicitly defined static method `values()`. The names of synthetic class members are not specified and may not be the same in all compiler implementations or releases. These and other synthetic fields will be included in the array returned by [`Class.getDeclaredFields()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getDeclaredFields--) but not identified by [`Class.getField()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getField-java.lang.String-) since synthetic members are not typically `public`.
+因为 [`Field`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html) 实现了接口 [`java.lang.reflect.AnnotatedElement`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AnnotatedElement.html) ，它就可能使用 [`java.lang.annotation.RetentionPolicy.RUNTIME`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/RetentionPolicy.html#RUNTIME) 检索任何运行时注解。获取注解的例子在章节 [Examining Class Modifiers and Types](https://docs.oracle.com/javase/tutorial/reflect/class/classModifiers.html) 中。
 
-Because [`Field`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Field.html) implements the interface [`java.lang.reflect.AnnotatedElement`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AnnotatedElement.html), it is possible to retrieve any runtime annotation with[`java.lang.annotation.RetentionPolicy.RUNTIME`](https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/RetentionPolicy.html#RUNTIME). For an example of obtaining annotations see the section [Examining Class Modifiers and Types](https://docs.oracle.com/javase/tutorial/reflect/class/classModifiers.html).
