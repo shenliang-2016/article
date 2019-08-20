@@ -1,29 +1,50 @@
-#### 故障排除
+### 构造器
 
-本节包含开发人员在使用反射来查找，调用或获取有关方法的信息时可能遇到的问题的示例。
+构造器被用来创建类的实例对象。它执行的典型操作是需要再方法被调用或者字段被访问之前初始化类实例对象。构造器用于无法被继承。
 
-**类型擦除导致的 NoSuchMethodException**
+类似于方法，反射提供了发现和检索类的构造器的 API ，同时可以获取注入修饰符、参数、注解以及抛出异常等声明信息。新的类实例还可以使用一个特定的构造器创建。当使用构造器时涉及到的关键类是 [`Class`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html) 和 [`java.lang.reflect.Constructor`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Constructor.html) 。与构造器相关的一般操作在下面的章节中介绍。
 
- [`MethodTrouble`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodTrouble.java) 示例展示了当在一个类中搜索特定方法的代码没有考虑类型擦除时将会发生什么：
+- [查找构造器](https://docs.oracle.com/javase/tutorial/reflect/member/ctorLocation.html) 展示如何获取携带特定参数的构造器
+- [检索并解析构造器修饰符](https://docs.oracle.com/javase/tutorial/reflect/member/ctorModifiers.html) 展示如何获取构造器声明修饰符以及有关构造器的其它信息
+- [创建新的类实例](https://docs.oracle.com/javase/tutorial/reflect/member/ctorInstance.html) 展示如何实例化一个对象实例，通过调用它的构造器
+- [故障修复Troubleshooting](https://docs.oracle.com/javase/tutorial/reflect/member/ctorTrouble.html) 描述在查找或者调用构造器时可能遇到的常见错误
+
+#### 查找构造器
+
+构造器声明包含名称、修饰符、参数以及可抛出的异常列表。[`java.lang.reflect.Constructor`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Constructor.html) 类提供了获取这些信息的方法。
+
+ [`ConstructorSift`](https://docs.oracle.com/javase/tutorial/reflect/member/example/ConstructorSift.java) 示例展示了如何在一个类中查找声明的携带给定参数类型的构造器。
 
 ```java
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
+import static java.lang.System.out;
 
-public class MethodTrouble<T>  {
-    public void lookup(T t) {}
-    public void find(Integer i) {}
-
+public class ConstructorSift {
     public static void main(String... args) {
 	try {
-	    String mName = args[0];
-	    Class cArg = Class.forName(args[1]);
-	    Class<?> c = (new MethodTrouble<Integer>()).getClass();
-	    Method m = c.getMethod(mName, cArg);
-	    System.out.format("Found:%n  %s%n", m.toGenericString());
+	    Class<?> cArg = Class.forName(args[1]);
 
-        // production code should handle these exceptions more gracefully
-	} catch (NoSuchMethodException x) {
-	    x.printStackTrace();
+	    Class<?> c = Class.forName(args[0]);
+	    Constructor[] allConstructors = c.getDeclaredConstructors();
+	    for (Constructor ctor : allConstructors) {
+		Class<?>[] pType  = ctor.getParameterTypes();
+		for (int i = 0; i < pType.length; i++) {
+		    if (pType[i].equals(cArg)) {
+			out.format("%s%n", ctor.toGenericString());
+
+			Type[] gpType = ctor.getGenericParameterTypes();
+			for (int j = 0; j < gpType.length; j++) {
+			    char ch = (pType[j].equals(cArg) ? '*' : ' ');
+			    out.format("%7c%s[%d]: %s%n", ch,
+				       "GenericParameterType", j, gpType[j]);
+			}
+			break;
+		    }
+		}
+	    }
+
+        // production code should handle this exception more gracefully
 	} catch (ClassNotFoundException x) {
 	    x.printStackTrace();
 	}
@@ -31,268 +52,80 @@ public class MethodTrouble<T>  {
 }
 ```
 
-$ *java MethodTrouble lookup java.lang.Integer*
+[`Method.getGenericParameterTypes()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#getGenericParameterTypes--) 将在类文件中查找方法签名属性，如果它存在。如果属性不可用，该方法就会退化为 [`Method.getParameterType()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#getParameterType--) ，此方法在引入泛型时没有变化。另一个名为`getGeneric*Foo*()*`的方法通过反射获取某些`Foo`的值，实现类似。`Method.get*Types()`的返回值语法在 [`Class.getName()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getName--) 中描述。
+
+下面是 [`java.util.Formatter`](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) 中所有携带 [`Locale`](https://docs.oracle.com/javase/8/docs/api/java/util/Locale.html) 参数的构造器的输出：
+
+$ *java ConstructorSift java.util.Formatter java.util.Locale*
+
+```
+public
+java.util.Formatter(java.io.OutputStream,java.lang.String,java.util.Locale)
+throws java.io.UnsupportedEncodingException
+       GenericParameterType[0]: class java.io.OutputStream
+       GenericParameterType[1]: class java.lang.String
+      *GenericParameterType[2]: class java.util.Locale
+public java.util.Formatter(java.lang.String,java.lang.String,java.util.Locale)
+throws java.io.FileNotFoundException,java.io.UnsupportedEncodingException
+       GenericParameterType[0]: class java.lang.String
+       GenericParameterType[1]: class java.lang.String
+      *GenericParameterType[2]: class java.util.Locale
+public java.util.Formatter(java.lang.Appendable,java.util.Locale)
+       GenericParameterType[0]: interface java.lang.Appendable
+      *GenericParameterType[1]: class java.util.Locale
+public java.util.Formatter(java.util.Locale)
+      *GenericParameterType[0]: class java.util.Locale
+public java.util.Formatter(java.io.File,java.lang.String,java.util.Locale)
+throws java.io.FileNotFoundException,java.io.UnsupportedEncodingException
+       GenericParameterType[0]: class java.io.File
+       GenericParameterType[1]: class java.lang.String
+      *GenericParameterType[2]: class java.util.Locale
+```
+
+下面的例子输出展示了如何在 [`String`](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html) 中搜索`char[]`类型参数。
+
+$ *java ConstructorSift java.lang.String "[C"*
+
+```
+java.lang.String(int,int,char[])
+       GenericParameterType[0]: int
+       GenericParameterType[1]: int
+      *GenericParameterType[2]: class [C
+public java.lang.String(char[],int,int)
+      *GenericParameterType[0]: class [C
+       GenericParameterType[1]: int
+       GenericParameterType[2]: int
+public java.lang.String(char[])
+      *GenericParameterType[0]: class [C
+```
+
+ [`Class.forName()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#forName-java.lang.String-) 接受的表示引用类型和基本数据类型的数组的语法在 [`Class.getName()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getName--) 中描述。注意，首先列出的构造器是`package-private`，而不是`public`。它被返回是因为示例代码使用了 [`Class.getDeclaredConstructors()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getDeclaredConstructors--) 而不是 [`Class.getConstructors()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getConstructors--) ，后者只返回`public`构造器。
+
+这个示例展示了搜索可变参数个数，需要使用数组语法：
+
+$ *java ConstructorSift java.lang.ProcessBuilder "[Ljava.lang.String;"*
+
+```
+public java.lang.ProcessBuilder(java.lang.String[])
+      *GenericParameterType[0]: class [Ljava.lang.String;
+```
+
+这是源代码中实际的 [`ProcessBuilder`](https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html#ProcessBuilder-java.lang.String...-) 构造器声明。
 
 ```java
-java.lang.NoSuchMethodException: MethodTrouble.lookup(java.lang.Integer)
-        at java.lang.Class.getMethod(Class.java:1605)
-        at MethodTrouble.main(MethodTrouble.java:12)
+public ProcessBuilder(String... command)
 ```
 
-$ *java MethodTrouble lookup java.lang.Object*
+参数被表示为一个一维数组，元素类型为`java.lang.String`。可以通过调用 [`Constructor.isVarArgs()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Constructor.html#isVarArgs--) 区别于显式声明为`java.lang.String`数组的参数。
+
+最后的示例输出声明为携带泛型类型参数的构造器：
+
+$ *java ConstructorSift java.util.HashMap java.util.Map*
 
 ```
-Found:
-  public void MethodTrouble.lookup(T)
+public java.util.HashMap(java.util.Map<? extends K, ? extends V>)
+      *GenericParameterType[0]: java.util.Map<? extends K, ? extends V>
 ```
 
-当一个方法被声明为使用泛型类型参数，编译器将使用泛型类型的上界替换该泛型类型。示例中的情况下，`T`的上界是`Object`。因此，当代码搜索`lookup(Integer)`时，找不到方法，尽管`MethodTrouble`示例被创建如下：
-
-```java
-Class<?> c = (new MethodTrouble<Integer>()).getClass();
-```
-
-寻找 `lookup(Object)` 意料之中的成功。
-
-$ *java MethodTrouble find java.lang.Integer*
-
-```
-Found:
-  public void MethodTrouble.find(java.lang.Integer)
-```
-
-$ *java MethodTrouble find java.lang.Object*
-
-````
-java.lang.NoSuchMethodException: MethodTrouble.find(java.lang.Object)
-        at java.lang.Class.getMethod(Class.java:1605)
-        at MethodTrouble.main(MethodTrouble.java:12)
-````
-
-这种情况下，`find()`没有泛型参数，因而 [`getMethod()`](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html#getMethod-java.lang.String-java.lang.Class...-) 方法搜索的方法的参数类型必须精确匹配。
-
-------
-
-**提示：** 当搜索方法时永远传递参数化类型的类型上界。
-
-------
-
-**调用方法时发生 IllegalAccessException**
-
-试图调用一个`private`或者其它的不可访问方法时将抛出 [`IllegalAccessException`](https://docs.oracle.com/javase/8/docs/api/java/lang/IllegalAccessException.html) 。
-
- [`MethodTroubleAgain`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodTroubleAgain.java) 示例展示一个典型的调用栈轨迹，它由调用其它类中的一个`private`方法尝试产生。
-
-```java
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-class AnotherClass {
-    private void m() {}
-}
-
-public class MethodTroubleAgain {
-    public static void main(String... args) {
-	AnotherClass ac = new AnotherClass();
-	try {
-	    Class<?> c = ac.getClass();
- 	    Method m = c.getDeclaredMethod("m");
-//  	    m.setAccessible(true);      // solution
- 	    Object o = m.invoke(ac);    // IllegalAccessException
-
-        // production code should handle these exceptions more gracefully
-	} catch (NoSuchMethodException x) {
-	    x.printStackTrace();
-	} catch (InvocationTargetException x) {
-	    x.printStackTrace();
-	} catch (IllegalAccessException x) {
-	    x.printStackTrace();
-	}
-    }
-}
-```
-
-异常栈如下：
-
-$ *java MethodTroubleAgain*
-
-```
-java.lang.IllegalAccessException: Class MethodTroubleAgain can not access a
-  member of class AnotherClass with modifiers "private"
-        at sun.reflect.Reflection.ensureMemberAccess(Reflection.java:65)
-        at java.lang.reflect.Method.invoke(Method.java:588)
-        at MethodTroubleAgain.main(MethodTroubleAgain.java:15)
-```
-
-------
-
-**提示：**存在访问限制，阻止反射调用通常无法通过直接调用访问的方法。（这包括---但不限于 - 单独的类中的`private`方法和单独的`private`类中`public`方法。）但是，声明`Method`扩展了`AccessibleObject`，它提供了通过`AccessibleObject.setAccessible()`来抑制此检查的能力。如果成功，则此方法对象的后续调用不会因此问题而失败。
-
-------
-
-**来自 `Method.invoke()` 的 IllegalArgumentException**
-
-[`Method.invoke()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#invoke-java.lang.Object-java.lang.Object...-) has been retrofitted to be a variable-arity method. This is an enormous convenience, however it can lead to unexpected behavior. The [`MethodTroubleToo`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodTroubleToo.java)example shows various ways in which [`Method.invoke()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#invoke-java.lang.Object-java.lang.Object...-) can produce confusing results.
-
-[`Method.invoke()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#invoke-java.lang.Object-java.lang.Object...-) 已被改进为可变参数方法。这是一个巨大的便利，但它可能导致意外的行为。 [`MethodTroubleToo`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodTroubleToo.java) 示例显示了 [`Method.invoke()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#invoke-java.lang.Object-java.lang.Object...-)  可以产生令人困惑的结果的各种方法。
-
-```java
-import java.lang.reflect.Method;
-
-public class MethodTroubleToo {
-    public void ping() { System.out.format("PONG!%n"); }
-
-    public static void main(String... args) {
-	try {
-	    MethodTroubleToo mtt = new MethodTroubleToo();
-	    Method m = MethodTroubleToo.class.getMethod("ping");
-
- 	    switch(Integer.parseInt(args[0])) {
-	    case 0:
-  		m.invoke(mtt);                 // works
-		break;
-	    case 1:
- 		m.invoke(mtt, null);           // works (expect compiler warning)
-		break;
-	    case 2:
-		Object arg2 = null;
-		m.invoke(mtt, arg2);           // IllegalArgumentException
-		break;
-	    case 3:
-		m.invoke(mtt, new Object[0]);  // works
-		break;
-	    case 4:
-		Object arg4 = new Object[0];
-		m.invoke(mtt, arg4);           // IllegalArgumentException
-		break;
-	    default:
-		System.out.format("Test not found%n");
-	    }
-
-        // production code should handle these exceptions more gracefully
-	} catch (Exception x) {
-	    x.printStackTrace();
-	}
-    }
-}
-```
-
-$ *java MethodTroubleToo 0*
-
-```
-PONG!
-```
-
-除了第一个参数， [`Method.invoke()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Method.html#invoke-java.lang.Object-java.lang.Object...-) 的所有参数都是可选的，它们可以被忽略，当方法被以无参方式调用时。
-
-$ *java MethodTroubleToo 1*
-
-```
-PONG!
-```
-
-这种情况下该代码会产生编译器警告，因为`null`是不明确的。
-
-$ *javac MethodTroubleToo.java*
-
-```
-MethodTroubleToo.java:16: warning: non-varargs call of varargs method with
-  inexact argument type for last parameter;
- 		m.invoke(mtt, null);           // works (expect compiler warning)
- 		              ^
-  cast to Object for a varargs call
-  cast to Object[] for a non-varargs call and to suppress this warning
-1 warning
-```
-
-无法确定`null`是表示空数组参数还是第一个参数是`null`。
-
-$ *java MethodTroubleToo 2*
-
-```
-java.lang.IllegalArgumentException: wrong number of arguments
-        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke
-          (NativeMethodAccessorImpl.java:39)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke
-          (DelegatingMethodAccessorImpl.java:25)
-        at java.lang.reflect.Method.invoke(Method.java:597)
-        at MethodTroubleToo.main(MethodTroubleToo.java:21)
-```
-
-尽管参数为`null`，但由于类型是`Object`而`ping()`完全不需要参数，因此失败。
-
-$ *java MethodTroubleToo 3*
-
-```
-PONG!
-```
-
-这是有效的，因为 `new Object[0]` 创建一个空数组，而对于可变参数方法，这相当于不传递任何可选参数。
-
-$ *java MethodTroubleToo 4*
-
-```
-java.lang.IllegalArgumentException: wrong number of arguments
-        at sun.reflect.NativeMethodAccessorImpl.invoke0
-          (Native Method)
-        at sun.reflect.NativeMethodAccessorImpl.invoke
-          (NativeMethodAccessorImpl.java:39)
-        at sun.reflect.DelegatingMethodAccessorImpl.invoke
-          (DelegatingMethodAccessorImpl.java:25)
-        at java.lang.reflect.Method.invoke(Method.java:597)
-        at MethodTroubleToo.main(MethodTroubleToo.java:28)
-```
-
-不同于前面的例子，如果空数组被存储在一个 [`Object`](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html) 中，则它会被作为一个 [`Object`](https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html) 对待。此时失败的原因与第二种情况相同， `ping()` 不期待任何参数。
-
-------
-
-**提示：**当声明方法 `foo(Object... o)` 时，编译器会将传递给`foo()` 的所有参数放入`Object`类型的数组中。`foo()`的实现与声明为`foo(Object[] o)`的实现相同。理解这可能有助于避免上述类型问题。
-
-----
-
-**当调用方法失败时产生的 InvocationTargetException**
-
- [`InvocationTargetException`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/InvocationTargetException.html) 包装调用方法对象时生成的所有异常（已检查和未检查）。 [`MethodTroubleReturns`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodTroubleReturns.java) 示例显示如何检索被调用方法抛出的原始异常。
-
-```java
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-public class MethodTroubleReturns {
-    private void drinkMe(int liters) {
-	if (liters < 0)
-	    throw new IllegalArgumentException("I can't drink a negative amount of liquid");
-    }
-
-    public static void main(String... args) {
-	try {
-	    MethodTroubleReturns mtr  = new MethodTroubleReturns();
- 	    Class<?> c = mtr.getClass();
-   	    Method m = c.getDeclaredMethod("drinkMe", int.class);
-	    m.invoke(mtr, -1);
-
-        // production code should handle these exceptions more gracefully
-	} catch (InvocationTargetException x) {
-	    Throwable cause = x.getCause();
-	    System.err.format("drinkMe() failed: %s%n", cause.getMessage());
-	} catch (Exception x) {
-	    x.printStackTrace();
-	}
-    }
-}
-```
-
-$ *java MethodTroubleReturns*
-
-```
-drinkMe() failed: I can't drink a negative amount of liquid
-```
-
-------
-
-**提示：**如果抛出 [`InvocationTargetException`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/InvocationTargetException.html) ，则该方法被调用。问题的诊断与直接调用该方法并抛出 [`getCause()`](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/InvocationTargetException.html#getCause--) 检索的异常相同。此异常并不表示反射包或其用法存在问题。
-
-------
+构造器的异常类型可以通过与检索方法类似的方式查找。参考 [Obtaining Method Type Information](https://docs.oracle.com/javase/tutorial/reflect/member/methodType.html) 章节中描述的 [`MethodSpy`](https://docs.oracle.com/javase/tutorial/reflect/member/example/MethodSpy.java) 示例获取更多细节。
 
