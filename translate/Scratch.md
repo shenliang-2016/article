@@ -1,128 +1,127 @@
-# 泛型
+## 通配符
 
-***by Gilad Bracha***
-
-这个期待已久的类型系统增强版在 J2SE 5.0 中引入，允许类型或方法对各种类型的对象进行操作，同时提供编译时类型安全性。它为集合框架增加了编译时类型安全性，并消除了转型的苦差事。
-
-- [介绍](https://docs.oracle.com/javase/tutorial/extra/generics/intro.html)
-- [定义简单泛型](https://docs.oracle.com/javase/tutorial/extra/generics/simple.html)
-- [泛型和子类型](https://docs.oracle.com/javase/tutorial/extra/generics/subtype.html)
-- [通配符](https://docs.oracle.com/javase/tutorial/extra/generics/wildcards.html)
-- [泛型方法](https://docs.oracle.com/javase/tutorial/extra/generics/methods.html)
-- [与遗留代码的互操作](https://docs.oracle.com/javase/tutorial/extra/generics/legacy.html)
-- [良好的打印](https://docs.oracle.com/javase/tutorial/extra/generics/fineprint.html)
-- [类字面常量作为运行时类型符号](https://docs.oracle.com/javase/tutorial/extra/generics/literals.html)
-- [通配符的更多用法](https://docs.oracle.com/javase/tutorial/extra/generics/morefun.html)
-- [遗留代码适配泛型](https://docs.oracle.com/javase/tutorial/extra/generics/convert.html)
-- [参考文献](https://docs.oracle.com/javase/tutorial/extra/generics/acknowledgements.html)
-
-## 介绍
-
-JDK 5.0 引入了若干新的扩展到 Java 编程语言中。其中之一是引入了*泛型*。
-
-本课程介绍泛型。你可能熟悉其它语言中的类似结构，特别是 C++ 中的模板。如果是这样，你将看到它们之前的异同。如果你并不熟悉其它的类似结构，非常好，你可以从头开始，而且不会有任何错误概念的干扰。
-
-泛型允许你在类型之上进行抽象。大部分的例子都是容器类型，比如那些集合框架体系结构中的类型。
-
-下面是一个典型的排序应用：
+考虑编写打印集合中所有元素的程序。下面是你在 Java 5.0 版本之前的可能写法：
 
 ```java
-List myIntList = new LinkedList(); // 1
-myIntList.add(new Integer(0)); // 2
-Integer x = (Integer) myIntList.iterator().next(); // 3        
-```
-
-第三行的转型有点烦人。典型地，程序员直到放入特定列表中的具体是什么类型的数据。然而，转型是基础的。编译器只能保证迭代器返回`Object` 。为了保证为`Integer` 变量的赋值是类型安全的，就必须转型。
-
-当然，这种转型同时也引入了干扰。他同时引入了运行时错误的可能性，因为程序员可能会犯错误。
-
-程序员如何才能实际表达他们的意图，将一个列表标记为只能包含特定类型的数据？这是泛型背后的核心目标。下面这个代码片段使用泛型做到这一点：
-
-```java
-List<Integer> 
-    myIntList = new LinkedList<Integer>(); // 1'
-myIntList.add(new Integer(0)); // 2'
-Integer x = myIntList.iterator().next(); // 3'
-```
-
-注意，变量`myIntList` 的类型声明。它表明这不仅仅是一个任意的`List` ，而是一个`Integer`的`List`，写做`List<Integer>`。我们说该`List`是一个泛型接口，携带了类型参数。这种情况下，类型参数是`Integer`。我们通常也会在创建列表对象时指定一个类型参数。
-
-同时，注意第三行代码中的转型没有了。
-
-现在，你可能认为我们所做的就是绕过了干扰。相对于在第三行中将数据转型为`Integer` ，我们现在将`Integer` 作为第一行代码中的类型参数。不过，这里仍然有个显著不同。编译器现在可以在编译期检查程序的类型正确性。当我们说`myIntList` 被使用类型`List<Integer>` 声明时，这告诉我们有关变量`myIntlist` 的一些信息，无论在何时何处使用该变量，编译器将保证这些信息始终为 `true` 。相对而言，转型告诉我们的信息只是程序员认为在那个代码处这个信息是真的。
-
-泛型的单纯的好处，特别是在大型程序中，显著提高了代码可读性和鲁棒性。
-
-## 定义简单泛型
-
-这里是 `java.util` 包中的 `List` 和 `Iterator` 接口定义中的片段：
-
-```java
-public interface List <E> {
-    void add(E x);
-    Iterator<E> iterator();
-}
-
-public interface Iterator<E> {
-    E next();
-    boolean hasNext();
+void printCollection(Collection c) {
+    Iterator i = c.iterator();
+    for (k = 0; k < c.size(); k++) {
+        System.out.println(i.next());
+    }
 }
 ```
 
-这些代码你应该很熟悉，除了其中的大括号。那些大括号是接口 `List` 和 `Iterator` 的*形式类型参数*声明。
-
-类型参数可以被使用在泛型声明中的各处，基本上就是你使用普通类型的位置（尽管存在一些特殊限制，参考 [The Fine Print](https://docs.oracle.com/javase/tutorial/extra/generics/fineprint.html) ）。
-
-本章节中，我们看到泛型类型声明 `List` 的*调用*，比如 `List<Integer>` 。在该调用中（通常称为*参数化类型*），所有出现的形式类型参数（例子中的 `E`）都会被*实际类型参数*（例子中的 `Integer`）替换。
-
-你可以将 `List<Integer>` 想象为 `List` 的一个特殊版本，其中的 `E` 会被 `Integer` 统一替换：
+下面是一个单纯的使用泛型的版本（同时使用了新版本的 `for` 循环语法）：
 
 ```java
-public interface IntegerList {
-    void add(Integer x);
-    Iterator<Integer> iterator();
+void printCollection(Collection<Object> c) {
+    for (Object e : c) {
+        System.out.println(e);
+    }
 }
 ```
 
-这种直觉可能会有助于理解，但是也可能导致误解。
+问题在于，新版本的代码相比于老版本代码通用性差了很多。因为老版本代码可以接受任何类型的集合作为参数，但是新版本的代码只能使用 `Collection<Object>` ，当时，正如我们前面强调的，它并不是所有集合的超类！
 
-它是有用的，因为参数化类型 `List<Integer>` 确实具有类似这种扩展的方法。
-
-它具有误导性，因为泛型声明永远不会以这种方式扩展。不能存在代码副本，源代码、二进制文件、磁盘以及内存中都没有。如果你是一个 C++ 程序员，你讲理解这一点显然不同于 C++ 模板。
-
-反省类型声明一次性编译，并转化为单个类文件，就像其他普通的类或者接口声明。
-
-类型参数类似于方法或构造函数中使用的普通参数。就像方法具有描述其操作的值的种类的形式值参数一样，泛型声明具有形式类型参数。调用方法时，将使用实际参数替换形式参数，并评估方法体。调用泛型声明时，实际的类型参数将替换形式类型参数。
-
-关于命名约定的说明。我们建议您使用简洁（单个字符，如果可能）但令人回味的名称为形式类型参数。最好避免使用小写字符，这样可以很容易地将形式类型参数与普通类和接口区分开来。许多容器类型使用 `E` 作为元素，如上例所示。我们将在后面的示例中看到一些其他约定。
-
-## 泛型和子类型
-
-让我们来测试一下你对泛型的理解。下面的代码合法吗？
+那么，什么才是所有集合的超类？写做 `Collection<?>` （发音为“collection of unknown”），也就是说，一个元素类型匹配任何东西的集合。它被称为**通配符类型**，顾名思义。我们可以这么写：
 
 ```java
-List<String> ls = new ArrayList<String>(); // 1
-List<Object> lo = ls; // 2 
+void printCollection(Collection<?> c) {
+    for (Object e : c) {
+        System.out.println(e);
+    }
+}
 ```
 
-第一行自然是合法的。有问题的部分是第二行。归结起来的根本问题是：一个 `String` 的 `List` 究竟是不是一个 `Object` 的 `List` ？大多数人直觉的答案是：“当然是！”
-
-好的，继续看接下来几行代码：
+现在，我们可以使用任意类型的集合来调用新版本代码。注意在 `printCollection()` 内部，我们仍然能够从 `c` 中读取元素并给予它们类型 `Object` 。这永远是安全的，因为无论实际集合元素是什么类型，它都包含对象。然而，向其中添加任意对象却是不安全的：
 
 ```java
-lo.add(new Object()); // 3
-String s = ls.get(0); // 4: Attempts to assign an Object to a String!
+Collection<?> c = new ArrayList<String>();
+c.add(new Object()); // Compile time error
 ```
 
-此时，我们已经创建了 `ls` 和一个它的别名 `lo` 。通过别名 `lo` 访问 `ls` ，一个 `String` 列表。我们可以将任意对象插入该列表。作为结果，`ls` 不在仅仅包含 `String` ，然后当我们试图从其中获取数据时，我们就会遇到问题。
+因为我们不知道 `c` 的元素类型代表什么，我们不能添加对象到其中。`add()` 方法使用类型 `E` 的参数，也就是集合的元素类型。当实际类型参数是 `?` 时，它代表一些未知类型。我们传递给 `add` 的任何参数都必须是这个未知类型的子类。因为我们不知道这个类型是什么，我们也就不能传递任何参数进去。唯一的例外是 `null` ，它是每种类型的成员。
 
-Java 编译器当然将阻止这一切的发生。第二行代码将会导致一个编译期错误。
+另一方面，给定一个 `List<?>` ，我们能够调用 `get()` 并使用其结果。结果类型是一个未知类型，但是我们始终知道它就是一个对象。因此，将 `get()` 方法的结果赋值给一个 `Object` 类型的变量，或者将其作为 `Object` 类型参数传递都是安全的。
 
-通常，如果 `Foo` 是一个 `Bar` 的子类型（子类或者子接口），同时 `G` 是泛型类型声明，那么 `G<Foo>` 并不是 `G<Bar>` 的子类。这一点可能是你需要理解的泛型概念中最难的部分，因为这一点显然不同于我们的直觉。
+**有界通配符**
 
-我们不应该假定集合不会发生变化。我们的直觉会误导我们认为这些东西是不可变的。
+考虑一个简单的绘图程序，可以绘制诸如长方形和圆形等形状。为了在程序中表示这些形状，你可以定义如下类体系结构：
 
-比如，如果汽车供应商向人口普查部门提供司机清单，这看起来是合理的。我们认为 `List<Driver` 是一个 `List<Person>` ，假定 `Driver` 是 `Person` 的子类型。事实上，被传递的是司机注册表的副本。否则，人口普查部门可以将不是司机的人员添加到司机注册表中，破坏了 DMV 的记录。
+```java
+public abstract class Shape {
+    public abstract void draw(Canvas c);
+}
 
-为了处理这种排序情况，考虑更加灵活的泛型类型是有用的。到目前为止我们看到的规则是相当严格的。
+public class Circle extends Shape {
+    private int x, y, radius;
+    public void draw(Canvas c) {
+        ...
+    }
+}
+
+public class Rectangle extends Shape {
+    private int x, y, width, height;
+    public void draw(Canvas c) {
+        ...
+    }
+}
+```
+
+这些形状可以被绘制到画布上：
+
+```java
+public class Canvas {
+    public void draw(Shape s) {
+        s.draw(this);
+   }
+}
+```
+
+任何绘制将包含一系列的形状。假定它们表示为一个列表，方便的做法是在 `Canvas` 中有一个方法类绘制它们：
+
+```java
+public void drawAll(List<Shape> shapes) {
+    for (Shape s: shapes) {
+        s.draw(this);
+   }
+}
+```
+
+现在，类型规则规定 `drawAll()` 只能被在一个确切的 `Shape` 列表上调用。它不能，比如，被在 `List<Circle>` 上调用。这很不幸，因为所有的方法确实是从该列表中读取形状，因此它也应该可以被在 `List<Circle>` 上调用。其实我们需要的是接受任何形状的列表的方法：
+
+```java
+public void drawAll(List<? extends Shape> shapes) {
+    ...
+}
+```
+
+这里有个很小的但是很重要的区别：我们已经使用 `List<? extends Shape>` 替换了类型 `List<Shape>` 。现在 `drawAll()` 将接受任何 `Shape` 的子类的列表，因而我们现在可以如愿在 `List<Circle>` 上调用它。
+
+`List<? extends Shapte>` 是一个*有界通配符*的例子。其中的 `?` 表示一个未知类型，就像我们前面看到的通配符。然而，这种情况下，我们知道这个未知类型实际上是 `Shape` 的子类。（注意：它可以是 `Shape` 本身，或者是一些子类，它不需要字面上扩展 `Shape` 。）我们将 `Shape` 称为通配符的*上界* 。
+
+这就是通常情况下为了使用通配符的灵活性而需要付出的代价。代价是现在在方法体中写入 `Shape` 是非法的。比如，下面的写法是不允许的：
+
+```java
+public void addRectangle(List<? extends Shape> shapes) {
+    // Compile-time error!
+    shapes.add(0, new Rectangle());
+}
+```
+
+你应该能够指出为什么上面的代码是不允许的。`shapes.add()` 的第二个参数的类型是 `? extends Shape` ，一个 `Shape` 的未知子类型。因为我们不知道它是什么类型，我们也就不知道它是不是 `Rectangle` 的超类。它可能是也可能不是那个超类，因此在那里传递 `Rectangel` 是不安全的。
+
+有界通配符正是人们处理DMV将其数据传递给人口普查局的例子中所需要的。我们的示例假定数据通过从名称（表示为字符串）到人（由引用类型（如`Person`或其子类型，如`Driver`）表示）的映射来表示。`Map <K，V>`是一个泛型类型的示例，它采用两个类型参数，表示映射的键和值。
+
+再次，请注意形式类型参数的命名约定 - 键为`K`，值为`V` 。
+
+```java
+public class Census {
+    public static void addRegistry(Map<String, ? extends Person> registry) {
+}
+...
+
+Map<String, Driver> allDrivers = ... ;
+Census.addRegistry(allDrivers);
+```
 
