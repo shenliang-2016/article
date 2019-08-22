@@ -179,78 +179,76 @@ FROM Employees
 
 **`WHERE` 子句**
 
-The `WHERE` clause in a `SELECT` statement provides the criteria for selecting values. For example, in the following code fragment, values will be selected only if they occur in a row in which the column `Last_Name` begins with the string 'Washington'.
+`SELECT` 语句中的 `WHERE` 子句提供选择值的约束条件。比如，在下面的语句中，只有列 `Last_Name` 以字符串 `Washington` 开头的行中的值才会被选择。
 
-```
+```sql
 SELECT First_Name, Last_Name
 FROM Employees
 WHERE Last_Name LIKE 'Washington%'
 ```
 
-The keyword `LIKE` is used to compare strings, and it offers the feature that patterns containing wildcards can be used. For example, in the code fragment above, there is a percent sign (`%`) at the end of 'Washington', which signifies that any value containing the string 'Washington' plus zero or more additional characters will satisfy this selection criterion. So 'Washington' or 'Washingtonian' would be matches, but 'Washing' would not be. The other wildcard used in `LIKE` clauses is an underbar (`_`), which stands for any one character. For example,
+关键字 `LIKE` 用来比较字符床，同时提供了可以使用包含通配符的模式的功能特性。比如，上面的语句中，`Washington` 的末尾跟着一个百分号 `%`，表示任何包含 `Washington` 加上零个或者多个附加字符的值都符合选择约束条件。另一个用于 `LIKE` 子句的通配符是下划线 `_` ，表示任何单个字符。比如：
 
-```
+```sql
 WHERE Last_Name LIKE 'Ba_man'
 ```
 
-would match 'Barman', 'Badman', 'Balman', 'Bagman', 'Bamman', and so on.
+将匹配 'Barman', 'Badman', 'Balman', 'Bagman', 'Bamman', 等等。
 
-The code fragment below has a `WHERE` clause that uses the equal sign (`=`) to compare numbers. It selects the first and last name of the employee who is assigned car 12.
+下面的语句包含一个 `WHERE` 子句，使用等号 `=` 来比较数字。它选择分配了车号 12 的员工的姓名。
 
-```
+```sql
 SELECT First_Name, Last_Name
 FROM Employees
 WHERE Car_Number = 12
 ```
 
-The next code fragment selects the first and last names of employees whose employee number is greater than 10005:
+下面的语句选择员工号大于 10005 的员工的姓名：
 
-```
+```sql
 SELECT First_Name, Last_Name
 FROM Employees
 WHERE Employee_Number > 10005
 ```
 
-`WHERE` clauses can get rather elaborate, with multiple conditions and, in some DBMSs, nested conditions. This overview will not cover complicated `WHERE` clauses, but the following code fragment has a `WHERE` clause with two conditions; this query selects the first and last names of employees whose employee number is less than 10100 and who do not have a company car.
+`WHERE`子句可以包含多个条件而变得非常缜密，在某些DBMS中，还可以包含嵌套条件。这个概述不会涵盖复杂的`WHERE`子句，但是下面的代码片段有一个带有两个条件的`WHERE`子句。此查询选择员工编号小于 10100 且没有公司汽车的员工的名字和姓氏。
 
-```
+```sql
 SELECT First_Name, Last_Name
 FROM Employees
 WHERE Employee_Number < 10100 and Car_Number IS NULL
 ```
 
-A special type of `WHERE` clause involves a join, which is explained in the next section.
+一种特殊类型的 `WHERE` 子句涉及 `join` ，在下一章节中解释。
 
-## Joins
+**Joins**
 
-A distinguishing feature of relational databases is that it is possible to get data from more than one table in what is called a join. Suppose that after retrieving the names of employees who have company cars, one wanted to find out who has which car, including the license plate number, mileage, and year of car. This information is stored in another table, `Cars`:
-
-
+关系数据库的一个显着特征是可以从所谓的连接中的多个表中获取数据。假设在检索拥有公司汽车的员工的姓名后，人们想知道谁拥有哪辆汽车，包括车牌号码，里程数和汽车年份。此信息存储在另一个表 `Cars` 中：
 
 | `Car_Number` | `License_Plate` | `Mileage` | `Year` |
 | ------------ | --------------- | --------- | ------ |
 | 5            | ABC123          | 5000      | 1996   |
 | 12           | DEF123          | 7500      | 1999   |
 
-There must be one column that appears in both tables in order to relate them to each other. This column, which must be the primary key in one table, is called the foreign key in the other table. In this case, the column that appears in two tables is `Car_Number`, which is the primary key for the table `Cars` and the foreign key in the table `Employees`. If the 1996 car with license plate number ABC123 were wrecked and deleted from the `Cars` table, then `Car_Number` 5 would also have to be removed from the `Employees` table in order to maintain what is called referential integrity. Otherwise, the foreign key column (`Car_Number`) in the `Employees` table would contain an entry that did not refer to anything in the `Cars` table. A foreign key must either be null or equal to an existing primary key value of the table to which it refers. This is different from a primary key, which may not be null. There are several null values in the `Car_Number` column in the table `Employees` because it is possible for an employee not to have a company car.
+两个表中必须有相同的一列才能将它们相互关联。此列必须是一个表中的主键，在另一个表中称为外键。在这种情况下，出现在两个表中的列是`Car_Number`，它是表`Cars`的主键和表`Employees`中的外键。如果车牌号为 ABC123 的 1996 年汽车被破坏并从`Cars`表中删除，则还必须从`Employees`表中删除`Car_Number` 5以维持所谓的参照完整性。否则，`Employees`表中的外键列（`Car_Number`）将包含一个未引用`Cars`表中任何内容的条目。外键必须为`null`或等于其引用的表的现有主键值。这与主键不同，主键不能为空。表`Employees`中的`Car_Number`列中有几个空值，因为员工可能没有公司汽车。
 
-The following code asks for the first and last names of employees who have company cars and for the license plate number, mileage, and year of those cars. Note that the `FROM` clause lists both the `Employees` and `Cars` tables because the requested data is contained in both tables. Using the table name and a dot (`.`) before the column name indicates which table contains the column.
+以下代码查询拥有公司汽车的员工的名字和姓氏，以及这些车辆的车牌号码，里程数和年份。请注意，`FROM`子句列出了`Employees`和`Cars`表，因为请求的数据包含在两个表中。在列名称前使用表名和点（`.`）表示哪个表包含该列。
 
-```
+```sql
 SELECT Employees.First_Name, Employees.Last_Name,
     Cars.License_Plate, Cars.Mileage, Cars.Year
 FROM Employees, Cars
 WHERE Employees.Car_Number = Cars.Car_Number
 ```
 
-This returns a result set that will look similar to the following:
+返回的结果集如下：
 
 | `FIRST_NAME` | `LAST_NAME` | `LICENSE_PLATE` | `MILEAGE` | `YEAR` |
 | ------------ | ----------- | --------------- | --------- | ------ |
 | John         | Washington  | ABC123          | 5000      | 1996   |
 | Florence     | Wojokowski  | DEF123          | 7500      | 1999   |
 
-## Common SQL Commands
+**通用 SQL 命令**
 
 SQL commands are divided into categories, the two main ones being Data Manipulation Language (DML) commands and Data Definition Language (DDL) commands. DML commands deal with data, either retrieving it or modifying it to keep it up-to-date. DDL commands create or change tables and other database objects such as views and indexes.
 
@@ -267,7 +265,7 @@ The more common DDL commands follow:
 - `DROP TABLE — ` deletes all rows and removes the table definition from the database. A JDBC API implementation is required to support the DROP TABLE command as specified by SQL92, Transitional Level. However, support for the `CASCADE` and `RESTRICT` options of `DROP TABLE` is optional. In addition, the behavior of `DROP TABLE` is implementation-defined when there are views or integrity constraints defined that reference the table being dropped.
 - `ALTER TABLE — ` adds or removes a column from a table. It also adds or drops table constraints and alters column attributes
 
-## Result Sets and Cursors
+**结果集和游标**
 
 The rows that satisfy the conditions of a query are called the result set. The number of rows returned in a result set can be zero, one, or many. A user can access the data in a result set one row at a time, and a cursor provides the means to do that. A cursor can be thought of as a pointer into a file that contains the rows of the result set, and that pointer has the ability to keep track of which row is currently being accessed. A cursor allows a user to process each row of a result set from top to bottom and consequently may be used for iterative processing. Most DBMSs create a cursor automatically when a result set is generated.
 
@@ -275,7 +273,7 @@ Earlier JDBC API versions added new capabilities for a result set's cursor, allo
 
 See [Retrieving and Modifying Values from Result Sets](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html) for more information.
 
-## Transactions
+**事务**
 
 When one user is accessing data in a database, another user may be accessing the same data at the same time. If, for instance, the first user is updating some columns in a table at the same time the second user is selecting columns from that same table, it is possible for the second user to get partly old data and partly updated data. For this reason, DBMSs use transactions to maintain data in a consistent state (data consistency) while allowing more than one user to access a database at the same time (data concurrency).
 
@@ -285,10 +283,10 @@ A lock is a mechanism that prohibits two transactions from manipulating the same
 
 See [Using Transactions](https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html) for more information.
 
-## Stored Procedures
+**存储过程**
 
 A stored procedure is a group of SQL statements that can be called by name. In other words, it is executable code, a mini-program, that performs a particular task that can be invoked the same way one can call a function or method. Traditionally, stored procedures have been written in a DBMS-specific programming language. The latest generation of database products allows stored procedures to be written using the Java programming language and the JDBC API. Stored procedures written in the Java programming language are bytecode portable between DBMSs. Once a stored procedure is written, it can be used and reused because a DBMS that supports stored procedures will, as its name implies, store it in the database. See [Using Stored Procedures](https://docs.oracle.com/javase/tutorial/jdbc/basics/storedprocedures.html) for information about writing stored procedures.
 
-## Metadata
+**元数据**
 
 Databases store user data, and they also store information about the database itself. Most DBMSs have a set of system tables, which list tables in the database, column names in each table, primary keys, foreign keys, stored procedures, and so forth. Each DBMS has its own functions for getting information about table layouts and database features. JDBC provides the interface `DatabaseMetaData`, which a driver writer must implement so that its methods return information about the driver and/or DBMS for which the driver is written. For example, a large number of methods return whether or not the driver supports a particular functionality. This interface gives users and tools a standardized way to get metadata. In general, developers writing tools and drivers are the ones most likely to be concerned with metadata.
