@@ -126,3 +126,169 @@ Figure 2: 数据访问的三层体系结构
 
 随着企业越来越多地使用 Java 编程语言编写服务器代码，JDBC API 在三层体系结构的中间层中越来越多地被使用。使 JDBC 成为服务器技术的一些功能是它支持连接池，分布式事务和断开连接的行集。JDBC API也允许从 Java 中间层访问数据源。
 
+### 关系数据库概览
+
+数据库是一种以可以从中检索信息的方式存储信息的方法。简单来说，关系数据库是在包含行和列的表中显示信息的数据库。表在某种意义上被称为关系，它是相同类型（行）的对象的集合。表中的数据可以根据公共键或概念进行关联，并且从表中检索相关数据的能力是关系数据库术语的基础。数据库管理系统（DBMS）处理数据的存储，维护和检索方式。对于关系数据库，关系数据库管理系统（RDBMS）执行这些任务。本书中使用的DBMS是包含RDBMS的通用术语。
+
+**完整性规则**
+
+关系表遵循某些完整性规则，以确保它们包含的数据保持准确并始终可访问。首先，关系表中的行应该都是不同的。如果存在重复行，则可能存在解决两个可能选择中哪一个是正确选择的问题。对于大多数DBMS，用户可以指定不允许重复行，如果这样做，DBMS将阻止添加任何重复现有行的行。
+
+传统关系模型的第二个完整性规则是列值不能是重复的组或数组。数据完整性的第三个方面涉及空值的概念。数据库通过使用空值来指示缺少值，从而处理数据可能不可用的情况。它不等于空白或零。空白被认为等于另一个空白，零等于另一个零，但两个空值不被认为是相等的。
+
+当表中的每一行不同时，可以使用一列或多列来标识特定行。此唯一列或列组称为主键。作为主键一部分的任何列都不能为空；如果为空，则包含它的主键将不再是完整的标识符。此规则称为实体完整性规则。
+
+`Employees` 表展示了一些关系数据库概念。它包含 5 列和 6 行，每行数据表示一个不同的雇员。
+
+| `Employee_Number` | `First_name` | `Last_Name` | `Date_of_Birth` | `Car_Number` |
+| ----------------- | ------------ | ----------- | --------------- | ------------ |
+| 10001             | John         | Washington  | 28-Aug-43       | 5            |
+| 10083             | Arvid        | Sharma      | 24-Nov-54       | null         |
+| 10120             | Jonas        | Ginsberg    | 01-Jan-69       | null         |
+| 10005             | Florence     | Wojokowski  | 04-Jul-71       | 12           |
+| 10099             | Sean         | Washington  | 21-Sep-66       | null         |
+| 10035             | Elizabeth    | Yamaguchi   | 24-Dec-59       | null         |
+
+该表的主键通常是员工编号，因为每个人都保证不同。（如果进行比较，数字也比字符串更有效。）也可以使用 `First_Name` 和 `Last_Name` ，因为两者的组合也能识别我们的示例数据库中的一行。单独使用姓氏是行不通的，因为有两名员工的姓氏为“华盛顿”。在这种特殊情况下，名字都是不同的，因此可以设想使用该列作为主键，但最好避免使用可能发生重复的列。如果 Elizabeth Jones 在这家公司工作并且主键是 `First_Name` ，则RDBMS将不允许添加她的名字（如果已经指定不允许重复）。因为表中已经有一个 Elizabeth，所以添加第二个会使主键无法用作识别一行的方法。请注意，尽管使用 `First_Name` 和 `Last_Name` 是此示例的唯一复合键，但在较大的数据库中它可能不是唯一的。另请注意，`Employees` 表假定每个员工只能有一辆车。
+
+## `SELECT` Statements
+
+SQL is a language designed to be used with relational databases. There is a set of basic SQL commands that is considered standard and is used by all RDBMSs. For example, all RDBMSs use the `SELECT` statement.
+
+A `SELECT` statement, also called a query, is used to get information from a table. It specifies one or more column headings, one or more tables from which to select, and some criteria for selection. The RDBMS returns rows of the column entries that satisfy the stated requirements. A `SELECT` statement such as the following will fetch the first and last names of employees who have company cars:
+
+```
+SELECT First_Name, Last_Name
+FROM Employees
+WHERE Car_Number IS NOT NULL
+```
+
+The result set (the set of rows that satisfy the requirement of not having null in the `Car_Number` column) follows. The first name and last name are printed for each row that satisfies the requirement because the `SELECT` statement (the first line) specifies the columns `First_Name` and `Last_Name`. The `FROM` clause (the second line) gives the table from which the columns will be selected.
+
+| `FIRST_NAME` | `LAST_NAME` |
+| ------------ | ----------- |
+| John         | Washington  |
+| Florence     | Wojokowski  |
+
+The following code produces a result set that includes the whole table because it asks for all of the columns in the table Employees with no restrictions (no `WHERE` clause). Note that `SELECT *` means "`SELECT` all columns."
+
+```
+SELECT *
+FROM Employees
+```
+
+## `WHERE` Clauses
+
+The `WHERE` clause in a `SELECT` statement provides the criteria for selecting values. For example, in the following code fragment, values will be selected only if they occur in a row in which the column `Last_Name` begins with the string 'Washington'.
+
+```
+SELECT First_Name, Last_Name
+FROM Employees
+WHERE Last_Name LIKE 'Washington%'
+```
+
+The keyword `LIKE` is used to compare strings, and it offers the feature that patterns containing wildcards can be used. For example, in the code fragment above, there is a percent sign (`%`) at the end of 'Washington', which signifies that any value containing the string 'Washington' plus zero or more additional characters will satisfy this selection criterion. So 'Washington' or 'Washingtonian' would be matches, but 'Washing' would not be. The other wildcard used in `LIKE` clauses is an underbar (`_`), which stands for any one character. For example,
+
+```
+WHERE Last_Name LIKE 'Ba_man'
+```
+
+would match 'Barman', 'Badman', 'Balman', 'Bagman', 'Bamman', and so on.
+
+The code fragment below has a `WHERE` clause that uses the equal sign (`=`) to compare numbers. It selects the first and last name of the employee who is assigned car 12.
+
+```
+SELECT First_Name, Last_Name
+FROM Employees
+WHERE Car_Number = 12
+```
+
+The next code fragment selects the first and last names of employees whose employee number is greater than 10005:
+
+```
+SELECT First_Name, Last_Name
+FROM Employees
+WHERE Employee_Number > 10005
+```
+
+`WHERE` clauses can get rather elaborate, with multiple conditions and, in some DBMSs, nested conditions. This overview will not cover complicated `WHERE` clauses, but the following code fragment has a `WHERE` clause with two conditions; this query selects the first and last names of employees whose employee number is less than 10100 and who do not have a company car.
+
+```
+SELECT First_Name, Last_Name
+FROM Employees
+WHERE Employee_Number < 10100 and Car_Number IS NULL
+```
+
+A special type of `WHERE` clause involves a join, which is explained in the next section.
+
+## Joins
+
+A distinguishing feature of relational databases is that it is possible to get data from more than one table in what is called a join. Suppose that after retrieving the names of employees who have company cars, one wanted to find out who has which car, including the license plate number, mileage, and year of car. This information is stored in another table, `Cars`:
+
+
+
+| `Car_Number` | `License_Plate` | `Mileage` | `Year` |
+| ------------ | --------------- | --------- | ------ |
+| 5            | ABC123          | 5000      | 1996   |
+| 12           | DEF123          | 7500      | 1999   |
+
+There must be one column that appears in both tables in order to relate them to each other. This column, which must be the primary key in one table, is called the foreign key in the other table. In this case, the column that appears in two tables is `Car_Number`, which is the primary key for the table `Cars` and the foreign key in the table `Employees`. If the 1996 car with license plate number ABC123 were wrecked and deleted from the `Cars` table, then `Car_Number` 5 would also have to be removed from the `Employees` table in order to maintain what is called referential integrity. Otherwise, the foreign key column (`Car_Number`) in the `Employees` table would contain an entry that did not refer to anything in the `Cars` table. A foreign key must either be null or equal to an existing primary key value of the table to which it refers. This is different from a primary key, which may not be null. There are several null values in the `Car_Number` column in the table `Employees` because it is possible for an employee not to have a company car.
+
+The following code asks for the first and last names of employees who have company cars and for the license plate number, mileage, and year of those cars. Note that the `FROM` clause lists both the `Employees` and `Cars` tables because the requested data is contained in both tables. Using the table name and a dot (`.`) before the column name indicates which table contains the column.
+
+```
+SELECT Employees.First_Name, Employees.Last_Name,
+    Cars.License_Plate, Cars.Mileage, Cars.Year
+FROM Employees, Cars
+WHERE Employees.Car_Number = Cars.Car_Number
+```
+
+This returns a result set that will look similar to the following:
+
+| `FIRST_NAME` | `LAST_NAME` | `LICENSE_PLATE` | `MILEAGE` | `YEAR` |
+| ------------ | ----------- | --------------- | --------- | ------ |
+| John         | Washington  | ABC123          | 5000      | 1996   |
+| Florence     | Wojokowski  | DEF123          | 7500      | 1999   |
+
+## Common SQL Commands
+
+SQL commands are divided into categories, the two main ones being Data Manipulation Language (DML) commands and Data Definition Language (DDL) commands. DML commands deal with data, either retrieving it or modifying it to keep it up-to-date. DDL commands create or change tables and other database objects such as views and indexes.
+
+A list of the more common DML commands follows:
+
+- `SELECT — ` used to query and display data from a database. The `SELECT` statement specifies which columns to include in the result set. The vast majority of the SQL commands used in applications are `SELECT` statements.
+- `INSERT — ` adds new rows to a table. `INSERT` is used to populate a newly created table or to add a new row (or rows) to an already-existing table.
+- `DELETE — ` removes a specified row or set of rows from a table
+- `UPDATE — ` changes an existing value in a column or group of columns in a table
+
+The more common DDL commands follow:
+
+- `CREATE TABLE — ` creates a table with the column names the user provides. The user also needs to specify a type for the data in each column. Data types vary from one RDBMS to another, so a user might need to use metadata to establish the data types used by a particular database. `CREATE TABLE` is normally used less often than the data manipulation commands because a table is created only once, whereas adding or deleting rows or changing individual values generally occurs more frequently.
+- `DROP TABLE — ` deletes all rows and removes the table definition from the database. A JDBC API implementation is required to support the DROP TABLE command as specified by SQL92, Transitional Level. However, support for the `CASCADE` and `RESTRICT` options of `DROP TABLE` is optional. In addition, the behavior of `DROP TABLE` is implementation-defined when there are views or integrity constraints defined that reference the table being dropped.
+- `ALTER TABLE — ` adds or removes a column from a table. It also adds or drops table constraints and alters column attributes
+
+## Result Sets and Cursors
+
+The rows that satisfy the conditions of a query are called the result set. The number of rows returned in a result set can be zero, one, or many. A user can access the data in a result set one row at a time, and a cursor provides the means to do that. A cursor can be thought of as a pointer into a file that contains the rows of the result set, and that pointer has the ability to keep track of which row is currently being accessed. A cursor allows a user to process each row of a result set from top to bottom and consequently may be used for iterative processing. Most DBMSs create a cursor automatically when a result set is generated.
+
+Earlier JDBC API versions added new capabilities for a result set's cursor, allowing it to move both forward and backward and also allowing it to move to a specified row or to a row whose position is relative to another row.
+
+See [Retrieving and Modifying Values from Result Sets](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html) for more information.
+
+## Transactions
+
+When one user is accessing data in a database, another user may be accessing the same data at the same time. If, for instance, the first user is updating some columns in a table at the same time the second user is selecting columns from that same table, it is possible for the second user to get partly old data and partly updated data. For this reason, DBMSs use transactions to maintain data in a consistent state (data consistency) while allowing more than one user to access a database at the same time (data concurrency).
+
+A transaction is a set of one or more SQL statements that make up a logical unit of work. A transaction ends with either a commit or a rollback, depending on whether there are any problems with data consistency or data concurrency. The commit statement makes permanent the changes resulting from the SQL statements in the transaction, and the rollback statement undoes all changes resulting from the SQL statements in the transaction.
+
+A lock is a mechanism that prohibits two transactions from manipulating the same data at the same time. For example, a table lock prevents a table from being dropped if there is an uncommitted transaction on that table. In some DBMSs, a table lock also locks all of the rows in a table. A row lock prevents two transactions from modifying the same row, or it prevents one transaction from selecting a row while another transaction is still modifying it.
+
+See [Using Transactions](https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html) for more information.
+
+## Stored Procedures
+
+A stored procedure is a group of SQL statements that can be called by name. In other words, it is executable code, a mini-program, that performs a particular task that can be invoked the same way one can call a function or method. Traditionally, stored procedures have been written in a DBMS-specific programming language. The latest generation of database products allows stored procedures to be written using the Java programming language and the JDBC API. Stored procedures written in the Java programming language are bytecode portable between DBMSs. Once a stored procedure is written, it can be used and reused because a DBMS that supports stored procedures will, as its name implies, store it in the database. See [Using Stored Procedures](https://docs.oracle.com/javase/tutorial/jdbc/basics/storedprocedures.html) for information about writing stored procedures.
+
+## Metadata
+
+Databases store user data, and they also store information about the database itself. Most DBMSs have a set of system tables, which list tables in the database, column names in each table, primary keys, foreign keys, stored procedures, and so forth. Each DBMS has its own functions for getting information about table layouts and database features. JDBC provides the interface `DatabaseMetaData`, which a driver writer must implement so that its methods return information about the driver and/or DBMS for which the driver is written. For example, a large number of methods return whether or not the driver supports a particular functionality. This interface gives users and tools a standardized way to get metadata. In general, developers writing tools and drivers are the ones most likely to be concerned with metadata.
