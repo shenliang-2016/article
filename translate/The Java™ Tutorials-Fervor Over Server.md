@@ -250,14 +250,18 @@ WHERE Employees.Car_Number = Cars.Car_Number
 
 **通用 SQL 命令**
 
-SQL commands are divided into categories, the two main ones being Data Manipulation Language (DML) commands and Data Definition Language (DDL) commands. DML commands deal with data, either retrieving it or modifying it to keep it up-to-date. DDL commands create or change tables and other database objects such as views and indexes.
+SQL 命令分为几个类别，主要的两个种类是数据维护语言（DML）命令和数据定义语言（DDL）命令。DML 命令处理数据，检索或者更新数据以保持实时。DDL 命令创建或者修改表以及其他数据库对象，比如视图和索引。
 
-A list of the more common DML commands follows:
+更多的通用 DML 命令如下：
 
-- `SELECT — ` used to query and display data from a database. The `SELECT` statement specifies which columns to include in the result set. The vast majority of the SQL commands used in applications are `SELECT` statements.
-- `INSERT — ` adds new rows to a table. `INSERT` is used to populate a newly created table or to add a new row (or rows) to an already-existing table.
-- `DELETE — ` removes a specified row or set of rows from a table
-- `UPDATE — ` changes an existing value in a column or group of columns in a table
+* `SELECT` - 用于从数据库查询数据并展示。此语句指定查询结果集包含哪些列。应用中用到的 SQL 命令绝大部分都是 `SELECT` 语句。
+* `INSERT` - 添加新行到表中。`INSERT` 通常被用来向新建的表中添加数据或者向已经存在的表中添加新行。
+* `DELETE` - 从表中删除特定行或者行集。
+* `UPDATE` - 修改表中已经存在的列值或者列组的值。
+
+通用 DDL 命令如下：
+
+* `CREATE TABLE` - 使用用户提供的列名创建表。用户还需要指定每个列的数据类型。不同的 RDBMS 中的数据类型有所不同，因此用户可能需要使用元数据来建立特定数据库使用的数据类型。`CREATE TABLE` 通常不像 DML 命令那样经常使用，因为每个表都只会创建一次，而新增、删除和修改单个列值当然会更频繁发生。
 
 The more common DDL commands follow:
 
