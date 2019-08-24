@@ -346,56 +346,56 @@ SQL 命令分为几个类别，主要的两个种类是数据维护语言（DML�
 
 **按需安装你的数据库管理系统 DBMS**
 
-You may use Java DB, which comes with the latest version of Java SE SDK. This tutorial has been tested for the following DBMS:
+你可以使用 Java DB，随着最新版本的 Java SE SDK 提供。本课程中的示例已经通过了下列 DBMS 测试：
 
 - [Java DB](http://www.oracle.com/technetwork/java/javadb/overview/index.html)
 - [MySQL](http://www.mysql.com/)
 
-Note that if you are using another DBMS, you might have to alter the code of the tutorial samples.
+注意，如果你使用的是别的 DBMS，就可能需要修改示例代码。
 
-## Install a JDBC driver from the vendor of your database
+**安装来自数据库提供商的 JDBC 驱动**
 
-If you are using Java DB, it already comes with a JDBC driver. If you are using MySQL, install the latest version of [Connector/J](http://www.mysql.com/products/connector/).
+如果你正在使用 Java DB，那么它已经携带了 JDBC 驱动。如果你真在使用 MySQL,，安装最新版本的 [Connector/J](http://www.mysql.com/products/connector/) 。
 
-Contact the vendor of your database to obtain a JDBC driver for your DBMS.
+联系你的数据库产品提供商来获取相应的 JDBC 驱动。
 
-There are many possible implementations of JDBC drivers. These implementations are categorized as follows:
+JDBC 驱动存在很多种可能实现。这些实现分类如下：
 
-- **Type 1**: Drivers that implement the JDBC API as a mapping to another data access API, such as ODBC (Open Database Connectivity). Drivers of this type are generally dependent on a native library, which limits their portability. The JDBC-ODBC Bridge is an example of a Type 1 driver.
+- **Type 1**: 驱动程序将JDBC API实现为另一个数据访问 API 的映射，例如ODBC（开放式数据库连接）。此类驱动程序通常依赖于本地库，这限制了它们的可移植性。JDBC-ODBC Bridge是Type 1驱动程序的例子。
 
-  **Note**: The JDBC-ODBC Bridge should be considered a transitional solution. It is not supported by Oracle. Consider using this only if your DBMS does not offer a Java-only JDBC driver.
+  **Note**: JDBC-ODBC Bridge应被视为过渡解决方案。Oracle不支持它。仅当您的 DBMS 不提供 Java-only 的 JDBC 驱动程序时才应该考虑使用此选项。
 
-- **Type 2**: Drivers that are written partly in the Java programming language and partly in native code. These drivers use a native client library specific to the data source to which they connect. Again, because of the native code, their portability is limited. Oracle's OCI (Oracle Call Interface) client-side driver is an example of a Type 2 driver.
+- **Type 2**: 部分使用Java编程语言编写，部分使用本地代码编写的驱动程序。这些驱动程序使用特定于它们所连接的数据源的本地客户端库。同样，由于本机代码，它们的可移植性是有限的。Oracle的OCI（Oracle调用接口）客户端驱动程序是Type 2驱动程序的一个例子。
 
-- **Type 3**: Drivers that use a pure Java client and communicate with a middleware server using a database-independent protocol. The middleware server then communicates the client's requests to the data source.
+- **Type 3**: 使用纯Java客户端并使用独立于数据库的协议与中间件服务器通信的驱动程序。然后，中间件服务器将客户端的请求传递给数据源。
 
-- **Type 4**: Drivers that are pure Java and implement the network protocol for a specific data source. The client connects directly to the data source.
+- **Type 4**: 纯Java的驱动程序，并为特定数据源实现网络协议。客户端直接连接到数据源。
 
-Check which driver types comes with your DBMS. Java DB comes with two Type 4 drivers, an Embedded driver and a Network Client Driver. MySQL Connector/J is a Type 4 driver.
+检查 DBMS 附带的驱动程序类型。Java DB 附带两个 Type 4 驱动程序，一个嵌入式驱动程序和一个网络客户端驱动程序。MySQL Connector/J 是 Type 4 驱动程序。
 
-Installing a JDBC driver generally consists of copying the driver to your computer, then adding the location of it to your class path. In addition, many JDBC drivers other than Type 4 drivers require you to install a client-side API. No other special configuration is usually needed.
+安装 JDBC 驱动程序通常包括将驱动程序复制到计算机，然后将其位置添加到类路径中。此外，除 Type 4 驱动程序之外的许多 JDBC 驱动程序都要求您安装客户端 API。通常不需要其他特殊配置。
 
-## Install Apache Ant
+**安装 Apache Ant**
 
-These steps use Apache Ant, a Java-based tool, to build, compile, and run the JDBC tutorial samples. Go to the following link to download Apache Ant:
+这些步骤使用 Apache Ant（一种基于Java的工具）来构建，编译和运行 JDBC 教程示例。转到以下链接下载 Apache Ant：
 
 ```
 http://ant.apache.org/
 ```
 
-Ensure that the Apache Ant executable file is in your `PATH` environment variable so that you can run it from any directory.
+确保 Apache Ant 可执行文件位于您的`PATH`环境变量中，以便您可以从任何目录运行它。
 
-## Install Apache Xalan
+**安装 Apache Xalan**
 
-The sample `RSSFeedsTable.java`, which is described in [Using SQLXML Objects](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlxml.html), requires Apache Xalan if your DBMS is Java DB. The sample uses Apache Xalan-Java. Go to the following link to download it:
+在 [使用SQLXML对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlxml.html) 中描述的示例`RSSFeedsTable.java`如果您的 DBMS 是 Java DB，则需要 Apache Xalan。该示例使用 Apache Xalan-Java。转到以下链接下载它：
 
 ```
 http://xml.apache.org/xalan-j/
 ```
 
-## Download the sample code
+**下载示例代码**
 
-The sample code, `JDBCTutorial.zip`, consists of the following files:
+ `JDBCTutorial.zip` ，包含以下文件：
 
 - ```
   properties
@@ -467,19 +467,19 @@ The sample code, `JDBCTutorial.zip`, consists of the following files:
 
 - `build.xml`
 
-Create a directory to contain all the files of the sample. These steps refer to this directory as `*<JDBC tutorial directory>*`. Unzip the contents of `JDBCTutorial.zip` into `*<JDBC tutorial directory>*`.
+创建一个目录以包含该示例的所有文件。下面步骤中将此目录称为`*<JDBC tutorial directory>*`。将`JDBCTutorial.zip`的内容解压缩到`* <JDBC tutorial directory> *`中。
 
-## Modify the build.xml file
+**修改 build.xml 文件**
 
-The `build.xml` file is the build file that Apache Ant uses to compile and execute the JDBC samples. The files `properties/javadb-build-properties.xml` and `properties/mysql-build-properties.xml` contain additional Apache Ant properties required for Java DB and MySQL, respectively. The files `properties/javadb-sample-properties.xml` and `properties/mysql-sample-properties.xml` contain properties required by the sample.
+`build.xml`文件是Apache Ant用于编译和执行JDBC示例的构建文件。文件`properties/javadb-build-properties.xml`和`properties/mysql-build-properties.xml`分别包含Java DB和MySQL所需的其他Apache Ant属性。文件`properties/javadb-sample-properties.xml`和`properties/mysql-sample-properties.xml`包含示例所需的属性。
 
-Modify these XML files as follows:
+修改这些XML文件，如下所示：
 
-### Modify build.xml
+**修改 build.xml**
 
-In the `build.xml` file, modify the property `ANTPROPERTIES` to refer to either `properties/javadb-build-properties.xml` or `properties/mysql-build-properties.xml`, depending on your DBMS. For example, if you are using Java DB, your `build.xml` file would contain this:
+在`build.xml`文件中，修改属性`ANTPROPERTIES`以引用`properties/javadb-build-properties.xml`或`properties/mysql-build-properties.xml`，具体取决于您的DBMS。例如，如果您使用的是Java DB，那么`build.xml`文件将包含以下内容：
 
-```
+```xml
 <property
   name="ANTPROPERTIES"
   value="properties/javadb-build-properties.xml"/>
@@ -487,9 +487,9 @@ In the `build.xml` file, modify the property `ANTPROPERTIES` to refer to either 
   <import file="${ANTPROPERTIES}"/>
 ```
 
-Similarly, if you are using MySQL, your `build.xml` file would contain this:
+同样，如果您使用的是MySQL，那么`build.xml`文件将包含以下内容：
 
-```
+```xml
 <property
   name="ANTPROPERTIES"
   value="properties/mysql-build-properties.xml"/>
@@ -497,9 +497,9 @@ Similarly, if you are using MySQL, your `build.xml` file would contain this:
   <import file="${ANTPROPERTIES}"/>
 ```
 
-### Modify database-specific properties file
+**修改特定于数据库的属性文件**
 
-In the `properties/javadb-build-properties.xml` or `properties/mysql-build-properties.xml` file (depending on your DBMS), modify the following properties, as described in the following table:
+在`properties/javadb-build-properties.xml`或`properties/mysql-build-properties.xml`文件中（取决于您的DBMS），修改以下属性，如下表所述：
 
 | Property             | Description                                                  |
 | -------------------- | ------------------------------------------------------------ |
@@ -522,9 +522,9 @@ In the `properties/javadb-build-properties.xml` or `properties/mysql-build-prope
 | `DB.PASSWORD`        | The password of the user specified in `DB.USER`.             |
 | `DB.DELIMITER`       | The character used to separate SQL statements. *Do not change this value.* It should be the semicolon character (`;`). |
 
-## Modify the tutorial properties file
+**修改教程属性文件**
 
-The tutorial samples use the values in either the `properties/javadb-sample-properties.xml` file or `properties/mysql-sample-properties.xml` file (depending on your DBMS) to connect to the DBMS and initialize databases and tables, as described in the following table:
+教程示例使用`properties/javadb-sample-properties.xml`文件或`properties/mysql-sample-properties.xml`文件（取决于您的DBMS）中的值来连接到DBMS并初始化数据库和表 ，如下表所述：
 
 | Property        | Description                                                  |
 | --------------- | ------------------------------------------------------------ |
@@ -537,37 +537,37 @@ The tutorial samples use the values in either the `properties/javadb-sample-prop
 | `server_name`   | The host name of the computer hosting your DBMS.             |
 | `port_number`   | The port number of the computer hosting your DBMS.           |
 
-**Note**: For simplicity in demonstrating the JDBC API, the JDBC tutorial sample code does not perform the password management techniques that a deployed system normally uses. In a production environment, you can follow the Oracle Database password management guidelines and disable any sample accounts. See the section [Securing Passwords in Application Design](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm#CJADABGG) in [Managing Security for Application Developers](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm) in [*Oracle Database Security Guide*](http://docs.oracle.com/cd/B28359_01/network.111/b28531/toc.htm) for password management guidelines and other security recommendations.
+**注意**：为了简单地演示JDBC API，JDBC教程示例代码不执行已部署系统通常使用的密码管理技术。在生产环境中，您可以遵循Oracle数据库密码管理准则并禁用任何示例帐户。请参阅  [*Oracle Database Security Guide*](http://docs.oracle.com/cd/B28359_01/network.111/b28531/toc.htm)  中的  [Managing Security for Application Developers](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm) 中的 [Securing Passwords in Application Design](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm#CJADABGG) 用于密码管理指南和其他安全建议。
 
-## Compile and package the samples
+**编译并打包示例程序**
 
-At a command prompt, change the current directory to `*<JDBC tutorial directory>*`. From this directory, run the following command to compile the samples and package them in a jar file:
+在命令提示符下，将当前目录切换到`*<JDBC tutorial directory>*`。从此目录中，运行以下命令以编译示例并将其打包在jar文件中：
 
 ```
 ant jar
 ```
 
-## Create databases, tables, and populate tables
+**创建数据库，表，并填充表**
 
-If you are using MySQL, then run the following command to create a database:
+如果您使用的是MySQL，请运行以下命令来创建数据库：
 
 ```
 ant create-mysql-database
 ```
 
-**Note**: No corresponding Ant target exists in the `build.xml` file that creates a database for Java DB. The database URL for Java DB, which is used to establish a database connection, includes the option to create the database (if it does not already exist). See [Establishing a Connection](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html) for more information.
+**注意**：为buildDB创建数据库的`build.xml`文件中没有相应的Ant目标。用于建立数据库连接的Java DB的数据库URL包括创建数据库的选项（如果它尚不存在）。有关详细信息，请参阅 [Establishing a Connection](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html) 。
 
-If you are using either Java DB or MySQL, then from the same directory, run the following command to delete existing sample database tables, recreate the tables, and populate them. For Java DB, this command also creates the database if it does not already exist:
+如果您使用的是Java DB或MySQL，则从同一目录运行以下命令以删除现有的示例数据库表，重新创建表并填充它们。对于Java DB，此命令还会创建数据库（如果该数据库尚不存在）：
 
 ```
 ant setup
 ```
 
-**Note**: You should run the command `ant setup` every time before you run one of the Java classes in the sample. Many of these samples expect specific data in the contents of the sample's database tables.
+**注意**：每次运行示例中的一个Java类之前，都应该运行命令`ant setup`。其中许多样本都希望样本数据库表的内容中包含特定数据。
 
-## Run the samples
+**运行示例**
 
-Each target in the `build.xml` file corresponds to a Java class or SQL script in the JDBC samples. The following table lists the targets in the `build.xml` file, which class or script each target executes, and other classes or files each target requires:
+`build.xml`文件中的每个目标对应于JDBC示例中的Java类或SQL脚本。下表列出了`build.xml`文件中的目标，每个目标执行的类或脚本，以及每个目标所需的其他类或文件：
 
 | Ant Target                | Class or SQL Script                                          | Other Required Classes or Files                              |
 | ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -588,8 +588,9 @@ Each target in the `build.xml` file corresponds to a Java class or SQL script in
 | `runspmysql`              | `StoredProcedureMySQLSample`                                 | `JDBCTutorialUtilities`, `SuppliersTable`, `CoffeesTable`    |
 | `runframe`                | `CoffeesFrame`                                               | `JDBCTutorialUtilities`, `CoffeesTableModel`                 |
 
-For example, to run the class `CoffeesTable`, change the current directory to `*<JDBC tutorial directory>*`, and from this directory, run the following command:
+例如，要运行类`CoffeesTable`，请将当前目录切换到`* <JDBC tutorial directory> *`，然后从该目录运行以下命令：
 
 ```
 ant runct
 ```
+
