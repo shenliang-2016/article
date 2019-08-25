@@ -1077,32 +1077,32 @@ public class ConnectionPoolingBean implements SessionBean {
 }
 ```
 
-The connection in this code sample participates in connection pooling because the following are true:
+此代码示例中的连接参与连接池，因为以下情况属实：
 
-- An instance of a class implementing `ConnectionPoolDataSource` has been deployed.
-- An instance of a class implementing `DataSource` has been deployed, and the value set for its `dataSourceName`property is the logical name that was bound to the previously deployed `ConnectionPoolDataSource` object.
+ - 已部署实现`ConnectionPoolDataSource`的类的实例。
+ - 已经部署了实现`DataSource`的类的实例，并且为其`dataSourceName`属性设置的值是绑定到先前部署的`ConnectionPoolDataSource`对象的逻辑名。
 
-Note that although this code is very similar to code you have seen before, it is different in the following ways:
+请注意，尽管此代码与您之前看到的代码非常相似，但它在以下方面有所不同：
 
-- It imports the `javax.sql`, `javax.ejb`, and `javax.naming` packages in addition to `java.sql`.
+ - 除了`java.sql`之外，它还导入`javax.sql`，`javax.ejb`和`javax.naming`包。
 
-  The `DataSource` and `ConnectionPoolDataSource` interfaces are in the `javax.sql` package, and the JNDI constructor `InitialContext` and method `Context.lookup` are part of the `javax.naming` package. This particular example code is in the form of an EJB component that uses API from the `javax.ejb` package. The purpose of this example is to show that you use a pooled connection the same way you use a nonpooled connection, so you need not worry about understanding the EJB API.
+   `DataSource`和`ConnectionPoolDataSource`接口在`javax.sql`包中，JNDI构造函数`InitialContext`和方法`Context.lookup`是`javax.naming`包的一部分。此特定示例代码采用EJB组件的形式，该组件使用来自`javax.ejb`包的API。此示例的目的是显示您使用池化连接的方式与使用非池化连接的方式相同，因此您无需担心理解EJB API。
 
-- It uses a `DataSource` object to get a connection instead of using the `DriverManager` facility.
+ - 它使用`DataSource`对象来获取连接，而不是使用`DriverManager`工具。
 
-- It uses a `finally` block to ensure that the connection is closed.
+ - 它使用`finally`块来确保连接被关闭。
 
-Getting and using a pooled connection is similar to getting and using a regular connection. When someone acting as a system administrator has deployed a `ConnectionPoolDataSource` object and a `DataSource` object properly, an application uses that `DataSource` object to get a pooled connection. An application should, however, use a `finally` block to close the pooled connection. For simplicity, the preceding example used a `finally` block but no `catch` block. If an exception is thrown by a method in the `try` block, it will be thrown by default, and the `finally` clause will be executed in any case.
+获取和使用池化连接类似于获取和使用常规连接。当充当系统管理员的人正确部署了`ConnectionPoolDataSource`对象和`DataSource`对象时，应用程序使用该`DataSource`对象来获得池化连接。但是，应用程序应使用`finally`块来关闭池连接。为简单起见，前面的示例使用了`finally`块但没有使用`catch`块。如果`try`块中的方法抛出异常，则默认情况下将抛出该异常，并且在任何情况下都将执行`finally`子句。
 
 **部署分布式事务**
 
-`DataSource` objects can be deployed to get connections that can be used in distributed transactions. As with connection pooling, two different class instances must be deployed: an `XADataSource` object and a `DataSource` object that is implemented to work with it.
+可以部署`DataSource`对象以获取可在分布式事务中使用的连接。与连接池一样，必须部署两个不同的类实例：一个`XADataSource`对象和一个与之一起使用的`DataSource`实现对象。
 
-Suppose that the EJB server that The Coffee Break entrepreneur bought includes the `DataSource` class `com.applogic.TransactionalDS`, which works with an `XADataSource` class such as `com.dbaccess.XATransactionalDS`. The fact that it works with any `XADataSource` class makes the EJB server portable across JDBC drivers. When the `DataSource` and `XADataSource` objects are deployed, the connections produced will be able to participate in distributed transactions. In this case, the class `com.applogic.TransactionalDS` is implemented so that the connections produced are also pooled connections, which will usually be the case for `DataSource`classes provided as part of an EJB server implementation.
+假设The Coffee Break企业家购买的EJB服务器包含`DataSource`类`com.applogic.TransactionalDS`，它与`XADataSource`类（如`com.dbaccess.XATransactionalDS`）一起使用。它适用于任何`XADataSource`类这一事实使EJB服务器可以跨JDBC驱动程序移植。当部署`DataSource`和`XADataSource`对象时，生成的连接将能够参与分布式事务。在这种情况下，实现了类`com.applogic.TransactionalDS`，以便生成的连接也是池化连接，这通常是作为EJB服务器实现的一部分提供的`DataSource`类的情况。
 
-The `XADataSource` object must be deployed first. The following code creates an instance of `com.dbaccess.XATransactionalDS` and sets its properties:
+必须首先部署`XADataSource`对象。以下代码创建`com.dbaccess.XATransactionalDS`的实例并设置其属性：
 
-```
+```java
 com.dbaccess.XATransactionalDS xads = new com.dbaccess.XATransactionalDS();
 xads.setServerName("creamer");
 xads.setDatabaseName("COFFEEBREAK");
@@ -1110,16 +1110,16 @@ xads.setPortNumber(9040);
 xads.setDescription("Distributed transactions for COFFEEBREAK DBMS");
 ```
 
-The following code registers the `com.dbaccess.XATransactionalDS` object `*xads*` with a JNDI naming service. Note that the logical name being associated with `*xads*` has the subcontext `xa` added under `jdbc`. Oracle recommends that the logical name of any instance of the class `com.dbaccess.XATransactionalDS` always begin with `jdbc/xa`.
+以下代码使用JNDI命名服务注册`com.dbaccess.XATransactionalDS`对象`xads`。 请注意，与`xads`相关联的逻辑名称在`jdbc`下添加了子上下文`xa`。Oracle建议`com.dbaccess.XATransactionalDS`类的任何实例的逻辑名始终以`jdbc/xa`开头。
 
-```
+```java
 Context ctx = new InitialContext();
 ctx.bind("jdbc/xa/distCoffeeDB", xads);
 ```
 
-Next, the `DataSource` object that is implemented to interact with `*xads*` and other `XADataSource` objects is deployed. Note that the `DataSource` class, `com.applogic.TransactionalDS`, can work with an `XADataSource` class from any JDBC driver vendor. Deploying the `DataSource` object involves creating an instance of the `com.applogic.TransactionalDS`class and setting its properties. The `dataSourceName` property is set to `jdbc/xa/distCoffeeDB`, the logical name associated with `com.dbaccess.XATransactionalDS`. This is the `XADataSource` class that implements the distributed transaction capability for the `DataSource` class. The following code deploys an instance of the `DataSource` class:
+接下来，部署了实现与`xads`和其他`XADataSource`对象交互的`DataSource`对象。请注意，`DataSource`类，`com.applogic.TransactionalDS`，可以与任何JDBC驱动程序供应商的`XADataSource`类一起使用。部署`DataSource`对象涉及创建`com.applogic.TransactionalDS`类的实例并设置其属性。`dataSourceName`属性设置为`jdbc/xa/distCoffeeDB`，这是与`com.dbaccess.XATransactionalDS`相关联的逻辑名。这是`XADataSource`类，它实现了`DataSource`类的分布式事务功能。以下代码部署了`DataSource`类的实例：
 
-```
+```java
 com.applogic.TransactionalDS ds = new com.applogic.TransactionalDS();
 ds.setDescription("Produces distributed transaction " +
                   "connections to COFFEEBREAK");
@@ -1128,27 +1128,27 @@ Context ctx = new InitialContext();
 ctx.bind("jdbc/distCoffeeDB", ds);
 ```
 
-Now that instances of the classes `com.applogic.TransactionalDS` and `com.dbaccess.XATransactionalDS` have been deployed, an application can call the method `getConnection` on instances of the `TransactionalDS` class to get a connection to the `COFFEEBREAK` database that can be used in distributed transactions.
+现在已经部署了类`com.applogic.TransactionalDS`和`com.dbaccess.XATransactionalDS`的实例，应用程序可以在`TransactionalDS`类的实例上调用方法`getConnection`以获得与`COFFEEBREAK的连接 `可以在分布式事务中使用的数据库。
 
 **使用分布式事务的连接**
 
-To get a connection that can be used for distributed transactions, must use a `DataSource` object that has been properly implemented and deployed, as shown in the section [Deploying Distributed Transactions](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqldatasources.html#deployment_distributed_transactions). With such a `DataSource` object, call the method `getConnection` on it. After you have the connection, use it just as you would use any other connection. Because `jdbc/distCoffeesDB` has been associated with an `XADataSource` object in a JNDI naming service, the following code produces a `Connection` object that can be used in distributed transactions:
+要获得可用于分布式事务的连接，必须使用已正确实现和部署的`DataSource`对象，如 [Deploying Distributed Transactions](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqldatasources.html#deployment_distributed_transactions) 中所述。使用这样的`DataSource`对象，在其上调用方法`getConnection`。连接后，使用它就像使用任何其他连接一样。因为`jdbc/distCoffeesDB`已经与JNDI命名服务中的`XADataSource`对象相关联，所以下面的代码生成一个可以在分布式事务中使用的`Connection`对象：
 
-```
+```java
 Context ctx = new InitialContext();
 DataSource ds = (DataSource)ctx.lookup("jdbc/distCoffeesDB");
 Connection con = ds.getConnection();
 ```
 
-There are some minor but important restrictions on how this connection is used while it is part of a distributed transaction. A transaction manager controls when a distributed transaction begins and when it is committed or rolled back; therefore, application code should never call the methods `Connection.commit` or `Connection.rollback`. An application should likewise never call `Connection.setAutoCommit(true)`, which enables the auto-commit mode, because that would also interfere with the transaction manager's control of the transaction boundaries. This explains why a new connection that is created in the scope of a distributed transaction has its auto-commit mode disabled by default. Note that these restrictions apply only when a connection is participating in a distributed transaction; there are no restrictions while the connection is not part of a distributed transaction.
+当它是分布式事务的一部分时，对如何使用此连接存在一些次要但重要的限制。事务管理器控制分布式事务何时开始以及何时提交或回滚。因此，应用程序代码永远不应该调用方法`Connection.commit`或`Connection.rollback`。应用程序同样应该永远不会调用`Connection.setAutoCommit（true）`，它启用自动提交模式，因为这也会干扰事务管理器对事务边界的控制。这解释了为什么在分布式事务范围内创建的新连接默认情况下禁用其自动提交模式。请注意，这些限制仅适用于连接参与分布式事务的情况。连接不是分布式事务的一部分时没有限制。
 
-For the following example, suppose that an order of coffee has been shipped, which triggers updates to two tables that reside on different DBMS servers. The first table is a new `INVENTORY` table, and the second is the `COFFEES` table. Because these tables are on different DBMS servers, a transaction that involves both of them will be a distributed transaction. The code in the following example, which obtains a connection, updates the `COFFEES` table, and closes the connection, is the second part of a distributed transaction.
+对于以下示例，假设已发送咖啡订单，这会触发对位于不同DBMS服务器上的两个表的更新。第一个表是一个新的`INVENTORY`表，第二个表是`COFFEES`表。由于这些表位于不同的DBMS服务器上，因此涉及它们的事务将是分布式事务。以下示例中的代码获取连接，更新`COFFEES`表，并关闭连接，是分布式事务的第二部分。
 
-Note that the code does not explicitly commit or roll back the updates because the scope of the distributed transaction is being controlled by the middle tier server's underlying system infrastructure. Also, assuming that the connection used for the distributed transaction is a pooled connection, the application uses a `finally` block to close the connection. This guarantees that a valid connection will be closed even if an exception is thrown, thereby ensuring that the connection is returned to the connection pool to be recycled.
+请注意，代码未显式提交或回滚更新，因为分布式事务的范围由中间层服务器的底层系统基础结构控制。此外，假设用于分布式事务的连接是池连接，应用程序使用`finally`块来关闭连接。这可以保证即使抛出异常也会关闭有效连接，从而确保连接返回到连接池以进行回收。
 
-The following code sample illustrates an enterprise Bean, which is a class that implements the methods that can be called by a client computer. The purpose of this example is to demonstrate that application code for a distributed transaction is no different from other code except that it does not call the `Connection` methods `commit`, `rollback`, or `setAutoCommit(true)`. Therefore, you do not need to worry about understanding the EJB API that is used.
+以下代码示例演示了一个企业Bean，它是一个实现客户端计算机可以调用的方法的类。此示例的目的是演示分布式事务的应用程序代码与其他代码没有区别，除了它不调用`Connection`方法`commit`，`rollback`或`setAutoCommit（true）`。因此，您无需担心了解所使用的EJB API。
 
-```
+```java
 import java.sql.*;
 import javax.sql.*;
 import javax.ejb.*;
@@ -1189,3 +1189,4 @@ public class DistributedTransactionBean implements SessionBean {
     private Context ctx = null;
 }
 ```
+
