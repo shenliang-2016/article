@@ -994,30 +994,30 @@ ctx.bind("jdbc/fastCoffeeDB", ds);
 
 **获取并使用连接池**
 
-A *connection pool* is a cache of database connection objects. The objects represent physical database connections that can be used by an application to connect to a database. At run time, the application requests a connection from the pool. If the pool contains a connection that can satisfy the request, it returns the connection to the application. If no connections are found, a new connection is created and returned to the application. The application uses the connection to perform some work on the database and then returns the object back to the pool. The connection is then available for the next connection request.
+*连接池*是数据库连接对象的缓存。连接对象表示应用程序可用于连接到数据库的物理数据库连接。在运行时，应用程序从连接池请求连接。如果池包含可以满足请求的连接，则它将返回与应用程序的连接。如果未找到任何连接，则会创建新连接并将其返回给应用程序。应用程序使用连接对数据库执行某些操作，然后将连接对象返回连接池。然后，该连接可用于下一个连接请求。
 
-Connection pools promote the reuse of connection objects and reduce the number of times that connection objects are created. Connection pools significantly improve performance for database-intensive applications because creating connection objects is costly both in terms of time and resources.
+连接池可以促进连接对象的重用，并减少创建连接对象的次数。连接池显着提高了数据库密集型应用程序的性能，因为创建连接对象在时间和资源方面都很昂贵。
 
-Now that these `DataSource` and `ConnectionPoolDataSource` objects are deployed, a programmer can use the `DataSource` object to get a pooled connection. The code for getting a pooled connection is just like the code for getting a nonpooled connection, as shown in the following two lines:
+现在已经部署了这些`DataSource`和`ConnectionPoolDataSource`对象，程序员可以使用`DataSource`对象来获得池化连接。获取池连接的代码就像获取非池化连接的代码一样，如以下两行所示：
 
-```
+```java
 ctx = new InitialContext();
 ds = (DataSource)ctx.lookup("jdbc/fastCoffeeDB");
 ```
 
-The variable `*ds*` represents a `DataSource` object that produces pooled connections to the database `COFFEEBREAK`. You need to retrieve this `DataSource` object only once because you can use it to produce as many pooled connections as needed. Calling the method `getConnection` on the `*ds*` variable automatically produces a pooled connection because the `DataSource` object that the `*ds*` variable represents was configured to produce pooled connections.
+变量`ds`表示一个`DataSource`对象，它产生与数据库`COFFEEBREAK`的池连接。您只需要检索一次这个`DataSource`对象，因为您可以根据需要使用它来生成尽可能多的池连接。在`ds`变量上调用`getConnection`方法会自动产生一个池化连接，因为`ds`变量所代表的`DataSource`对象被配置为产生池化连接。
 
-Connection pooling is generally transparent to the programmer. There are only two things you need to do when you are using pooled connections:
+连接池通常对程序员是透明的。使用池化连接时，只需要执行两项操作：
 
-1. Use a `DataSource` object rather than the `DriverManager` class to get a connection. In the following line of code, `*ds*`is a `DataSource` object implemented and deployed so that it will create pooled connections and `username` and `password` are variables that represent the credentials of the user that has access to the database:
+1. 使用`DataSource`对象而不是`DriverManager`类来获取连接。在下面的代码行中，`ds`是一个实现和部署的`DataSource`对象，它将创建池连接，`username`和`password`是代表有权访问数据库的用户凭据的变量：
 
-   ```
+   ```java
    Connection con = ds.getConnection(username, password);
    ```
 
-2. Use a `finally` statement to close a pooled connection. The following `finally` block would appear after the `try/catch` block that applies to the code in which the pooled connection was used:
+2. 使用`finally`语句关闭池化连接。以下`finally`块将出现在`try/catch`块之后，该块适用于使用池化连接的代码：
 
-   ```
+   ```java
    try {
        Connection con = ds.getConnection(username, password);
        // ... code to use the pooled
@@ -1029,11 +1029,11 @@ Connection pooling is generally transparent to the programmer. There are only tw
    }
    ```
 
-Otherwise, an application using a pooled connection is identical to an application using a regular connection. The only other thing an application programmer might notice when connection pooling is being done is that performance is better.
+除此之外，使用池化连接的应用程序与使用常规连接的应用程序相同。应用程序员在完成连接池时可能会注意到的另一件事是性能更好。
 
-The following sample code gets a `DataSource` object that produces connections to the database `COFFEEBREAK` and uses it to update a price in the table `COFFEES`:
+以下示例代码获取一个`DataSource`对象，该对象生成与数据库`COFFEEBREAK`的连接，并使用它来更新表`COFFEES`中的价格：
 
-```
+```java
 import java.sql.*;
 import javax.sql.*;
 import javax.ejb.*;
