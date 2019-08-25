@@ -874,96 +874,96 @@ jdbc:mysql://[host][,failoverhost...]
 
 **使用 DataSource 对象获取连接**
 
-In [Establishing a Connection](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html), you learned how to get a connection using the `DriverManager` class. This section shows you how to use a `DataSource` object to get a connection to your data source, which is the preferred way.
+在 [Establishing a Connection](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html) 中，您学习了如何使用`DriverManager`类获取连接。本节介绍如何使用`DataSource`对象获取与数据源的连接，这是首选方法。
 
-Objects instantiated by classes that implement the `DataSource` represent a particular DBMS or some other data source, such as a file. A `DataSource` object represents a particular DBMS or some other data source, such as a file. If a company uses more than one data source, it will deploy a separate `DataSource` object for each of them. The `DataSource` interface is implemented by a driver vendor. It can be implemented in three different ways:
+由实现`DataSource`的类实例化的对象表示特定的DBMS或某些其他数据源，例如文件。`DataSource`对象表示特定的DBMS或某些其他数据源，例如文件。如果公司使用多个数据源，它将为每个数据源部署一个单独的`DataSource`对象。`DataSource`接口由驱动程序供应商实现。它可以通过三种不同的方式实现：
 
-- A basic `DataSource` implementation produces standard `Connection` objects that are not pooled or used in a distributed transaction.
-- A `DataSource` implementation that supports connection pooling produces `Connection` objects that participate in connection pooling, that is, connections that can be recycled.
-- A `DataSource` implementation that supports distributed transactions produces `Connection` objects that can be used in a distributed transaction, that is, a transaction that accesses two or more DBMS servers.
+- 基本的`DataSource`实现，生成标准的`Connection`对象，这些连接对象没有你池化，这些对象不是在分布式事务中使用的。
+- 支持连接池的`DataSource`实现，产生参与连接池的`Connection`对象，即可以回收的连接。
+- 支持分布式事务的`DataSource`实现，产生可以在分布式事务中使用的`Connection`对象，即访问两个或多个DBMS服务器的事务。
 
-A JDBC driver should include at least a basic `DataSource` implementation. For example, the Java DB JDBC driver includes the implementation `org.apache.derby.jdbc.ClientDataSource` and for MySQL, `com.mysql.jdbc.jdbc2.optional.MysqlDataSource`. If your client runs on Java 8 compact profile 2, then the Java DB JDBC driver is `org.apache.derby.jdbc.BasicClientDataSource40`. The sample for this tutorial requires compact profile 3 or greater.
+JDBC驱动程序至少应包含一个基本的`DataSource`实现。例如，Java DB JDBC驱动程序包括实现`org.apache.derby.jdbc.ClientDataSource`和用于MySQL的，`com.mysql.jdbc.jdbc2.optional.MysqlDataSource`。如果您的客户端在Java 8 compact profile 2上运行，那么Java DB JDBC驱动程序是`org.apache.derby.jdbc.BasicClientDataSource40`。本教程的示例需要  compact profile 3 或更高版本。
 
-A `DataSource` class that supports distributed transactions typically also implements support for connection pooling. For example, a `DataSource` class provided by an EJB vendor almost always supports both connection pooling and distributed transactions.
+支持分布式事务的`DataSource`类通常还实现对连接池的支持。例如，EJB供应商提供的`DataSource`类几乎总是支持连接池和分布式事务。
 
-Suppose that the owner of the thriving chain of The Coffee Break shops, from the previous examples, has decided to expand further by selling coffee over the Internet. With the large amount of online business expected, the owner will definitely need connection pooling. Opening and closing connections involves a great deal of overhead, and the owner anticipates that this online ordering system will necessitate a sizable number of queries and updates. With connection pooling, a pool of connections can be used over and over again, avoiding the expense of creating a new connection for every database access. In addition, the owner now has a second DBMS that contains data for the recently acquired coffee roasting company. This means that the owner will want to be able to write distributed transactions that use both the old DBMS server and the new one.
+假设之前的例子中，兴旺的咖啡店连锁店的所有者决定通过互联网进一步扩大销售咖啡。由于预计会有大量的在线业务，所有者肯定需要连接池。打开和关闭连接涉及大量开销，并且所有者预计该在线订购系统将需要大量的查询和更新。通过连接池，可以反复使用连接池，从而避免为每个数据库访问创建新连接的费用。此外，所有者现在拥有第二个DBMS，其中包含最近收购的咖啡烘焙公司的数据。这意味着所有者希望能够编写使用旧DBMS服务器和新DBMS服务器的分布式事务。
 
-The chain owner has reconfigured the computer system to serve the new, larger customer base. The owner has purchased the most recent JDBC driver and an EJB application server that works with it to be able to use distributed transactions and get the increased performance that comes with connection pooling. Many JDBC drivers are available that are compatible with the recently purchased EJB server. The owner now has a three-tier architecture, with a new EJB application server and JDBC driver in the middle tier and the two DBMS servers as the third tier. Client computers making requests are the first tier.
+连锁店主已重新配置计算机系统，以服务于更大的新客户群。所有者购买了最新的JDBC驱动程序和与其一起使用的EJB应用程序服务器，以便能够使用分布式事务并获得连接池带来的更高性能。许多JDBC驱动程序与最近购买的EJB服务器兼容。所有者现在具有三层体系结构，中间层有一个新的EJB应用服务器和JDBC驱动程序，第二层有两个DBMS服务器。发出请求的客户端计算机是第一层。
 
 **部署基本的 DataSource 对象**
 
-The system administrator needs to deploy `DataSource` objects so that The Coffee Break's programming team can start using them. Deploying a `DataSource` object consists of three tasks:
+系统管理员需要部署`DataSource`对象，以便Coffee Break的编程团队可以开始使用它们。部署`DataSource`对象包含三个任务：
 
-1. Creating an instance of the `DataSource` class
-2. Setting its properties
-3. Registering it with a naming service that uses the Java Naming and Directory Interface (JNDI) API
+1. 创建`DataSource`类的实例
+2. 设置其属性
+3. 将其注册到使用Java命名和目录接口（JNDI）API的命名服务
 
-First, consider the most basic case, which is to use a basic implementation of the `DataSource` interface, that is, one that does not support connection pooling or distributed transactions. In this case there is only one `DataSource` object that needs to be deployed. A basic implementation of `DataSource` produces the same kind of connections that the `DriverManager`class produces.
+首先，考虑最基本的情况，即使用`DataSource`接口的基本实现，即不支持连接池或分布式事务的接口。在这种情况下，只需要部署一个`DataSource`对象。`DataSource`的基本实现产生了与`DriverManager`类产生的相同类型的连接。
 
 **创建 DataSource 类实例并设置其属性**
 
-Suppose a company that wants only a basic implementation of `DataSource` has bought a driver from the JDBC vendor DB Access, Inc. This driver includes the class `com.dbaccess.BasicDataSource` that implements the `DataSource` interface. The following code excerpt creates an instance of the class `BasicDataSource` and sets its properties. After the instance of `BasicDataSource` is deployed, a programmer can call the method `DataSource.getConnection` to get a connection to the company's database, `CUSTOMER_ACCOUNTS`. First, the system administrator creates the `BasicDataSource` object `*ds*`using the default constructor. The system administrator then sets three properties. Note that the following code is typically be executed by a deployment tool:
+假设一个只想要基本实现`DataSource`的公司从JDBC供应商 DB Access, Inc 购买了一个驱动程序。该驱动程序包含实现`DataSource`接口的`com.dbaccess.BasicDataSource`类。以下代码片段创建类`BasicDataSource`的实例并设置其属性。在部署了`BasicDataSource`实例之后，程序员可以调用方法`DataSource.getConnection`来获得与公司数据库`CUSTOMER_ACCOUNTS`的连接。首先，系统管理员使用默认构造函数创建`BasicDataSource`对象`ds`。然后系统管理员设置三个属性。请注意，以下代码通常由部署工具执行：
 
-```
+```java
 com.dbaccess.BasicDataSource ds = new com.dbaccess.BasicDataSource();
 ds.setServerName("grinder");
 ds.setDatabaseName("CUSTOMER_ACCOUNTS");
 ds.setDescription("Customer accounts database for billing");
 ```
 
-The variable `*ds*` now represents the database `CUSTOMER_ACCOUNTS` installed on the server. Any connection produced by the `BasicDataSource` object `*ds*` will be a connection to the database `CUSTOMER_ACCOUNTS`.
+变量`ds`现在表示服务器上安装的数据库`CUSTOMER_ACCOUNTS`。由`BasicDataSource`对象`ds`生成的任何连接都将是与数据库`CUSTOMER_ACCOUNTS`的连接。
 
 **使用 JNDI API 注册 DataSource 对象到名称服务**
 
-With the properties set, the system administrator can register the `BasicDataSource` object with a JNDI (Java Naming and Directory Interface) naming service. The particular naming service that is used is usually determined by a system property, which is not shown here. The following code excerpt registers the `BasicDataSource` object and binds it with the logical name `jdbc/billingDB`:
+通过设置属性，系统管理员可以使用JNDI（Java命名和目录接口）命名服务注册`BasicDataSource`对象。使用的特定命名服务通常由系统属性确定，此处未显示。以下代码片段注册了`BasicDataSource`对象并将其与逻辑名称`jdbc/billingDB`绑定：
 
-```
+```java
 Context ctx = new InitialContext();
 ctx.bind("jdbc/billingDB", ds);
 ```
 
-This code uses the JNDI API. The first line creates an `InitialContext` object, which serves as the starting point for a name, similar to root directory in a file system. The second line associates, or binds, the `BasicDataSource` object `*ds*` to the logical name `jdbc/billingDB`. In the next code excerpt, you give the naming service this logical name, and it returns the `BasicDataSource` object. The logical name can be any string. In this case, the company decided to use the name `billingDB` as the logical name for the `CUSTOMER_ACCOUNTS` database.
+此代码使用JNDI API。第一行创建一个`InitialContext`对象，它作为名称的起始点，类似于文件系统中的根目录。第二行将`BasicDataSource`对象`ds`关联或绑定到逻辑名`jdbc/billingDB`。在下一个代码片段中，您将为命名服务提供此逻辑名称，并返回`BasicDataSource`对象。逻辑名称可以是任何字符串。在这种情况下，公司决定使用名称`billingDB`作为`CUSTOMER_ACCOUNTS`数据库的逻辑名。
 
-In the previous example, `jdbc` is a subcontext under the initial context, just as a directory under the root directory is a subdirectory. The name `jdbc/billingDB` is like a path name, where the last item in the path is analogous to a file name. In this case, `billingDB` is the logical name that is given to the `BasicDataSource` object `*ds*`. The subcontext `jdbc` is reserved for logical names to be bound to `DataSource` objects, so `jdbc` will always be the first part of a logical name for a data source.
+在前面的示例中，`jdbc`是初始上下文下的子上下文，就像根目录下的目录是子目录一样。名称`jdbc/billingDB`类似于路径名，其中路径中的最后一项与文件名类似。在这种情况下，`billingDB`是给`BasicDataSource`对象`ds`的逻辑名。子上下文`jdbc`保留用于绑定到`DataSource`对象的逻辑名，因此`jdbc`将始终是数据源的逻辑名的第一部分。
 
 **使用部署的 DataSource 对象**
 
-After a basic `DataSource` implementation is deployed by a system administrator, it is ready for a programmer to use. This means that a programmer can give the logical data source name that was bound to an instance of a `DataSource` class, and the JNDI naming service will return an instance of that `DataSource` class. The method `getConnection` can then be called on that `DataSource` object to get a connection to the data source it represents. For example, a programmer might write the following two lines of code to get a `DataSource` object that produces a connection to the database `CUSTOMER_ACCOUNTS`.
+在系统管理员部署了基本的`DataSource`实现之后，程序员就可以使用它了。这意味着程序员可以提供绑定到`DataSource`类实例的逻辑数据源名称，JNDI命名服务将返回该`DataSource`类的实例。然后可以在`DataSource`对象上调用方法`getConnection`以获得与它所代表的数据源的连接。例如，程序员可能会编写以下两行代码来获取一个`DataSource`对象，该对象生成与数据库`CUSTOMER_ACCOUNTS`的连接。
 
-```
+```java
 Context ctx = new InitialContext();
 DataSource ds = (DataSource)ctx.lookup("jdbc/billingDB");
 ```
 
-The first line of code gets an initial context as the starting point for retrieving a `DataSource` object. When you supply the logical name `jdbc/billingDB` to the method `lookup`, the method returns the `DataSource` object that the system administrator bound to `jdbc/billingDB` at deployment time. Because the return value of the method `lookup` is a Java `Object`, we must cast it to the more specific `DataSource` type before assigning it to the variable `*ds*`.
+第一行代码获取初始上下文作为检索`DataSource`对象的起点。当您向方法`lookup`提供逻辑名称`jdbc/billingDB`时，该方法返回系统管理员在部署时绑定到`jdbc/billingDB`的`DataSource`对象。因为`lookup`方法的返回值是Java `Object`，所以我们必须将它转换为更具体的`DataSource`类型，然后再将它赋给变量`ds`。
 
-The variable `*ds*` is an instance of the class `com.dbaccess.BasicDataSource` that implements the `DataSource` interface. Calling the method `*ds*.getConnection` produces a connection to the `CUSTOMER_ACCOUNTS` database.
+变量`ds`是实现`DataSource`接口的`com.dbaccess.BasicDataSource`类的实例。调用方法`ds.getConnection`会产生与`CUSTOMER_ACCOUNTS`数据库的连接。
 
-```
+```java
 Connection con = ds.getConnection("fernanda","brewed");
 ```
 
-The `getConnection` method requires only the user name and password because the variable `*ds*` has the rest of the information necessary for establishing a connection with the `CUSTOMER_ACCOUNTS` database, such as the database name and location, in its properties.
+`getConnection`方法只需要用户名和密码，因为变量`ds`具有在其属性中与`CUSTOMER_ACCOUNTS`数据库建立连接所需的其余信息，例如数据库名称和位置。
 
 **DataSource 对象的优点**
 
-Because of its properties, a `DataSource` object is a better alternative than the `DriverManager` class for getting a connection. Programmers no longer have to hard code the driver name or JDBC URL in their applications, which makes them more portable. Also, `DataSource` properties make maintaining code much simpler. If there is a change, the system administrator can update data source properties and not be concerned about changing every application that makes a connection to the data source. For example, if the data source were moved to a different server, all the system administrator would have to do is set the `serverName` property to the new server name.
+由于它的属性，`DataSource`对象比获取连接的`DriverManager`类更好。程序员不再需要在其应用程序中对驱动程序名称或JDBC URL进行硬编码，这使得它们更具可移植性。此外，`DataSource`属性使维护代码更加简单。如果有更改，系统管理员可以更新数据源属性，而不用担心更改连接到数据源的每个应用程序。例如，如果数据源被移动到不同的服务器，则系统管理员所要做的就是将`serverName`属性设置为新的服务器名称。
 
-Aside from portability and ease of maintenance, using a `DataSource` object to get connections can offer other advantages. When the `DataSource` interface is implemented to work with a `ConnectionPoolDataSource` implementation, all of the connections produced by instances of that `DataSource` class will automatically be pooled connections. Similarly, when the `DataSource` implementation is implemented to work with an `XADataSource` class, all of the connections it produces will automatically be connections that can be used in a distributed transaction. The next section shows how to deploy these types of `DataSource` implementations.
+除了可移植性和易维护性之外，使用`DataSource`对象获取连接还可以提供其他优势。当实现`DataSource`接口以使用`ConnectionPoolDataSource`实现时，该`DataSource`类的实例产生的所有连接将自动成为池化连接。类似地，当实现`DataSource`实现以使用`XADataSource`类时，它产生的所有连接将自动成为可以在分布式事务中使用的连接。下一节将介绍如何部署这些类型的`DataSource`实现。
 
 **部署其他 DataSource 实现**
 
-A system administrator or another person working in that capacity can deploy a `DataSource` object so that the connections it produces are pooled connections. To do this, he or she first deploys a `ConnectionPoolDataSource` object and then deploys a `DataSource` object implemented to work with it. The properties of the `ConnectionPoolDataSource` object are set so that it represents the data source to which connections will be produced. After the `ConnectionPoolDataSource`object has been registered with a JNDI naming service, the `DataSource` object is deployed. Generally only two properties must be set for the `DataSource` object: `description` and `dataSourceName`. The value given to the `dataSourceName`property is the logical name identifying the `ConnectionPoolDataSource` object previously deployed, which is the object containing the properties needed to make the connection.
+系统管理员或以该角色工作的其他人可以部署`DataSource`对象，以便它产生的连接是池化连接。为此，他首先部署一个`ConnectionPoolDataSource`对象，然后部署一个`DataSource`对象来实现它。设置`ConnectionPoolDataSource`对象的属性，使其表示将生成连接的数据源。在使用JNDI命名服务注册`ConnectionPoolDataSource` 对象之后，部署`DataSource`对象。通常只需要为`DataSource`对象设置两个属性：`description`和`dataSourceName`。赋给`dataSourceName` 属性的值是标识先前部署的`ConnectionPoolDataSource`对象的逻辑名，该对象包含进行连接所需的属性。
 
-With the `ConnectionPoolDataSource` and `DataSource` objects deployed, you can call the method `DataSource.getConnection` on the `DataSource` object and get a pooled connection. This connection will be to the data source specified in the `ConnectionPoolDataSource` object's properties.
+部署了`ConnectionPoolDataSource`和`DataSource`对象后，可以在`DataSource`对象上调用`DataSource.getConnection`方法并获得池连接。此连接将是`ConnectionPoolDataSource`对象属性中指定的数据源。
 
-The following example describes how a system administrator for The Coffee Break would deploy a `DataSource` object implemented to provide pooled connections. The system administrator would typically use a deployment tool, so the code fragments shown in this section are the code that a deployment tool would execute.
+以下示例描述了The Coffee Break的系统管理员如何部署实现为提供池连接的`DataSource`对象。系统管理员通常使用部署工具，因此本节中显示的代码片段是部署工具将执行的代码。
 
-To get better performance, The Coffee Break company has bought a JDBC driver from DB Access, Inc. that includes the class `com.dbaccess.ConnectionPoolDS`, which implements the `ConnectionPoolDataSource` interface. The system administrator creates create an instance of this class, sets its properties, and registers it with a JNDI naming service. The Coffee Break has bought its `DataSource` class, `com.applogic.PooledDataSource`, from its EJB server vendor, Application Logic, Inc. The class `com.applogic.PooledDataSource` implements connection pooling by using the underlying support provided by the `ConnectionPoolDataSource` class `com.dbaccess.ConnectionPoolDS`.
+为了获得更好的性能，The Coffee Break公司从 DB Access, Inc 购买了一个JDBC驱动程序，其中包含`com.dbaccess.ConnectionPoolDS`类，它实现了`ConnectionPoolDataSource`接口。系统管理员创建创建此类的实例，设置其属性，并将其注册到JNDI命名服务。Coffee Break从其EJB服务器供应商Application Logic, Inc 购买了它的`DataSource`类`com.applogic.PooledDataSource` 。`com.applogic.PooledDataSource`类通过使用由`ConnectionPoolDataSource`类和`com.dbaccess.ConnectionPoolDS`提供的底层支持来实现连接池。
 
-The `ConnectionPoolDataSource` object must be deployed first. The following code creates an instance of `com.dbaccess.ConnectionPoolDS` and sets its properties:
+必须首先部署`ConnectionPoolDataSource`对象。以下代码创建`com.dbaccess.ConnectionPoolDS`的实例并设置其属性：
 
-```
+```java
 com.dbaccess.ConnectionPoolDS cpds = new com.dbaccess.ConnectionPoolDS();
 cpds.setServerName("creamer");
 cpds.setDatabaseName("COFFEEBREAK");
@@ -971,18 +971,18 @@ cpds.setPortNumber(9040);
 cpds.setDescription("Connection pooling for " + "COFFEEBREAK DBMS");
 ```
 
-After the `ConnectionPoolDataSource` object has been deployed, the system administrator deploys the `DataSource`object. The following code registers the `com.dbaccess.ConnectionPoolDS` object `*cpds*` with a JNDI naming service. Note that the logical name being associated with the `*cpds*` variable has the subcontext `pool` added under the subcontext `jdbc`, which is similar to adding a subdirectory to another subdirectory in a hierarchical file system. The logical name of any instance of the class `com.dbaccess.ConnectionPoolDS` will always begin with `jdbc/pool`. Oracle recommends putting all `ConnectionPoolDataSource` objects under the subcontext `jdbc/pool`:
+在部署`ConnectionPoolDataSource`对象之后，系统管理员部署`DataSource`对象。以下代码使用JNDI命名服务注册`com.dbaccess.ConnectionPoolDS`对象`cpds`。请注意，与`cpds`变量关联的逻辑名称在子上下文`jdbc`下添加了子上下文`pool`，这类似于将子目录添加到分层文件系统中的另一个子目录。类`com.dbaccess.ConnectionPoolDS`的任何实例的逻辑名将始终以`jdbc/pool`开头。Oracle建议将所有`ConnectionPoolDataSource`对象放在子上下文`jdbc/pool`下：
 
-```
+```java
 Context ctx = new InitialContext();
 ctx.bind("jdbc/pool/fastCoffeeDB", cpds);
 ```
 
-Next, the `DataSource` class that is implemented to interact with the `*cpds*` variable and other instances of the `com.dbaccess.ConnectionPoolDS` class is deployed. The following code creates an instance of this class and sets its properties. Note that only two properties are set for this instance of `com.applogic.PooledDataSource`. The `description` property is set because it is always required. The other property that is set, `dataSourceName`, gives the logical JNDI name for `*cpds*`, which is an instance of the `com.dbaccess.ConnectionPoolDS` class. In other words, `*cpds*`represents the `ConnectionPoolDataSource` object that will implement connection pooling for the `DataSource` object.
+接下来，部署实现与`cpds`变量和`com.dbaccess.ConnectionPoolDS`类的其他实例交互的`DataSource`类。以下代码创建此类的实例并设置其属性。请注意，只为此`com.applogic.PooledDataSource`实例设置了两个属性。设置`description`属性是因为它始终是必需的。设置的另一个属性`dataSourceName`为`cpds`提供了逻辑JNDI名称，它是`com.dbaccess.ConnectionPoolDS`类的一个实例。换句话说，`cpds `表示将实现`DataSource`对象的连接池的`ConnectionPoolDataSource`对象。
 
-The following code, which would probably be executed by a deployment tool, creates a `PooledDataSource` object, sets its properties, and binds it to the logical name `jdbc/fastCoffeeDB`:
+以下代码可能由部署工具执行，它创建一个`PooledDataSource`对象，设置其属性，并将其绑定到逻辑名称`jdbc/fastCoffeeDB`：
 
-```
+```java
 com.applogic.PooledDataSource ds = new com.applogic.PooledDataSource();
 ds.setDescription("produces pooled connections to COFFEEBREAK");
 ds.setDataSourceName("jdbc/pool/fastCoffeeDB");
@@ -990,7 +990,7 @@ Context ctx = new InitialContext();
 ctx.bind("jdbc/fastCoffeeDB", ds);
 ```
 
-At this point, a `DataSource` object is deployed from which an application can get pooled connections to the database `COFFEEBREAK`.
+此时，部署了一个`DataSource`对象，应用程序可以从该对象获得与数据库`COFFEEBREAK`的池化连接。
 
 **获取并使用连接池**
 
