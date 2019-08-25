@@ -594,3 +594,159 @@ ant setup
 ant runct
 ```
 
+### 使用 JDBC 处理 SQL 语句
+
+通常，为了使用 JDBC 处理任何 SQL 语句，你必须遵循以下步骤：
+
+1. [建立连接](https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html#establishing_connections)
+2. [创建语句](https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html#creating_statements)
+3. [执行查询](https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html#executing_queries)
+4. [处理 `ResultSet` 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html#processing_resultset_objects)
+5. [关闭连接](https://docs.oracle.com/javase/tutorial/jdbc/basics/processingsqlstatements.html#closing_connections)
+
+此页面使用教程示例中的以下方法`CoffeesTables.viewTable`来演示这些步骤。此方法输出表`COFFEES`的内容。本教程后面将详细讨论此方法：
+
+```java
+public static void viewTable(Connection con, String dbName)
+    throws SQLException {
+
+    Statement stmt = null;
+    String query = "select COF_NAME, SUP_ID, PRICE, " +
+                   "SALES, TOTAL " +
+                   "from " + dbName + ".COFFEES";
+    try {
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery(query);
+        while (rs.next()) {
+            String coffeeName = rs.getString("COF_NAME");
+            int supplierID = rs.getInt("SUP_ID");
+            float price = rs.getFloat("PRICE");
+            int sales = rs.getInt("SALES");
+            int total = rs.getInt("TOTAL");
+            System.out.println(coffeeName + "\t" + supplierID +
+                               "\t" + price + "\t" + sales +
+                               "\t" + total);
+        }
+    } catch (SQLException e ) {
+        JDBCTutorialUtilities.printSQLException(e);
+    } finally {
+        if (stmt != null) { stmt.close(); }
+    }
+}
+```
+
+**建立连接**
+
+首先，与要使用的数据源建立连接。数据源可以是DBMS，遗留文件系统或具有相应JDBC驱动程序的某些其他数据源。此连接由`Connection`对象表示。有关详细信息，请参阅 [建立连接](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html) 。
+
+**创建语句**
+
+`Statement`是表示SQL语句的接口。执行`Statement`对象，它们生成`ResultSet`对象，这是一个表示数据库结果集的数据表。你需要一个`Connection`对象来创建一个`Statement`对象。
+
+例如，`CoffeesTables.viewTable`使用以下代码创建一个`Statement`对象：
+
+```java
+stmt = con.createStatement();
+```
+
+有三种不同的语句：
+
+ - `Statement`：用于实现没有参数的简单SQL语句。
+ - `PreparedStatement` ：(扩展`Statement`。）用于预编译可能包含输入参数的SQL语句。有关详细信息，请参阅[使用预编译语句](https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html) 。
+ - `CallableStatement：`（扩展`PreparedStatement`。）用于执行可能包含输入和输出参数的存储过程。有关详细信息，请参阅[存储过程](https://docs.oracle.com/javase/tutorial/jdbc/basics/storedprocedures.html) 。
+
+**执行查询**
+
+要执行查询，请从`Statement`调用`execute`方法，如下所示：
+
+ - `execute`：如果查询返回的第一个对象是`ResultSet`对象，则返回`true`。如果查询可以返回一个或多个`ResultSet`对象，请使用此方法。通过重复调用`Statement.getResultSet`来检索从查询返回的`ResultSet`对象。
+ - `executeQuery`：返回一个`ResultSet`对象。
+ - `executeUpdate`：返回一个整数，表示受SQL语句影响的行数。如果您使用`INSERT`，`DELETE`或`UPDATE` SQL语句，请使用此方法。
+
+例如，`CoffeesTables.viewTable`使用以下代码执行`Statement`对象：
+
+```java
+ResultSet rs = stmt.executeQuery（query）;
+```
+
+有关详细信息，请参阅[从结果集中检索和修改值](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html) 。
+
+**处理结果集对象**
+
+您可以通过游标访问`ResultSet`对象中的数据。请注意，此游标不是数据库游标。该游标是一个指向`ResultSet`对象中一行数据的指针。最初，光标位于第一行之前。您可以调用`ResultSet`对象中定义的各种方法来移动光标。
+
+例如，`CoffeesTables.viewTable`重复调用方法`ResultSet.next`将光标向前移动一行。每次调用`next`时，该方法都会输出光标当前所在行的数据：
+
+```java
+try {
+    stmt = con.createStatement();
+    ResultSet rs = stmt.executeQuery(query);
+    while (rs.next()) {
+        String coffeeName = rs.getString("COF_NAME");
+        int supplierID = rs.getInt("SUP_ID");
+        float price = rs.getFloat("PRICE");
+        int sales = rs.getInt("SALES");
+        int total = rs.getInt("TOTAL");
+        System.out.println(coffeeName + "\t" + supplierID +
+                           "\t" + price + "\t" + sales +
+                           "\t" + total);
+    }
+}
+// ...
+```
+
+参考 [Retrieving and Modifying Values from Result Sets](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html) 获取更多信息。
+
+**关闭连接**
+
+当你完成使用`Statement`时，调用方法`Statement.close`立即释放它正在使用的资源。当您调用此方法时，其`ResultSet`对象将被关闭。
+
+例如，方法`CoffeesTables.viewTable`通过将它包装在`finally`块中，确保在方法结束时关闭`Statement`对象，而不管抛出任何`SQLException`对象：
+
+```java
+} finally {
+    if (stmt != null) { stmt.close(); }
+}
+```
+
+JDBC在与数据源交互期间遇到错误时会抛出`SQLException`。有关详细信息，请参阅[处理SQL异常](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html) 。
+
+在Java SE 7及更高版本中可用的JDBC 4.1中，您可以使用`try-with-resources`语句自动关闭`Connection`，`Statement`和`ResultSet`对象，无论是否已经抛出`SQLException ` 。自动资源语句由`try`语句和一个或多个声明的资源组成。例如，您可以修改`CoffeesTables.viewTable`，使其`Statement`对象自动关闭，如下所示：
+
+```java
+public static void viewTable(Connection con) throws SQLException {
+
+    String query = "select COF_NAME, SUP_ID, PRICE, " +
+                   "SALES, TOTAL " +
+                   "from COFFEES";
+
+    try (Statement stmt = con.createStatement()) {
+
+        ResultSet rs = stmt.executeQuery(query);
+
+        while (rs.next()) {
+            String coffeeName = rs.getString("COF_NAME");
+            int supplierID = rs.getInt("SUP_ID");
+            float price = rs.getFloat("PRICE");
+            int sales = rs.getInt("SALES");
+            int total = rs.getInt("TOTAL");
+            System.out.println(coffeeName + ", " + supplierID +
+                               ", " + price + ", " + sales +
+                               ", " + total);
+        }
+    } catch (SQLException e) {
+        JDBCTutorialUtilities.printSQLException(e);
+    }
+}
+```
+
+以下语句是一个`try-with-resources`语句，它声明了一个资源`stmt`，它将在`try`块终止时自动关闭：
+
+```java
+try (Statement stmt = con.createStatement()) {
+    // ...
+}
+```
+
+参考 [Essential Classes](https://docs.oracle.com/javase/tutorial/essential/index.html) 中的 [The `try`-with-resources Statement](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html) 部分获取更多信息。
+
