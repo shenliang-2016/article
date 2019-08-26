@@ -501,41 +501,41 @@ http://xml.apache.org/xalan-j/
 
 在`properties/javadb-build-properties.xml`或`properties/mysql-build-properties.xml`文件中（取决于您的DBMS），修改以下属性，如下表所述：
 
-| Property             | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| `JAVAC`              | The full path name of your Java compiler, `javac`            |
-| `JAVA`               | The full path name of your Java runtime executable, `java`   |
+| Property             | Description                              |
+| -------------------- | ---------------------------------------- |
+| `JAVAC`              | The full path name of your Java compiler, `javac` |
+| `JAVA`               | The full path name of your Java runtime executable, `java` |
 | `PROPERTIESFILE`     | The name of the properties file, either `properties/javadb-sample-properties.xml` or `properties/mysql-sample-properties.xml` |
 | `MYSQLDRIVER`        | The full path name of your MySQL driver. For Connector/J, this is typically `*<Connector/J installation directory>*/mysql-connector-java-*version-number*.jar`. |
 | `JAVADBDRIVER`       | The full path name of your Java DB driver. This is typically `*<Java DB installation directory>*/lib/derby.jar`. |
 | `XALANDIRECTORY`     | The full path name of the directory that contains Apache Xalan. |
 | `CLASSPATH`          | The class path that the JDBC tutorial uses. *You do not need to change this value.* |
-| `XALAN`              | The full path name of the file `xalan.jar`.                  |
+| `XALAN`              | The full path name of the file `xalan.jar`. |
 | `DB.VENDOR`          | A value of either `derby` or `mysql` depending on whether you are using Java DB or MySQL, respectively. The tutorial uses this value to construct the URL required to connect to the DBMS and identify DBMS-specific code and SQL statements. |
 | `DB.DRIVER`          | The fully qualified class name of the JDBC driver. For Java DB, this is `org.apache.derby.jdbc.EmbeddedDriver`. For MySQL, this is `com.mysql.jdbc.Driver`. |
-| `DB.HOST`            | The host name of the computer hosting your DBMS.             |
-| `DB.PORT`            | The port number of the computer hosting your DBMS.           |
-| `DB.SID`             | The name of the database the tutorial creates and uses.      |
+| `DB.HOST`            | The host name of the computer hosting your DBMS. |
+| `DB.PORT`            | The port number of the computer hosting your DBMS. |
+| `DB.SID`             | The name of the database the tutorial creates and uses. |
 | `DB.URL.NEWDATABASE` | The connection URL used to connect to your DBMS when creating a new database. *You do not need to change this value.* |
 | `DB.URL`             | The connection URL used to connect to your DBMS. *You do not need to change this value.* |
 | `DB.USER`            | The name of the user that has access to create databases in the DBMS. |
-| `DB.PASSWORD`        | The password of the user specified in `DB.USER`.             |
+| `DB.PASSWORD`        | The password of the user specified in `DB.USER`. |
 | `DB.DELIMITER`       | The character used to separate SQL statements. *Do not change this value.* It should be the semicolon character (`;`). |
 
 **修改教程属性文件**
 
 教程示例使用`properties/javadb-sample-properties.xml`文件或`properties/mysql-sample-properties.xml`文件（取决于您的DBMS）中的值来连接到DBMS并初始化数据库和表 ，如下表所述：
 
-| Property        | Description                                                  |
-| --------------- | ------------------------------------------------------------ |
+| Property        | Description                              |
+| --------------- | ---------------------------------------- |
 | `dbms`          | A value of either `derby` or `mysql` depending on whether you are using Java DB or MySQL, respectively. The tutorial uses this value to construct the URL required to connect to the DBMS and identify DBMS-specific code and SQL statements. |
 | `jar_file`      | The full path name of the JAR file that contains all the class files of this tutorial. |
 | `driver`        | The fully qualified class name of the JDBC driver. For Java DB, this is `org.apache.derby.jdbc.EmbeddedDriver`. For MySQL, this is `com.mysql.jdbc.Driver`. |
-| `database_name` | The name of the database the tutorial creates and uses.      |
+| `database_name` | The name of the database the tutorial creates and uses. |
 | `user_name`     | The name of the user that has access to create databases in the DBMS. |
-| `password`      | The password of the user specified in `user_name`.           |
-| `server_name`   | The host name of the computer hosting your DBMS.             |
-| `port_number`   | The port number of the computer hosting your DBMS.           |
+| `password`      | The password of the user specified in `user_name`. |
+| `server_name`   | The host name of the computer hosting your DBMS. |
+| `port_number`   | The port number of the computer hosting your DBMS. |
 
 **注意**：为了简单地演示JDBC API，JDBC教程示例代码不执行已部署系统通常使用的密码管理技术。在生产环境中，您可以遵循Oracle数据库密码管理准则并禁用任何示例帐户。请参阅  [*Oracle Database Security Guide*](http://docs.oracle.com/cd/B28359_01/network.111/b28531/toc.htm)  中的  [Managing Security for Application Developers](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm) 中的 [Securing Passwords in Application Design](http://docs.oracle.com/cd/B28359_01/network.111/b28531/app_devs.htm#CJADABGG) 用于密码管理指南和其他安全建议。
 
@@ -569,24 +569,24 @@ ant setup
 
 `build.xml`文件中的每个目标对应于JDBC示例中的Java类或SQL脚本。下表列出了`build.xml`文件中的目标，每个目标执行的类或脚本，以及每个目标所需的其他类或文件：
 
-| Ant Target                | Class or SQL Script                                          | Other Required Classes or Files                              |
-| ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `javadb-create-procedure` | `javadb/create-procedures.sql`; see the `build.xml`file to view other SQL statements that are run | No other required files                                      |
-| `mysql-create-procedure`  | `mysql/create-procedures.sql`.                               | No other required files                                      |
-| `run`                     | `JDBCTutorialUtilities`                                      | No other required classes                                    |
-| `runct`                   | `CoffeesTable`                                               | `JDBCTutorialUtilities`                                      |
-| `runst`                   | `SuppliersTable`                                             | `JDBCTutorialUtilities`                                      |
-| `runjrs`                  | `JdbcRowSetSample`                                           | `JDBCTutorialUtilities`                                      |
-| `runcrs`                  | `CachedRowSetSample`, `ExampleRowSetListener`                | `JDBCTutorialUtilities`                                      |
-| `runjoin`                 | `JoinSample`                                                 | `JDBCTutorialUtilities`                                      |
-| `runfrs`                  | `FilteredRowSetSample`                                       | `JDBCTutorialUtilities`, `CityFilter`, `StateFilter`         |
-| `runwrs`                  | `WebRowSetSample`                                            | `JDBCTutorialUtilities`                                      |
-| `runclob`                 | `ClobSample`                                                 | `JDBCTutorialUtilities`, `txt/colombian-description.txt`     |
-| `runrss`                  | `RSSFeedsTable`                                              | `JDBCTutorialUtilities`, the XML files contained in the `xml` directory |
-| `rundl`                   | `DatalinkSample`                                             | `JDBCTutorialUtilities`                                      |
-| `runspjavadb`             | `StoredProcedureJavaDBSample`                                | `JDBCTutorialUtilities`, `SuppliersTable`, `CoffeesTable`    |
-| `runspmysql`              | `StoredProcedureMySQLSample`                                 | `JDBCTutorialUtilities`, `SuppliersTable`, `CoffeesTable`    |
-| `runframe`                | `CoffeesFrame`                                               | `JDBCTutorialUtilities`, `CoffeesTableModel`                 |
+| Ant Target                | Class or SQL Script                      | Other Required Classes or Files          |
+| ------------------------- | ---------------------------------------- | ---------------------------------------- |
+| `javadb-create-procedure` | `javadb/create-procedures.sql`; see the `build.xml`file to view other SQL statements that are run | No other required files                  |
+| `mysql-create-procedure`  | `mysql/create-procedures.sql`.           | No other required files                  |
+| `run`                     | `JDBCTutorialUtilities`                  | No other required classes                |
+| `runct`                   | `CoffeesTable`                           | `JDBCTutorialUtilities`                  |
+| `runst`                   | `SuppliersTable`                         | `JDBCTutorialUtilities`                  |
+| `runjrs`                  | `JdbcRowSetSample`                       | `JDBCTutorialUtilities`                  |
+| `runcrs`                  | `CachedRowSetSample`, `ExampleRowSetListener` | `JDBCTutorialUtilities`                  |
+| `runjoin`                 | `JoinSample`                             | `JDBCTutorialUtilities`                  |
+| `runfrs`                  | `FilteredRowSetSample`                   | `JDBCTutorialUtilities`, `CityFilter`, `StateFilter` |
+| `runwrs`                  | `WebRowSetSample`                        | `JDBCTutorialUtilities`                  |
+| `runclob`                 | `ClobSample`                             | `JDBCTutorialUtilities`, `txt/colombian-description.txt` |
+| `runrss`                  | `RSSFeedsTable`                          | `JDBCTutorialUtilities`, the XML files contained in the `xml` directory |
+| `rundl`                   | `DatalinkSample`                         | `JDBCTutorialUtilities`                  |
+| `runspjavadb`             | `StoredProcedureJavaDBSample`            | `JDBCTutorialUtilities`, `SuppliersTable`, `CoffeesTable` |
+| `runspmysql`              | `StoredProcedureMySQLSample`             | `JDBCTutorialUtilities`, `SuppliersTable`, `CoffeesTable` |
+| `runframe`                | `CoffeesFrame`                           | `JDBCTutorialUtilities`, `CoffeesTableModel` |
 
 例如，要运行类`CoffeesTable`，请将当前目录切换到`* <JDBC tutorial directory> *`，然后从该目录运行以下命令：
 
@@ -1189,4 +1189,143 @@ public class DistributedTransactionBean implements SessionBean {
     private Context ctx = null;
 }
 ```
+
+### 处理 SQL 异常
+
+本页面涵盖以下主题：
+
+- [SQLException 概述](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html#overview_sqlexception)
+- [获取 Exceptions](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html#retrieving_exceptions)
+- [获取 Warnings](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html#retrieving_warnings)
+- [SQLExceptions 分类](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html#categorized_sqlexceptions)
+- [SQLException 的其它子类型](https://docs.oracle.com/javase/tutorial/jdbc/basics/sqlexception.html#subclasses_sqlexception)
+
+**SQLException 概述**
+
+当JDBC在与数据源交互期间遇到错误时，它会抛出`SQLException`实例而不是`Exception`。（此上下文中的数据源表示`Connection`对象所连接的数据库。）`SQLException`实例包含以下信息，可帮助您确定错误原因：
+
+ - 错误的描述。通过调用方法`SQLException.getMessage`检索包含此描述的`String`对象。
+ - SQLState 代码。这些代码及其各自的含义已经由 ISO/ANSI 和 Open Group (X/Open) 标准化，尽管已经为数据库供应商保留了一些代码来自行定义。此`String`对象由五个字母数字字符组成。通过调用方法`SQLException.getSQLState`来检索此代码。
+ - 错误代码。这是一个整数值，用于标识导致抛出`SQLException`实例的错误。它的值和含义是特定于实现的，可能是底层数据源返回的实际错误代码。通过调用方法`SQLException.getErrorCode`来检索错误。
+- 原因。`SQLException`实例可能具有因果关系，该关系由一个或多个`Throwable`对象组成，这些对象导致抛出`SQLException`实例。要导航此原因链，请递归调用方法`SQLException.getCause`，直到返回`null`值。
+ - 对任何链式异常的引用。如果发生多个错误，则通过此链引用异常。通过对抛出的异常调用方法`SQLException.getNextException`来检索这些异常。
+
+**获取异常**
+
+下面的方法， `JDBCTutorialUtilities.printSQLException` 输出包含在 `SQLException` 以及任何与之形成异常链的异常中的 SQLState，错误码，错误描述，以及原因（如果存在）：
+
+```java
+public static void printSQLException(SQLException ex) {
+
+    for (Throwable e : ex) {
+        if (e instanceof SQLException) {
+            if (ignoreSQLException(
+                ((SQLException)e).
+                getSQLState()) == false) {
+
+                e.printStackTrace(System.err);
+                System.err.println("SQLState: " +
+                    ((SQLException)e).getSQLState());
+
+                System.err.println("Error Code: " +
+                    ((SQLException)e).getErrorCode());
+
+                System.err.println("Message: " + e.getMessage());
+
+                Throwable t = ex.getCause();
+                while(t != null) {
+                    System.out.println("Cause: " + t);
+                    t = t.getCause();
+                }
+            }
+        }
+    }
+}
+```
+
+比如，如果你调用方法 `CoffeesTable.dropTable` 并使用 Java DB 作为你的 DBMS，表 `COFFEES` 不存在，同时你删除了对 `JDBCTutorialUtilities.ignoreSQLException` 的调用，将得到类似下面的输出：
+
+```
+SQLState: 42Y55
+Error Code: 30000
+Message: 'DROP TABLE' cannot be performed on
+'TESTDB.COFFEES' because it does not exist.
+```
+
+您可以改为首先检索 `SQLState`，然后相应地处理`SQLException`，而不是输出`SQLException`信息。例如，如果`SQLState`等于代码`42Y55`（并且您使用Java DB作为DBMS），则`JDBCTutorialUtilities.ignoreSQLException`方法返回`true`，这会导致`JDBCTutorialUtilities.printSQLException`忽略`SQLException`：
+
+```java
+public static boolean ignoreSQLException(String sqlState) {
+
+    if (sqlState == null) {
+        System.out.println("The SQL state is not defined!");
+        return false;
+    }
+
+    // X0Y32: Jar file already exists in schema
+    if (sqlState.equalsIgnoreCase("X0Y32"))
+        return true;
+
+    // 42Y55: Table already exists in schema
+    if (sqlState.equalsIgnoreCase("42Y55"))
+        return true;
+
+    return false;
+}
+```
+
+**获取警告**
+
+`SQLWarning`对象是`SQLException`的子类，用于处理数据库访问警告。警告不会像异常那样停止执行应用程序，它们只是提醒用户某些事情没有按计划发生。例如，警告可能会让您知道您尝试撤销的权限未被撤销。或者警告可能会告诉您在请求的断开连接期间发生了错误。
+
+可以在`Connection`对象，`Statement`对象（包括`PreparedStatement`和`CallableStatement`对象）或`ResultSet`对象上报告警告。这些类中的每一个都有一个`getWarnings`方法，您必须调用该方法才能看到在调用对象上报告的第一个警告。如果`getWarnings`返回警告，则可以在其上调用`SQLWarning`方法`getNextWarning`以获取任何其他警告。执行语句会自动清除先前语句中的警告，因此警告不会积聚。但是，这意味着如果要检索语句上报告的警告，则必须在执行另一个语句之前执行。
+
+`JDBCTutorialUtilities`中的以下方法说明了如何获取有关`Statement`或`ResultSet`对象上报告的任何警告的完整信息：
+
+```java
+public static void getWarningsFromResultSet(ResultSet rs)
+    throws SQLException {
+    JDBCTutorialUtilities.printWarnings(rs.getWarnings());
+}
+
+public static void getWarningsFromStatement(Statement stmt)
+    throws SQLException {
+    JDBCTutorialUtilities.printWarnings(stmt.getWarnings());
+}
+
+public static void printWarnings(SQLWarning warning)
+    throws SQLException {
+
+    if (warning != null) {
+        System.out.println("\n---Warning---\n");
+
+    while (warning != null) {
+        System.out.println("Message: " + warning.getMessage());
+        System.out.println("SQLState: " + warning.getSQLState());
+        System.out.print("Vendor error code: ");
+        System.out.println(warning.getErrorCode());
+        System.out.println("");
+        warning = warning.getNextWarning();
+    }
+}
+```
+
+最常见的警告是`DataTruncation`警告，它是`SQLWarning`的子类。所有`DataTruncation`对象的`SQLState`都为`01004`，表示读取或写入数据时出现问题。通过`DataTruncation`方法，您可以找出截断的列或参数数据，截断是在读取还是写入操作，应该传输了多少字节，以及实际传输了多少字节。
+
+**SQLExceptions 分类**
+
+您的JDBC驱动程序可能抛出`SQLException`的子类，该子类对应于公共`SQLState`或与特定`SQLState`类值无关的常见错误状态。这使您可以编写更多可移植的错误处理代码。这些异常是以下类之一的子类：
+
+ -  `SQLNonTransientException`
+ -  `SQLTransientException`
+ -  `SQLRecoverableException`
+
+有关这些子类的更多信息，请参阅`java.sql`包的最新Javadoc或JDBC驱动程序的文档。
+
+**SQLException 的其它子类型**
+
+还可以抛出以下`SQLException`子类：
+
+ - 批处理更新操作期间发生错误时抛出`BatchUpdateException`。除了`SQLException`提供的信息之外，`BatchUpdateException`还提供在错误发生之前执行的所有语句的更新计数。
+ - 无法在`Connection`上设置一个或多个客户端信息属性时抛出`SQLClientInfoException`。除了`SQLException`提供的信息之外，`SQLClientInfoException`还提供了未设置的客户端信息属性列表。
 
