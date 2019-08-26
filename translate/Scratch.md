@@ -1,131 +1,141 @@
-## 重构遗留代码以使用泛型
-
-前面，我们展示了新版本代码和遗留代码如何互操作。现在，看看更困难的问题，泛型化老代码。
-
-如果你决定要重构老代码以使用泛型，你就需要谨慎考虑对 API 的修改。
-
-您需要确保泛型 API 不会过度限制；它必须继续支持 API 的原始契约。再次考虑 `java.util.Collection` 中的一些示例。泛型化之前的 API 如下所示：
+下面的例子展示了配置切面，它是有用的。他是一个基于时间的配置器，使用 @AspectJ 风格的切面声明：
 
 ```java
-interface Collection {
-    public boolean containsAll(Collection c);
-    public boolean addAll(Collection c);
-}
-```
+package foo;
 
-最直接的泛型化尝试可能如下：
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.util.StopWatch;
+import org.springframework.core.annotation.Order;
 
-```java
-interface Collection<E> {
+@Aspect
+public class ProfilingAspect {
 
-    public boolean containsAll(Collection<E> c);
-    public boolean addAll(Collection<E> c);
-}
-```
-
-尽管这是类型安全的，它却并没有遵循原始 API 的契约。`containsAll()` 方法使用任何类型的输入集合。只有当传入集合实际上只包含 `E` 类型实例时，它才会成功。但是：
-
-* 传入集合的静态类型可能不同，可能因为调用者并不知道被传入的集合的精确类型，或者因为它是一个 `Collection<S>` ，其中的 `S` 是 `E` 的一个子类。
-* 使用不同类型的集合调用 `containsAll()` 是完全合法的。该程序可以工作，返回 `false` 。
-
-在 `addAll()` 情况下，我们应该能够添加任何由 `E` 的子类组成的集合。我们在 [Generic Methods](https://docs.oracle.com/javase/tutorial/extra/generics/methods.html) 章节中看到了如何正确处理这种情况。
-
-您还需要确保修订后的 API 保持与旧客户端的二进制兼容性。这意味着 API 的擦除必须与原始的，未经过泛型化的 API 相同。在大多数情况下，这自然会失败，但有一些微妙的情况。我们将研究我们遇到过的最微妙的案例之一，即 `Collections.max()` 方法。正如我们在  [More Fun with Wildcards](https://docs.oracle.com/javase/tutorial/extra/generics/morefun.html) 部分中看到的那样，`max()` 的合理签名是：
-
-```java
-public static <T extends Comparable<? super T>> 
-        T max(Collection<T> coll)
-```
-
-这很好，除了此签名的擦除是：
-
-```java
-public static Comparable max(Collection coll)
-```
-
-不同于原始的 `max()` 签名：
-
-```java
-public static Object max(Collection coll)
-```
-
-本来当然可以早已指定了这个 `max()` 签名，但是这并没有发生，同时所有的调用 `Collections.max()` 的老版本的二进制类文件都依赖于返回 `Object` 的签名。
-
-我们可以强制擦除不同，通过为形式类型参数 `T` 显式指定一个界内的超类。
-
-```java
-public static <T extends Object & Comparable<? super T>> 
-        T max(Collection<T> coll)
-```
-
-这是一个给定*多个边界*的类型参数的例子，使用语法`T1 & T2 ... & Tn` 。一个具有多个边界的类型变量被认为是边界列表中的所有类型的子类。当使用多个边界时，边界列表中第一个出现的类型会被作为类型变量的擦除。
-
-最终，我们应该记得 `max` 只从它的输入集合中读取数据，因此适用于 `T` 的任何子类的集合。
-
-这将我们指引到 JDK 中实际使用的方法签名：
-
-```java
-public static <T extends Object & Comparable<? super T>> 
-        T max(Collection<? extends T> coll)
-```
-
-在实践中出现如此复杂的事情是非常罕见的，但类库设计者应该准备好在转换现有 API 时的全面考量。
-
-需要注意的另一个问题是*协变返回*，即改进子类中方法的返回类型。您不应该在旧 API 中利用此功能。为了了解原因，让我们看一个例子。
-
-假设您的原始 API 具有以下形式：
-
-```java
-public class Foo {
-    // Factory. Should create an instance of 
-    // whatever class it is declared in.
-    public Foo create() {
-        ...
+    @Around("methodsToBeProfiled()")
+    public Object profile(ProceedingJoinPoint pjp) throws Throwable {
+        StopWatch sw = new StopWatch(getClass().getSimpleName());
+        try {
+            sw.start(pjp.getSignature().getName());
+            return pjp.proceed();
+        } finally {
+            sw.stop();
+            System.out.println(sw.prettyPrint());
+        }
     }
-}
 
-public class Bar extends Foo {
-    // Actually creates a Bar.
-    public Foo create() {
-        ...
-    }
+    @Pointcut("execution(public * foo..*.*(..))")
+    public void methodsToBeProfiled(){}
 }
 ```
 
-利用协变返回的优点，你将其修改为：
+我们还需要创建一个 `META-INF/aop.xml` 文件，告知 AspectJ 编织器我们想要将 `ProfilingAspect` 织入我们自己的类中。此文件约定，在 Java 类路径中存在名为 `META-INF/aop.xml` 的文件（或多个文件）是标准的 AspectJ。下面的例子展示了 `aop.xml` 文件：
+
+```xml
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "https://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+
+    <weaver>
+        <!-- only weave classes in our application-specific packages -->
+        <include within="foo.*"/>
+    </weaver>
+
+    <aspects>
+        <!-- weave in just this aspect -->
+        <aspect name="foo.ProfilingAspect"/>
+    </aspects>
+
+</aspectj>
+```
+
+现在我们可以继续介绍特定于 Spring 的配置部分。我们需要配置一个 `LoadTimeWeaver` （稍后解释）。此加载期编织器是基本的组件，负责将一个或者多个 `META-INF/aop.xml` 文件中配置的切面织入到你的应用中的类中。好消息是它不需要大量配置（你可以指定其它一些选项，后续介绍），如下面例子所示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- a service object; we will be profiling its methods -->
+    <bean id="entitlementCalculationService"
+            class="foo.StubEntitlementCalculationService"/>
+
+    <!-- this switches on the load-time weaving -->
+    <context:load-time-weaver/>
+</beans>
+```
+
+现在，所有必须的工件（切面，`META-INF/aop.xml` 文件，以及 Spring 配置）都已到位，我们可以使用 `main(..)` 方法创建下面的驱动类，以演示 LTW 运行过程：
 
 ```java
-public class Foo {
-    // Factory. Should create an instance of 
-    // whatever class it is declared in.
-    public Foo create() {
-        ...
-    }
-}
+package foo;
 
-public class Bar extends Foo {
-    // Actually creates a Bar.
-    public Bar create() {
-        ...
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public final class Main {
+
+    public static void main(String[] args) {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml", Main.class);
+
+        EntitlementCalculationService entitlementCalculationService =
+                (EntitlementCalculationService) ctx.getBean("entitlementCalculationService");
+
+        // the profiling aspect is 'woven' around this method execution
+        entitlementCalculationService.calculateEntitlement();
     }
 }
 ```
 
-现在，假定你的代码的一个第三方客户端编写如下代码：
+我们还有最后一件事要做。本节的介绍确实说可以在 Spring 的基础上有选择地在每个 `ClassLoader` 的基础上打开 LTW，这是事实。但是，对于此示例，我们使用 Java 代理（随 Spring 提供）来打开 LTW。我们使用以下命令来运行前面显示的 `Main` 类：
+
+```
+java -javaagent:C:/projects/foo/lib/global/spring-instrument.jar foo.Main
+```
+
+`-javaagent`是一个标志，用于指定和启用代理程序来检测在 JVM 上运行的程序。Spring Framework附带了一个代理程序`InstrumentationSavingAgent`，它包装在`spring-instrument.jar`中，该函数作为前面示例中`-javaagent`参数的值提供。
+
+执行`Main`程序的输出类似于下一个示例。（我在`calculateEntitlement()`实现中引入了一个`Thread.sleep(..)`语句，以便探查器实际捕获0毫秒以外的东西（`01234`毫秒不是AOP引入的开销）。下面的清单显示了运行我们的探查器时得到的输出：
+
+```
+Calculating entitlement
+
+StopWatch 'ProfilingAspect': running time (millis) = 1234
+------ ----- ----------------------------
+ms     %     Task name
+------ ----- ----------------------------
+01234  100%  calculateEntitlement
+```
+
+由于LTW是通过使用成熟的AspectJ实现的，因此我们不仅限于为Spring bean提供增强。`Main`程序的以下细微变化产生相同的结果：
 
 ```java
-public class Baz extends Bar {
-    // Actually creates a Baz.
-    public Foo create() {
-        ...
+package foo;
+
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public final class Main {
+
+    public static void main(String[] args) {
+        new ClassPathXmlApplicationContext("beans.xml", Main.class);
+
+        EntitlementCalculationService entitlementCalculationService =
+                new StubEntitlementCalculationService();
+
+        // the profiling aspect will be 'woven' around this method execution
+        entitlementCalculationService.calculateEntitlement();
     }
 }
 ```
 
-Java 虚拟机不直接支持覆盖具有不同返回类型的方法。编译器支持此功能。因此，除非重新编译 `Baz` 类，否则它将无法正确覆盖 `Bar` 的 `create()` 方法。此外，`Baz` 必须被修改，因为代码将在编写时被拒绝 - `Baz` 中的 `create()` 的返回类型不是 `Bar` 中 `create()` 的返回类型的子类型。
+请注意，在前面的程序中，我们如何引导Spring容器，然后在Spring的上下文之外创建一个新的`StubEntitlementCalculationService`实例。剖析增强仍编织其中。
 
-## 致谢
+不可否认，这个例子很简单。 但是，Spring中LTW支持的基础知识已在前面的示例中引入，本节的其余部分详细说明了每个配置和使用位置背后的“原因”。
 
-Erik Ernst, Christian Plesner Hansen, Jeff Norton, Mads Torgersen, Peter von der Ahe and Philip Wadler 为此课程贡献了宝贵资料。
+> 本例中使用的`ProfilingAspect`可能是基本的，但它非常有用。这是开发人员在开发期间可以使用的开发期切面的一个很好的示例，然后可以轻松地从部署到UAT或生产中的应用程序的构建中排除。
 
-感谢 David Biesack, Bruce Chapman, David Flanagan, Neal Gafter, Orjan Petersson, Scott Seligman, Yoshiki Shibata and Kresten Krab Thorup 为此课程的早期版本提供了珍贵的反馈。如果有遗漏，深表抱歉！
