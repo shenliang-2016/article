@@ -1344,7 +1344,7 @@ public static void printWarnings(SQLWarning warning)
 
 **COFFEES Table**
 
-The `COFFEES` table stores information about the coffees available for sale at The Coffee Break:
+`COFFEES`表存储 The Coffee Break 可销售的咖啡的信息：
 
 | `COF_NAME`         | `SUP_ID` | `PRICE` | `SALES` | `TOTAL` |
 | ------------------ | -------- | ------- | ------- | ------- |
@@ -1354,17 +1354,17 @@ The `COFFEES` table stores information about the coffees available for sale at T
 | Colombian_Decaf    | 101      | 8.99    | 0       | 0       |
 | French_Roast_Decaf | 49       | 9.99    | 0       | 0       |
 
-The following describes each of the columns in the `COFFEES` table:
+下面介绍 `COFFEES` 表中的每个列：
 
-- `COF_NAME`: Stores the coffee name. Holds values with a SQL type of `VARCHAR` with a maximum length of 32 characters. Because the names are different for each type of coffee sold, the name uniquely identifies a particular coffee and serves as the primary key.
-- `SUP_ID`: Stores a number identifying the coffee supplier. Holds values with a SQL type of `INTEGER`. It is defined as a foreign key that references the column `SUP_ID` in the `SUPPLIERS` table. Consequently, the DBMS will enforce that each value in this column matches one of the values in the corresponding column in the `SUPPLIERS` table.
-- `PRICE`: Stores the cost of the coffee per pound. Holds values with a SQL type of `FLOAT` because it needs to hold values with decimal points. (Note that money values would typically be stored in a SQL type `DECIMAL` or `NUMERIC`, but because of differences among DBMSs and to avoid incompatibility with earlier versions of JDBC, the tutorial uses the more standard type `FLOAT`.)
-- `SALES`: Stores the number of pounds of coffee sold during the current week. Holds values with a SQL type of `INTEGER`.
-- `TOTAL`: Stores the number of pounds of coffee sold to date. Holds values with a SQL type of `INTEGER`.
+- `COF_NAME`: 存储咖啡名称。使用SQL类型`VARCHAR`保存值，最大长度为32个字符。因为每种类型的咖啡的名称都不同，所以该名称唯一地标识特定的咖啡并且用作主键。
+- `SUP_ID`: 存储识别咖啡供应商的编号。保存SQL类型为`INTEGER`的值。它被定义为引用`SUPPLIERS`表中的`SUP_ID`列的外键。因此，DBMS将强制执行此列中的每个值与`SUPPLIERS`表中相应列中的某个值匹配。
+- `PRICE`: 存储每磅咖啡的成本。使用SQL类型`FLOAT`保存值，因为它需要保存带小数点的值。（请注意，货币值通常存储在SQL类型`DECIMAL`或`NUMERIC`中，但由于DBMS之间存在差异并且为了避免与早期版本的JDBC不兼容，本教程使用更标准的`FLOAT`类型。）
+- `SALES`: 存储本周销售的咖啡磅数。保存SQL类型为`INTEGER`的值。
+- `TOTAL`: 存储迄今为止销售的咖啡磅数。保存SQL类型为`INTEGER`的值。
 
 **SUPPLIERS Table**
 
-The `SUPPLIERS` stores information about each of the suppliers:
+`SUPPLIERS` 存储有关供应商的信息：
 
 | `SUP_ID` | `SUP_NAME`      | `STREET`         | `CITY`       | `STATE` | `ZIP` |
 | -------- | --------------- | ---------------- | ------------ | ------- | ----- |
@@ -1372,15 +1372,15 @@ The `SUPPLIERS` stores information about each of the suppliers:
 | 49       | Superior Coffee | 1 Party Place    | Mendocino    | CA      | 95460 |
 | 150      | The High Ground | 100 Coffee Lane  | Meadows      | CA      | 93966 |
 
-The following describes each of the columns in the `SUPPLIERS` table:
+以下描述了`SUPPLIERS`表中的每个列：
 
-- `SUP_ID`: Stores a number identifying the coffee supplier. Holds values with a SQL type of `INTEGER`. It is the primary key in this table.
-- `SUP_NAME`: Stores the name of the coffee supplier.
-- `STREET`, `CITY`, `STATE`, and `ZIP`: These columns store the address of the coffee supplier.
+ -  `SUP_ID`：存储标识咖啡供应商的编号。保存SQL类型为`INTEGER`的值。它是此表中的主键。
+ -  `SUP_NAME`：存储咖啡供应商的名称。
+ -  `STREET`，`CITY`，`STATE`和`ZIP`：这些列存储咖啡供应商的地址。
 
 **COF_INVENTORY Table**
 
-The table `COF_INVENTORY` stores information about the amount of coffee stored in each warehouse:
+表`COF_INVENTORY`存储有关每个仓库中存储的咖啡量的信息：
 
 | `WAREHOUSE_ID` | `COF_NAME`        | `SUP_ID` | `QUAN` | `DATE_VAL` |
 | -------------- | ----------------- | -------- | ------ | ---------- |
@@ -1391,17 +1391,17 @@ The table `COF_INVENTORY` stores information about the amount of coffee stored i
 | 1234           | Espresso          | 150      | 0      | 2006_04_01 |
 | 1234           | Colombian_Decaf   | 101      | 0      | 2006_04_01 |
 
-The following describes each of the columns in the `COF_INVENTORY` table:
+以下描述了`COF_INVENTORY`表中的每个列：
 
-- `WAREHOUSE_ID`: Stores a number identifying a warehouse.
-- `COF_NAME`: Stores the name of a particular type of coffee.
-- `SUP_ID`: Stores a number identifying a supplier.
-- `QUAN`: Stores a number indicating the amount of merchandise available.
-- `DATE`: Stores a timestamp value indicating the last time the row was updated.
+ -  `WAREHOUSE_ID`：存储标识仓库的编号。
+ -  `COF_NAME`：存储特定类型咖啡的名称。
+ -  `SUP_ID`：存储标识供应商的编号。
+ -  `QUAN`：存储一个表示可用商品数量的数字。
+ -  `DATE`：存储时间戳值，指示上次更新行的时间。
 
 **MERCH_INVENTORY Table**
 
-The table `MERCH_INVENTORY` stores information about the amount of non-coffee merchandise in stock:
+表`MERCH_INVENTORY`存储有关库存中非咖啡商品数量的信息：
 
 | `ITEM_ID` | `ITEM_NAME` | `SUP_ID` | `QUAN` | `DATE`     |
 | --------- | ----------- | -------- | ------ | ---------- |
@@ -1418,17 +1418,17 @@ The table `MERCH_INVENTORY` stores information about the amount of non-coffee me
 | 00004495  | EspMaker    | 08732    | 4      | 2006_04_01 |
 | 00006914  | Cookbook    | 00927    | 12     | 2006_04_01 |
 
-The following describes each of the columns in the `MERCH_INVENTORY` table:
+以下内容描述了`MERCH_INVENTORY`表中的每个列：
 
-- `ITEM_ID`: Stores a number identifying an item.
-- `ITEM_NAME`: Stores the name of an item.
-- `SUP_ID`: Stores a number identifying a supplier.
-- `QUAN`: Stores a number indicating the amount of that item available.
-- `DATE`: Stores a timestamp value indicating the last time the row was updated.
+ -  `ITEM_ID`：存储标识项目的编号。
+ -  `ITEM_NAME`：存储商品的名称。
+ -  `SUP_ID`：存储标识供应商的编号。
+ -  `QUAN`：存储一个数字，表示该项目的可用数量。
+ -  `DATE`：存储时间戳值，指示上次更新行的时间。
 
 **COFFEE_HOUSES Table**
 
-The table `COFFEE_HOUSES` stores locations of coffee houses:
+`COFFEE_HOUSES`表存放咖啡馆的位置：
 
 | `STORE_ID` | `CITY`     | `COFFEE` | `MERCH` | `TOTAL` |
 | ---------- | ---------- | -------- | ------- | ------- |
@@ -1447,37 +1447,36 @@ The table `COFFEE_HOUSES` stores locations of coffee houses:
 | 10034      | San_Jose   | 1234     | 1032    | 2266    |
 | 32004      | Eugene     | 1356     | 1112    | 2468    |
 
-The following describes each of the columns in the `COFFEE_HOUSES` table:
+以下描述了`COFFEE_HOUSES`表中的每个列：
 
-- `STORE_ID`: Stores a number identifying a coffee house. It indicates, among other things, the state in which the coffee house is located. A value beginning with 10, for example, means that the state is California. `STORE_ID` values beginning with 32 indicate Oregon, and those beginning with 33 indicate the state of Washington.
-- `CITY`: Stores the name of the city in which the coffee house is located.
-- `COFFEE`: Stores a number indicating the amount of coffee sold.
-- `MERCH`: Stores a number indicating the amount of merchandise sold.
-- `TOTAL`: Stores a number indicating the total amount of coffee and merchandise sold.
+ -  `STORE_ID`：存储识别咖啡馆的号码。除其他外，它表示咖啡馆所处的状态。例如，以10开头的值表示该州是加利福尼亚州。以32开头的`STORE_ID`值表示俄勒冈州，以33开头的`STORE_ID`值表示华盛顿州。
+ -  `CITY`：存储咖啡馆所在城市的名称。
+ -  `COFFEE`：存储一个表示销售咖啡量的数字。
+ -  `MERCH`：存储一个表示销售商品数量的数字。
+ -  `TOTAL`：存储一个数字，表示销售的咖啡和商品的总量。
 
 **DATA_REPOSITORY Table**
 
-The table DATA_REPOSITORY stores URLs that reference documents and other data of interest to The Coffee Break. The script `populate_tables.sql` does not add any data to this table. The following describes each of the columns in this table:
+表`DATA_REPOSITORY`存储引用The Coffee Break感兴趣的文档和其他数据的URL。脚本`populate_tables.sql`不会向此表添加任何数据。以下描述了此表中的每个列：
 
-- `DOCUMENT_NAME`: Stores a string that identifies the URL.
-- `URL`: Stores a URL.
+ -  `DOCUMENT_NAME`：存储标识URL的字符串。
+ -  `URL`：存储URL。
 
 **创建表**
 
-You can create tables with Apache Ant or JDBC API.
+你可以使用 Apache Ant 或者 JDBC API 创建表。
 
 **使用 Apache Ant 创建表**
 
-To create the tables used with the tutorial sample code, run the following command in the directory `*<JDBC tutorial directory>*`:
+要创建与教程示例代码一起使用的表，请在目录`<JDBC tutorial directory>`中运行以下命令：
 
 ```
 ant setup
-
 ```
 
-This command runs several Ant targets, including the following, `build-tables` (from the `build.xml` file):
+此命令运行多个Ant目标，包括以下构建表（来自`build.xml`文件）：
 
-```
+```xml
 <target name="build-tables"
   description="Create database tables">
   <sql
@@ -1492,10 +1491,9 @@ This command runs several Ant targets, including the following, `build-tables` (
   "./sql/${DB.VENDOR}/create-tables.sql"/>
   </sql>
 </target>
-
 ```
 
-The sample specifies values for the following `sql` Ant task parameters:
+该示例指定以下 `sql` Ant任务参数的值：
 
 | Parameter      | Description                              |
 | -------------- | ---------------------------------------- |
@@ -1508,16 +1506,15 @@ The sample specifies values for the following `sql` Ant task parameters:
 | `autocommit`   | Boolean value; if set to `false`, all SQL statements are executed as one transaction. |
 | `onerror`      | Action to perform when a statement fails; possible values are `continue`, `stop`, and `abort`. The value `abort` specifies that if an error occurs, the transaction is aborted. |
 
-The sample stores the values of these parameters in a separate file. The build file `build.xml` retrieves these values with the `import` task:
+该示例将这些参数的值存储在单独的文件中。构建文件`build.xml`使用`import`任务检索这些值：
 
-```
+```xml
 <import file="${ANTPROPERTIES}"/>
-
 ```
 
-The `transaction` element specifies a file that contains SQL statements to execute. The file `create-tables.sql` contains SQL statements that create all the tables described on this page. For example, the following excerpt from this file creates the tables `SUPPLIERS` and `COFFEES`:
+`transaction`元素指定包含要执行的SQL语句的文件。`create-tables.sql`文件包含创建此页面上描述的所有表的SQL语句。例如，以下片段自此文件创建表`SUPPLIERS`和`COFFEES`：
 
-```
+```sql
 create table SUPPLIERS
     (SUP_ID integer NOT NULL,
     SUP_NAME varchar(40) NOT NULL,
@@ -1536,16 +1533,15 @@ create table COFFEES
     PRIMARY KEY (COF_NAME),
     FOREIGN KEY (SUP_ID)
         REFERENCES SUPPLIERS (SUP_ID));
-
 ```
 
-**Note**: The file `build.xml` contains another target named `drop-tables` that deletes the tables used by the tutorial. The `setup` target runs `drop-tables` before running the `build-tables` target.
+**注意：**文件`build.xml`包含另一个名为`drop-tables`的目标，用于删除教程使用的表。`setup`目标在运行`build-tables`目标之前运行`drop-tables`。
 
 **使用 JDBC API 创建表**
 
-The following method, `SuppliersTable.createTable`, creates the `SUPPLIERS` table:
+下面的方法，`SuppliersTable.createTable`，创建 `SUPPLIERS` 表：
 
-```
+```java
 public void createTable() throws SQLException {
     String createString =
         "create table " + dbName +
@@ -1568,12 +1564,11 @@ public void createTable() throws SQLException {
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
-The following method, `CoffeesTable.createTable`, creates the `COFFEES` table:
+下面的方法，`CoffeesTable.createTable`，创建 `COFFEES` 表：
 
-```
+```java
   public void createTable() throws SQLException {
     String createString =
         "create table " + dbName +
@@ -1597,28 +1592,27 @@ The following method, `CoffeesTable.createTable`, creates the `COFFEES` table:
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
-In both methods, `con` is a `Connection` object and `dbName` is the name of the database in which you are creating the table.
+在这两种方法中，`con`是`Connection`对象，`dbName`是要在其中创建表的数据库的名称。
 
-To execute the SQL query, such as those specified by the `String` `createString`, use a `Statement` object. To create a `Statement` object, call the method `Connection.createStatement` from an existing `Connection` object. To execute a SQL query, call the method `Statement.executeUpdate`.
+要执行SQL查询（例如`String createString`指定的查询），请使用`Statement`对象。要创建`Statement`对象，请从现有`Connection`对象调用`Connection.createStatement`方法。要执行SQL查询，请调用`Statement.executeUpdate`方法。
 
-All `Statement` objects are closed when the connection that created them is closed. However, it is good coding practice to explicitly close `Statement` objects as soon as you are finished with them. This allows any external resources that the statement is using to be released immediately. Close a statement by calling the method `Statement.close`. Place this statement in a `finally` to ensure that it closes even if the normal program flow is interrupted because an exception (such as `SQLException`) is thrown.
+关闭创建它们的连接时，将关闭所有`Statement`对象。但是，完成它们后立即显式关闭`Statement`对象是一种很好的编码实践。这允许立即释放语句正在使用的任何外部资源。通过调用`Statement.close`方法关闭语句。将此语句放在`finally`中以确保即使正常程序流因为抛出异常（例如`SQLException`）而中断也会关闭。
 
-**Note**: You must create the `SUPPLIERS` table before the `COFFEES` because `COFFEES` contains a foreign key, `SUP_ID` that references `SUPPLIERS`.
+**注意：**您必须在`COFFEES`之前创建`SUPPLIERS`表，因为`COFFEES`包含引用`SUPPLIERS`的外键`SUP_ID`。
 
 **填充表**
 
-Similarly, you can insert data into tables with Apache Ant or JDBC API.
+同样，您可以使用 Apache Ant 或 JDBC API 将数据插入表中。
 
 **使用 Apache Ant 填充表**
 
-In addition to creating the tables used by this tutorial, the command `ant setup` also populates these tables. This command runs the Ant target `populate-tables`, which runs the SQL script `populate-tables.sql`.
+除了创建本教程使用的表之外，命令`ant setup`还会填充这些表。此命令运行 Ant 目标`populate-tables`，它运行 SQL 脚本`populate-tables.sql`。
 
-The following is an excerpt from `populate-tables.sql` that populates the tables `SUPPLIERS` and `COFFEES`:
+以下是`populate-tables.sql`的摘录，用于填充表`SUPPLIERS`和`COFFEES`：
 
-```
+```sql
 insert into SUPPLIERS values(
     49, 'Superior Coffee', '1 Party Place',
     'Mendocino', 'CA', '95460');
@@ -1638,14 +1632,13 @@ insert into COFFEES values(
     'Colombian_Decaf', 00101, 8.99, 0, 0);
 insert into COFFEES values(
     'French_Roast_Decaf', 00049, 9.99, 0, 0);
-
 ```
 
 **使用 JDBC API 填充表**
 
-The following method, `SuppliersTable.populateTable`, inserts data into the table:
+下面的方法，`SuppliersTable.populateTable`，向表中插入数据：
 
-```
+```java
 public void populateTable() throws SQLException {
 
     Statement stmt = null;
@@ -1678,12 +1671,11 @@ public void populateTable() throws SQLException {
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
-The following method, `CoffeesTable.populateTable`, inserts data into the table:
+下面的方法，`CoffeesTable.populateTable`，将数据插入表：
 
-```
+```java
 public void populateTable() throws SQLException {
 
     Statement stmt = null;
@@ -1726,3 +1718,4 @@ public void populateTable() throws SQLException {
     }
 }
 ```
+
