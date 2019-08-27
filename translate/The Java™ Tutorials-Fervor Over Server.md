@@ -1802,18 +1802,18 @@ public static void viewTable(Connection con, String dbName)
 
 **游标可保持性**
 
-Calling the method `Connection.commit` can close the `ResultSet` objects that have been created during the current transaction. In some cases, however, this may not be the desired behavior. The `ResultSet` property *holdability* gives the application control over whether `ResultSet`objects (cursors) are closed when commit is called.
+调用 `Connection.commit` 方法能够关闭当前事务中已经创建的 `ResultSet` 对象。某些情况下，这并不一定是我们想要的行为。`ResultSet` 属性可保持性使得应用可以控制当`commit`被调用时`ResultSet` 对象（游标）是否会被关闭。
 
-The following `ResultSet` constants may be supplied to the `Connection` methods `createStatement`, `prepareStatement`, and `prepareCall`:
+下面的 `ResultSet` 常量可以被提供给 `Connection` 方法 `createStatement`，`prepareStatement`，以及`prepareCall` ：
 
-- `HOLD_CURSORS_OVER_COMMIT`: `ResultSet` cursors are not closed; they are *holdable*: they are held open when the method `commit` is called. Holdable cursors might be ideal if your application uses mostly read-only `ResultSet` objects.
-- `CLOSE_CURSORS_AT_COMMIT`: `ResultSet` objects (cursors) are closed when the `commit` method is called. Closing cursors when this method is called can result in better performance for some applications.
+- `HOLD_CURSORS_OVER_COMMIT`: `ResultSet` 游标不会被关闭，它们是*可保持的*：当 `commit` 方法被调用之后，它们将保持开放状态。可保持的游标是理想的，特别是你的应用大部分使用的都是只读的 `ResultSet` 对象时。
+- `CLOSE_CURSORS_AT_COMMIT`: `ResultSet` 对象（游标）当 `commit` 方法被调用时会被关闭。对某些应用来说，调用 `commit` 方法时关闭游标可能会得到更好的性能。
 
-The default cursor holdability varies depending on your DBMS.
+默认的游标可保持性取决于你的 DBMS。
 
-**Note**: Not all JDBC drivers and databases support holdable and non-holdable cursors. The following method, `JDBCTutorialUtilities.cursorHoldabilitySupport`, outputs the default cursor holdability of `ResultSet` objects and whether `HOLD_CURSORS_OVER_COMMIT` and `CLOSE_CURSORS_AT_COMMIT` are supported:
+**注意：**并不是所有的 JDBC 驱动和数据库都支持可保持的游标和不可保持游标。下面的方法，`JDBCTutotialUtilities.cursorHoldabilitySupport`，输出 `ResultSet` 对象的默认刻薄爱吃行，以及 `HOLD_CURSORS_OVER_COMMIT` 和 `CLOSE_CURSORS_AT_COMMIT` 是否被支持：
 
-```
+```java
 public static void cursorHoldabilitySupport(Connection conn)
     throws SQLException {
 
@@ -1835,16 +1835,15 @@ public static void cursorHoldabilitySupport(Connection conn)
         dbMetaData.supportsResultSetHoldability(
             ResultSet.CLOSE_CURSORS_AT_COMMIT));
 }
-
 ```
 
 **从 Rows 获取 Column 值**
 
-The `ResultSet` interface declares getter methods (for example, `getBoolean` and `getLong`) for retrieving column values from the current row. You can retrieve values using either the index number of the column or the alias or name of the column. The column index is usually more efficient. Columns are numbered from 1. For maximum portability, result set columns within each row should be read in left-to-right order, and each column should be read only once.
+`ResultSet`接口声明`getter`方法（例如，`getBoolean`和`getLong`），用于从当前行检索列值。您可以使用列的索引号或列的别名或名称来检索值。列索引通常更有效。列从1开始编号。为了获得最大的可移植性，每行中的结果集列应按从左到右的顺序读取，每列应只读一次。
 
-For example, the following method, `CoffeesTable.alternateViewTable`, retrieves column values by number:
+例如，以下方法`CoffeesTable.alternateViewTable`按编号检索列值：
 
-```
+```java
 public static void alternateViewTable(Connection con)
     throws SQLException {
 
@@ -1872,29 +1871,28 @@ public static void alternateViewTable(Connection con)
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
-Strings used as input to getter methods are case-insensitive. When a getter method is called with a string and more than one column has the same alias or name as the string, the value of the first matching column is returned. The option to use a string as opposed to an integer is designed to be used when column aliases and names are used in the SQL query that generated the result set. For columns that are *not* explicitly named in the query (for example, `select * from COFFEES`) it is best to use column numbers. If column names are used, the developer should guarantee that they uniquely refer to the intended columns by using column aliases. A column alias effectively renames the column of a result set. To specify a column alias, use the SQL `AS` clause in the `SELECT` statement.
+用作`getter`方法输入的字符串不区分大小写。当使用字符串调用`getter`方法并且多个列具有与字符串相同的别名或名称时，将返回第一个匹配列的值。使用字符串而不是整数的选项设计用于在生成结果集的 SQL 查询中使用列别名和名称时使用。对于未在查询中明确命名的列（例如，`select * from COFFEES`），最好使用列号。如果使用列名，开发人员应保证使用列别名唯一引用预期的列。列别名有效地重命名结果集的列。要指定列别名，请在`SELECT`语句中使用`AS`子句。
 
-The getter method of the appropriate type retrieves the value in each column. For example, in the method `CoffeeTables.viewTable`, the first column in each row of the `ResultSet` `rs` is `COF_NAME`, which stores a value of SQL type `VARCHAR`. The method for retrieving a value of SQL type `VARCHAR` is `getString`. The second column in each row stores a value of SQL type `INTEGER`, and the method for retrieving values of that type is `getInt`.
+适当类型的`getter`方法检索每列中的值。例如，在方法`CoffeeTables.viewTable`中，`ResultSet rs`的每一行中的第一列是`COF_NAME`，它存储SQL类型`VARCHAR`的值。检索SQL类型`VARCHAR`的值的方法是`getString`。每行中的第二列存储SQL类型`INTEGER`的值，并且用于检索该类型的值的方法是`getInt`。
 
-Note that although the method `getString` is recommended for retrieving the SQL types `CHAR` and `VARCHAR`, it is possible to retrieve any of the basic SQL types with it. Getting all values with `getString` can be very useful, but it also has its limitations. For instance, if it is used to retrieve a numeric type, `getString` converts the numeric value to a Java `String` object, and the value has to be converted back to a numeric type before it can be operated on as a number. In cases where the value is treated as a string anyway, there is no drawback. Furthermore, if you want an application to retrieve values of any standard SQL type other than SQL3 types, use the `getString` method.
+请注意，尽管建议使用`getString`方法来检索SQL类型`CHAR`和`VARCHAR`，但可以使用它检索任何基本SQL类型。使用`getString`获取所有值可能非常有用，但它也有其局限性。例如，如果它用于检索数字类型，则`getString`将数值转换为Java `String`对象，并且必须先将值转换回数字类型，然后才能将其作为数字进行操作。如果将值视为字符串，则没有任何缺点。此外，如果希望应用程序检索除 SQL3 类型之外的任何标准SQL类型的值，请使用`getString`方法。
 
 **游标**
 
-As mentioned previously, you access the data in a `ResultSet` object through a cursor, which points to one row in the `ResultSet` object. However, when a `ResultSet` object is first created, the cursor is positioned before the first row. The method `CoffeeTables.viewTable` moves the cursor by calling the `ResultSet.next` method. There are other methods available to move the cursor:
+如前所述，你通过游标访问 `ResultSet` 中的数据，游标指向 `ResultSet` 中的一行数据。不过，当一个 `ResultSet` 对象刚被创建出来时，游标指向第一行数据之前。方法 `CoffeeTables.viewTable` 通过调用 `ResultSet.next` 方法移动游标。还有一些方法可以移动游标：
 
-- `next`: Moves the cursor forward one row. Returns `true` if the cursor is now positioned on a row and `false` if the cursor is positioned after the last row.
-- `previous`: Moves the cursor backward one row. Returns `true` if the cursor is now positioned on a row and `false` if the cursor is positioned before the first row.
-- `first`: Moves the cursor to the first row in the `ResultSet` object. Returns `true` if the cursor is now positioned on the first row and `false` if the `ResultSet` object does not contain any rows.
-- `last:`: Moves the cursor to the last row in the `ResultSet` object. Returns `true` if the cursor is now positioned on the last row and `false` if the `ResultSet` object does not contain any rows.
-- `beforeFirst`: Positions the cursor at the start of the `ResultSet` object, before the first row. If the `ResultSet` object does not contain any rows, this method has no effect.
-- `afterLast`: Positions the cursor at the end of the `ResultSet` object, after the last row. If the `ResultSet` object does not contain any rows, this method has no effect.
-- `relative(int rows)`: Moves the cursor relative to its current position.
-- `absolute(int row)`: Positions the cursor on the row specified by the parameter `row`.
+- `next`: 游标前进一行。如果移动之后游标指向一行数据则返回 `true` ，如果游标指向最后一行数据之后，则返回 `false` 。
+- `previous`: 游标后退一行。如果移动之后游标指向一行数据则返回 `true` ，如果游标指向第一行数据之前，则返回 `false` 。
+- `first`: 将游标移动到 `ResultSet` 对象中第一行。如果移动之后游标指向第一行数据则返回 `true` ，如果 `ResultSet` 对象不包含任何行数据则返回 `false` 。
+- `last:`: Moves the cursor to the last row in the `ResultSet` object. Returns `true` if the cursor is now positioned on the last row and `false` if the `ResultSet` object does not contain any rows.将游标移动到 `ResultSet` 对象中最后一行。如果移动之后游标指向最后一行数据则返回 `true` ，如果 `ResultSet` 对象不包含任何行数据则返回 `false` 。
+- `beforeFirst`: 将游标定位到 `ResultSet` 对象的开头，第一行数据之前。如果 `ResultSet` 对象不包含任何行，则此方法没有影响。
+- `afterLast`: 将游标定位到 `ResultSet` 对象的末尾，最后一行数据之后。如果 `ResultSet` 对象不包含任何行，则此方法没有影响。
+- `relative(int rows)`: 相对于当前位置移动游标。
+- `absolute(int row)`: 将光标定位在参数`row`指定的行上。
 
-Note that the default sensitivity of a `ResultSet` is `TYPE_FORWARD_ONLY`, which means that it cannot be scrolled; you cannot call any of these methods that move the cursor, except `next`, if your `ResultSet` cannot be scrolled. The method `CoffeesTable.modifyPrices`, described in the following section, demonstrates how you can move the cursor of a `ResultSet`.
+请注意，`ResultSet`的默认灵敏度为`TYPE_FORWARD_ONLY`，这意味着它无法滚动。如果无法滚动`ResultSet`，则无法调用任何移动光标的方法（`next`除外）。下一节中描述的方法`CoffeesTable.modifyPrices`演示了如何移动`ResultSet`的光标。
 
 **更新 ResultSet 对象中的 Rows**
 
@@ -1902,7 +1900,7 @@ You cannot update a default `ResultSet` object, and you can only move its cursor
 
 The following method, `CoffeesTable.modifyPrices`, multiplies the `PRICE` column of each row by the argument `percentage`:
 
-```
+```java
 public void modifyPrices(float percentage) throws SQLException {
 
     Statement stmt = null;
@@ -1925,7 +1923,6 @@ public void modifyPrices(float percentage) throws SQLException {
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
 The field `ResultSet.TYPE_SCROLL_SENSITIVE` creates a `ResultSet` object whose cursor can move both forward and backward relative to the current position and to an absolute position. The field `ResultSet.CONCUR_UPDATABLE` creates a `ResultSet` object that can be updated. See the `ResultSet` Javadoc for other fields you can specify to modify the behavior of `ResultSet` objects.
@@ -1940,7 +1937,7 @@ The list, which is associated with a `Statement` object at its creation, is init
 
 For example, the following method `CoffeesTable.batchUpdate` adds four rows to the `COFFEES` table with a batch update:
 
-```
+```java
 public void batchUpdate() throws SQLException {
 
     Statement stmt = null;
@@ -1978,14 +1975,12 @@ public void batchUpdate() throws SQLException {
         this.con.setAutoCommit(true);
     }
 }
-
 ```
 
 The following line disables auto-commit mode for the `Connection` object con so that the transaction will not be automatically committed or rolled back when the method `executeBatch` is called.
 
-```
+```java
 this.con.setAutoCommit(false);
-
 ```
 
 To allow for correct error handling, you should always disable auto-commit mode before beginning a batch update.
@@ -1994,9 +1989,8 @@ The method `Statement.addBatch` adds a command to the list of commands associate
 
 The following line sends the four SQL commands that were added to its list of commands to the database to be executed as a batch:
 
-```
+```java
 int [] updateCounts = stmt.executeBatch();
-
 ```
 
 Note that `stmt` uses the method `executeBatch` to send the batch of insertions, not the method `executeUpdate`, which sends only one command and returns a single update count. The DBMS executes the commands in the order in which they were added to the list of commands, so it will first add the row of values for Amaretto, then add the row for Hazelnut, then Amaretto decaf, and finally Hazelnut decaf. If all four commands execute successfully, the DBMS will return an update count for each command in the order in which it was executed. The update counts that indicate how many rows were affected by each command are stored in the array `updateCounts`.
@@ -2007,9 +2001,8 @@ The `Connection.commit` method makes the batch of updates to the `COFFEES` table
 
 The following line enables auto-commit mode for the current `Connection` object.
 
-```
+```java
 this.con.setAutoCommit(true);
-
 ```
 
 Now each statement in the example will automatically be committed after it is executed, and it no longer needs to invoke the method `commit`.
@@ -2018,7 +2011,7 @@ Now each statement in the example will automatically be committed after it is ex
 
 It is also possible to have a parameterized batch update, as shown in the following code fragment, where `con` is a `Connection` object:
 
-```
+```java
 con.setAutoCommit(false);
 PreparedStatement pstmt = con.prepareStatement(
                               "INSERT INTO COFFEES VALUES( " +
@@ -2043,7 +2036,6 @@ pstmt.addBatch();
 int [] updateCounts = pstmt.executeBatch();
 con.commit();
 con.setAutoCommit(true);
-
 ```
 
 **处理批量更新异常**
@@ -2056,7 +2048,7 @@ A `BatchUpdateException` contains an array of update counts that is similar to t
 
 `BatchUpdateException` is derived from `SQLException`. This means that you can use all of the methods available to an `SQLException` object with it. The following method, `JDBCTutorialUtilities.printBatchUpdateException` prints all of the `SQLException` information plus the update counts contained in a `BatchUpdateException` object. Because `BatchUpdateException.getUpdateCounts` returns an array of `int`, the code uses a `for` loop to print each of the update counts:
 
-```
+```java
 public static void printBatchUpdateException(BatchUpdateException b) {
 
     System.err.println("----BatchUpdateException----");
@@ -2070,7 +2062,6 @@ public static void printBatchUpdateException(BatchUpdateException b) {
         System.err.print(updateCounts[i] + "   ");
     }
 }
-
 ```
 
 **在 ResultSet 对象中插入 Rows**
@@ -2079,7 +2070,7 @@ public static void printBatchUpdateException(BatchUpdateException b) {
 
 The following method, `CoffeesTable.insertRow`, inserts a row into the `COFFEES` through a `ResultSet` object:
 
-```
+```java
 public void insertRow(String coffeeName, int supplierID,
                       float price, int sales, int total)
     throws SQLException {
@@ -2109,7 +2100,6 @@ public void insertRow(String coffeeName, int supplierID,
         if (stmt != null) { stmt.close(); }
     }
 }
-
 ```
 
 This example calls the `Connection.createStatement` method with two arguments, `ResultSet.TYPE_SCROLL_SENSITIVE` and `ResultSet.CONCUR_UPDATABLE`. The first value enables the cursor of the `ResultSet` object to be moved both forward and backward. The second value, `ResultSet.CONCUR_UPDATABLE`, is required if you want to insert rows into a `ResultSet` object; it specifies that it can be updatable.
