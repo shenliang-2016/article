@@ -1896,9 +1896,9 @@ public static void alternateViewTable(Connection con)
 
 **更新 ResultSet 对象中的 Rows**
 
-You cannot update a default `ResultSet` object, and you can only move its cursor forward. However, you can create `ResultSet` objects that can be scrolled (the cursor can move backwards or move to an absolute position) and updated.
+你不能更新默认的 `ResultSet` 对象，只能向前移动它的游标。不过，你可以创建可滚动的 `ResultSet` 对象(游标可以向前和向后移动到绝对位置)，可以更新该对象。
 
-The following method, `CoffeesTable.modifyPrices`, multiplies the `PRICE` column of each row by the argument `percentage`:
+下面的方法，`CoffeeTable.modifyPrices`，将每行的`PRICE`列乘以参数`percentage`：
 
 ```java
 public void modifyPrices(float percentage) throws SQLException {
@@ -1925,17 +1925,17 @@ public void modifyPrices(float percentage) throws SQLException {
 }
 ```
 
-The field `ResultSet.TYPE_SCROLL_SENSITIVE` creates a `ResultSet` object whose cursor can move both forward and backward relative to the current position and to an absolute position. The field `ResultSet.CONCUR_UPDATABLE` creates a `ResultSet` object that can be updated. See the `ResultSet` Javadoc for other fields you can specify to modify the behavior of `ResultSet` objects.
+字段`ResultSet.TYPE_SCROLL_SENSITIVE`创建一个`ResultSet`对象，其游标可以相对于当前位置向前和向后移动到绝对位置。字段`ResultSet.CONCUR_UPDATABLE`创建一个可以更新的`ResultSet`对象。有关修改`ResultSet`对象行为的其他字段，请参阅`ResultSet` 文档。
 
-The method `ResultSet.updateFloat` updates the specified column (in this example, `PRICE` with the specified `float` value in the row where the cursor is positioned. `ResultSet` contains various updater methods that enable you to update column values of various data types. However, none of these updater methods modifies the database; you must call the method `ResultSet.updateRow` to update the database.
+方法`ResultSet.updateFloat`更新指定的列（在本例中，在游标所在的行中具有指定的`float`值的`PRICE`。`ResultSet`包含各种更新方法，使您可以更新列值。但是，这些更新方法都不会修改数据库。必须调用方法`ResultSet.updateRow`来更新数据库。
 
 **使用 Statement 对象进行批量更新**
 
-`Statement`, `PreparedStatement` and `CallableStatement` objects have a list of commands that is associated with them. This list may contain statements for updating, inserting, or deleting a row; and it may also contain DDL statements such as `CREATE TABLE` and `DROP TABLE`. It cannot, however, contain a statement that would produce a `ResultSet` object, such as a `SELECT` statement. In other words, the list can contain only statements that produce an update count.
+`Statement`，`PreparedStatement`和`CallableStatement`对象有一个与它们相关的命令列表。该列表可能包含更新，插入或删除行的语句；它还可能包含DDL语句，例如`CREATE TABLE`和`DROP TABLE`。但是，它不能包含一个产生`ResultSet`对象的语句，例如`SELECT`语句。换句话说，该列表只能包含能够产生更新计数的语句。
 
-The list, which is associated with a `Statement` object at its creation, is initially empty. You can add SQL commands to this list with the method `addBatch` and empty it with the method `clearBatch`. When you have finished adding statements to the list, call the method `executeBatch` to send them all to the database to be executed as a unit, or batch.
+该列表在创建时与`Statement`对象相关联，最初为空。您可以使用方法`addBatch`将SQL命令添加到此列表中，并使用`clearBatch`方法将其清空。完成向列表添加语句后，调用方法`executeBatch`将它们全部发送到数据库，作为一个单元或批处理执行。
 
-For example, the following method `CoffeesTable.batchUpdate` adds four rows to the `COFFEES` table with a batch update:
+例如，以下方法`CoffeesTable.batchUpdate`通过批量更新向`COFFEES`表添加四行：
 
 ```java
 public void batchUpdate() throws SQLException {
@@ -1977,39 +1977,39 @@ public void batchUpdate() throws SQLException {
 }
 ```
 
-The following line disables auto-commit mode for the `Connection` object con so that the transaction will not be automatically committed or rolled back when the method `executeBatch` is called.
+以下行禁用`Connection`对象`con`的自动提交模式，以便在调用方法`executeBatch`时不会自动提交或回滚事务。
 
 ```java
 this.con.setAutoCommit(false);
 ```
 
-To allow for correct error handling, you should always disable auto-commit mode before beginning a batch update.
+要允许正确的错误处理，应始终在开始批量更新之前禁用自动提交模式。
 
-The method `Statement.addBatch` adds a command to the list of commands associated with the `Statement` object `stmt`. In this example, these commands are all `INSERT INTO` statements, each one adding a row consisting of five column values. The values for the columns `COF_NAME`and `PRICE` are the name of the coffee and its price, respectively. The second value in each row is 49 because that is the identification number for the supplier, Superior Coffee. The last two values, the entries for the columns `SALES` and `TOTAL`, all start out being zero because there have been no sales yet. (`SALES` is the number of pounds of this row's coffee sold in the current week; `TOTAL` is the total of all the cumulative sales of this coffee.)
+方法`Statement.addBatch`将命令添加到与`Statement`对象`stmt`相关联的命令列表中。在这个例子中，这些命令都是`INSERT INTO`语句，每个语句都添加一个由五列值组成的行。`COF_NAME`和`PRICE`列的值分别是咖啡的名称及其价格。每行中的第二个值为`49`，因为这是供应商`Superior Coffee`的标识号。最后两个值，列`SALES`和`TOTAL`的条目都是零，因为还没有销售。（`SALES`是本周销售的这一排咖啡的磅数；`TOTAL`是这种咖啡累计销售的总和。）
 
-The following line sends the four SQL commands that were added to its list of commands to the database to be executed as a batch:
+以下行将添加到其命令列表中的四个SQL命令发送到要作为批处理执行的数据库：
 
 ```java
 int [] updateCounts = stmt.executeBatch();
 ```
 
-Note that `stmt` uses the method `executeBatch` to send the batch of insertions, not the method `executeUpdate`, which sends only one command and returns a single update count. The DBMS executes the commands in the order in which they were added to the list of commands, so it will first add the row of values for Amaretto, then add the row for Hazelnut, then Amaretto decaf, and finally Hazelnut decaf. If all four commands execute successfully, the DBMS will return an update count for each command in the order in which it was executed. The update counts that indicate how many rows were affected by each command are stored in the array `updateCounts`.
+请注意，`stmt`使用`executeBatch`方法发送一批插入，而不是方法`executeUpdate`，它只发送一个命令并返回一个更新计数。DBMS按照将命令添加到命令列表的顺序执行命令，因此它首先添加`Amaretto`的值所在的行，然后添加`Hazelnut`，然后是`Amaretto decaf`，最后是`Hazelnut decaf`。如果所有四个命令都成功执行，则DBMS将按照执行顺序为每个命令返回更新计数。更新计数表示每个命令影响的行数存储在数组`updateCounts`中。
 
-If all four of the commands in the batch are executed successfully, `updateCounts` will contain four values, all of which are 1 because an insertion affects one row. The list of commands associated with `stmt` will now be empty because the four commands added previously were sent to the database when `stmt` called the method `executeBatch`. You can at any time explicitly empty this list of commands with the method `clearBatch`.
+如果批处理中的所有四个命令都成功执行，`updateCounts`将包含四个值，所有这些值都是1，因为插入会影响一行。与`stmt`相关联的命令列表现在将为空，因为当`stmt`调用方法`executeBatch`时，先前添加的四个命令被发送到数据库。您可以随时使用`clearBatch`方法显式清空此命令列表。
 
-The `Connection.commit` method makes the batch of updates to the `COFFEES` table permanent. This method needs to be called explicitly because the auto-commit mode for this connection was disabled previously.
+`Connection.commit`方法使`COFFEES`表的批量更新永久化。需要显式调用此方法，因为此连接的自动提交模式先前已禁用。
 
-The following line enables auto-commit mode for the current `Connection` object.
+以下行为当前的`Connection`对象启用自动提交模式。
 
 ```java
 this.con.setAutoCommit(true);
 ```
 
-Now each statement in the example will automatically be committed after it is executed, and it no longer needs to invoke the method `commit`.
+现在，示例中的每个语句在执行后都会自动提交，并且不再需要调用方法`commit`。
 
 **执行参数化批量更新**
 
-It is also possible to have a parameterized batch update, as shown in the following code fragment, where `con` is a `Connection` object:
+也可以进行参数化批量更新，如下面的代码片段所示，其中`con`是一个`Connection`对象：
 
 ```java
 con.setAutoCommit(false);
@@ -2040,13 +2040,13 @@ con.setAutoCommit(true);
 
 **处理批量更新异常**
 
-You will get a `BatchUpdateException` when you call the method `executeBatch` if (1) one of the SQL statements you added to the batch produces a result set (usually a query) or (2) one of the SQL statements in the batch does not execute successfully for some other reason.
+如果(1)您添加到批处理中的一个SQL语句生成结果集（通常是查询）或(2)批处理中的一个SQL语句由于某些其他原因未成功执行，则在调用方法`executeBatch`时将得到`BatchUpdateException`。
 
-You should not add a query (a `SELECT` statement) to a batch of SQL commands because the method `executeBatch`, which returns an array of update counts, expects an update count from each SQL statement that executes successfully. This means that only commands that return an update count (commands such as `INSERT INTO`, `UPDATE`, `DELETE`) or that return 0 (such as `CREATE TABLE`, `DROP TABLE`, `ALTER TABLE`) can be successfully executed as a batch with the `executeBatch` method.
+您不应该向一批SQL命令添加查询（一个`SELECT`语句），因为返回更新计数数组的`executeBatch`方法需要每个成功执行的SQL语句的更新计数。这意味着只有返回更新计数的命令（诸如`INSERT INTO`，`UPDATE`，`DELETE`之类的命令）或返回0的命令（例如``CREATE TABLE`，`DROP TABLE`，`ALTER TABLE`）才能使用`executeBatch`方法成功执行批处理。
 
-A `BatchUpdateException` contains an array of update counts that is similar to the array returned by the method `executeBatch`. In both cases, the update counts are in the same order as the commands that produced them. This tells you how many commands in the batch executed successfully and which ones they are. For example, if five commands executed successfully, the array will contain five numbers: the first one being the update count for the first command, the second one being the update count for the second command, and so on.
+`BatchUpdateException`包含一个更新计数数组，类似于`executeBatch`方法返回的数组。在这两种情况下，更新计数的顺序与生成它们的命令的顺序相同。这告诉您批处理中有多少命令成功执行以及它们是哪些命令。例如，如果成功执行了五个命令，则该数组将包含五个数字：第一个是第一个命令的更新计数，第二个是第二个命令的更新计数，依此类推。
 
-`BatchUpdateException` is derived from `SQLException`. This means that you can use all of the methods available to an `SQLException` object with it. The following method, `JDBCTutorialUtilities.printBatchUpdateException` prints all of the `SQLException` information plus the update counts contained in a `BatchUpdateException` object. Because `BatchUpdateException.getUpdateCounts` returns an array of `int`, the code uses a `for` loop to print each of the update counts:
+`BatchUpdateException`派生自`SQLException`。这意味着您可以使用`SQLException`对象可用的所有方法。以下方法`JDBCTutorialUtilities.printBatchUpdateException`打印所有`SQLException`信息以及`BatchUpdateException`对象中包含的更新计数。因为`BatchUpdateException.getUpdateCounts`返回一个`int`数组，所以代码使用`for`循环来打印每个更新计数：
 
 ```java
 public static void printBatchUpdateException(BatchUpdateException b) {
@@ -2066,9 +2066,9 @@ public static void printBatchUpdateException(BatchUpdateException b) {
 
 **在 ResultSet 对象中插入 Rows**
 
-**Note**: Not all JDBC drivers support inserting new rows with the `ResultSet` interface. If you attempt to insert a new row and your JDBC driver database does not support this feature, a `SQLFeatureNotSupportedException` exception is thrown.
+**注意**：并非所有JDBC驱动程序都支持使用`ResultSet`接口插入新行。如果尝试插入新行并且JDBC驱动程序数据库不支持此功能，则会引发`SQLFeatureNotSupportedException`异常。
 
-The following method, `CoffeesTable.insertRow`, inserts a row into the `COFFEES` through a `ResultSet` object:
+下面的方法`CoffeesTable.insertRow`通过`ResultSet`对象在`COFFEES`中插入一行：
 
 ```java
 public void insertRow(String coffeeName, int supplierID,
@@ -2102,12 +2102,13 @@ public void insertRow(String coffeeName, int supplierID,
 }
 ```
 
-This example calls the `Connection.createStatement` method with two arguments, `ResultSet.TYPE_SCROLL_SENSITIVE` and `ResultSet.CONCUR_UPDATABLE`. The first value enables the cursor of the `ResultSet` object to be moved both forward and backward. The second value, `ResultSet.CONCUR_UPDATABLE`, is required if you want to insert rows into a `ResultSet` object; it specifies that it can be updatable.
+此示例使用两个参数`ResultSet.TYPE_SCROLL_SENSITIVE`和`ResultSet.CONCUR_UPDATABLE`调用`Connection.createStatement`方法。第一个值使`ResultSet`对象的游标可以向前和向后移动。如果要将行插入到`ResultSet`对象中，则需要第二个值`ResultSet.CONCUR_UPDATABLE`：它指定该`ResultSet`是可以更新的。
 
-The same stipulations for using strings in getter methods also apply to updater methods.
+在`getter`方法中使用字符串的相同规定也适用于`updater`方法。
 
-The method `ResultSet.moveToInsertRow` moves the cursor to the insert row. The insert row is a special row associated with an updatable result set. It is essentially a buffer where a new row can be constructed by calling the updater methods prior to inserting the row into the result set. For example, this method calls the method `ResultSet.updateString` to update the insert row's `COF_NAME` column to `Kona`.
+方法`ResultSet.moveToInsertRow`将游标移动到插入行。插入行是与可更新结果集关联的特殊行。它本质上是一个缓冲区，可以通过在将行插入结果集之前调用`updater`方法来构造新行。例如，此方法调用方法`ResultSet.updateString`将插入行的`COF_NAME`列更新为`Kona`。
 
-The method `ResultSet.insertRow` inserts the contents of the insert row into the `ResultSet` object and into the database.
+方法`ResultSet.insertRow`将插入行的内容插入到`ResultSet`对象中并插入到数据库中。
 
-**Note**: After inserting a row with the `ResultSet.insertRow`, you should move the cursor to a row other than the insert row. For example, this example moves it to before the first row in the result set with the method `ResultSet.beforeFirst`. Unexpected results can occur if another part of your application uses the same result set and the cursor is still pointing to the insert row.
+**注意**：使用`ResultSet.insertRow`插入行后，应将游标移动到插入行以外的行。例如，此示例使用方法`ResultSet.beforeFirst`将其移动到结果集中的第一行之前。因为如果应用程序的另一部分使用相同的结果集并且游标仍指向插入行，则可能会出现意外结果。
+
