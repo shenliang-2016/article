@@ -1598,3 +1598,80 @@ Consul 是一个功能强大的服务发现工具和配置存储。Consul 在类
 
 [Consul Template GitHub](https://github.com/hashicorp/consul-template)
 
+# 6 身份认证
+
+## 6.0 介绍
+
+NGINX 能够认证客户端。使用 NGINX 来承担认证客户端请求的工作，这样可以提供阻止未经身份认证的请求到达你的应用服务器的能力。NGINX 开源版本可用模块中包含了基本的身份认证和认证子请求。NGINX Plus 扩展模块可以验证 JSON Web Tokens (JWT) 可以与使用标准 OpenID Connect 认证的第三方身份认证提供者集成。
+
+## 6.1 HTTP 基本身份认证
+
+### 问题
+
+你需要通过 HTTP 基本身份认证保护你的应用或者内容。
+
+### 解决方案
+
+生成一个如下格式的文件，其中的密码使用以下几种允许的格式之一加密或者哈希：
+
+````
+# comment
+name1:password1
+name2:password2:comment
+name3:password3
+````
+
+用户名是第一个字段，密码是第二个字段，分隔符是分号。第三个字段是可选的，你可以用它来为每个用户添加注释。NGINX 可以理解几种密码格式，其中之一就是是否密码使用了 C 函数`crypt()`进行了加密。该函数通过`openssl passwd` 命令暴露给命令行。安装 `openssl` 之后，你就可以通过下面的命令创建加密密码字符串：
+
+````shell
+$ openssl passwd MyPassword1234
+````
+
+输出将是一个字符串，NGINX 可以将其用于你的密码文件中。
+
+在你的 NGING 配置文件中使用 `auth_basic` 和 `auth_basic_user_file` 指令来启用基本身份认证：
+
+````
+location / {
+  auth_basic				"Private site";
+  auth_basic_user_file		conf.d/passwd;
+}
+````
+
+你可以在 HTTP，服务器，或者 location 上下文中使用 `auth_basic` 指令。该指令携带一个字符串参数，当一个未经身份认证的用户到来时，该字符串将出现在基本身份认证弹出窗口上。`auth_basic_user_file` 指定了用户文件的路径。
+
+### 讨论
+
+按照不同的安全级别，你可以通过几种方式生成基本身份认证的密码，并使用几种不同的格式。来自 Apache 的 `htpasswd` 命令也可以生成密码。`openssl` 和 `htpasswd` 命令都使用 `apr1` 算法生成密码，NGINX 都可以理解。密码也可以是 Lightweight Directory Access Protocol (LDAP) 和 Dovecot 使用的加盐的 SHA-1格式。NGINX 支持更多格式和哈希算法，不过，其中很多都被认为是不安全的，因为它们很容易被暴力破解。
+
+你可以使用基本身份认证保护你的整个 NGINX 主机的内容、特定的虚拟服务器、或者甚至是特定 location 块。借本身份认证不会替代web应用的用户身份认证，不过它可以协助保持私密信息的安全。在幕后，基本身份认证通过服务器返回 `401 unauthorized` HTTP 状态码以及响应头 `WWW-Authenticate` 来完成。该响应头将拥有值 `Basic realm="your string"`。该响应将导致浏览器提示需要用户名和密码。用户名和密码使用分号分隔，使用 base64 编码，然后通过请求头 `Authorization` 发送。该请求头将指定一个 `Basic` 以及 `user:password` 编码字符串。服务器解码该请求头并根据给定的 `auth_basic_user_file` 对其中的信息进行验证。由于用户名密码字符串仅仅只是 base64 编码，推荐使用 HTTPS 进行基本身份认证。
+
+## 6.2 身份认证子请求
+
+### 问题
+
+你拥有一个第三方身份认证系统，你想使用它进行请求身份认证。
+
+### 解决方案
+
+使用 `http_auth_request_module` 向身份认证服务发送一个请求在为原始请求提供服务之前验证身份标识：
+
+````
+location /private/ {
+  auth_request				/auth;
+  auth_request_set			$auth_status $upstream_status;
+}
+
+location = /auth {
+  internal;
+  proxy_pass				http://auth-server;
+  proxy_pass_request_body	off;
+  proxy_set_header			Content-Length "";
+  proxy_set_header			X-Original-URI $request_uri;
+}
+````
+
+`auth_request` 指令携带一个 URI 参数，该参数必须是一个本地内部地址。`auth_request_set` 指令允许你设定来自认证子请求的变量。
+
+### 讨论
+
