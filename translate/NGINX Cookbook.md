@@ -1671,7 +1671,95 @@ location = /auth {
 }
 ````
 
-`auth_request` 指令携带一个 URI 参数，该参数必须是一个本地内部地址。`auth_request_set` 指令允许你设定来自认证子请求的变量。
+`auth_request` 指令携带一个 URI 参数，该参数必须是一个本地内部 location 。`auth_request_set` 指令允许你设定来自认证子请求的变量。
 
 ### 讨论
 
+`http_auth_request_module` 在所有被 NGINX 服务器处理的请求上开启身份认证。该模块在为原始请求提供服务之前发起一个身份认证子请求来确定该请求是否能够访问它请求的资源。整个原始请求被代理到该子请求 location。该身份认证 location 作为子请求的典型代理工作，并发送原始请求，包括原始请求体和请求头。子请求的响应的状态码用来确定原始请求是否可以访问资源。如果子请求返回 HTTP 200 状态码，则身份认证成功，原始请求被满足。如果子请求返回 HTTP 401 或者 403 状态码，则原始请求也会返回同样的状态码。
+
+如果你的身份认证服务不需要请求体，你可以使用`proxy_pass_request_body`指令丢弃请求体，如例子中所示。这样做可以减少请求大小和事件。由于响应体被忽略，`Content-Length` 响应头必须被设定为一个空字符串。如果你的身份认证服务需要了解请求访问的 URI，你将希望将该值放在一个自定义首部中，你的认证服务可以检查并校验它。如果还有其它的你不希望通过认证子请求发送到认证服务的数据，比如响应头等等，你可以使用 `auth_request_set` 指令来从响应数据中排除它们。
+
+## 6.3 验证 JWTs
+
+### 问题
+
+你需要在请求被 NGINX Plus 处理之前验证一个 JWT 。
+
+### 解决方案
+
+NGINX Plus 的 HTTP JWT 身份认证模块用来验证 token 签名并将 JWT 声明和请求头嵌入为 NGINX 变量：
+
+````
+location /api/ {
+  auth_jwt				"api";
+  auth_jwt_key_file		conf/keys.json
+}
+````
+
+此配置为此 location 启用 JWT 验证。`auth_jwt` 指令被传入一个字符串，被作为认证域。`auth_jwt` 携带一个可选的 token 参数，是携带该 JWT 的变量。默认情况下，根据 JWT 标准使用 `Authentication` 头。`auth_jwt`指令还可用于从继承的配置中取消所需 JWT 身份认证的影响。要关闭身份认证，请将关键字`off`传递给`auth_jwt`指令，不带任何其他内容。要取消继承的身份认证需求，请将`off`关键字传递给`auth_jwt`指令，不带任何其他内容。`auth_jwt_key_file`采用单个参数。此参数是标准 JSON Web Key 格式的密钥文件的路径。
+
+### 讨论
+
+NGINX Plus 能够验证 JSON web 签名类型的 token ，而不是 JSON web 加密类型，其中整个 token 都是加密的。NGINX Plus 能够验证使用 HS256、RS256、以及 ES256 算法签名的签名。使用 NGINX Plus 验证 token 能够节省时间和资源，因为不再需要发送子请求到认证服务。NGINX Plus 解密 JWT 请求头和有效负载，并捕获标准请求头和声明到嵌入变量中供你使用。
+
+### 参考
+
+[RFC Standard Documentation of JSON Web Signature](https://tools.ietf.org/html/rfc7515)
+
+[RFC Standard Documentation of JSON Web Algorithms](https://tools.ietf.org/html/rfc7518)
+
+[RFC Standard Documentation of JSON Web Token](https://tools.ietf.org/html/rfc7519)
+
+[NGINX Embedded Variables](http://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html#variables)
+
+[Detailed NGINX Blog](https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/)
+
+## 6.4 创建 JSON Web Keys
+
+### 问题
+
+你需要一个 JSON Web Keys 供 NGINX Plus 使用。
+
+### 解决方案
+
+NGINX Plus 使用 JSON Web Key (JWK) 格式如 RFC 标准中所述。此标准允许 JWK 文件中包含密钥对象数组。
+
+下面是密钥文件的例子：
+
+````
+{"keys":
+[
+  {
+    "kty":"oct",
+    "kid":"0001",
+    "k":"OctetSequenceKeyValue"
+  },
+  {
+	"kty":"EC",
+	"kid":"0002"
+	"crv":"P-256",
+	"x": "XCoordinateValue",
+	"y": "YCoordinateValue",
+	"d": "PrivateExponent",
+	"use": "sig"
+  },
+  {
+	"kty":"RSA",
+	"kid":"0003"
+	"n": "Modulus",
+	"e": "Exponent",
+	"d": "PrivateExponent"
+  }
+]
+}
+````
+
+上面的 JWK 文件展示了 RFC 标准中提到的3种初始密钥类型。这些密钥的格式也是 RFC 标准的一部分。`kty`属性是密钥类型。此文件展示了3种密钥类型：字节序列（`oct`），椭圆曲线（`EC`），以及 `RSA` 类型。`kid` 属性是密钥 ID。标准中指定这些密钥的其它属性。参考 RFC 文档获取更多信息。
+
+### 讨论
+
+在许多不同的语言中已经有大量的用于产生 JSON Web Key 的类库可用。推荐创建一个密钥服务作为中央 JWK 认证中心，负责创建并定器更新你的 JWK。对应更强的安全需求，推荐将你的 JWK 提升到 SSL/TLS 认证相同的安全级别。使用适当的用户和组权限保护您的密钥文件。将它们保存在主机内存中是最佳做法。您可以通过创建像 ramfs 这样的内存中文件系统来实现。定期更新密钥也很重要；您可以选择创建一个创建公钥和私钥的密钥服务，并通过 API 将它们提供给应用程序和 NGINX。
+
+### 参考
+
+[RFC standardization documentation of JSON Web Key](https://tools.ietf.org/html/rfc7517)
