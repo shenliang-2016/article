@@ -174,45 +174,43 @@ while (crs.next()) {
 
 **更新数据源**
 
-There is a major difference between making changes to a `JdbcRowSet` object and making changes to a `CachedRowSet` object. Because a `JdbcRowSet` object is connected to its data source, the methods `updateRow`, `insertRow`, and `deleteRow` can update both the `JdbcRowSet` object and the data source. In the case of a disconnected `RowSet` object, however, these methods update the data stored in the `CachedRowSet` object's memory but cannot affect the data source. A disconnected `RowSet` object must call the method `acceptChanges` in order to save its changes to the data source. In the inventory scenario, back at headquarters, an application will call the method `acceptChanges` to update the database with the new values for the column `QUAN`.
+更新`JdbcRowSet`对象和更新`CachedRowSet`对象之间存在重大差异。由于`JdbcRowSet`对象连接到其数据源，因此`updateRow`，`insertRow`和`deleteRow`方法可以更新`JdbcRowSet`对象和数据源。但是，在断开连接的`RowSet`对象的情况下，这些方法会更新存储在`CachedRowSet`对象内存中的数据，但不会影响数据源。断开连接的`RowSet`对象必须调用方法`acceptChanges`，以便将其更改保存到数据源。在示例库存场景中，返回总部，应用程序将调用方法`acceptChanges`以使用列`QUAN`的新值更新数据库。
 
-```
+```java
 crs.acceptChanges();
-
 ```
 
-## [What Writer Does]()
+**Writer 的功能**
 
-Like the method `execute`, the method `acceptChanges` does its work invisibly. Whereas the method `execute` delegates its work to the `RowSet` object's reader, the method `acceptChanges` delegates its tasks to the `RowSet` object's writer. In the background, the writer opens a connection to the database, updates the database with the changes made to the `RowSet` object, and then closes the connection.
+与方法`execute`一样，方法`acceptChanges`暗中完成其工作。方法`execute`将其工作委托给`RowSet`对象的`reader`，方法`acceptChanges`将其任务委托给`RowSet`对象的`writer`。在后台，`writer`打开与数据库的连接，使用对`RowSet`对象所做的更改来更新数据库，然后关闭连接。
 
-### Using Default Implementation
+**使用默认实现**
 
-The difficulty is that a *conflict* can arise. A conflict is a situation in which another party has updated a value in the database that corresponds to a value that was updated in a `RowSet` object. Which value should persist in the database? What the writer does when there is a conflict depends on how it is implemented, and there are many possibilities. At one end of the spectrum, the writer does not even check for conflicts and just writes all changes to the database. This is the case with the `RIXMLProvider` implementation, which is used by a `WebRowSet` object. At the other end, the writer ensures that there are no conflicts by setting database locks that prevent others from making changes.
+困难在于可能产生冲突。冲突是指另一方更新了数据库中与`RowSet`对象中更新的值相对应的值的情况。哪个值应该在数据库中保留？`writer`在发生冲突时所做的工作取决于具体实现，并且有很多可能性。另一方面，`writer`甚至不检查冲突，只是将所有更改写入数据库。这是`RIXMLProvider`实现的情况，它由`WebRowSet`对象使用。另一方面，`writer`通过设置阻止其他人进行更改的数据库锁来确保不存在冲突。
 
-The writer for the `crs` object is the one provided by the default `SyncProvider` implementation, `RIOptimisticProvider`. The `RIOPtimisticProvider` implementation gets its name from the fact that it uses an optimistic concurrency model. This model assumes that there will be few, if any, conflicts and therefore sets no database locks. The writer checks to see if there are any conflicts, and if there is none, it writes the changes made to the `crs` object to the database, and those changes become persistent. If there are any conflicts, the default is not to write the new `RowSet`values to the database.
+`crs`对象的`writer`是默认的`SyncProvider`实现`RIOptimisticProvider`提供的`writer`。`RIOPtimisticProvider`实现的名称源于它使用乐观并发模型的事实。此模型假定冲突很少（如果有），因此不设置数据库锁。`writer`检查是否存在任何冲突，如果没有冲突，则会将对`crs`对象所做的更改写入数据库，并且这些更改将成为持久性更改。如果存在任何冲突，则默认情况下不将新的`RowSetvalues`写入数据库。
 
-In the scenario, the default behavior works very well. Because no one at headquarters is likely to change the value in the `QUAN` column of `COF_INVENTORY`, there will be no conflicts. As a result, the values entered into the `crs` object at the warehouse will be written to the database and thus will be persistent, which is the desired outcome.
+在该场景中，默认行为非常有效。因为总部的任何人都不可能更改`COF_INVENTORY`的`QUAN`列中的值，所以不会发生冲突。结果，输入仓库中的`crs`对象的值将被写入数据库，因此将是持久的，这是期望的结果。
 
-## [Using SyncResolver Objects]()
+**使用 SyncResolver 对象**
 
-In other situations, however, it is possible for conflicts to exist. To accommodate these situations, the `RIOPtimisticProvider` implementation provides an option that lets you look at the values in conflict and decide which ones should be persistent. This option is the use of a `SyncResolver` object.
+但是，在其他情况下，冲突可能存在。为了适应这些情况，`RIOPtimisticProvider`实现提供了一个选项，使您可以查看冲突中的值并确定哪些值应该是持久的。此选项是使用`SyncResolver`对象。
 
-When the writer has finished looking for conflicts and has found one or more, it creates a `SyncResolver` object containing the database values that caused the conflicts. Next, the method `acceptChanges` throws a `SyncProviderException` object, which an application may catch and use to retrieve the `SyncResolver` object. The following lines of code retrieve the `SyncResolver` object `resolver`:
+当`writer`完成查找冲突并找到一个或多个冲突时，它会创建一个`SyncResolver`对象，其中包含导致冲突的数据库值。接下来，方法`acceptChanges`抛出一个`SyncProviderException`对象，应用程序可以捕获该对象并使用它来检索`SyncResolver`对象。以下代码行检索`SyncResolver`对象解析器：
 
-```
+```java
 try {
     crs.acceptChanges();
 } catch (SyncProviderException spe) {
     SyncResolver resolver = spe.getSyncResolver();
 }
-
 ```
 
-The object `resolver` is a `RowSet` object that replicates the `crs` object except that it contains only the values in the database that caused a conflict. All other column values are null.
+对象`resolver`是一个`RowSet`对象，它复制`crs`对象，但它只包含导致冲突的数据库中的值。所有其他列值均为`null`。
 
-With the `resolver` object, you can iterate through its rows to locate the values that are not null and are therefore values that caused a conflict. Then you can locate the value at the same position in the `crs` object and compare them. The following code fragment retrieves `resolver` and uses the `SyncResolver` method `nextConflict` to iterate through the rows that have conflicting values. The object `resolver` gets the status of each conflicting value, and if it is `UPDATE_ROW_CONFLICT`, meaning that the `crs` was attempting an update when the conflict occurred, the `resolver` object gets the row number of that value. Then the code moves the cursor for the `crs` object to the same row. Next, the code finds the column in that row of the `resolver` object that contains a conflicting value, which will be a value that is not null. After retrieving the value in that column from both the `resolver` and `crs` objects, you can compare the two and decide which one you want to become persistent. Finally, the code sets that value in both the `crs` object and the database using the method `setResolvedValue`, as shown in the following code:
+使用`resolver`对象，您可以遍历其行以查找非空值，那些就是导致冲突的值。然后，您可以在`crs`对象中的相同位置找到该值并进行比较。以下代码片段检索`resolver`并使用`SyncResolver`方法`nextConflict`迭代具有冲突值的行。对象`resolver`获取每个冲突值的状态，如果它是`UPDATE_ROW_CONFLICT`，意味着`crs`在发生冲突时正在尝试更新，则`resolver`对象将获取该值的行号，然后代码将`crs`对象的光标移动到同一行。接下来，代码在`resolver`对象的该行中查找包含冲突值的列，该值将是非空值。从`resolver`和`crs`对象中检索该列中的值后，您可以比较两者并确定要保持哪一个。最后，代码使用方法`setResolvedValue`在`crs`对象和数据库中设置该值，如以下代码所示：
 
-```
+```java
 try {
     crs.acceptChanges();
 } catch (SyncProviderException spe) {
@@ -255,48 +253,46 @@ try {
         }
     }
 }
-
 ```
 
-## [Notifying Listeners]()
+**通知监听器**
 
-Being a JavaBeans component means that a `RowSet` object can notify other components when certain things happen to it. For example, if data in a `RowSet` object changes, the `RowSet` object can notify interested parties of that change. The nice thing about this notification mechanism is that, as an application programmer, all you have to do is add or remove the components that will be notified.
+作为 JavaBeans 组件意味着`RowSet`对象可以在发生某些事情时通知其他组件。例如，如果`RowSet`对象中的数据发生更改，则`RowSet`对象可以通知感兴趣的各方该更改。这种通知机制的好处在于，作为应用程序员，您所要做的就是添加或删除监听通知的组件。
 
-This section covers the following topics:
+本章节涵盖以下主题：
 
-- [Setting Up Listeners](https://docs.oracle.com/javase/tutorial/jdbc/basics/cachedrowset.html#setting-up-listeners)
-- [How Notification Works](https://docs.oracle.com/javase/tutorial/jdbc/basics/cachedrowset.html#how-notification-works)
+- [创建监听器](https://docs.oracle.com/javase/tutorial/jdbc/basics/cachedrowset.html#setting-up-listeners)
+- [通知如何工作](https://docs.oracle.com/javase/tutorial/jdbc/basics/cachedrowset.html#how-notification-works)
 
-### [Setting Up Listeners]()
+**创建监听器**
 
-A *listener* for a `RowSet` object is a component that implements the following methods from the `RowSetListener` interface:
+`RowSet`对象的监听器是从`RowSetListener`接口实现以下方法的组件：
 
-- `cursorMoved`: Defines what the listener will do, if anything, when the cursor in the `RowSet` object moves.
-- `rowChanged`: Defines what the listener will do, if anything, when one or more column values in a row have changed, a row has been inserted, or a row has been deleted.
-- `rowSetChanged`: Defines what the listener will do, if anything, when the `RowSet` object has been populated with new data.
+ -  `cursorMoved`：定义当`RowSet`对象中的游标移动时侦听器将执行的操作（如果有）。
+ -  `rowChanged`：定义监听器将执行的操作（如果有），行中的一个或多个列值发生更改，插入行或删除行时。
+ -  `rowSetChanged`：定义在使用新数据填充`RowSet`对象时监听器将执行的操作（如果有）。
 
-An example of a component that might want to be a listener is a `BarGraph` object that graphs the data in a `RowSet` object. As the data changes, the `BarGraph` object can update itself to reflect the new data.
+可能希望成为监听器的组件示例是`BarGraph`对象，该对象用于绘制`RowSet`对象中的数据。随着数据的变化，`BarGraph`对象可以自行更新以反映新数据。
 
-As an application programmer, the only thing you must do to take advantage of the notification mechanism is to add or remove listeners. The following line of code means that every time the cursor for the `crs` objects moves, values in `crs` are changed, or `crs` as a whole gets new data, the `BarGraph` object `bar` will be notified:
+作为应用程序程序员，利用通知机制必须做的唯一事情是添加或删除监听器。以下代码行表示每次`crs`对象的游标移动时，`crs`中的值都会更改，或者`crs`作为一个整体获取新数据，`BarGraph`对象`bar`将被通知：
 
-```
+```java
 crs.addRowSetListener(bar);
-
 ```
 
-You can also stop notifications by removing a listener, as is done in the following line of code:
+您还可以通过删除监听器来停止通知，如以下代码行中所示：
 
-```
+```java
 crs.removeRowSetListener(bar);
-
 ```
 
-Using the Coffee Break scenario, assume that headquarters checks with the database periodically to get the latest price list for the coffees it sells online. In this case, the listener is the `PriceList` object `priceList` at the Coffee Break web site, which must implement the `RowSetListener`methods `cursorMoved`, `rowChanged`, and `rowSetChanged`. The implementation of the `cursorMoved` method could be to do nothing because the position of the cursor does not affect the `priceList` object. The implementations for the `rowChanged` and `rowSetChanged` methods, on the other hand, must ascertain what changes have been made and update `priceList` accordingly.
+Coffee Break 场景中，假设总部定期检查数据库，以获取其在线销售的咖啡的最新价目表。在这种情况下，监听器是 Coffee Break 网站上的`PriceList`对象`priceList`，它必须实现`RowSetListener`方法`cursorMoved`，`rowChanged`和`rowSetChanged`。`cursorMoved`方法的实现可能是什么都不做，因为游标的位置不会影响`priceList`对象。另一方面，`rowChanged`和`rowSetChanged`方法的实现必须确定已进行了哪些更改并相应地更新`priceList`。
 
-### [How Notification Works]()
+**通知如何工作**
 
-In the reference implementation, methods that cause any of the `RowSet` events automatically notify all registered listeners. For example, any method that moves the cursor also calls the method `cursorMoved` on each of the listeners. Similarly, the method `execute` calls the method `rowSetChanged` on all listeners, and `acceptChanges` calls `rowChanged` on all listeners.
+在参考实现中，导致任何`RowSet`事件的方法会自动通知所有已注册的监听器。例如，任何移动游标的方法也会在每个监听器上调用方法`cursorMoved`。类似地，方法`execute`在所有监听器上调用方法`rowSetChanged`，而`acceptChanges`在所有监听器上调用`rowChanged`。
 
-## [Sending Large Amounts of Data]()
+**发送大量数据**
 
-The sample code [`CachedRowSetSample.testCachedRowSet`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) demonstrates how data can be sent in smaller pieces.
+示例代码 [`CachedRowSetSample.testCachedRowSet`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 展示了如何将大量数据分片发送。
+
