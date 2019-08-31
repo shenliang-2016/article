@@ -1,31 +1,50 @@
-# 7 安全控制
-
-## 7.0 介绍
-
-安全性是分层完成的，安全模型必须有多个层才能真正加强。在本章中，我们将通过许多不同的方式使用 NGINX 和 NGINX Plus 来保护您的 Web 应用程序。您可以将这些安全方法中的许多方法相互结合使用，以帮助加强安全性。以下是一些探索 NGINX 和 NGINX Plus 功能的安全部分，可以帮助您加强应用程序。您可能会注意到本章未涉及 NGINX 的最大安全功能之一，即 ModSecurity 3.0 NGINX 模块，它将 NGINX 转变为 Web 应用防火墙（WAF）。要了解有关 WAF 功能的更多信息，请下载 [ModSecurity 3.0和NGINX：快速入门指南](https://www.nginx.com/resources/library/modsecurity-3-nginx-quick-start-guide/) 。
-
-## 7.1 基于 IP 地址访问
+## 7.2 允许跨域资源共享
 
 ### 问题
 
-你需要基于客户端 IP 地址进行访问控制。
+你从另外一个域名提供资源服务，需要允许跨域资源共享(CORS)以允许浏览器使用这些资源。
 
 ### 解决方案
 
-使用 HTTP 访问模块来控制对受保护资源的访问：
+修改基于`request` 方法的首部以启用 CORS ：
 
 ````
-location /admin/ {
-	deny 10.0.0.1;
-	allow 10.0.0.0/20;
-	allow 2001:0db8::/32;
-	deny all;
+map $request_method $cors_method {
+	OPTIONS 11;
+	GET  1;
+	POST 1;
+	default 0;
+}
+server {
+	...
+	location / {
+		if ($cors_method ~ '1') {
+			add_header 'Access-Control-Allow-Methods'
+				'GET,POST,OPTIONS';
+			add_header 'Access-Control-Allow-Origin'
+        '*.example.com';
+      add_header 'Access-Control-Allow-Headers'
+        'DNT,
+         Keep-Alive,
+         User-Agent,
+         X-Requested-With,
+         If-Modified-Since,
+         Cache-Control,
+         Content-Type';
+		}
+		if ($cors_method = '11') {
+			add_header 'Access-Control-Max-Age' 1728000;
+      add_header 'Content-Type' 'text/plain; charset=UTF-8';
+      add_header 'Content-Length' 0;
+      return 204;
+		}
+	}
 }
 ````
 
-给定的 location 块允许从`10.0.0.0/20`中的任何 IPv4 地址（`10.0.0.1`除外）进行访问，允许从`2001:0db8::/32`子网中的 IPv6 地址进行访问，并对来自任何其他地址的请求返回 403。`allow`和`deny`指令在 HTTP，server 和 location 上下文中有效。按顺序检查规则，直到找到远程地址的匹配项。
+在这个例子中有很多内容，通过使用`map`将`GET`和`POST`方法组合在一起来浓缩。`OPTIONS`请求方法向客户端返回有关此服务器的`CORS`规则的*preflight*请求。CORS 允许使用`OPTIONS`，`GET`和`POST`方法。设置`Access-Control-Allow-Origin`首部允许从此服务器提供的内容也可用于`origins`与此首部匹配的页面。该*preflight*请求可以缓存在客户端上 1,728,000 秒或20天。
 
 ### 讨论
 
-保护互联网上宝贵的资源和服务必须分层进行。NGINX 提供了成为这些层之一的能力。`deny`指令阻止访问给定的上下文，而`allow`指令可用于允许阻止访问的子集。您可以使用 IP 地址，IPv4 或 IPv6，CIDR 块范围，关键字`all`和 Unix 套接字。通常，在保护资源时，可能允许一块内部 IP 地址并拒绝其他所有人访问。
+当请求的资源属于非自己的域时，JavaScript 等资源会生成 CORS。当请求被视为跨域时，浏览器必须遵守 CORS 规则。如果资源没有专门允许其使用的首部，则浏览器不会使用该资源。为了允许我们的资源被其他子域使用，我们必须设置 CORS 首部，这可以使用`add_header`指令完成。如果请求是具有标准内容类型的`GET`，`HEAD`或`POST`，并且请求没有特殊首部，则浏览器将发出请求并仅检查`origin`。其他请求方法将使浏览器发出*preflight*请求以检查它将遵循该资源的服务器的条款。如果您没有正确设置这些首部，浏览器在尝试使用该资源时会出错。
 
