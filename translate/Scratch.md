@@ -1,104 +1,47 @@
-### 使用 JoinRowSet 对象
+在 NGINX Plus 中使用 JWT 模块来保护一个 location 或者 server，同时构建 `auth_jwt` 指令来使用`$cookie_auth_token`作为 token 来校验：
 
-`JoinRowSet`实现允许您在`RowSet`对象未连接到数据源时创建SQL`JOIN`。这很重要，因为它节省了必须创建一个或多个连接的开销。
-
-本节涵盖以下主题：
-
-- [创建 JoinRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/joinrowset.html#creating-joinrowset-object)
-- [添加 RowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/joinrowset.html#adding-rowset-objects)
-- [管理匹配列](https://docs.oracle.com/javase/tutorial/jdbc/basics/joinrowset.html#managing-match-columns)
-
-`JoinRowSet`接口是`CachedRowSet`接口的子接口，从而继承了`CachedRowSet`对象的功能。这意味着`JoinRowSet`对象是一个断开连接的`RowSet`对象，可以在不总是连接到数据源的情况下运行。
-
-**创建 JoinRowSet 对象**
-
-`JoinRowSet`对象充当SQL`JOIN`的持有者。以下代码行显示创建`JoinRowSet`对象：
-
-```java
-JoinRowSet jrs = new JoinRowSetImpl();
-```
-
-变量`jrs`在添加`RowSet`对象之前不会保留任何内容。
-
-**注意**：或者，您可以使用 JDBC 驱动程序的`JoinRowSet`实现中的构造函数。但是，`RowSet`接口的实现将与参考实现不同。这些实现将具有不同的名称和构造函数。例如，Oracle JDBC 驱动程序的`JoinRowSet`接口的实现名为`oracle.jdbc.rowset.OracleJoinRowSet`。
-
-**添加 RowSet 对象**
-
-任何`RowSet`对象都可以添加到`JoinRowSet`对象，只要它可以是SQL`JOIN`的一部分。可以添加一个始终连接到其数据源的`JdbcRowSet`对象，但通常它通过直接操作数据源而成为`JOIN`的一部分，而不是通过添加到`JoinRowSet`对象成为`JOIN`的一部分。提供`JoinRowSet`实现的目的是使断开连接的`RowSet`对象成为`JOIN`关系的一部分成为可能。
-
-Coffee Break 连锁咖啡馆的老板想要获得他从 Acme, Inc. 购买的咖啡清单。为了做到这一点，店主必须从两个表`COFFEES`和`SUPPLIERS`获取信息。在`RowSet`技术之前的数据库世界中，程序员会将以下查询发送到数据库：
-
-```java
-String query =
-    "SELECT COFFEES.COF_NAME " +
-    "FROM COFFEES, SUPPLIERS " +
-    "WHERE SUPPLIERS.SUP_NAME = Acme.Inc. " +
-    "and " +
-    "SUPPLIERS.SUP_ID = COFFEES.SUP_ID";
-```
-
-在`RowSet`技术的世界中，您可以得到相同的结果，而无需向数据源发送查询。您可以将包含两个表中数据的`RowSet`对象添加到`JoinRowSet`对象。然后，因为所有相关数据都在`JoinRowSet`对象中，所以您可以对其执行查询以获取所需数据。
-
-来自 [`JoinSample.testJoinRowSet`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 的以下代码片段创建了两个`CachedRowSet`对象，`coffees`由来自表`COFFEES`的数据填充，`suppliers` 由表`SUPPLIERS`中的数据填充。`coffees`和`suppliers`对象必须与数据库建立连接以执行它们的命令并填充数据，但在此之后，它们不必再次重新连接以形成`JOIN`。
-
-```java
-coffees = new CachedRowSetImpl();
-coffees.setCommand("SELECT * FROM COFFEES");
-coffees.setUsername(settings.userName);
-coffees.setPassword(settings.password);
-coffees.setUrl(settings.urlString);
-coffees.execute();
-
-suppliers = new CachedRowSetImpl();
-suppliers.setCommand("SELECT * FROM SUPPLIERS");
-suppliers.setUsername(settings.userName);
-suppliers.setPassword(settings.password);
-suppliers.setUrl(settings.urlString);
-suppliers.execute(); 
-```
-
-**管理匹配列**
-
-查看`SUPPLIERS`表，您可以看到 Acme, Inc. 的识别号码是101。表`COFFEES`中供应商识别号为101的咖啡是 Colombian 和 Colombian_Decaf。两个表中的信息连接是可能的，因为这两个表具有共同的`SUP_ID`列。在JDBC`RowSet`技术中，`SUP_ID`，`JOIN`所基于的列，被称为*匹配列*。
-
-添加到`JoinRowSet`对象的每个`RowSet`对象必须有一个匹配列，即`JOIN`所基于的列。有两种方法可以为`RowSet`对象设置匹配列。第一种方法是将匹配列传递给`JoinRowSet`方法`addRowSet`，如下面的代码行所示：
-
-```java
-jrs.addRowSet(coffees, 2);
-```
-
-这行代码将`coffees` `CachedRowSet`添加到`jrs`对象，并将`coffees`（`SUP_ID`）的第二列设置为匹配列。代码行也可以使用列名而不是列号。
-
-```java
-jrs.addRowSet(coffees, "SUP_ID");
-```
-
-在这一点上，`jrs`中只有 `coffees` 。添加到`jrs`的下一个`RowSet`对象必须能够与`coffees`形成`JOIN`，这对于 `suppliers` 是正确的，因为两个表都有列`SUP_ID`。以下代码行将`suppliers`添加到`jrs`并将列`SUP_ID`设置为匹配列。
-
-```java
-jrs.addRowSet(suppliers, 1);
-```
-
-现在`jrs`在`coffees`和`suppliers`之间包含`JOIN`，老板可以从中获取 Acme, Inc. 提供的咖啡的名称。因为代码没有设置`JOIN`的类型，`jrs` 保持`inner JOIN`，这是默认值。换句话说，`jrs`中的一行合并了`coffees`中的一行和`suppliers`中的一行。它保存了`coffees`中的列加上`供应商`中的列，其中`COFFEES.SUP_ID`列中的值与`SUPPLIERS.SUP_ID`中的值匹配。下面的代码打印出 Acme, Inc. 提供的咖啡的名称，其中`String` `supplierName`等于`Acme,Inc.`。注意这是可能的，因为来自`suppliers` 的`SUP_NAME`列和来自`coffees`的`COF_NAME`列现在都包含在`JoinRowSet`对象`jrs`中。
-
-```java
-System.out.println("Coffees bought from " + supplierName + ": ");
-
-while (jrs.next()) {
-    if (jrs.getString("SUP_NAME").equals(supplierName)) {
-        String coffeeName = jrs.getString(1);
-        System.out.println("     " + coffeeName);
-    }
+````
+location /private/ {
+	auth_jwt "Google Oauth" token=$cookied_auth_token;
+	auth_jwt_key_file /etc/nginx/google_certs.jwk;
 }
-```
+````
 
-这将产生类似于以下的输出：
+此配置指示 NGINX Plus 使用 JWT 校验保护 */private* URI 路径。Google Oauth 2.0 OpenID Connect 使用 cookie `auth_token` 而不是默认的 bearer token。因此，你必须指示 NGINX 在该 cookie 中寻找 token ，而不是在 NGINX Plus 默认位置寻找。`auth_jwt_key_file` 位置可以设置为任意路径，我们将在 6.6 章节中介绍。
 
-```
-Coffees bought from Acme, Inc.:
-     Colombian
-     Colombian_Decaf
-```
+### 讨论
 
-`JoinRowSet`接口提供了用于设置将要形成的`JOIN`类型的常量，但是目前唯一实现的类型是`JoinRowSet.INNER_JOIN`。
+此配置展示了你如何使用 NGINX Plus 校验 Google Oauth 2.0 OpenID Connect JSON Web Token 。用于 HTTP 的 NGINX Plus JWT 认证模块能够校验任何遵循 JSON Web Signature 规范 RFC 的 JSON Web Token，立即启用任何利用 JSON Web Token 的SSO权限在 NGINX Plus 层进行验证。OpenID 1.0 协议是 OAuth 2.0 身份验证协议之上的一个层，它添加了身份标识，允许使用 JWT 来证明发送请求的用户的身份。通过令牌的签名，NGINX Plus 可以验证令牌自签名以来未被修改。通过这种方式，Google 正在使用异步签名方法，并且可以在保持其私有 JWK 秘密的同时分发公共 JWK。
+
+NGINX Plus 还可以控制 OpenID Connect 1.0 的授权代码流，使 NGINX Plus 成为OpenID Connect 的中继方。此功能支持与大多数主要身份提供程序集成，包括 CA Single Sign-On（以前称为 SiteMinder），ForgeRock OpenAM，Keycloak，Okta，OneLogin 和 Ping Identity。有关NGINX Plus 作为 OpenID Connect 认证的中继方的更多信息和参考实现，请查看 [NGINX Inc OpenID Connect GitHub Reposory](https://github.com/nginxinc/nginx-openid-connect) 。
+
+### 参考
+
+[Detailed NGINX Blog on OpenID Connect](https://www.nginx.com/blog/authenticating-users-existing-applications-openid-connect-nginx-plus/)
+[OpenID Connect](https://openid.net/connect/)
+
+##6.6 从 Google 获取 JSON Web Key
+
+### 问题
+
+当使用 NGINX Plus 验证 OpenID Connect tokens 时你需要从 Google 获取 JSON Web Key。
+
+### 解决方案
+
+使用 Cron 来每个小时请求一个密钥集合来保证你的密钥始终是最新的：
+
+````
+0 * * * * root wget https://www.googleapis.com/oauth2/v3/ \
+		certs-0/etc/nginx/google_certs.jwk
+````
+
+这行代码来自一个 crontab 文件。类 Unix 系统有很多选项用于配置 crontab 文件。每个用户都可以拥有自己特定的 crontab，同时，在*/etc/directory*路径下也存在大量文件和文件夹。
+
+### 讨论
+
+Cron 是在类 Unix 系统上运行计划任务的常用方法。应定期更新 JSON Web 密钥，以确保密钥的安全性，进而确保系统的安全性。为了确保您始终拥有 Google 提供的最新密钥，您需要定期检查新的 JWK。这种 Cron 解决方案是这样做的一种方式。
+
+### 参考
+
+[Cron](https://linux.die.net/man/8/cron)
 
