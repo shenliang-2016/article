@@ -3048,7 +3048,7 @@ String sql = "SELECT P.ID, P.USERNAME, P.PASSWORD, P.FULL_NAME, "
 "ORDER BY P.ID, P.FULL_NAME";
 ```
 
-### The Solution
+### 解决方案
 
 MyBatis 3提供了方便的工具类来帮助解决该问题。使用SQL类，简单地创建一个实例来调用方法生成SQL语句。上面示例中的问题就像重写SQL类那样：
 

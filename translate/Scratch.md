@@ -1,385 +1,359 @@
-### 使用 FilteredRowSet 对象
+### 使用 WebRowSet 对象
 
-使用`FilteredRowSet`对象可以减少`RowSet`对象中可见的行数，这样您就可以只处理与您正在执行的操作相关的数据。您可以决定要对数据设置的限制（如何“过滤”数据）并将该过滤器应用于`FilteredRowSet`对象。换句话说，`FilteredRowSet`对象仅显示符合您设置的限制的数据行。`JdbcRowSet`对象始终与其数据源有连接，可以使用对数据源的查询进行此筛选，该数据源仅选择要查看的列和行。查询的`WHERE`子句定义了过滤条件。`FilteredRowSet`对象为断开连接的`RowSet`对象提供了一种方法来进行此过滤，而无需对数据源执行查询，从而避免必须连接到数据源并向其发送查询。
-
-例如，假设咖啡馆 Coffee Break 连锁店已经发展到美国各地的数百家商店，并且所有商店都列在名为`COFFEE_HOUSES`的表中。老板希望仅通过咖啡馆比较应用来衡量加利福尼亚州商店的成功与否，该应用不需要与数据库系统的持久连接。这种比较将考察销售商品与销售咖啡饮料的盈利能力以及各种其他成功衡量标准，并将根据咖啡饮料销售，商品销售和总销售额对加州商店进行排名。因为表`COFFEE_HOUSES`有数百行，所以如果搜索的数据量减少到`STORE_ID`列中的值表示加利福尼亚的那些行，这些比较将更快更容易。
-
-这正是`FilteredRowSet`对象通过提供以下功能解决的问题：
-
- - 能够根据设定的标准限制可见的行
- - 能够选择哪些数据可见而无需连接到数据源
+`WebRowSet`对象非常特殊，因为除了提供`CachedRowSet`对象的所有功能外，它还可以将自身编写为 XML 文档，还可以读取该 XML 文档以将其自身转换回`WebRowSet`对象。由于 XML 是不同企业可以相互通信的语言，因此它已成为 Web 服务通信的标准。因此，`WebRowSet`对象通过使 Web 服务以 XML 文档的形式从数据库发送和接收数据来满足实际需求。
 
 本节涵盖以下主题：
 
-- [在 Predicate 对象中定义过滤准则](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#defining-filtering-criteria-in-predicate-object)
-- [创建 FilteredRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#creating-filteredrowset-object)
-- [创建并设置 Predicate 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#creating-and-setting-predicate-object)
-- [使用新的 Predicate 对象设置 FilteredRowSet 对象以进一步过滤数据](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#filter-data-further)
-- [更新 FilteredRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#updating-filteredrowset-object)
-- [插入或者更新行](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#inserting-or-updating-row)
-- [删除所有过滤器使所有行可见](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#removing-all-filters)
-- [删除行](https://docs.oracle.com/javase/tutorial/jdbc/basics/filteredrowset.html#deleting-row)
+- [创建并填充 WebRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#creating-and-populating-webrowset-object)
+- [将 WebRowSet 对象写入 XML 以及从 XML 读取 WebRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#writing-and-reading-webrowset-object-to-xml)
+- [XML 文档中有什么？](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#what-is-in-xml-document)
+- [修改 WebRowSet 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#making-changes-to-webrowset-object)
 
-**在 Predicate 对象中定义过滤准则**
+Coffee Break 公司已经扩展到在线销售咖啡。用户从 Coffee Break 网站点击咖啡，通过从公司数据库获取最新信息，定期更新价目表。本节演示如何使用`WebRowSet`对象和单个方法调用将价格数据作为 XML 文档发送。
 
-要设置`FilteredRowSet`对象中哪些行可见的条件，您可以定义一个实现`Predicate`接口的类。使用此类创建的对象使用以下内容进行初始化：
+**创建并填充 WebRowSet 对象**
 
- - 值必须落在的范围的高端
- - 值必须落在的范围的低端
- - 列的列名或列号，其值必须位于由高和低边界设置的值范围内
-
-请注意，值的范围是闭区间，这意味着边界处的值包含在范围内。例如，如果范围具有100的上限值和50的下限值，则认为值50在该范围内，值49不是。同样，100在范围内，但101不在。
-
-根据老板想要比较加利福尼亚商店的情况，必须编写`Predicate`接口的实现，该接口用于过滤位于加利福尼亚州的 Coffee Break 咖啡馆。没有一种正确的方法可以做到这一点，这意味着在编写实现方面存在很大的自由度。例如，您可以根据需要为类及其成员命名，并以任何方式实现构造函数和三个计算方法，以实现所需的结果。
-
-列出所有咖啡馆的表格名为`COFFEE_HOUSES`，有几百行。为了使事情更易于管理，本示例使用行少得多的表，这足以说明如何完成过滤。
-
-`STORE_ID`列中的值是`int`值，其中指示咖啡馆所处的状态等。例如，以`10`开头的值表示该州是加利福尼亚州。以`32`开头的`STORE_ID`值表示俄勒冈州，以`33`开头的那些表示华盛顿州。
-
-以下类 [`StateFilter`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 实现了`Predicate`接口：
+使用参考实现`WebRowSetImpl`中定义的默认构造函数创建一个新的`WebRowSet`对象，如以下代码行所示：
 
 ```java
-public class StateFilter implements Predicate {
+WebRowSet priceList = new WebRowSetImpl();
+```
 
-    private int lo;
-    private int hi;
-    private String colName = null;
-    private int colNumber = -1;
+尽管`priceList`对象还没有数据，但它具有`BaseRowSet`对象的默认属性。它的`SyncProvider`object首先设置为`RIOptimisticProvider`实现，这是所有断开连接的`RowSet`对象的默认设置。但是，`WebRowSet`实现将`SyncProvider`对象重置为`RIXMLProvider`实现。
 
-    public StateFilter(int lo, int hi, int colNumber) {
-        this.lo = lo;
-        this.hi = hi;
-        this.colNumber = colNumber;
-    }
+您可以使用从`RowSetProvider`类创建的`RowSetFactory`实例来创建`WebRowSet`对象。请参阅 [Using JdbcRowSet Objects](https://docs.oracle.com/javase/tutorial/jdbc/basics/jdbcrowset.html) 中的 [Using the RowSetFactory Interface](https://docs.oracle.com/javase/tutorial/jdbc/basics/jdbcrowset.html#rowsetfactory) 了解更多信息。
 
-    public StateFilter(int lo, int hi, String colName) {
-        this.lo = lo;
-        this.hi = hi;
-        this.colName = colName;
-    }
+Coffee Break 总部定期向其网站发送价目表更新。有关`WebRowSet`对象的信息将显示一种可以在 XML 文档中发送最新价格表的方法。
 
-    public boolean evaluate(Object value, String columnName) {
-        boolean evaluation = true;
-        if (columnName.equalsIgnoreCase(this.colName)) {
-            int columnValue = ((Integer)value).intValue();
-            if ((columnValue >= this.lo)
-                &&
-                (columnValue <= this.hi)) {
-                evaluation = true;
-            } else {
-                evaluation = false;
-            }
-        }
-        return evaluation;
-    }
+价格表包含`COFFEES`表中`COF_NAME`和`PRICE`列中的数据。以下代码片段设置所需的属性，并使用价目表数据填充`priceList`对象：
 
-    public boolean evaluate(Object value, int columnNumber) {
-
-        boolean evaluation = true;
-
-        if (this.colNumber == columnNumber) {
-            int columnValue = ((Integer)value).intValue();
-            if ((columnValue >= this.lo)
-                &&
-                (columnValue <= this.hi)) {
-                evaluation = true;
-            } else {
-                evaluation = false;
-            }
-        }
-        return evaluation;
-    }
-
-
-    public boolean evaluate(RowSet rs) {
-    
-        CachedRowSet frs = (CachedRowSet)rs;
-        boolean evaluation = false;
-
-        try {
-            int columnValue = -1;
-
-            if (this.colNumber > 0) {
-                columnValue = frs.getInt(this.colNumber);
-            } else if (this.colName != null) {
-                columnValue = frs.getInt(this.colName);
-            } else {
-                return false;
-            }
-
-            if ((columnValue >= this.lo)
-                &&
-                (columnValue <= this.hi)) {
-                evaluation = true;
-            }
-        } catch (SQLException e) {
-            JDBCTutorialUtilities.printSQLException(e);
-            return false;
-        } catch (NullPointerException npe) {
-            System.err.println("NullPointerException caught");
-            return false;
-        }
-        return evaluation;
-    }
+```java
+public void getPriceList(String username, String password) {
+    priceList.setCommand("SELECT COF_NAME, PRICE FROM COFFEES");
+    priceList.setURL("jdbc:mySubprotocol:myDatabase");
+    priceList.setUsername(username);
+    priceList.setPassword(password);
+    priceList.execute();
+    // ...
 }
 ```
 
-这是一个非常简单的实现，它检查由`colName`或`colNumber`指定的列中的值，以查看它是否在`lo`到`hi`的范围内。来自 [`FilteredRowSetSample`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 的以下代码行创建了一个过滤器，该过滤器仅允许`STORE_ID`列所在的行值表示介于10000和10999之间的值，表示加利福尼亚州的位置：
+此时，除了默认属性之外，`priceList`对象还包含来自`COFFEES`表的`COF_NAME`和`PRICE`列中的数据以及有关这两列的元数据。
 
-```
-StateFilter myStateFilter = new StateFilter(10000, 10999, 1);
-```
+**将 WebRowSet 对象写入 XML 以及从 XML 读取 WebRowSet 对象**
 
-请注意，刚定义的`StateFilter`类适用于一列。通过使用参数数组而不是单个值，可以将它应用于两个或更多列。例如，`Filter`对象的构造函数可能如下所示：
+要将`WebRowSet`对象编写为XML文档，请调用`writeXml`方法。要将XML文档的内容读入`WebRowSet`对象，请调用方法`readXml`。这两种方法都在后台完成它们的工作，这意味着除了结果之外的所有内容对您来说都是不可见的。
 
-```java
-public Filter2(Object [] lo, Object [] hi, Object [] colNumber) {
-    this.lo = lo;
-    this.hi = hi;
-    this.colNumber = colNumber;
-}
-```
+**使用 writeXml 方法**
 
-`colNumber`对象中的第一个元素给出第一列，其中将根据`lo`中的第一个元素和`hi`中的第一个元素检查该值。将使用`lo`和`hi`中的第二个元素检查由`colNumber`指示的第二列中的值，依此类推。因此，三个数组中的元素数应该相同。下面的代码是`evaluate(RowSet rs)`方法的实现可能看起来像`Filter2`对象，其中参数是数组：
+方法`writeXml`编写`WebRowSet`对象，该对象将其作为表示其当前状态的XML文档调用。它将此XML文档写入您传递给它的流。流可以是`OutputStream`对象，例如`FileOutputStream`对象，或`Writer`对象，例如`FileWriter`对象。如果你传递给`writeXml`方法一个`OutputStream`对象，你将以字节为单位写入，它可以处理所有类型的数据；如果你传递一个`Writer`对象，你将用字符写入。下面的代码演示了将`WebRowSet`对象`priceList`作为XML文档写入`FileOutputStream`对象`oStream`：
 
 ```java
-public boolean evaluate(RowSet rs) {
-    CachedRowSet crs = (CachedRowSet)rs;
-    boolean bool1;
-    boolean bool2;
-    for (int i = 0; i < colNumber.length; i++) {
-
-        if ((rs.getObject(colNumber[i] >= lo [i]) &&
-            (rs.getObject(colNumber[i] <= hi[i]) {
-            bool1 = true;
-        } else {
-            bool2 = true;
-        }
-
-        if (bool2) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-}
+java.io.FileOutputStream oStream =
+    new java.io.FileOutputStream("priceList.xml");
+priceList.writeXml(oStream);
 ```
 
-使用`Filter2`实现的优点是你可以使用任何`Object`类型的参数，并且可以检查一列或多列而无需编写另一个实现。但是，您必须传递一个`Object`类型，这意味着您必须将基本类型转换为其`Object`类型。例如，如果对`lo`和`hi`使用`int`值，则必须将`int`值转换为`Integer`对象，然后再将其传递给构造函数。`String`对象已经是`Object`类型，所以你不必转换它们。
-
-**创建 FilteredRowSet 对象**
-
-`FilteredRowSet`接口的参考实现，`FilteredRowSetImpl`，包括一个默认构造函数，在下面的代码行中使用它来创建空的`FilteredRowSet`对象`frs`：
-
-```
-FilteredRowSet frs = new FilteredRowSetImpl();
-```
-
-该实现扩展了`BaseRowSet`抽象类，因此`frs`对象具有在`BaseRowSet`中定义的默认属性。这意味着`frs`是可滚动的，可更新的，不显示已删除的行，已启用转义处理，等等。另外，因为`FilteredRowSet`接口是`CachedRowSet`，`Joinable`和`WebRowSet`的子接口，所以`frs`对象具有每个接口的能力。它可以作为断开连接的`RowSet`对象运行，可以是`JoinRowSet`对象的一部分，并且可以以 XML 格式读写自己。
-
-**注意**：或者，您可以使用JDBC驱动程序的`WebRowSet`实现中的构造函数。但是，`RowSet`接口的实现将与参考实现不同。这些实现将具有不同的名称和构造函数。例如，Oracle JDBC 驱动程序的`WebRowSet`接口的实现名为`oracle.jdbc.rowset.OracleWebRowSet`。
-
-您可以使用从RowSetProvider类创建的`RowSetFactory`实例来创建`FilteredRowSet`对象。请参阅 [Using JdbcRowSet Objects](https://docs.oracle.com/javase/tutorial/jdbc/basics/jdbcrowset.html) 中的 [Using the RowSetFactory Interface](https://docs.oracle.com/javase/tutorial/jdbc/basics/jdbcrowset.html#rowsetfactory) 了解更多信息。
-
-与其他断开连接的`RowSet`对象一样，`frs`对象必须填充来自表格数据源的数据，表格数据源是参考实现中的关系数据库。来自 [`FilteredRowSetSample`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 的以下代码片段设置连接到数据库以执行其命令所需的属性。请注意，此代码使用`DriverManager`类进行连接，这样做是为了方便起见。通常，最好使用已向实现 Java 命名和目录接口 (JNDI) 的命名服务注册的`DataSource`对象：
+下面的代码将表示`priceList`的XML文档写入`FileWriter`对象`writer`而不是`OutputStream`对象。`FileWriter`类是用于将字符写入文件的便捷类。
 
 ```java
-frs.setCommand("SELECT * FROM COFFEE_HOUSES");
-frs.setUsername(settings.userName);
-frs.setPassword(settings.password);
-frs.setUrl(settings.urlString);
+java.io.FileWriter writer =
+    new java.io.FileWriter("priceList.xml");
+priceList.writeXml(writer);
 ```
 
-以下代码行使用存储在`COFFEE_HOUSE`表中的数据填充`frs`对象：
+方法`writeXml`的另外两个版本允许你在将`ResultSet`对象的内容填充到一个`WebRowSet`对象之前将其写入流。在下面的代码行中，方法`writeXml`将`ResultSet`对象`rs`的内容读入`priceList`对象，然后将`priceList`作为XML文档写入`FileOutputStream`对象`oStream`。
 
 ```java
-frs.execute();
+priceList.writeXml(rs, oStream);
 ```
 
-方法`execute`通过调用`frs`的`RowSetReader`对象来执行各种事情，它创建一个连接，执行`frs`的命令，用`ResultSet`中的数据填充`frs` 生成的对象，并关闭连接。 请注意，如果表`COFFEE_HOUSES`的行数多于`frs`对象一次可以保存在内存中，则会使用`CachedRowSet`分页方法。
-
-在该场景中，Coffee Break 所有者将在办公室中完成上述任务，然后将存储在`frs`对象中的信息导入或下载到咖啡馆比较应用程序中。从现在开始，`frs`对象将独立运行，而无需连接到数据源。
-
-**创建并设置 Predicate 对象**
-
-既然`FilteredRowSet`对象`frs`包含了 Coffee Break 位置的列表，你可以设置选择标准来缩小`frs`对象中可见的行数。
-
-下面的代码行使用先前定义的`StateFilter`类来创建对象`myStateFilter`，该对象检查列`STORE_ID`以确定哪些商店在加利福尼亚（如果商店的ID号介于10000和10999之间，则商店在加利福尼亚州）：
+在下一行代码中，`writeXml`方法使用`rs`的内容填充`price List`，但它将XML文档写入`FileWriter`对象而不是`OutputStream`对象：
 
 ```java
-StateFilter myStateFilter = new StateFilter(10000, 10999, 1);
+priceList.writeXml(rs, writer);
 ```
 
-以下行将`myStateFilter`设置为`frs`的过滤器。
+**使用 readXml 方法**
+
+方法`readXml`解析XML文档，以构造XML文档描述的`WebRowSet`对象。与`writeXml`方法类似，您可以传递给`readXml`一个`InputStream`对象或一个`Reader`对象，从中读取XML文档。
 
 ```java
-frs.setFilter(myStateFilter);
+java.io.FileInputStream iStream =
+    new java.io.FileInputStream("priceList.xml");
+priceList.readXml(iStream);
+
+java.io.FileReader reader = new
+    java.io.FileReader("priceList.xml");
+priceList.readXml(reader);
 ```
 
-要进行实际过滤，可以调用方法`next`，它在参考实现中调用之前已实现的`Predicate.evaluate`方法的相应版本。
-
-如果返回值为`true`，则该行将可见；如果返回值为`false`，则该行将不可见。
-
-**使用新的 Predicate 对象设置 FilteredRowSet 对象以进一步过滤数据**
-
-您可以串行设置多个过滤器。第一次调用方法`setFilter`并将其传递给`Predicate`对象时，您已在该过滤器中应用了过滤条件。在每行调用方法`next`后，只显示那些满足过滤器的行，你可以再次调用`setFilter`，传递一个不同的`Predicate`对象。即使一次只设置一个过滤器，效果是两个过滤器都累积应用。
-
-例如，所有者通过将`stateFilter`设置为`frs`的`Predicate`对象来检索加利福尼亚州的 Coffee Break 商店列表。现在，店主希望比较加利福尼亚州的两个城市，旧金山（表格中为`COFFEE_HOUSES`表中的`SF`）和洛杉矶（表格中的`LA`）中的商店。首先要做的是编写一个`Predicate`实现，用于过滤`SF`或`LA`中的商店：
+请注意，您可以将XML描述读入新的`WebRowSet`对象或读取调用`writeXml`方法的同一个`WebRowSet`对象。在从总部向 Web 站点发送价目表信息的场景中，您将使用新的`WebRowSet`对象，如以下代码行所示：
 
 ```java
-public class CityFilter implements Predicate {
-
-    private String[] cities;
-    private String colName = null;
-    private int colNumber = -1;
-
-    public CityFilter(String[] citiesArg, String colNameArg) {
-        this.cities = citiesArg;
-        this.colNumber = -1;
-        this.colName = colNameArg;
-    }
-
-    public CityFilter(String[] citiesArg, int colNumberArg) {
-        this.cities = citiesArg;
-        this.colNumber = colNumberArg;
-        this.colName = null;
-    }
-
-    public boolean evaluate Object valueArg, String colNameArg) {
-
-        if (colNameArg.equalsIgnoreCase(this.colName)) {
-            for (int i = 0; i < this.cities.length; i++) {
-                if (this.cities[i].equalsIgnoreCase((String)valueArg)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean evaluate(Object valueArg, int colNumberArg) {
-
-        if (colNumberArg == this.colNumber) {
-            for (int i = 0; i < this.cities.length; i++) {
-                if (this.cities[i].equalsIgnoreCase((String)valueArg)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-
-    public boolean evaluate(RowSet rs) {
-
-        if (rs == null) return false;
-
-        try {
-            for (int i = 0; i < this.cities.length; i++) {
-
-                String cityName = null;
-
-                if (this.colNumber > 0) {
-                    cityName = (String)rs.getObject(this.colNumber);
-                } else if (this.colName != null) {
-                    cityName = (String)rs.getObject(this.colName);
-                } else {
-                    return false;
-                }
-
-                if (cityName.equalsIgnoreCase(cities[i])) {
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            return false;
-        }
-        return false;
-    }
-}
+WebRowSet recipient = new WebRowSetImpl();
+java.io.FileReader reader =
+    new java.io.FileReader("priceList.xml");
+recipient.readXml(reader);
 ```
 
-来自 [`FilteredRowSetSample`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 的以下代码片段设置新过滤器并遍历`frs`中的行，打印出来 `CITY`列包含`SF`或`LA`的行。请注意，`frs`目前只包含商店在加利福尼亚州的行，因此当过滤器更改为另一个`Predicate`对象时，`Predicate`对象`state`的条件仍然有效。下面的代码将过滤器设置为`CityFilter`对象`city`。`CityFilter`实现使用数组作为构造函数的参数来说明如何完成：
+**XML 文档中是什么？**
 
-```java
-public void testFilteredRowSet() {
+`RowSet`对象不仅仅是它们包含的数据。它们还具有有关其列的属性和元数据。因此，表示`WebRowSet`对象的XML文档除了其数据之外还包括该其他信息。此外，XML文档中的数据包括当前值和原始值。（回想一下，原始值是在最近的数据更改之前存在的值。这些值是检查数据库中相应值是否已更改所必需的，从而产生了应该持久保存值的冲突： 您放入`RowSet`对象的新值或其他人放入数据库的新值。）
 
-    FilteredRowSet frs = null;
-    StateFilter myStateFilter = new StateFilter(10000, 10999, 1);
-    String[] cityArray = { "SF", "LA" };
+WebRowSet XML Schema 本身就是一个XML文档，它定义了表示`WebRowSet`对象的XML文档将包含的内容以及它必须呈现的格式。写入者和读取者都使用此模式，因为它告诉写入者如何编写XML文档（表示`WebRowSet`对象）和读取者如何解析XML文档。因为实际的写入和读取是通过方法`writeXml`和`readXml`的实现在内部完成的，所以作为用户，您不需要了解 WebRowSet XML Schema 文档中的内容。
 
-    CityFilter myCityFilter = new CityFilter(cityArray, 2);
+XML文档包含分层结构中的元素和子元素。以下是描述`WebRowSet`对象的XML文档中的三个主要元素：
 
-    try {
-        frs = new FilteredRowSetImpl();
+- [属性](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#properties-webrowset)
+- [元数据](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#metadata-webrowset)
+- [数据](https://docs.oracle.com/javase/tutorial/jdbc/basics/webrowset.html#data-webrowset)
 
-        frs.setCommand("SELECT * FROM COFFEE_HOUSES");
-        frs.setUsername(settings.userName);
-        frs.setPassword(settings.password);
-        frs.setUrl(settings.urlString);
-        frs.execute();
+元素标签标示元素的开头和结尾。例如，`<properties>`标记表示 properties 元素的开头，而`</properties>`标记表示它的结束。`<map/>`标签是一种简写方式，表示 map 子元素（ properties 元素中的一个子元素）尚未赋值。以下示例XML文档使用间距和缩进来使其更易于阅读，但这些不在实际的XML文档中使用，其中间距并不意味着什么。
 
-        System.out.println("\nBefore filter:");
-        FilteredRowSetSample.viewTable(this.con);
+接下来的三节将向您展示在示例 [`WebRowSetSample.java`](https://docs.oracle.com/javase/tutorial/jdbc/basics/gettingstarted.html) 中创建的`WebRowSet` `priceList`对象包含的三个主要元素。
 
-        System.out.println("\nSetting state filter:");
-        frs.beforeFirst();
-        frs.setFilter(myStateFilter);
-        this.viewFilteredRowSet(frs);
+**属性**
 
-        System.out.println("\nSetting city filter:");
-        frs.beforeFirst();
-        frs.setFilter(myCityFilter);
-        this.viewFilteredRowSet(frs);
-    } catch (SQLException e) {
-        JDBCTutorialUtilities.printSQLException(e);
-    }
-}
+在`priceList`对象上调用`writeXml`方法会产生一个描述`priceList`的XML文档。此XML文档的属性部分如下所示：
+
+```xml
+<properties>
+  <command>
+    select COF_NAME, PRICE from COFFEES
+  </command>
+  <concurrency>1008</concurrency>
+  <datasource><null/></datasource>
+  <escape-processing>true</escape-processing>
+  <fetch-direction>1000</fetch-direction>
+  <fetch-size>0</fetch-size>
+  <isolation-level>2</isolation-level>
+  <key-columns>
+    <column>1</column>
+  </key-columns>
+  <map>
+  </map>
+  <max-field-size>0</max-field-size>
+  <max-rows>0</max-rows>
+  <query-timeout>0</query-timeout>
+  <read-only>true</read-only>
+  <rowset-type>
+    ResultSet.TYPE_SCROLL_INSENSITIVE
+  </rowset-type>
+  <show-deleted>false</show-deleted>
+  <table-name>COFFEES</table-name>
+  <url>jdbc:mysql://localhost:3306/testdb</url>
+  <sync-provider>
+    <sync-provider-name>
+      com.sun.rowset.providers.RIOptimisticProvider
+    </sync-provider-name>
+    <sync-provider-vendor>
+      Sun Microsystems Inc.
+    </sync-provider-vendor>
+    <sync-provider-version>
+      1.0
+    </sync-provider-version>
+    <sync-provider-grade>
+      2
+    </sync-provider-grade>
+    <data-source-lock>1</data-source-lock>
+  </sync-provider>
+</properties>
 ```
 
-对于位于加利福尼亚州旧金山或加利福尼亚州洛杉矶的每个商店，输出应包含一行。如果有一行，其中`CITY`列包含`LA`而`STORE_ID`列包含40003，则它不会包含在列表中，因为当过滤器设置为`state`时它已经被过滤掉了。（40003不在10000到10999的范围内。）
+请注意，某些属性没有任何价值。例如，`datasource`属性用`<datasource/>`标记表示，这是表示`<datasource> </datasource>`的简写方式。没有给出值，因为设置了`url`属性。建立的任何连接都将使用此 JDBC URL 完成，因此不需要设置`DataSource`对象。此外，未列出`username`和`password`属性，因为它们必须保密。
 
-**更新 FilteredRowSet 对象**
+**元数据**
 
-您可以对`FilteredRowSet`对象进行更改，但前提是该更改不违反当前有效的任何过滤条件。例如，如果新值或值在过滤条件内，则可以插入新行或更改现有行中的一个或多个值。
+描述`WebRowSet`对象的XML文档的元数据部分包含有关该`WebRowSet`对象中的列的信息。下面显示了`WebRowSet`对象`priceList`的这个部分。因为`priceList`对象有两列，所以描述它的XML文档有两个`<column-definition>`元素。每个`<column-definition>`元素都有子元素，提供有关所描述列的信息。
 
-**插入或者更新行**
-
-假设两个新的咖啡休息咖啡馆刚刚开业，店主想将它们添加到所有咖啡馆的名单中。如果要插入的行不符合有效的累积过滤条件，则将阻止添加该行。
-
-`frs`对象的当前状态是设置了`StateFilter`对象，然后设置了`CityFilter`对象。因此，`frs`目前只显示那些满足两个过滤器条件的行。同样重要的是，除非满足两个过滤器的条件，否则不能向`frs`对象添加行。下面的代码片段试图在`frs`对象中插入两个新行，一行中`STORE_ID`和`CITY`列中的值都满足条件，一行中`STORE_ID`中的值无法通过过滤器，但`CITY`列中的值可以通过过滤器：
-
-```java
-frs.moveToInsertRow();
-frs.updateInt("STORE_ID", 10101);
-frs.updateString("CITY", "SF");
-frs.updateLong("COF_SALES", 0);
-frs.updateLong("MERCH_SALES", 0);
-frs.updateLong("TOTAL_SALES", 0);
-frs.insertRow();
-
-frs.updateInt("STORE_ID", 33101);
-frs.updateString("CITY", "SF");
-frs.updateLong("COF_SALES", 0);
-frs.updateLong("MERCH_SALES", 0);
-frs.updateLong("TOTAL_SALES", 0);
-frs.insertRow();
-frs.moveToCurrentRow();
+```xml
+<metadata>
+  <column-count>2</column-count>
+  <column-definition>
+    <column-index>1</column-index>
+    <auto-increment>false</auto-increment>
+    <case-sensitive>false</case-sensitive>
+    <currency>false</currency>
+    <nullable>0</nullable>
+    <signed>false</signed>
+    <searchable>true</searchable>
+    <column-display-size>
+      32
+    </column-display-size>
+    <column-label>COF_NAME</column-label>
+    <column-name>COF_NAME</column-name>
+    <schema-name></schema-name>
+    <column-precision>32</column-precision>
+    <column-scale>0</column-scale>
+    <table-name>coffees</table-name>
+    <catalog-name>testdb</catalog-name>
+    <column-type>12</column-type>
+    <column-type-name>
+      VARCHAR
+    </column-type-name>
+  </column-definition>
+  <column-definition>
+    <column-index>2</column-index>
+    <auto-increment>false</auto-increment>
+    <case-sensitive>true</case-sensitive>
+    <currency>false</currency>
+    <nullable>0</nullable>
+    <signed>true</signed>
+    <searchable>true</searchable>
+    <column-display-size>
+      12
+    </column-display-size>
+    <column-label>PRICE</column-label>
+    <column-name>PRICE</column-name>
+    <schema-name></schema-name>
+    <column-precision>10</column-precision>
+    <column-scale>2</column-scale>
+    <table-name>coffees</table-name>
+    <catalog-name>testdb</catalog-name>
+    <column-type>3</column-type>
+    <column-type-name>
+      DECIMAL
+    </column-type-name>
+  </column-definition>
+</metadata>
 ```
 
-如果你使用`next`方法遍历`frs`对象，你会发现加利福尼亚州旧金山的新咖啡馆有一行数据，但华盛顿旧金山的商店没有。
+从此元数据部分，您可以看到每行中有两列。第一列是`COF_NAME`，它包含类型为`VARCHAR`的值。第二列是`PRICE`，它包含`REAL`类型的值，依此类推。请注意，列类型是数据源中使用的数据类型，而不是Java编程语言中的类型。要获取或更新`COF_NAME`列中的值，可以使用`getString`或`updateString`方法，并且驱动程序会像往常那样转换为`VARCHAR`类型。
 
-**删除所有过滤器使所有行可见**
+**数据**
 
-店主可以通过使过滤器无效来在华盛顿添加商店。如果没有设置过滤器，`frs`对象中的所有行都会再次可见，并且任何位置的商店都可以添加到商店列表中。下面的代码行取消了当前的过滤器，有效地消除了之前在`frs`对象上设置的两个`Predicate`实现。
+数据部分给出了`WebRowSet`对象的每一行中每列的值。如果已填充`priceList`对象并且未对其进行任何更改，则XML文档的数据元素将如下所示。在下一节中，您将看到在修改`priceList`对象中的数据时XML文档如何更改。
+
+对于每一行，都有一个`<currentRow>`元素，因为`priceList`有两列，每个`<currentRow>`元素包含两个`<columnValue>`元素。
+
+```xml
+<data>
+  <currentRow>
+    <columnValue>Colombian</columnValue>
+    <columnValue>7.99</columnValue>
+  </currentRow>
+  <currentRow>
+    <columnValue>
+      Colombian_Decaf
+    </columnValue>
+    <columnValue>8.99</columnValue>
+  </currentRow>
+  <currentRow>
+    <columnValue>Espresso</columnValue>
+    <columnValue>9.99</columnValue>
+  </currentRow>
+  <currentRow>
+    <columnValue>French_Roast</columnValue>
+    <columnValue>8.99</columnValue>
+  </currentRow>
+  <currentRow>
+    <columnValue>French_Roast_Decaf</columnValue>
+    <columnValue>9.99</columnValue>
+  </currentRow>
+</data>
+```
+
+**修改 WebRowSet 对象**
+
+您对`WebRowSet`对象进行更改的方式与对`CachedRowSet`对象的更改方式相同。然而，与`CachedRowSet`对象不同，`WebRowSet`对象跟踪更新，插入和删除，以便`writeXml`方法可以写入当前值和原始值。接下来的三个部分演示了对数据的更改，并显示了每次更改后描述`WebRowSet`对象的XML文档的样子。您不必对XML文档做任何事情; 对它的任何更改都是自动进行的，就像编写和读取XML文档一样。
+
+**插入行**
+
+如果 Coffee Break 连锁店的所有者想要在价目表中添加新咖啡，则代码可能如下所示：
 
 ```java
-frs.setFilter(null);
+priceList.absolute(3);
+priceList.moveToInsertRow();
+priceList.updateString(COF_NAME, "Kona");
+priceList.updateFloat(PRICE, 8.99f);
+priceList.insertRow();
+priceList.moveToCurrentRow();
+```
+
+在参考实现中，紧接在当前行之后进行插入。在前面的代码片段中，当前行是第三行，因此新行将在第三行之后添加并成为新的第四行。为了反映这种插入，XML文档将在`<data>`元素中的第三个`<currentRow>`元素之后添加以下`<insertRow>`元素。
+
+`<insertRow>`元素将类似于以下内容。
+
+```java
+<insertRow>
+  <columnValue>Kona</columnValue>
+  <columnValue>8.99</columnValue>
+</insertRow>
 ```
 
 **删除行**
 
-如果店主决定关闭或出售其中一个咖啡馆，店主将希望将其从`COFFEE_HOUSES`表中删除。只要行可见，店主就可以删除表现不佳的咖啡馆的行。
+店主认为`Espresso`销售不足，应该从出售的咖啡中删除。因此，所有者想要从价目表中删除`Espresso`。`Espresso`位于`priceList`object的第三行，因此以下代码行将其删除：
 
-例如，假设刚刚使用参数`null`调用方法`setFilter`，则`frs`对象上没有设置过滤器。这意味着所有行都是可见的，因此可以删除。但是，在设置`StateFilter`对象`myStateFilter`之后，过滤掉加利福尼亚以外的任何州，只能删除位于加利福尼亚州的店。当`CityFilter`对象`myCityFilter`被设置为`frs`对象时，只有加利福尼亚州旧金山或加利福尼亚州洛杉矶的咖啡馆才能被删除，因为它们只在可见的行中。
+```java
+priceList.absolute(3); priceList.deleteRow();
+```
 
+以下`<deleteRow>`元素将出现在XML文档的数据部分的第二行之后，表示第三行已被删除。
+
+```xml
+<deleteRow>
+  <columnValue>Espresso</columnValue>
+  <columnValue>9.99</columnValue>
+</deleteRow>
+```
+
+**修改行**
+
+店主进一步认为哥伦比亚咖啡的价格过于昂贵，并希望将其降低至每磅6.99美元。以下代码将哥伦比亚咖啡的新价格设定为每磅6.99美元，这是第一行的价格：
+
+```java
+priceList.first();
+priceList.updateFloat(PRICE, 6.99);
+```
+
+XML文档将在提供新值的`<updateRow>`元素中反映此更改。第一列的值没有改变，因此只有第二列的`<updateValue>`元素：
+
+```xml
+<currentRow>
+  <columnValue>Colombian</columnValue>
+  <columnValue>7.99</columnValue>
+  <updateRow>6.99</updateRow>
+</currentRow>
+```
+
+此时，通过插入行，删除行以及修改行，`priceList`对象的XML文档如下所示：
+
+```xml
+<data>
+  <insertRow>
+    <columnValue>Kona</columnValue>
+    <columnValue>8.99</columnValue>
+  </insertRow>
+  <currentRow>
+    <columnValue>Colombian</columnValue>
+    <columnValue>7.99</columnValue>
+    <updateRow>6.99</updateRow>
+  </currentRow>
+  <currentRow>
+    <columnValue>
+      Colombian_Decaf
+    </columnValue>
+    <columnValue>8.99</columnValue>
+  </currentRow>
+  <deleteRow>
+    <columnValue>Espresso</columnValue>
+    <columnValue>9.99</columnValue>
+  </deleteRow>
+  <currentRow>
+    <columnValue>French_Roast</columnValue>
+    <columnValue>8.99</columnValue>
+  </currentRow>
+  <currentRow>
+    <columnValue>
+      French_Roast_Decaf
+    </columnValue>
+    <columnValue>9.99</columnValue>
+  </currentRow>
+</data>
+```
+
+**WebRowSet 代码示例**
+
+示例 `WebRowSetSample.java` 演示了此页面上描述的所有功能。
