@@ -1,108 +1,168 @@
-### 使用高级数据类型
+### 使用大对象
 
-本节中介绍的高级数据类型为关系数据库提供了更多的灵活性，可以用作表列的值。例如，列可用于存储`BLOB`（二进制大对象）值，这些值可以将非常大量的数据存储为原始字节。列也可以是`CLOB`类型（字符大对象），它能够以字符格式存储非常大量的数据。
+`Blob`，`Clob`和`NClob` Java对象的一个重要特性是，您可以操作它们，而无需将所有数据从数据库服务器带到客户端计算机。某些实现表示这些类型的实例，其中包含实例所代表的数据库中对象的定位符（逻辑指针）。因为`BLOB`，`CLOB`或`NCLOB` SQL对象可能非常大，所以使用定位器可以显着提高性能。但是，其他实现完全实现了客户端计算机上的大对象。
 
-最新版本的 ANSI/ISO SQL 标准通常称为 SQL:2003。本标准规定了以下数据类型：
+如果要将`BLOB`，`CLOB`或`NCLOB`SQL值的数据带到客户端计算机，请使用为此目的提供的`Blob`，`Clob`和`NClob`Java接口中的方法。这些大对象类型对象将它们表示的对象的数据实现为流。
 
-- SQL92 内建类型，包括大家熟悉的 SQL 列类型诸如 `CHAR`， `FLOAT`，和 `DATE`
+本章节涵盖以下主题：
 
-- SQL99 内建类型，包括 SQL99 添加的类型：
+- [添加大对象类型对象到数据库](https://docs.oracle.com/javase/tutorial/jdbc/basics/blob.html#add_lob)
+- [查询 CLOB 值](https://docs.oracle.com/javase/tutorial/jdbc/basics/blob.html#retrieve_clob)
+- [添加和查询 BLOB 对象](https://docs.oracle.com/javase/tutorial/jdbc/basics/blob.html#add_retrieve_blob)
+- [释放大对象持有的资源](https://docs.oracle.com/javase/tutorial/jdbc/basics/blob.html#release_large_objects)
 
-  - `BOOLEAN`：布尔值 (`true` or `false`)
-  - `BLOB`：二进制大对象
-  - `CLOB`：字符大对象
+**添加大对象类型对象到数据库**
 
-- SQL:2003 添加的新的内建类型：
-
-  - `XML`：XML 对象
-
-- 用户定义类型：
-
-  - 结构化类型：用户定义类型；比如：
-
-    ```sql
-    CREATE TYPE PLANE_POINT
-    AS (X FLOAT, Y FLOAT) NOT FINAL
-    ```
-
-  - `DISTINCT` 类型：基于内建类型的用户定义类型；比如：
-
-    ```sql
-    CREATE TYPE MONEY
-    AS NUMERIC(10,2) FINAL
-    ```
-
-- 结构化类型：基于给定基类型的新类型：
-
-  - `REF(*structured-type*)`：持久表示驻留在数据库中的结构化类型的实例的指针
-  - `*base-type* ARRAY[*n*]`：*n*个基类型元素的数组
-
-- 定位器：作为驻留在数据库服务器上的数据的逻辑指针的实体。定位器存在于客户端计算机中，是指向服务器上数据的瞬态逻辑指针。定位器通常指的是太大而无法在客户端上实现的数据，例如图像或音频。 （*物化视图*是作为模式对象预先存储或“物化”的查询结果。）在SQL级别定义了运算符，以检索由定位符表示的随机访问的数据片段：
-
-  - `LOCATOR(*structured-type*)`：服务器上一个结构化实例的定位器
-  - `LOCATOR(*array*)`：服务器上一个数组的定位器
-  - `LOCATOR(*blob*)`：服务器上一个二进制大对象的定位器
-  - `LOCATOR(*clob*)`：服务器上一个字符大对象的定位器
-
-- `Datalink`：用于管理数据源外部数据的类型。`Datalink`值是 SQL MED（外部数据管理）的一部分，是 SQL ANSI/ISO 标准规范的一部分。
-
-**映射高级数据类型**
-
-JDBC API 为 SQL:2003 标准指定的高级数据类型提供默认映射。以下列表给出了数据类型以及它们映射到的接口或类：
-
- - `BLOB`：`Blob`接口
- - `CLOB`：`Clob`接口
- - `NCLOB`：`NClob`接口
- - `ARRAY`：`Array`接口
- - `XML`：`SQLXML`接口
- - 结构化类型：`Struct`接口
- - `REF（结构化类型）`：`Ref`接口
- - `ROWID`：`RowId`接口
- - `DISTINCT`：基类型映射到的类型。 例如，基于SQL`NUMERIC`类型的`DISTINCT`值映射到`java.math.BigDecimal`类型，因为`NUMERIC`映射到Java编程语言中的`BigDecimal`。
- - `DATALINK`：`java.net.URL`对象
-
-**使用高级数据类型**
-
-您可以像处理其他数据类型一样检索，存储和更新高级数据类型。您可以使用`ResultSet.getDataType`或`CallableStatement.getDataType`方法来检索它们，使用`PreparedStatement.setDataType`方法来存储它们，使用`ResultSet.updateDataType`方法来更新它们。（变量`DataType`是映射到高级数据类型的Java接口或类的名称。）可能在高级数据类型上执行的操作的 90％ 涉及使用`getDataType`，`setDataType`和`updateDataType`方法。下表显示了要使用的方法：
-
-| **Advanced Data Type** | **getDataType Method** | **setDataType method** | **updateDataType Method** |
-| ---------------------- | ---------------------- | ---------------------- | ------------------------- |
-| `BLOB`                 | `getBlob`              | `setBlob`              | `updateBlob`              |
-| `CLOB`                 | `getClob`              | `setClob`              | `updateClob`              |
-| `NCLOB`                | `getNClob`             | `setNClob`             | `updateNClob`             |
-| `ARRAY`                | `getArray`             | `setArray`             | `updateArray`             |
-| `XML`                  | `getSQLXML`            | `setSQLXML`            | `updateSQLXML`            |
-| `Structured type`      | `getObject`            | `setObject`            | `updateObject`            |
-| `REF(structured type)` | `getRef`               | `setRef`               | `updateRef`               |
-| `ROWID`                | `getRowId`             | `setRowId`             | `updateRowId`             |
-| `DISTINCT`             | `getBigDecimal`        | `setBigDecimal`        | `updateBigDecimal`        |
-| `DATALINK`             | `getURL`               | `setURL`               | `updateURL`               |
-
-**注意**：`DISTINCT`数据类型与其他高级SQL数据类型的行为不同。作为基于已存在的内置类型的用户定义类型，它没有接口作为Java编程语言中的映射。因此，您使用与`DISTINCT`数据类型所基于的Java类型对应的方法。有关详细信息，请参阅  [Using DISTINCT Data Type](https://docs.oracle.com/javase/tutorial/jdbc/basics/distinct.html) 。
-
-例如，以下代码片段检索SQL`ARRAY`值。对于此示例，假设表`STUDENTS`中的`SCORES`列包含`ARRAY`类型的值。变量`stmt`是一个`Statement`对象。
+以下来自`ClobSample.addRowToCoffeeDescriptions`的摘录将`CLOB`SQL值添加到表`COFFEE_DESCRIPTIONS`中。`Clob` Java对象`myClob`包含`fileName`指定的文件的内容。
 
 ```java
-ResultSet rs = stmt.executeQuery(
-    "SELECT SCORES FROM STUDENTS " +
-    "WHERE ID = 002238");
-rs.next();
-Array scores = rs.getArray("SCORES");
+public void addRowToCoffeeDescriptions(
+    String coffeeName, String fileName)
+    throws SQLException {
+
+    PreparedStatement pstmt = null;
+    try {
+        Clob myClob = this.con.createClob();
+        Writer clobWriter = myClob.setCharacterStream(1);
+        String str = this.readFile(fileName, clobWriter);
+        System.out.println("Wrote the following: " +
+            clobWriter.toString());
+
+        if (this.settings.dbms.equals("mysql")) {
+            System.out.println(
+                "MySQL, setting String in Clob " +
+                "object with setString method");
+            myClob.setString(1, str);
+        }
+        System.out.println("Length of Clob: " + myClob.length());
+
+        String sql = "INSERT INTO COFFEE_DESCRIPTIONS " +
+                     "VALUES(?,?)";
+
+        pstmt = this.con.prepareStatement(sql);
+        pstmt.setString(1, coffeeName);
+        pstmt.setClob(2, myClob);
+        pstmt.executeUpdate();
+    } catch (SQLException sqlex) {
+        JDBCTutorialUtilities.printSQLException(sqlex);
+    } catch (Exception ex) {
+      System.out.println("Unexpected exception: " + ex.toString());
+    } finally {
+        if (pstmt != null)pstmt.close();
+    }
+}
 ```
 
-变量`scores`是存储在表`STUDENTS`中的学生`002238`行中的SQL`ARRAY`对象的逻辑指针。
-
-如果要在数据库中存储值，可以使用适当的`set`方法。例如，下面的代码片段，其中`rs`是`ResultSet`对象，存储一个`Clob`对象：
+以下行创建一个`Clob` Java对象：
 
 ```java
-Clob notes = rs.getClob("NOTES");
-PreparedStatement pstmt =
-    con.prepareStatement(
-        "UPDATE MARKETS SET COMMENTS = ? " +
-        "WHERE SALES < 1000000");
-pstmt.setClob(1, notes);
+Clob myClob = this.con.createClob();
+```
+
+以下代码行检索一个流（在本例中是一个名为`clobWriter`的`Writer`对象），用于将字符流写入`Clob` Java对象`myClob`。方法`ClobSample.readFile`写入这个字符流；流来自`String` `fileName`指定的文件。方法参数`1`表示`Writer`对象将开始在`Clob`值的开头写入字符流：
+
+```java
+Writer clobWriter = myClob.setCharacterStream(1);
+```
+
+`ClobSample.readFile`方法逐行读取文件`fileName`指定的文件，并将其写入`writerArg`指定的`Writer`对象：
+
+```java
+private String readFile(String fileName, Writer writerArg)
+        throws FileNotFoundException, IOException {
+
+    BufferedReader br = new BufferedReader(new FileReader(fileName));
+    String nextLine = "";
+    StringBuffer sb = new StringBuffer();
+    while ((nextLine = br.readLine()) != null) {
+        System.out.println("Writing: " + nextLine);
+        writerArg.write(nextLine);
+        sb.append(nextLine);
+    }
+    // Convert the content into to a string
+    String clobData = sb.toString();
+
+    // Return the data.
+    return clobData;
+}
+```
+
+以下摘录创建了一个`PreparedStatement`对象`pstmt`，它将`Clob` Java对象`myClob`插入到`COFFEE_DESCRIPTIONS`中：
+
+```java
+PreparedStatement pstmt = null;
+// ...
+String sql = "INSERT INTO COFFEE_DESCRIPTIONS VALUES(?,?)";
+pstmt = this.con.prepareStatement(sql);
+pstmt.setString(1, coffeeName);
+pstmt.setClob(2, myClob);
 pstmt.executeUpdate();
 ```
 
-此代码将`notes`设置为发送到数据库的`update`语句中的第一个参数。由`notes`指定的`Clob`值将存储在表`MARKETS`中的每一行中的`COMMENTS`列中，其中`SALES`列中的值小于一百万。
+**查询 CLOB 值**
+
+方法`ClobSample.retrieveExcerpt`从列值`COF_NAME`等于`coffeeName`参数指定的`String`值的行中检索存储在`COFFEE_DESCRIPTIONS`的`COF_DESC`列中的`CLOB` SQL值：
+
+```java
+public String retrieveExcerpt(String coffeeName, int numChar)
+    throws SQLException {
+
+    String description = null;
+    Clob myClob = null;
+    PreparedStatement pstmt = null;
+
+    try {
+        String sql =
+            "select COF_DESC " +
+            "from COFFEE_DESCRIPTIONS " +
+            "where COF_NAME = ?";
+
+        pstmt = this.con.prepareStatement(sql);
+        pstmt.setString(1, coffeeName);
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            myClob = rs.getClob(1);
+            System.out.println("Length of retrieved Clob: " +
+                myClob.length());
+        }
+        description = myClob.getSubString(1, numChar);
+    } catch (SQLException sqlex) {
+        JDBCTutorialUtilities.printSQLException(sqlex);
+    } catch (Exception ex) {
+        System.out.println("Unexpected exception: " + ex.toString());
+    } finally {
+        if (pstmt != null) pstmt.close();
+    }
+    return description;
+}
+```
+
+以下行从`ResultSet`对象`rs`中检索`Clob` Java值：
+
+```java
+myClob = rs.getClob(1);
+```
+
+以下行从`myClob`对象中检索子字符串。子字符串从`myClob`值的第一个字符开始，最多包含`numChar`中指定的个数的连续字符数，其中`numChar`是一个整数。
+
+```java
+description = myClob.getSubString(1, numChar);
+```
+
+**添加和查询 BLOB 对象**
+
+添加和检索`BLOB` SQL对象类似于添加和检索`CLOB` SQL对象。使用`Blob.setBinaryStream`方法检索`OutputStream`对象，以编写`Blob` Java对象（调用该方法使用的对象）表示的`BLOB` SQL值。
+
+**释放大对象持有的资源**
+
+`Blob`，`Clob`和`NClob` Java对象至少在创建它们的事务期间保持有效。这可能导致应用程序在长时间运行的事务期间耗尽资源。应用程序可以通过调用`free`方法释放`Blob`，`Clob`和`NClob`资源。
+
+在下面的代码片段中，调用方法`Clob.free`来释放为先前创建的`Clob`对象保存的资源：
+
+```java
+Clob aClob = con.createClob();
+int numWritten = aClob.setString(1, val);
+aClob.free();
+```
 
