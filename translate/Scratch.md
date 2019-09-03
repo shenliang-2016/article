@@ -1,152 +1,221 @@
-# Java 管理扩展(JMX)
+## MBeans 介绍
 
- **Java Management Extensions (JMX)** 课程提供了有关 JMX 技术的介绍。该技术包含在 Java 平台标准版中。本课程中的例子展示了如何使用 JMX 中最重要的特性。
+本课程介绍了JMX API的基本概念，即托管bean或MBean。
 
-[![trail icon](https://docs.oracle.com/javase/tutorial/images/networkingIcon.gif)JMX 技术概述](https://docs.oracle.com/javase/tutorial/jmx/overview/index.html) 简要介绍了 JMX 技术，包括它的目标和主要特性。
+MBean是一个托管Java对象，类似于JavaBeans组件，它遵循JMX规范中提出的设计模式。MBean可以表示设备，应用程序或需要管理的任何资源。MBean公开了一个由以下内容组成的管理界面：
 
-[![trail icon](https://docs.oracle.com/javase/tutorial/images/networkingIcon.gif)MBeans 介绍](https://docs.oracle.com/javase/tutorial/jmx/mbeans/index.html) 介绍 JMX 技术的基础概念，*管理 beans*，也被称为**MBeans**。本课程也将介绍MXBeans。
+ - 一组可读或可写属性，或两者兼而有之。
+ - 一组可调用的操作。
+ - 自我描述。
 
-[![trail icon](https://docs.oracle.com/javase/tutorial/images/networkingIcon.gif)通知](https://docs.oracle.com/javase/tutorial/jmx/notifs/index.html) 介绍 JMX 技术中的通知机制。
+管理接口在MBean实例的整个生命周期中不会更改。MBean还可以在发生某些预定义事件时发出通知。
 
-[![trail icon](https://docs.oracle.com/javase/tutorial/images/networkingIcon.gif)远程管理](https://docs.oracle.com/javase/tutorial/jmx/remote/index.html) 展示如何实现 JMX API 的管理能力并创建一个 JMX 客户端应用。
+JMX规范定义了五种类型的MBean：
 
-[![trail icon](https://docs.oracle.com/javase/tutorial/images/networkingIcon.gif)延伸学习](https://docs.oracle.com/javase/tutorial/jmx/end.html) 介绍有关 JMX 技术的更进一步的资料。
+ - 标准MBean
+ - 动态MBean
+ - 打开MBean
+ - 模型MBean
+ - MXBeans
 
-## JMX 技术概述
+此课程中的示例仅演示了最简单的MBean类型，即标准MBean和MXBeans。
 
-Java Management Extensions（JMX）技术是Java平台标准版（Java SE平台）的标准部分。JMX技术已添加到Java 2平台标准版（J2SE）5.0版本的平台中。
+### 标准 MBeans
 
-JMX技术提供了一种简单，标准的方式来管理应用程序，设备和服务等资源。由于JMX技术是动态的，因此您可以使用它来监视和管理资源的创建，安装和实施。您还可以使用JMX技术来监视和管理Java虚拟机（Java VM）。
+This section presents an example of a straightforward, standard MBean.
 
-JMX规范定义了Java编程语言中的体系结构，设计模式，API和服务，用于管理和监视应用程序和网络。
+A standard MBean is defined by writing a Java interface called `SomethingMBean` and a Java class called `Something` that implements that interface. Every method in the interface defines either an attribute or an operation in the MBean. By default, every method defines an operation. Attributes and operations are methods that follow certain design patterns. A standard MBean is composed of an MBean interface and a class. The MBean interface lists the methods for all exposed attributes and operations. The class implements this interface and provides the functionality of the instrumented resource.
 
-使用JMX技术，给定资源由一个或多个Java对象（称为 Managed Beans 或 MBeans）进行检测。这些 MBeans 在核心管理的对象服务器中注册，称为 MBean 服务器。MBean 服务器充当管理代理程序，可以在大多数已为Java编程语言启用的设备上运行。
+The following sections examine an example of a standard MBean and a simple JMX technology-enabled agent (JMX agent) that manages the MBean.
 
-规范定义了用于管理已正确配置以进行管理的任何资源的JMX代理。JMX代理由MBean服务器和一组用于处理MBean的服务组成，MBean服务器在其中注册MBean。通过这种方式，JMX代理可以直接控制资源并使其可用于远程管理应用程序。
+**MBean 接口**
 
-检测资源的方式完全独立于管理基础结构。因此，无论管理应用程序如何实现，都可以使资源易于管理。
+基本 MBean 接口的例子 [`HelloMBean`](https://docs.oracle.com/javase/tutorial/jmx/examples/HelloMBean.java) ：
 
-JMX技术定义了标准连接器（称为JMX连接器），使您可以从远程管理应用程序访问JMX代理。使用不同协议的JMX连接器提供相同的管理接口。因此，无论使用何种通信协议，管理应用程序都可以透明地管理资源。只要这些系统或应用程序支持JMX代理，JMX代理也可以由不符合JMX规范的系统或应用程序使用。
-
-### 为什么要使用 JMX 技术？
-
-JMX技术为开发人员提供了一种灵活的方法来检测基于Java技术的应用程序（Java应用程序），创建智能代理，实现分布式管理中间件和管理器，并将这些解决方案顺利集成到现有的管理和监视系统中。
-
-* JMX技术使Java应用程序无需大量投资即可进行管理。
-  基于JMX技术的代理（JMX代理）可以在大多数支持Java技术的设备上运行。因此，Java应用程序可以变得易于管理，而对其设计几乎没有影响。Java应用程序只需要嵌入一个托管对象服务器，并使其某些功能可用作在对象服务器中注册的一个或多个托管bean（MBean）。这就是从管理基础设施中受益所需的一切。
-* JMX技术提供了管理Java应用程序，系统和网络的标准方法。
-  例如，Java平台企业版（Java EE）5 Application Server符合JMX体系结构，因此可以使用JMX技术进行管理。
-* JMX技术可用于Java VM的开箱即用管理。
-  Java虚拟机（Java VM）使用JMX技术进行了高度定制化。您可以启动JMX代理以访问内置Java VM检测，从而远程监视和管理Java VM。
-* JMX技术提供可扩展的动态管理架构。
-  每个JMX代理服务都是一个独立的模块，可以根据需要插入管理代理程序。这种基于组件的方法意味着JMX解决方案可以从小型设备扩展到大型电信交换机等。 JMX规范提供了一组核心代理服务。可以在管理基础架构中开发和动态加载，卸载或更新其他服务。
-* JMX技术利用现有的标准Java技术。
-  只要需要，JMX规范就会引用现有的Java规范，例如Java命名和目录接口（J.N.D.I.）API。
-* 可以从NetBeans IDE模块创建基于JMX技术的应用程序（JMX应用程序）。
-  您可以从NetBeans更新中心（在NetBeans界面中选择工具 - >更新中心）获取模块，该模块使您可以使用NetBeans IDE创建JMX应用程序。这降低了JMX应用程序的开发成本。
-* JMX技术与现有管理解决方案和新兴技术相集成。
-  JMX API是任何管理系统供应商都可以实现的开放接口。 JMX解决方案可以使用查找和发现服务以及Jini网络技术和服务定位协议（SLP）等协议。
-
-### JMX 技术架构
-
-JMX 技术可以分为三个层次如下：
-
-- 插桩
-- JMX 代理
-- 远程管理
-
-**插桩**
-
-要使用JMX技术管理资源，必须首先使用Java编程语言检测资源。您使用称为*MBeans*的Java对象来实现对资源插桩的访问。MBean必须遵循JMX规范中定义的设计模式和接口。这样做可确保所有MBean以标准化方式提供托管资源工具。除了标准MBean之外，JMX规范还定义了一种称为*MXBean*的特殊类型的MBean。MXBean是仅引用预定义数据类型集的MBean。存在其他类型的MBean，但本课程将集中在标准MBean和MXBeans上。
-
-一旦资源由MBean插桩检测，就可以通过JMX代理进行管理。MBean不需要了解它们将运行的JMX代理。
-
-MBean设计灵活，简单且易于实施。应用程序，系统和网络的开发人员可以以标准方式管理其产品，而无需了解或投资复杂的管理系统。可以用最少的努力使现有资源易于管理。
-
-此外，JMX规范的检测层次提供了通知机制。此机制使MBean能够生成通知事件并将其传播到其他层次的组件。
-
-**JMX 代理**
-
-基于JMX技术的代理（JMX代理）是一种标准管理代理，可直接控制资源并使其可用于远程管理应用程序。JMX代理通常与它们控制的资源位于同一台机器上，但这种布置不是必需的。
-
-JMX代理的核心组件是**MBean服务器**，这是一个在其中注册MBean的托管对象服务器。JMX代理还包括一组用于管理MBean的服务，以及至少一个允许管理应用程序访问的通信适配器或连接器。
-
-实现JMX代理时，您不需要知道它将管理的资源的语义或功能。事实上，JMX代理甚至不需要知道它将服务哪些资源，因为任何符合JMX规范的资源都可以使用任何提供资源所需服务的JMX代理。同样，JMX代理不需要知道将访问它的管理应用程序的功能。
-
-**远程管理**
-
-可以通过许多不同方式访问JMX技术工具，可以通过现有管理协议（如简单网络管理协议 SNMP ）或通过专有协议进行访问。 MBean服务器依赖于协议适配器和连接器，以便从代理的Java虚拟机（Java VM）之外的管理应用程序访问JMX代理。
-
-每个适配器都提供通过MBean服务器中注册的所有MBean的特定协议的视图。例如，HTML适配器可以在浏览器中显示MBean。
-
-连接器提供管理器端接口，用于处理管理器和JMX代理之间的通信。每个连接器通过不同的协议提供相同的远程管理接口。当远程管理应用程序使用此接口时，无论协议如何，它都可以通过网络透明地连接到JMX代理。 JMX技术提供了一种标准解决方案，用于将JMX技术工具导出到基于Java远程方法调用（Java RMI）的远程应用程序。
-
-### 虚拟机监控和管理
-
-JMX技术还可用于监视和管理Java虚拟机（Java VM）。
-
-Java VM具有内置检测功能，使您可以使用JMX技术监视和管理它。这些内置管理实用程序通常被称为Java VM的*开箱即用*管理工具。为了监视和管理Java VM的不同方面，Java VM包括一个平台MBean服务器和特殊的MXBeans，供符合JMX规范的管理应用程序使用。
-
-**平台 MXBeans 和平台 MBean 服务**
-
-*platform MXBeans*是一组MXBeans，随Java SE平台一起提供，用于监视和管理Java VM以及Java Runtime Environment（JRE）的其他组件。每个平台MXBean都封装了Java VM功能的一部分，例如类加载系统，即时（JIT）编译系统，垃圾收集器等。通过使用符合JMX规范的监视和管理工具，可以显示和交互这些MXBean，使您能够监视和管理这些不同的VM功能。一个这样的监视和管理工具是Java SE平台的 JConsole 图形用户界面。
-
-Java SE平台提供标准的*平台MBean服务器*，其中注册了这些平台MXBean。平台MBean服务器还可以注册您要创建的任何其他MBean。
-
-**JConsole**
-
-Java SE平台包括 JConsole 监视和管理工具，该工具符合JMX规范。JConsole 使用Java VM的丰富工具（平台MXBeans）来提供有关Java平台上运行的应用程序的性能和资源消耗的信息。
-
-**开箱即用的管理实践**
-
-由于实现JMX技术的标准监视和管理实用程序内置于Java SE平台中，因此您可以在不必编写任何一行JMX API代码的情况下查看现成的JMX技术。您可以通过启动Java应用程序然后使用JConsole对其进行监视来实现。
-
-**使用 JConsole 监控应用**
-
-此过程说明如何监视Notepad Java应用程序。在版本6之前的Java SE平台版本下，需要使用以下选项启动要使用JConsole监视的应用程序。
-
-```
--Dcom.sun.management.jmxremote
+```java
+package com.example; 
+ 
+public interface HelloMBean { 
+ 
+    public void sayHello(); 
+    public int add(int x, int y); 
+    
+    public String getName(); 
+     
+    public int getCacheSize(); 
+    public void setCacheSize(int size); 
+} 
 ```
 
-但是，随Java SE 6平台提供的JConsole版本可以附加到支持Attach API的任何本地应用程序。换句话说，JACsole会自动检测在Java SE 6 HotSpot VM中启动的任何应用程序，而不需要使用上述命令行选项启动。
+按照惯例，MBean接口采用实现它的Java类的名称，并添加后缀MBean。在上面例子这种情况下，接口称为`HelloMBean`。实现此接口的`Hello`类将在下一节中介绍。
 
-1. 通过在终端窗口中使用以下命令启动Notepad Java应用程序：
+根据JMX规范，除了可由MBean管理的应用程序调用的命名和类型操作之外，MBean接口还包含可读且可写的命名和类型属性。`HelloMBean`接口声明了两个操作：Java方法`add()`和`sayHello()`。
+
+`HelloMBean`声明了两个属性：`Name`是只读字符串，`CacheSize`是一个可以读写的整数。声明了`getter`和`setter`方法，以允许托管应用程序访问并可能更改属性值。根据JMX规范的定义，`getter`是任何不返回`void`且名称以`get`开头的公共方法。`getter`使管理器能够读取属性的值，该属性的类型是返回对象的类型。`setter`是任何公共方法，它接受一个参数，其名称以`set`开头。`setter`使管理器能够在属性中写入一个新值，其类型与参数的类型相同。
+
+以下部分显示了这些操作和属性的实现。
+
+**MBean 实现**
+
+下面的 [`Hello`](https://docs.oracle.com/javase/tutorial/jmx/examples/Hello.java) Java 类实现了 `HelloMBean` MBean 接口：
+
+```java
+package com.example; 
+ 
+public class Hello ... 
+    implements HelloMBean { 
+    public void sayHello() { 
+        System.out.println("hello, world"); 
+    } 
+     
+    public int add(int x, int y) { 
+        return x + y; 
+    } 
+     
+    public String getName() { 
+        return this.name; 
+    }  
+     
+    public int getCacheSize() { 
+        return this.cacheSize; 
+    } 
+     
+    public synchronized void setCacheSize(int size) {
+        ...
+    
+        this.cacheSize = size; 
+        System.out.println("Cache size now " + this.cacheSize); 
+    } 
+    ...
+     
+    private final String name = "Reginald"; 
+    private int cacheSize = DEFAULT_CACHE_SIZE; 
+    private static final int 
+        DEFAULT_CACHE_SIZE = 200; 
+}
+```
+
+`Hello`类直截了当地提供了`HelloMBean`声明的操作和属性的定义。`sayHello()`和`add()`操作非常简单，但实际操作可以根据需要简单或复杂。
+
+该类还定义了获取`Name`属性以及获取和设置`CacheSize`属性的方法。在此示例中，`Name`属性值永远不会更改。但是，在实际情况中，此属性可能会随托管资源的运行而更改。例如，该属性可能表示正常运行时间或内存使用情况等统计信息。这里，该属性仅仅是`Reginald`的名称。
+
+调用`setCacheSize`方法使您可以从其声明的默认值`200`更改`CacheSize`属性。在实际方案中，更改`CacheSize`属性可能需要执行其他操作，例如丢弃条目或分配新条目。此示例仅打印一条消息以确认缓存大小已更改。但是，可以定义更复杂的操作，而不是简单调用`println()`。
+
+使用`Hello` MBean及其定义的接口，它们现在可用于管理它们所代表的资源，如以下部分所示。
+
+**创建 JMX 代理用以管理资源**
+
+一旦资源由MBean检测，该资源的管理由JMX代理执行。
+
+JMX代理的核心组件是MBean服务器。MBean服务器是注册MBean的托管对象服务器。JMX代理还包括一组用于管理MBean的服务。有关MBean服务器实现的详细信息，请参阅  [`MBeanServer`](https://docs.oracle.com/javase/8/docs/api/javax/management/MBeanServer.html) 接口的API文档。
+
+后面的`Main`类表示基本的JMX代理：
+
+```java
+package com.example; 
+ 
+import java.lang.management.*; 
+import javax.management.*; 
+ 
+public class Main { 
+ 
+    public static void main(String[] args) 
+        throws Exception { 
+     
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+        ObjectName name = new ObjectName("com.example:type=Hello"); 
+        Hello mbean = new Hello(); 
+        mbs.registerMBean(mbean, name); 
+          
+        ...
+     
+        System.out.println("Waiting forever..."); 
+        Thread.sleep(Long.MAX_VALUE); 
+    } 
+} 
+```
+
+JMX代理`Main`首先通过调用`java.lang.management.ManagementFactory`类的`getPlatformMBeanServer()`方法获取由平台创建和初始化的MBean服务器。如果平台尚未创建MBean服务器，则`getPlatformMBeanServer()`通过调用JMX方法`MBeanServerFactory.createMBeanServer()`自动创建MBean服务器。`Main`获取的`MBeanServer`实例名为`mbs`。
+
+接下来，`Main`定义它将创建的MBean实例的对象名称。每个JMX MBean都必须具有对象名称。对象名称是JMX类`ObjectName`的实例，必须符合JMX规范定义的语法。即，对象名称必须包含域和键属性列表。在`Main`定义的对象名称中，域是`com.example`（包含示例MBean的包）。此外，key-property声明此对象的类型为`Hello`。
+
+创建名为`mbean`的`Hello`对象的实例。然后，通过将对象和对象名称传递给对JMX方法`MBeanServer.registerMBean()`的调用，将名为`mbean`的`Hello`对象注册为MBean服务器`mbs`中具有对象名称的MBean。
+
+在MBean服务器中注册了`Hello` MBean后，`Main`只是等待对`Hello`执行管理操作。在此示例中，这些管理操作正在调用`sayHello()`和`add()`，以及获取和设置属性值。
+
+**运行该标准 MBean 示例**
+
+在检查了示例类之后，您现在可以运行该示例。在此示例中，JConsole用于与MBean交互。
+
+若要运行该示例，请按照下列步骤操作：
+
+1. 将JMX API示例类包`jmx_examples.zip`保存到您的工作目录`work_dir`。
+
+2. 在终端窗口中使用以下命令解压缩示例类包。
 
    ```
-   java -jar 
-       jdk_home/demo/jfc/Notepad/Notepad.jar
+   unzip jmx_examples.zip
    ```
 
-   其中`jdk_home`是安装Java Development Kit（JDK）的目录。如果您没有运行Java SE平台的第6版，则需要使用以下命令：
+3. 编译`work_dir`目录中的示例Java类。
 
    ```
-   java -Dcom.sun.management.jmxremote -jar 
-         jdk_home/demo/jfc/Notepad/Notepad.jar
+   javac com/example/*.java
    ```
 
-2. 打开记事本后，在不同的终端窗口中，使用以下命令启动JConsole：
+4. 如果您运行的是Java Development Kit（JDK）版本6，请使用以下命令启动Main应用程序。
+
+   ```
+   java com.example.Main
+   ```
+
+   如果您运行的是早于版本6的JDK版本，则需要使用指定的以下选项启动Main应用程序，以公开应用程序以进行监视和管理。
+
+   ```
+   java -Dcom.sun.management.jmxremote example.Main
+   ```
+
+   显示`Main`正在等待某事发生的确认。
+
+5. 在同一台计算机上的另一个终端窗口中启动JConsole。
 
    ```
    jconsole
    ```
 
-   将显示“新建连接”对话框。
+   将显示“新建连接”对话框，其中列出了可以连接的正在运行的JMX代理的列表。
 
-3. 在“新建连接”对话框中，选择
+6. 在“新建连接”对话框中，从列表中选择`com.example.Main`，然后单击“连接”。
 
-   ```
-   Notepad.jar
-   ```
+   将显示平台当前活动的摘要。
 
-   从“本地进程”列表中，单击“连接”按钮。
+7. 单击MBeans选项卡。
 
-   JConsole打开并将自身连接到`Notepad.jar`进程。当JConsole打开时，您将看到与记事本相关的监视和管理信息的概述。例如，您可以查看应用程序正在使用的堆内存量，应用程序当前运行的线程数以及应用程序消耗的中央处理单元（CPU）容量。
+   此面板显示当前在MBean服务器中注册的所有MBean。
 
-4. 单击不同的JConsole选项卡。
+8. 在左侧框架中，展开MBean树中的`com.example`节点。
 
-   每个选项卡都提供有关运行记事本的Java VM的不同功能区域的更多详细信息。所有提供的信息都是从该踪迹中提到的各种JMX技术MXBeans中获得的。所有平台MXBeans都可以显示在MBeans选项卡中。MBeans选项卡将在此跟踪的下一部分中进行检查。
+   您会看到Main创建并注册的示例MBean `Hello`。如果单击`Hello`，则会在MBean树中看到其关联的`Attributes`和`Operations`节点。
 
-5. 
+9. 展开MBean树中的`Hello` MBean的`Attributes`节点。
 
-6. 要关闭JConsole，请选择Connection  -> Exit。
+   显示由`Hello`类定义的MBean属性。
+
+10. 将`CacheSize`属性的值更改为150。
+
+    在您启动`Main`的终端窗口中，将生成此属性更改的确认。
+
+11. 展开MBean树中的`Hello` MBean的`Operations`节点。
+
+    `Hello` MBean声明的两个操作，`sayHello()`和`add()`是可见的。
+
+12. 单击`sayHello`按钮调用`sayHello()`操作。
+
+    JConsole对话框通知您已成功调用该方法。消息“hello，world”在`Main`运行的终端窗口中生成。
+
+13. 为`add()`操作提供两个整数以添加并单击“添加”按钮。
+
+    答案显示在JConsole对话框中。
+
+14. 要关闭JConsole，请选择Connection  -> Exit。
+
