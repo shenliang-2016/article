@@ -1,36 +1,37 @@
-### Naming 包
+### Directory 和 LDAP 包
 
-[`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html) 包包含访问命名服务的类和接口。
+**Directory 包**
 
-**上下文**
+[`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html) 包扩展了 [`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html) 包，在命名服务基础上提供了访问目录服务的功能。此包允许应用程序存储在目录中的相关对象以及使用特定属性搜索对象。
 
-`javax.naming` 包定义一个 [`Context`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html) 接口，它是查找，绑定/解绑，重命名对象，创建和销毁子上下文等功能的核心接口。
+**Directory 上下文**
 
-- Lookup
+[`DirContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html) 接口表示*目录上下文*。通过扩展 [`Context`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html) 接口，`Dircontext` 的行为就像一个名称上下文。这就意味着任何目录对象也可以提供命名上下文。它定义检查和更新目录实体的相关属性的方法。
 
-  最常用的操作就是 [`lookup()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html#lookup-javax.naming.Name-) 。你将查找的对象的名称传递给 `lookup()` 方法，它将返回绑定到该名称的对象。
+- 属性
 
-- Bindings
+  你使用 [`getAttributes()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#getAttributes-javax.naming.Name-) 方法来获取目录实体（需要你给定名称）的相关属性。属性可以使用 [`modifyAttributes()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#modifyAttributes-javax.naming.Name-javax.naming.directory.ModificationItem:A-) 方法修改。你可以使用该操作添加、替换、或者而删除属性和/或属性值。
 
-  [`listBindings()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html#listBindings-javax.naming.Name-) 返回一个名称—对象映射的枚举。一个绑定时一个三元组，包含对象名称，对象类名，以及对象自身。
+- 搜索
 
-- List
+  `DirContext`包含用于执行基于内容的目录搜索的方法。在最简单和最常见的使用形式中，应用程序指定一组属性，这些属性可能具有匹配的特定值，并将此属性集提交给 [`search()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#search-javax.naming.Name-javax.naming.directory.Attributes-) 方法。其他重载形式的 [`search()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#search-javax.naming.Name-javax.naming.directory.Attributes-) 支持更复杂的搜索过滤器。
 
-  [`list()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html#list-javax.naming.Name-) 类似于 `listBindings()` ，除了它返回一个包含对象名称和对象类名的枚举。`list()` 对应用非常有用，例如浏览器希望获取上下文中绑定的对象信息，但是又不需要实际的对象本身。尽管 `listBindings()` 提供了全部的相同信息，但是它是一个潜在的更加昂贵的操作。
+**LDAP 包**
 
-- Name
+ [`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html) 包中包含用于使用特定于 [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 的功能的类和接口，这些功能尚未包含在更通用的 [`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html) 包中。事实上，大多数使用LDAP的JNDI应用程序都会找到足够的`javax.naming.directory`包，根本不需要使用`javax.naming.ldap`包。此程序包主要用于需要使用“扩展”操作，控件，或未经请求的通知的应用程序。
 
-  `Name` 是一个表示通用名称—零个或者多个组件的有序序列的接口。命名系统使用此接口来定义遵循它的命名约定的名称。命名约定在后续的 [Naming and Directory Concepts](https://docs.oracle.com/javase/tutorial/jndi/concepts/index.html) 中描述。
+- ”扩展“操作
 
-- References
+  除了指定定义良好的操作（如搜索和修改）之外， [LDAP v3 (RFC 2251)](http://www.ietf.org/rfc/rfc2251.txt) 还指定了在LDAP客户端和服务器之间传输尚未定义的操作的方法。这些操作称为“扩展”操作。“扩展”操作可以由诸如因特网工程任务组（IETF）之类的标准组织或由供应商定义。
 
-  对象以不同方式存储在命名和目录服务中。引用可能是对象的非常紧凑的表示。JNDI定义 [`Reference`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Reference.html) 类来表示引用。引用包含有关如何构造对象副本的信息。JNDI将尝试将从目录中查找的引用转换为它们所代表的Java对象，以便JNDI客户端可以安全地认为目录中存储的内容是Java对象。
+- 控件
 
-**初始上下文**
+   [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 允许任何请求或响应通过尚未定义的修饰符（称为控件）进行扩充。与请求一起发送的控件是请求控件，而与响应一起发送的控件是响应控件。控件可以由诸如IETF的标准组织或由供应商定义。请求控件和响应控件不一定是成对的，也就是说，不需要为发送的每个请求控件都有响应控件，反之亦然。
 
-在JNDI中，所有命名和目录操作都是相对于上下文执行的。没有绝对的根。因此，JNDI定义了一个`InitialContext`，它为命名和目录操作提供了一个起点。获得初始上下文后，可以使用它来查找其他上下文和对象。
+- 未经请求的通知
 
-**异常**
+  除了客户端和服务器之间正常的请求/响应交互方式之外， [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 还指定了未经请求的通知 - 从服务器异步发送到客户端而不是响应任何客户端请求的消息。
 
-JNDI定义了在执行命名和目录操作过程中可以抛出的异常的类层次结构。此类层次结构的根是`NamingException`。对处理特定异常感兴趣的程序可以捕获异常的相应子类。否则，应该捕获`NamingException`。
+**LDAP 上下文**
 
+[`LdapContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/LdapContext.html) 接口表示用于执行“扩展”操作，发送请求控件和接收响应控件的上下文。JNDI教程的 [Controls and Extensions](https://docs.oracle.com/javase/jndi/tutorial/ldap/ext/index.html) 课程中介绍了如何使用这些功能的示例。
