@@ -1,37 +1,26 @@
-### Directory 和 LDAP 包
+### Event 和服务提供者包
 
-**Directory 包**
+**Event 包**
 
-[`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html) 包扩展了 [`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html) 包，在命名服务基础上提供了访问目录服务的功能。此包允许应用程序存储在目录中的相关对象以及使用特定属性搜索对象。
+ [`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html) 包中包含用于支持命名和目录服务中的事件通知的类和接口。事件通知在 [Event Notification](https://docs.oracle.com/javase/tutorial/jndi/overview/event.html) 中详细描述。
 
-**Directory 上下文**
+ - 事件
+      [`NamingEvent`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/NamingEvent.html) 表示由命名/目录服务生成的事件。该事件包含标识事件类型的类型。例如，事件类型分为影响命名空间的事件类型，例如“对象被添加”，和不影响命名空间的事件类型，例如“对象已更改”。
+ - 监听器
+      [`NamingListener`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/NamingListener.html) 是一个监听`NamingEvents`的对象。每种类型的事件类型都有相应类型的`NamingListener`。例如， [`NamespaceChangeListener`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/NamespaceChangeListener.html) 表示对命名空间更改事件感兴趣的侦听器， [`ObjectChangeListener`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/ObjectChangeListener.html) 表示对对象更改事件感兴趣的侦听器。
 
-[`DirContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html) 接口表示*目录上下文*。通过扩展 [`Context`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html) 接口，`Dircontext` 的行为就像一个名称上下文。这就意味着任何目录对象也可以提供命名上下文。它定义检查和更新目录实体的相关属性的方法。
+要接收事件通知，必须使用 [`EventContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/EventContext.html) 或 [`EventDirContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/EventDirContext.html) 注册侦听器。注册后，当命名/目录服务中发生相应的更改时，侦听器将接收事件通知。有关事件通知的详细信息，请参阅 [JNDI Tutorial](https://docs.oracle.com/javase/jndi/tutorial/beyond/event/index.html) 。
 
-- 属性
+**服务提供者包**
 
-  你使用 [`getAttributes()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#getAttributes-javax.naming.Name-) 方法来获取目录实体（需要你给定名称）的相关属性。属性可以使用 [`modifyAttributes()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#modifyAttributes-javax.naming.Name-javax.naming.directory.ModificationItem:A-) 方法修改。你可以使用该操作添加、替换、或者而删除属性和/或属性值。
+ [`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html) 包提供了不同命名/目录服务提供者的开发人员可以开发和连接其实现的方法，以便可以从使用JNDI的应用程序访问相应的服务。
 
-- 搜索
+ - 插件架构
+     `javax.naming.spi`包允许动态插入不同的实现。这些实现包括 [initial context](https://docs.oracle.com/javase/tutorial/jndi/ops/index.html) 和可以从初始上下文到达的上下文的实现。
+ - Java对象支持
+     `javax.naming.spi`包支持 [lookup](https://docs.oracle.com/javase/tutorial/jndi/ops/lookup.html) 和相关方法的实现，以返回Java程序员自然而直观的Java对象。例如，如果从目录中查找打印机名称，那么您可能希望找回要在其上运行的打印机对象。这种支持以对象工厂的形式提供。该软件包还支持反向操作。也就是说， [`Context.bind()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/Context.html#bind-javax.naming.Name-java.lang.Object-) 和相关方法的实现者可以接受Java对象并以底层命名/目录服务可接受的格式存储对象。这种支持以 [state factories](https://docs.oracle.com/javase/tutorial/jndi/objects/index.html#STATEFAC) 的形式提供。
+ - 多个命名系统（联合）
+     JNDI操作允许应用程序提供跨多个命名系统的名称。在完成操作的过程中，一个服务提供者可能需要与另一个服务提供者交互，例如传递要在下一个命名系统中继续的操作。该软件包支持不同的提供商合作完成JNDI操作。
 
-  `DirContext`包含用于执行基于内容的目录搜索的方法。在最简单和最常见的使用形式中，应用程序指定一组属性，这些属性可能具有匹配的特定值，并将此属性集提交给 [`search()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#search-javax.naming.Name-javax.naming.directory.Attributes-) 方法。其他重载形式的 [`search()`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/DirContext.html#search-javax.naming.Name-javax.naming.directory.Attributes-) 支持更复杂的搜索过滤器。
+有关服务提供者机制的详细信息，请参阅 [JNDI Tutorial](https://docs.oracle.com/javase/jndi/tutorial/provider/index.html) 。
 
-**LDAP 包**
-
- [`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html) 包中包含用于使用特定于 [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 的功能的类和接口，这些功能尚未包含在更通用的 [`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html) 包中。事实上，大多数使用LDAP的JNDI应用程序都会找到足够的`javax.naming.directory`包，根本不需要使用`javax.naming.ldap`包。此程序包主要用于需要使用“扩展”操作，控件，或未经请求的通知的应用程序。
-
-- ”扩展“操作
-
-  除了指定定义良好的操作（如搜索和修改）之外， [LDAP v3 (RFC 2251)](http://www.ietf.org/rfc/rfc2251.txt) 还指定了在LDAP客户端和服务器之间传输尚未定义的操作的方法。这些操作称为“扩展”操作。“扩展”操作可以由诸如因特网工程任务组（IETF）之类的标准组织或由供应商定义。
-
-- 控件
-
-   [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 允许任何请求或响应通过尚未定义的修饰符（称为控件）进行扩充。与请求一起发送的控件是请求控件，而与响应一起发送的控件是响应控件。控件可以由诸如IETF的标准组织或由供应商定义。请求控件和响应控件不一定是成对的，也就是说，不需要为发送的每个请求控件都有响应控件，反之亦然。
-
-- 未经请求的通知
-
-  除了客户端和服务器之间正常的请求/响应交互方式之外， [LDAP v3](http://www.ietf.org/rfc/rfc2251.txt) 还指定了未经请求的通知 - 从服务器异步发送到客户端而不是响应任何客户端请求的消息。
-
-**LDAP 上下文**
-
-[`LdapContext`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/LdapContext.html) 接口表示用于执行“扩展”操作，发送请求控件和接收响应控件的上下文。JNDI教程的 [Controls and Extensions](https://docs.oracle.com/javase/jndi/tutorial/ldap/ext/index.html) 课程中介绍了如何使用这些功能的示例。
