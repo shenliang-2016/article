@@ -119,3 +119,15 @@ Spring TestContext 框架提供了 Spring `ApplicationContext` 实例和 `WebApp
 
 请参阅 [上下文管理](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) 和 [上下文缓存](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching) 。
 
+#### 3.2.2. 测试夹具的依赖注入
+
+当 TestContext 框架加载你的应用上下文时，它可以通过依赖注入有选择地配置你的测试类实例。这提供了一种方便的机制来使用来自你的应用上下文的预配置的 beans 建立测试夹具。一个显著的好处就是你可以在各种测试场景下重用应用上下文(比如，为了配置 Spring 管理的对象图，事务性代理，`DataSource` 实例，等等)，因此避免了为每个测试用例重复执行复杂的测试夹具初始化工作。
+
+比如，考虑一个场景，我们拥有一个类`HibernateTitleRepository`为`Title`域实体实现了数据访问逻辑。我们想要编写继承测试来覆盖以下区域：
+
+- Spring 配置：基本地，与`HibernateTitleRepository` bean 有关的配置是否存在并且正确？
+- Hibernate 映射文件配置：一切都正确映射并且是否正确的设置为延迟加载？
+- `HibernateTitleRepository`的逻辑：此类型配置好的实例是否如期望的那样执行操作？
+
+参考 [TestContext framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-fixture-di) 的测试夹具的依赖注入。
+
