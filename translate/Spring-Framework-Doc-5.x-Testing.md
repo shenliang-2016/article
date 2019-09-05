@@ -107,16 +107,15 @@ Spring 的集成测试支持有以下几个主要目标：
 - 为集成测试提供合适的 [transaction management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testing-tx) 。
 - 提供 [Spring-specific base classes](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testing-support-classes) 辅助开发者编写集成测试。
 
-接下来几个小姐介绍每个目标并提供有关实现和配置细节的链接。
+接下来几个小节介绍每个目标并提供有关实现和配置细节的链接。
 
 #### 3.2.1. 上下文管理和缓存
 
-Spring TestContext 框架提供了 Spring `ApplicationContext` 实例和 `WebApp
+Spring TestContext 框架提供了 Spring `ApplicationContext` 实例和 `WebApplicationContext` 实例的连贯加载的同时还缓存了那些上下文。支持被加载的上下文的缓存是重要的，因为启动时间可能会成为问题－不是因为 Spring 本身的开销，而是哪些由 Spring 容器实例化的对象的实例化过程需要消耗时间。比如，包含 50 个到 100 个 Hibernate 映射文件的项目可能需要 10 秒到 20 秒时间加载这些映射文件，在每个测试夹具中的每个测试运行之前都执行这个过程将导致测试变慢，从而降低开发效率。
 
-The Spring TestContext Framework provides consistent loading of Spring `ApplicationContext` instances and `WebApplicationContext` instances as well as caching of those contexts. Support for the caching of loaded contexts is important, because startup time can become an issue — not because of the overhead of Spring itself, but because the objects instantiated by the Spring container take time to instantiate. For example, a project with 50 to 100 Hibernate mapping files might take 10 to 20 seconds to load the mapping files, and incurring that cost before running every test in every test fixture leads to slower overall test runs that reduce developer productivity.
+测试类通常声明 XML 或 Groovy 配置元数据的资源位置数组－通常在类路径中－或用于配置应用程序的带注解类的数组。这些位置或类与`web.xml`或生产部署的其他配置文件中指定的位置或类相同或类似。
 
-Test classes typically declare either an array of resource locations for XML or Groovy configuration metadata — often in the classpath — or an array of annotated classes that is used to configure the application. These locations or classes are the same as or similar to those specified in `web.xml` or other configuration files for production deployments.
+默认情况下，一旦加载，配置好的`ApplicationContext`将被每个测试重用。因此，每个测试套件仅产生一次设置成本，并且后续测试执行要快得多。在此上下文中，术语“测试套件”表示所有测试都在同一 JVM 中运行－例如，所有测试都是针对给定项目或模块从 Ant，Maven 或 Gradle 构建的。在不太可能的情况下，测试会破坏应用程序上下文并需要重新加载（例如，通过修改 bean 定义或应用程序对象的状态），可以将 TestContext 框架配置为在执行下一个测试之前重新加载配置并重建应用程序上下文。
 
-By default, once loaded, the configured `ApplicationContext` is reused for each test. Thus, the setup cost is incurred only once per test suite, and subsequent test execution is much faster. In this context, the term “test suite” means all tests run in the same JVM — for example, all tests run from an Ant, Maven, or Gradle build for a given project or module. In the unlikely case that a test corrupts the application context and requires reloading (for example, by modifying a bean definition or the state of an application object) the TestContext framework can be configured to reload the configuration and rebuild the application context before executing the next test.
+请参阅 [上下文管理](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) 和 [上下文缓存](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching) 。
 
-See [Context Management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) and [Context Caching](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching) with the TestContext framework.
