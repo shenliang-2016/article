@@ -131,3 +131,68 @@ Spring TestContext 框架提供了 Spring `ApplicationContext` 实例和 `WebApp
 
 参考 [TestContext framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-fixture-di) 的测试夹具的依赖注入。
 
+#### 3.2.3. 事务管理
+
+测试中的一个常见问题就是访问真实数据库将会影响持久化存储的状态。即使你使用的是开发库，状态变化也可能会影响后续的测试。同时，许多操作 - 比如插入或者修改持久化数据 - 不能在事务范围之外执行（或者验证）。
+
+TestContext 框架解决了这个问题。默认的，该框架为每个测试用例创建和回滚事务。你可以在编写代码时假定事务是始终存在的。如果你在测试中调用事务性的代理对象，它们的行为就是正确的，符合它们配置的事务性语义。另外，如果一个测试方法在为该测试用例管理的事务中删除选中表中的内容，事务将会默认回滚，而数据库将会恢复到该测试执行之前的状态。事务支持通过使用定义在测试上下文中的 `PlatformTransactionManager` bean 提供。
+
+如果你希望事务被提交（不常见，但是有时候你希望特定的测试填充或者修改数据库），你可以通过使用 [`@Commit`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 注解告诉 TestContext 框架提交事务而不是回滚。
+
+参考使用 [TestContext framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-tx) 的事务管理。
+
+#### 3.2.4. 集成测试的支持类
+
+Spring TestContext 框架提供了若干 `abstract` 支持类来简化集成测试的编写。这些基础测试类提供了良好定义的测试框架中的回调以及方便使用的实例变量和方法，允许你访问：
+
+- `ApplicationContext` ，用来执行显式 bean 检索或者作为整体测试上下文的状态。
+- `JdbcTemplate` ，用来执行 SQL 语句以查询数据库。你可以是使用这些查询来确认数据库相关代码执行前后数据库的状态。Spring 保证这些查询运行在应用代码相同的事务范围内。当和 ORM 工具结合使用时，请确保避免 [false positives](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-tx-false-positives) 。
+
+另外，你可能会想要使用特定于你的项目的实例变量和方法创建自定义的、应用范围的超类。
+
+参考 [TestContext framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes) 的支持类。
+
+### 3.3. JDBC 测试支持
+
+`org.springframework.test.jdbc` 包中包含 `JdbcTestUtils` ，它是一个 JDBC 相关的工具方法集合，目标是简化标准的数据库测试场景。特别地，`JdbcTestutils` 提供了下面的静态工具方法：
+
+- `countRowsInTable(..)`：给定表中数据行计数。
+- `countRowsInTableWhere(..)`：使用给定的 `WHERE` 子句对给定表中的数据行计数。
+- `deleteFromTables(..)`：将特定表中所有行删除。
+- `deleteFromTableWhere(..)`：使用给定的 `WHERE` 子句删除表中的行。
+- `dropTables(..)`：删除特定的表。
+
+> [`AbstractTransactionalJUnit4SpringContextTests`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-junit4) 和 [`AbstractTransactionalTestNGSpringContextTests`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-testng) 提供了方便的方法委托给前面提到过的 `JdbcTestUtils` 中的方法。`spring-jdbc` 模块提供了配置和启动一个内置数据库的支持，你可以将其用于需要数据库交互的集成测试。更多细节，参考 [Embedded Database Support](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-support) 和 [Testing Data Access Logic with an Embedded Database](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-dao-testing) 。
+
+### 3.4. 注解
+
+本节涵盖你可以在 Spring 应用测试中使用的注解。包括以下主题：
+
+- [Spring 测试注解](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-spring)
+- [标准注解支持](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-standard)
+- [Spring JUnit 4 测试注解](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit4)
+- [Spring JUnit Jupiter 测试注解](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter)
+- [测试的元注解支持](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-meta)
+
+#### 3.4.1. Spring 测试注解
+
+Spring 框架提供了下面这些特定于 Spring 的注解，你可以将它们结合 TestContext 框架用在你的单元测试和集成测试中。参考相关的文档获取更多信息，包含默认属性值，属性别名，等等细节。
+
+Spring 测试注解如下：
+
+- [`@BootstrapWith`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-bootstrapwith)
+- [`@ContextConfiguration`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-contextconfiguration)
+- [`@WebAppConfiguration`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-webappconfiguration)
+- [`@ContextHierarchy`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-contexthierarchy)
+- [`@ActiveProfiles`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-activeprofiles)
+- [`@TestPropertySource`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-testpropertysource)
+- [`@DirtiesContext`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-dirtiescontext)
+- [`@TestExecutionListeners`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-testexecutionlisteners)
+- [`@Commit`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-commit)
+- [`@Rollback`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-rollback)
+- [`@BeforeTransaction`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-beforetransaction)
+- [`@AfterTransaction`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-aftertransaction)
+- [`@Sql`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-sql)
+- [`@SqlConfig`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-sqlconfig)
+- [`@SqlGroup`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-sqlgroup)
+
