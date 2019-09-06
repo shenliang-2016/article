@@ -196,3 +196,131 @@ Spring 测试注解如下：
 - [`@SqlConfig`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-sqlconfig)
 - [`@SqlGroup`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-sqlgroup)
 
+##### `@BootstrapWith`
+
+`@BootstrapWith`  是一个类级别的注解，你可以将其用于 Spring TestContext 框架的启动配置。特别地，你可以使用 `BootstrapWith` 来指定一个自定义的 `TestContextBootstrapper` 。参考  [bootstrapping the TestContext framework](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-bootstrapping) 获取更多信息。
+
+##### `@ContextConfiguration`
+
+`@ContextConfiguration` 定义类级别的元数据，该元数据被用于确定如何为集成测试加载和配置一个 `ApplicationContext` 。特别是，`@ContextConfiguration` 声明应用上下文资源 `locations` 或者注解修饰的 `classes` 用于加载上下文。
+
+资源位置典型的就是位于系统类路径中的 XML 配置文件或者 Groovy 脚本，等价的注解修饰的类典型的是 `@Configuration` 类。不过，资源位置也可以表示文件系统中的文件和脚本，注解修饰的类可以是组件类，等等。
+
+下面的例子展示了 `@ContextConfiguration` 注解表示一个 XML 文件：
+
+```java
+@ContextConfiguration("/test-config.xml") 
+public class XmlApplicationContextTests {
+    // class body...
+}
+```
+
+下面的例子展示了 `@ContextConfiguration` 注解表示一个类：
+
+```java
+@ContextConfiguration(classes = TestConfig.class) 
+public class ConfigClassApplicationContextTests {
+    // class body...
+}
+```
+
+作为声明资源位置或注解修饰的类的替代或补充，您可以使用`@ContextConfiguration`来声明`ApplicationContextInitializer`类。以下示例显示了这种情况：
+
+```java
+@ContextConfiguration(initializers = CustomContextIntializer.class) 
+public class ContextInitializerTests {
+    // class body...
+}
+```
+
+您也可以选择使用`@ContextConfiguration`来声明`ContextLoader`策略。但请注意，您通常不需要显式配置加载程序，因为默认加载程序支持初始化程序以及资源位置或注解修饰的类。
+
+以下示例使用位置和加载器：
+
+```java
+@ContextConfiguration(locations = "/test-context.xml", loader = CustomContextLoader.class) 
+public class CustomLoaderXmlApplicationContextTests {
+    // class body...
+}
+```
+
+> `@ContextConfiguration` 提供了对继承资源位置、配置类、以及由超类声明的上下文初始化器的支持。
+
+See [Context Management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) and the `@ContextConfiguration` javadocs for further details.
+
+##### `@WebAppConfiguration`
+
+`@WebAppConfiguration` 是一个类级别注解，你可以用于声明为集成测试加载的 `ApplicationContext` 应该是 `WebApplicationContext` 。仅在测试类上存在`@WebAppConfiguration`可确保为测试加载`WebApplicationContext`，使用默认值`“file:src/main/webapp”`作为 Web 应用程序根目录的路径（即资源基本路径）。资源基本路径被用在创建 `MockServletContext` 的场景中，该类作为测试 `WebApplicationContext` 中的 `ServletContext` 。
+
+下面的例子展示了如何使用 `@WebAppConfiguration` 注解：
+
+```java
+@ContextConfiguration
+@WebAppConfiguration 
+public class WebAppTests {
+    // class body...
+}
+```
+
+为了覆盖默认值，你可以使用隐含的 `value` 属性来指定一个不同的资源基路径。`classpath:` 和 `file:` 资源前缀都是支持的。如果没有提供任何资源前缀，该路径被假定为一个文件系统资源。下面的例子展示了如何指定一个类路径资源：
+
+```java
+@ContextConfiguration
+@WebAppConfiguration("classpath:test-web-resources") 
+public class WebAppTests {
+    // class body...
+}
+```
+
+注意，`@WebAppConfiguration` 必须被与 `@ContextConfiguration` 结合使用，或者在一个单独的测试类中使用，或者在一个测试类层级结构中。参考 [`@WebAppConfiguration`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/context/web/WebAppConfiguration.html) 文档获取更多细节。
+
+##### `@ContextHierarchy`
+
+`@ContextHierarchy` 是一个类级别的注解，用来为集成测试定义一个 `ApplicationContext` 实例的层级结构。`@ContextHierarchy` 应该被使用一个或者多个 `@ContextConfiguration` 实例的列表来声明，其中的每个实例都在上下文层级结构中定义了一个层级。下面的例子展示了在单个测试类中如何使用 `@ContextHierarchy` （`@ContextHierarchy` 也可以被用在一个测试类层级结构中）：
+
+```java
+@ContextHierarchy({
+    @ContextConfiguration("/parent-config.xml"),
+    @ContextConfiguration("/child-config.xml")
+})
+public class ContextHierarchyTests {
+    // class body...
+}
+```
+
+```java
+@WebAppConfiguration
+@ContextHierarchy({
+    @ContextConfiguration(classes = AppConfig.class),
+    @ContextConfiguration(classes = WebConfig.class)
+})
+public class WebIntegrationTests {
+    // class body...
+}
+```
+
+如果你需要在测试类层级中合并或者覆盖上下文层级结构的给定层级的配置，你必须显式指出该层级，通过提供与类层级结构中相应层级中的 `@ContextConfiguration` 中的 `name` 属性相同的值。参考 [Context Hierarchies](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-ctx-hierarchies) 和 [`@ContextHierarchy`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/context/ContextHierarchy.html) 文档获取更多细节。
+
+##### `@ActiveProfiles`
+
+`@ActiveProfiles` 是一个类级别的注解，可用于声明在为集成测试加载 `ApplicationContext` 时应该激活哪个 bean 定义配置文件。
+
+下面的例子表示 `dev` 配置应该被激活：
+
+```java
+@ContextConfiguration
+@ActiveProfiles("dev") 
+public class DeveloperTests {
+    // class body...
+}
+```
+
+下面的例子表示 `dev` 和 `integration` 配置文件都应该被激活：
+
+```java
+@ContextConfiguration
+@ActiveProfiles({"dev", "integration"}) 
+public class DeveloperIntegrationTests {
+    // class body...
+}
+```
