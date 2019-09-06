@@ -324,3 +324,119 @@ public class DeveloperIntegrationTests {
     // class body...
 }
 ```
+> `@ActiveProfiles` 默认提供了对继承超类声明的激活的 bean 定义配置的支持。你也可以通过实现自定义的[`ActiveProfilesResolver`](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles-ActiveProfilesResolver) 并使用 `@ActiverProfiles` 的 `resolver` 属性注册它，来以编程方式解析激活的 bean 定义配置。
+
+参考 [Context Configuration with Environment Profiles](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles) 和 [`@ActiveProfiles`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/context/ActiveProfiles.html) 文档获取跟多示例和细节。
+
+##### `@TestPropertySource`
+
+`@TestPropertySource` 是一个类级别的注解，你可以用来配置需要添加到为集成测试加载的 `ApplicationContext` 的 `Environment` 中的 `PorpertySources` 集合中的属性文件以及行内属性的位置。
+
+测试属性源相对于那些加载自操作系统环境或者 Java 系统属性的属性，拥有更高优先级。也要比应用通过 `@PropertySource` 声明式或者编程式添加的属性源优先级更高。因此，测试属性源可以被用于有选择地覆盖定义在系统中和应用属性源中定义的属性。进一步地，行内属性的优先级高于从资源位置加载的属性。
+
+下面的例子展示了如何在类路径上声明一个属性文件：
+
+```java
+@ContextConfiguration
+@TestPropertySource("/test.properties") 
+public class MyIntegrationTests {
+    // class body...
+}
+```
+
+下面的例子展示了如何声明行内属性：
+
+```java
+@ContextConfiguration
+@TestPropertySource(properties = { "timezone = GMT", "port: 4242" }) 
+public class MyIntegrationTests {
+    // class body...
+}
+```
+
+##### `@DirtiesContext`
+
+`@DirtiesContext` 表示在执行测试期间底层 Spring `ApplicationContext`已被弄脏（即，测试以某种方式修改或损坏它 - 例如，通过更改单例 bean 的状态）并且应该关闭。当应用程序上下文被标记为脏时，它将从测试框架的缓存中删除并关闭。因此，对于需要具有相同配置元数据的上下文的任何后续测试，都会重建基础 Spring 容器。
+
+您可以将`@DirtiesContext`用作同一类或类层次结构中的类级别和方法级别注解。在这种情况下，`ApplicationContext`在任何此类带注解的方法之前或之后以及当前测试类之前或之后被标记为脏，具体取决于配置的`methodMode`和`classMode`。
+
+以下示例说明了各种配置方案的上下文何时会变脏：
+
+- 当前测试类之前，声明在类模式设置为  `BEFORE_CLASS` 的类上。
+
+  ```java
+  @DirtiesContext(classMode = BEFORE_CLASS) 
+  public class FreshContextTests {
+      // some tests that require a new Spring container
+  }
+  ```
+
+- 在当前测试类之后，当声明在类模式设置为 `AFTER_CLASS` 的类上（也就是默认类模式）。
+
+  ```java
+  @DirtiesContext 
+  public class ContextDirtyingTests {
+      // some tests that result in the Spring container being dirtied
+  }
+  ```
+
+- 当前测试类中的每个测试方法之前，当声明在类模式设置为 `BEFORE_EACH_TEST_METHOD` 的类上。
+
+  ```java
+  @DirtiesContext(classMode = BEFORE_EACH_TEST_METHOD) 
+  public class FreshContextTests {
+      // some tests that require a new Spring container
+  }
+  ```
+
+- 当前测试类中的每个测试方法之后，当声明在类模式设置为 `AFTER_EACH_TEST_METHOD` 的类上。
+
+  ```java
+  @DirtiesContext(classMode = AFTER_EACH_TEST_METHOD) 
+  public class ContextDirtyingTests {
+      // some tests that result in the Spring container being dirtied
+  }
+  ```
+
+- 当前测试之前，当声明在方法模式设置为 `BEFORE_METHOD` 的方法上。
+
+  ```java
+  @DirtiesContext(methodMode = BEFORE_METHOD) 
+  @Test
+  public void testProcessWhichRequiresFreshAppCtx() {
+      // some logic that requires a new Spring container
+  }
+  ```
+
+- 当前测试之后，当声明在方法模式设置为 `AFTER_METHOD` 的方法上（也就是默认方法模式）。
+
+  ```java
+  @DirtiesContext 
+  @Test
+  public void testProcessWhichDirtiesAppCtx() {
+      // some logic that results in the Spring container being dirtied
+  }
+  ```
+
+如果在测试中使用`@DirtiesContext`，其上下文配置为具有`@ContextHierarchy`的上下文层次结构的一部分，则可以使用`hierarchyMode`标志来控制如何清除上下文缓存。默认情况下，使用详尽的算法来清除上下文缓存，不仅包括当前级别，还包括共享当前测试公共祖先上下文的所有其他上下文层次结构。驻留在公共祖先上下文的子层次结构中的所有`ApplicationContext`实例将从上下文缓存中删除并关闭。如果穷举算法对于特定用例而言有点过犹不及，则可以指定更简单的当前级别算法，如以下示例所示。
+
+```java
+@ContextHierarchy({
+    @ContextConfiguration("/parent-config.xml"),
+    @ContextConfiguration("/child-config.xml")
+})
+public class BaseTests {
+    // class body...
+}
+
+public class ExtendedTests extends BaseTests {
+
+    @Test
+    @DirtiesContext(hierarchyMode = CURRENT_LEVEL) 
+    public void test() {
+        // some logic that results in the child context being dirtied
+    }
+}
+```
+
+For further details regarding the `EXHAUSTIVE` and `CURRENT_LEVEL` algorithms, see the [`DirtiesContext.HierarchyMode`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/annotation/DirtiesContext.HierarchyMode.html) javadoc.
