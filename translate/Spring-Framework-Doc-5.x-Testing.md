@@ -439,4 +439,119 @@ public class ExtendedTests extends BaseTests {
 }
 ```
 
-For further details regarding the `EXHAUSTIVE` and `CURRENT_LEVEL` algorithms, see the [`DirtiesContext.HierarchyMode`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/annotation/DirtiesContext.HierarchyMode.html) javadoc.
+有关 `EXHAUSTIVE` 和 `CURRENT_LEVEL` 算法的更多细节，参考 [`DirtiesContext.HierarchyMode`](https://docs.spring.io/spring-framework/docs/5.1.8.RELEASE/javadoc-api/org/springframework/test/annotation/DirtiesContext.HierarchyMode.html) 文档。
+
+##### `@TestExecutionListeners`
+
+`@TestExecutionListeners`定义了类级元数据，用于配置应该使用`TestContextManager`注册的`TestExecutionListener`实现。通常，`@TestExecutionListeners`与`@ContextConfiguration`一起使用。
+
+以下示例显示如何注册两个`TestExecutionListener`实现：
+
+```java
+@ContextConfiguration
+@TestExecutionListeners({CustomTestExecutionListener.class, AnotherTestExecutionListener.class}) 
+public class CustomTestExecutionListenerTests {
+    // class body...
+}
+```
+
+默认情况下，`@TestExecutionListeners` 支持继承的监听器。参考 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/TestExecutionListeners.html) 获取更多示例和详情。
+
+##### `@Commit`
+
+`@Commit`表示在测试方法完成后应该提交事务性测试方法的事务。您可以使用`@Commit`作为`@Rollback(false)`的直接替代，以更明确地传达代码的意图。类似于`@Rollback`，`@Commit`也可以声明为类级别或方法级别的注解。
+
+以下示例显示了如何使用`@Commit`注解：
+
+```java
+@Commit 
+@Test
+public void testProcessWithoutRollback() {
+    // ...
+}
+```
+
+##### `@Rollback`
+
+`@Rollback`表示在测试方法完成后是否应回滚事务性测试方法的事务。如果为`true`，则回滚事务。否则，提交事务（另见[`@Commit`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-commit)）。即使没有显式声明`@Rollback`，Spring TestContext Framework中的集成测试回滚也默认为`true`。
+
+当声明为类级注解时，`@Rollback`定义测试类层次结构中所有测试方法的默认回滚语义。当声明为方法级注解时，`@Rollback`定义了特定测试方法的回滚语义，可能会覆盖类级别`@Rollback`或`@Commit`语义。
+
+以下示例导致不回滚测试方法的结果（即，结果提交到数据库）：
+
+```java
+@Rollback(false) 
+@Test
+public void testProcessWithoutRollback() {
+    // ...
+}
+```
+
+##### `@BeforeTransaction`
+
+`@BeforeTransaction`表示在启动事务之前应该运行带注解的`void`方法，对于已经配置为使用 Spring 的`@Transactional`注解在事务中运行的测试方法。从Spring Framework 4.3开始，`@BeforeTransaction`方法不需要是`public`，可以在基于Java 8的接口默认方法中声明。
+
+以下示例显示了如何使用`@BeforeTransaction`注释：
+
+```java
+@BeforeTransaction 
+void beforeTransaction() {
+    // logic to be executed before a transaction is started
+}
+```
+
+##### `@AfterTransaction`
+
+`@AfterTransaction`表示在事务结束后应该运行带注解的`void`方法，对于已经配置为使用 Spring 的`@Transactional`注解在事务中运行的测试方法。从Spring Framework 4.3开始，`@AfterTransaction`方法不需要是`public`，可以在基于Java 8的接口默认方法中声明。
+
+```java
+@AfterTransaction 
+void afterTransaction() {
+    // logic to be executed after a transaction has ended
+}
+```
+
+##### `@Sql`
+
+`@Sql`用于注解测试类或测试方法，以配置在集成测试期间针对给定数据库运行的SQL脚本。以下示例显示了如何使用它：
+
+```java
+@Test
+@Sql({"/test-schema.sql", "/test-user-data.sql"}) 
+public void userTest {
+    // execute code that relies on the test schema and test data
+}
+```
+
+参考 [Executing SQL scripts declaratively with @Sql](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-executing-sql-declaratively) 获取更多细节。
+
+##### `@SqlConfig`
+
+`@SqlConfig`定义了用于确定如何解析和运行使用`@Sql`注解配置的SQL脚本的元数据。以下示例显示了如何使用它：
+
+```java
+@Test
+@Sql(
+    scripts = "/test-user-data.sql",
+    config = @SqlConfig(commentPrefix = "`", separator = "@@") 
+)
+public void userTest {
+    // execute code that relies on the test data
+}
+```
+
+##### `@SqlGroup`
+
+`@SqlGroup`是一个容器注解，它聚合了几个`@Sql`注解。您可以本地使用`@SqlGroup`来声明几个嵌套的`@Sql`注解，或者您可以将它与 Java 8 的可重复注解一起使用，其中`@Sql`可以在同一个类或方法上多次声明， 隐式生成此容器注解。以下示例显示如何声明SQL组：
+
+```java
+@Test
+@SqlGroup({ 
+    @Sql(scripts = "/test-schema.sql", config = @SqlConfig(commentPrefix = "`")),
+    @Sql("/test-user-data.sql")
+)}
+public void userTest {
+    // execute code that uses the test schema and test data
+}
+```
+
