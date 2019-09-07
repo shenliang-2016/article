@@ -555,3 +555,99 @@ public void userTest {
 }
 ```
 
+#### 3.4.2. 标准注解支持
+
+对于所有 Spring TestContext 框架的所有配置，下面的注解的标准语义被支持。注意，这些注解并不是特定于测试，还可以用在 Spring 框架中的任何其他地方。
+
+- `@Autowired`
+- `@Qualifier`
+- `@Resource` (javax.annotation) if JSR-250 is present
+- `@ManagedBean` (javax.annotation) if JSR-250 is present
+- `@Inject` (javax.inject) if JSR-330 is present
+- `@Named` (javax.inject) if JSR-330 is present
+- `@PersistenceContext` (javax.persistence) if JPA is present
+- `@PersistenceUnit` (javax.persistence) if JPA is present
+- `@Required`
+- `@Transactional`
+
+> JSR-250 生命周期注解
+>
+> 在 Spring TestContext 框架中，你可以使用 `@PostConstruct` 和 `@PreDestroy` 的标准语义到 `ApplicationContext` 中配置的任何应用组件之上。不过，这些生命周期注解在具体的测试类中的使用还是有些限制条件。
+>
+> 如果一个测试类中的方法由 `@PostConstruct` 注解修饰，该方法会在所有测试框架底层的前置方法（比如，使用 Junit Jupiter 的 `@BeforeEach` 注解修饰的方法）之前运行，对测试类中每个测试方法都是如此。另一方面，如果测试类中的一个方法由 `@PreDestroy` 注解修饰，该方法将永远不会运行。因此，在测试类中，我们建议您使用来自底层测试框架的测试生命周期回调，而不是 `@PostConstruct` 和 `@PreDestroy`。
+
+#### 3.4.3. Spring JUnit 4 Testing Annotations
+
+下面的注解只有当结合使用 [SpringRunner](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit4-runner), [Spring’s JUnit 4 rules](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit4-rules)，或者 [Spring’s JUnit 4 support classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-junit4) 时才会被支持：
+
+- [`@IfProfileValue`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit4-ifprofilevalue)
+- [`@ProfileValueSourceConfiguration`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit4-profilevaluesourceconfiguration)
+- [`@Timed`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit4-timed)
+- [`@Repeat`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit4-repeat)
+
+##### `@IfProfileValue`
+
+`@IfProfileValue` 表示该测试为某个特定 测试环境开启。如果配置的 `ProfileValueSource` 返回与注解给定的 `name ` 匹配的 `vaule` ，该测试开启。否则，该测试不可用，也就是说，被忽略。
+
+你可以将 `@IfProfileValue` 用在类级别，方法级别，或者同时用在两个级别。类级别使用的 `@IfProfileValue` 相对于该测试类中所有方法，以及该类的子类中所有方法，的方法级别的此注解，拥有更高优先级。特别地，一个测试被启用，如果它在类级别和方法级别同时都是被开启的。不存在此注解意味着测试是隐式开启的。此注解的语义近似于 Junit 4 的 `@Ignore` 注解，除了 `@Ignore` 注解始终都会关闭一个测试。
+
+下面的例子展示了此注解的使用：
+
+```java
+@IfProfileValue(name="java.vendor", value="Oracle Corporation") 
+@Test
+public void testProcessWhichRunsOnlyOnOracleJvm() {
+    // some logic that should run only on Java VMs from Oracle Corporation
+}
+```
+
+另外，你可以使用一个 `values` 列表(使用 `OR` 语义)配置 `@IfProfileValue` 来在 Junit 4 环境下获得类－TestNG 的对测试组的支持。考虑下面的例子：
+
+```java
+@IfProfileValue(name="test-groups", values={"unit-tests", "integration-tests"}) 
+@Test
+public void testProcessWhichRunsForUnitOrIntegrationTestGroups() {
+    // some logic that should run only for unit and integration test groups
+}
+```
+
+##### `@ProfileValueSourceConfiguration`
+
+`@ProfileValueSourceConfiguration` 是一个类级注解，它指定在检索通过 `@IfProfileValue` 注解配置的配置文件值时要使用的 `ProfileValueSource` 类型。如果没有为测试声明 `@ProfileValueSourceConfiguration`，则默认使用 `SystemProfileValueSource`。以下示例显示了如何使用`@ProfileValueSourceConfiguration`：
+
+```java
+@ProfileValueSourceConfiguration(CustomProfileValueSource.class) 
+public class CustomProfileValueSourceTests {
+    // class body...
+}
+```
+
+##### `@Timed`
+
+`@Timed`表示其注解的测试方法必须在指定的时间段内完成执行（以毫秒为单位）。如果测试执行时间超过指定的时间段，则测试失败。
+
+时间段包括运行测试方法本身，任何重复的测试（参见`@Repeat`），以及测试夹具的任何设置或拆除。以下示例显示了如何使用它：
+
+```java
+@Timed(millis = 1000) 
+public void testProcessWithOneSecondTimeout() {
+    // some logic that should not take longer than 1 second to execute
+}
+```
+
+Spring 的 `@Timed` 注解与 JUnit 4 的 `@Test(timeout=...)`支持有不同的语义。具体来说，取决于 JUnit 4 处理测试执行超时的方式（也就是说，通过在单独的 `Thread` 中执行测试方法），如果测试时间太长，则 `@Test(timeout=...)` 就会先发制人地让测试失败。另一方面，Spring 的 `@Timed` 没有先发制人地让测试失败，而是在失败之前等待测试完成。
+
+##### `@Repeat`
+
+`@Repeed`表示必须重复运行带注解的测试方法。在注解中指定测试方法的执行次数。
+
+要重复的执行范围包括执行测试方法本身以及测试夹具的任何设置或拆除。以下示例显示了如何使用 `@Repeat` 注解：
+
+```java
+@Repeat(10) 
+@Test
+public void testProcessRepeatedly() {
+    // ...
+}
+```
+
