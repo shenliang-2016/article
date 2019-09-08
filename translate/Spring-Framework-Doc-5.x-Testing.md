@@ -756,3 +756,134 @@ public @interface EnabledOnMac {}
 public @interface DisabledOnMac {}
 ```
 
+#### 3.4.5. 为测试提供的元注解支持
+
+您可以将大多数与测试相关的注解用作 [meta-annotations](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-meta-annotations ) 创建自定义组合注解并减少测试套件中的重复配置。
+
+您可以将以下各项作为元注解与 [TestContext框架](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-framework) 结合使用。
+
+- `@BootstrapWith`
+- `@ContextConfiguration`
+- `@ContextHierarchy`
+- `@ActiveProfiles`
+- `@TestPropertySource`
+- `@DirtiesContext`
+- `@WebAppConfiguration`
+- `@TestExecutionListeners`
+- `@Transactional`
+- `@BeforeTransaction`
+- `@AfterTransaction`
+- `@Commit`
+- `@Rollback`
+- `@Sql`
+- `@SqlConfig`
+- `@SqlGroup`
+- `@Repeat` *(only supported on JUnit 4)*
+- `@Timed` *(only supported on JUnit 4)*
+- `@IfProfileValue` *(only supported on JUnit 4)*
+- `@ProfileValueSourceConfiguration` *(only supported on JUnit 4)*
+- `@SpringJUnitConfig` *(only supported on JUnit Jupiter)*
+- `@SpringJUnitWebConfig` *(only supported on JUnit Jupiter)*
+- `@EnabledIf` *(only supported on JUnit Jupiter)*
+- `@DisabledIf` *(only supported on JUnit Jupiter)*
+
+考虑下面的例子：
+
+```java
+@RunWith(SpringRunner.class)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+public class OrderRepositoryTests { }
+
+@RunWith(SpringRunner.class)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+public class UserRepositoryTests { }
+```
+
+如果我们发现我们在基于 JUnit 4 的测试套件中重复了前面的配置，我们可以通过引入一个自定义组合注解来集中 Spring 的常用测试配置来减少重复，如下所示：
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+public @interface TransactionalDevTestConfig { }
+```
+
+然后我们可以使用自定义的`@TransactionalDevTestConfig`注解来简化基于JUnit 4的各个测试类的配置，如下所示：
+
+```java
+@RunWith(SpringRunner.class)
+@TransactionalDevTestConfig
+public class OrderRepositoryTests { }
+
+@RunWith(SpringRunner.class)
+@TransactionalDevTestConfig
+public class UserRepositoryTests { }
+```
+
+如果我们编写使用JUnit Jupiter的测试，我们可以进一步减少代码重复，因为JUnit 5中的注解也可以用作元注解。请考虑以下示例：
+
+```java
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+class OrderRepositoryTests { }
+
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+class UserRepositoryTests { }
+```
+
+如果我们发现我们在基于JUnit Jupiter的测试套件中重复上述配置，我们可以通过引入一个自定义组合注解来集中Spring和JUnit Jupiter的常用测试配置来减少重复，如下所示：
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration({"/app-config.xml", "/test-data-access-config.xml"})
+@ActiveProfiles("dev")
+@Transactional
+public @interface TransactionalDevTestConfig { }
+```
+
+然后我们可以使用我们的自定义`@TransactionalDevTestConfig`注解来简化各个基于JUnit Jupiter的测试类的配置，如下所示：
+
+```java
+@TransactionalDevTestConfig
+class OrderRepositoryTests { }
+
+@TransactionalDevTestConfig
+class UserRepositoryTests { }
+```
+
+由于JUnit Jupiter支持使用`@Test`，`@RepeatedTest`，`ParameterizedTest`和其他作为元注解，因此您还可以在测试方法级别创建自定义组合注解。例如，如果我们希望创建一个组合注解，它将来自JUnit Jupiter的`@Test`和`@Tag`注解与Spring中的`@Transactional`注解相结合，我们可以创建一个`@TransactionalIntegrationTest`注解，如下所示：
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Transactional
+@Tag("integration-test") // org.junit.jupiter.api.Tag
+@Test // org.junit.jupiter.api.Test
+public @interface TransactionalIntegrationTest { }
+```
+
+然后我们可以使用我们的自定义`@TransactionalIntegrationTest`注解来简化各个基于JUnit Jupiter的测试方法的配置，如下所示：
+
+```java
+@TransactionalIntegrationTest
+void saveOrder() { }
+
+@TransactionalIntegrationTest
+void deleteOrder() { }
+```
+
+参考 [Spring Annotation Programming Model](https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model) 页面获取更多细节。
+
