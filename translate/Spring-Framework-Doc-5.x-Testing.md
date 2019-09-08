@@ -651,3 +651,108 @@ public void testProcessRepeatedly() {
 }
 ```
 
+#### 3.4.4. Spring JUnit Jupiter 测试注解
+
+下面的注解只有当同时使用 [`SpringExtension`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit-jupiter-extension) 和 JUnit Jupiter (也就是说，也就是说，JUnit 5中的编程模型) 时才会被支持：
+
+- [`@SpringJUnitConfig`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter-springjunitconfig)
+- [`@SpringJUnitWebConfig`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter-springjunitwebconfig)
+- [`@EnabledIf`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter-enabledif)
+- [`@DisabledIf`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter-disabledif)
+
+##### `@SpringJUnitConfig`
+
+`@SpringJUnitConfig` 是一个组合注解，结合了来自 JUnit Jupiter 的 `@ExtendWith(SpringExtension.class)` 和来自 Spring TestContext 框架的 `@ContextConfiguration` 。它可以用在类级别作为 `@ContextConfiguration` 的插入式替代。关于配置选项，`@ContextConfiguration` 和 `@SpringJUnitConfig` 的唯一区别就是可以使用 `@SpringJUnitConfig` 中的 `value` 属性声明注解修饰的类。
+
+下面的例子展示了如何使用 `@SpringJUnitConfig` 注解来指定配置类：
+
+```java
+@SpringJUnitConfig(TestConfig.class) 
+class ConfigurationClassJUnitJupiterSpringTests {
+    // class body...
+}
+```
+
+下面的例子展示了如何 使用 `@SpringJUnitConfig` 注解指定配置文件位置：
+
+```java
+@SpringJUnitConfig(locations = "/test-config.xml") 
+class XmlJUnitJupiterSpringTests {
+    // class body...
+}
+```
+
+参考 [Context Management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) 和 [`@SpringJUnitConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/junit/jupiter/SpringJUnitConfig.html) 以及 `@ContextConfiguration` 文档获取更多细节。
+
+##### `@SpringJUnitWebConfig`
+
+`@SpeingJUnitWebConfig` 是一个组合注解，结合了来自 JUnit Jupiter 的 `@ExtendWith(SpringExtension.class)` 和来自 Spring TestContext 框架的 `@ContextConfiguration` 和 `@WebAppConfiguration` 。你可以在类级别使用它作为 `@ContextConfiguration` 和 `@WebAppConfiguration` 的替代品。关于配置选项，`@ContextConfiguration` 和 `@SpringJUnitWebConfig` 的唯一区别就是你可以使用 `@SpringJUnitWebConfig` 中的 `value` 属性声明被注解的类。另外，你只能通过使用 `@SpringJUnitWebConfig` 的 `resourcePath` 覆盖 `@WebAppConfiguration` 中的 `value` 属性。
+
+下面的例子展示了如何使用 `@SpringJUnitWebConfig` 注解指定配置类：
+
+```java
+@SpringJUnitWebConfig(TestConfig.class) 
+class ConfigurationClassJUnitJupiterSpringWebTests {
+    // class body...
+}
+```
+
+下面的例子展示了如何使用 `@SpringJUnitWebConfig` 注解指定配置文件的位置：
+
+```java
+@SpringJUnitWebConfig(locations = "/test-config.xml") 
+class XmlJUnitJupiterSpringWebTests {
+    // class body...
+}
+```
+
+参考 [Context Management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management) 和 [`@SpringJUnitWebConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/junit/jupiter/web/SpringJUnitWebConfig.html), [`@ContextConfiguration`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/ContextConfiguration.html), 以及 [`@WebAppConfiguration`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/web/WebAppConfiguration.html) 的文档获取更多细节。
+
+##### `@EnabledIf`
+
+`@EnabledIf` 用于表示该注解修饰的 JUnit Jupiter 测试类或测试方法已启用，如果提供的 `expression` 计算结果为`true`，则那些测试应该运行。具体来说，如果表达式求值为 `Boolean.TRUE` 或等于 `true` 的 `String`（忽略大小写），则启用测试。在类级别应用时，默认情况下也会自动启用该类中的所有测试方法。
+
+表达式可以是如下之一：
+
+- [Spring Expression Language](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions) (SpEL) 表达式。比如： `@EnabledIf("#{systemProperties['os.name'].toLowerCase().contains('mac')}")`
+- Spring [`Environment`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-environment) 中可用属性的占位符。比如： `@EnabledIf("${smoke.tests.enabled}")`
+- 文本字面量。比如： `@EnabledIf("true")`
+
+但请注意，不是属性占位符动态解析结果的文本文字的实用价值为零，因为`@EnabledIf("false")`等同于`@Disable`和`@EnabledIf("true")`在逻辑上毫无意义。
+
+您可以使用`@EnabledIf`作为元注解来创建自定义组合注解。例如，您可以创建自定义`@EnabledOnMac`注解，如下所示：
+
+```java
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@EnabledIf(
+    expression = "#{systemProperties['os.name'].toLowerCase().contains('mac')}",
+    reason = "Enabled on Mac OS"
+)
+public @interface EnabledOnMac {}
+```
+
+##### `@DisabledIf`
+
+`@DisabledIf` 用于表示该注解修饰的 JUnit Jupiter 测试类或测试方法被禁用，如果提供的`expression`计算结果为`true`，则不应该执行。具体来说，如果表达式求值为`Boolean.TRUE`或等于`true` 的`String` （忽略大小写），则禁用测试。在类级别应用时，该类中的所有测试方法也会自动禁用。
+
+表达式可以是以下任何一种：
+
+ -  [Spring Expression Language](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions)（SpEL）表达式。例如：`@DisabledIf("#{systemProperties['os.name'].toLowerCase().contains('mac')}")`
+ -  Spring [`Environment`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-environment) 中可用属性的占位符。例如：`@DisabledIf("${smoke.tests.disabled}")`
+ - 文字文字。例如：`@DisabledIf("true")`
+
+但请注意，不是属性占位符的动态解析结果的文本文字没有实用价值，因为`@DisabledIf("true")`相当于`@Disable`和`@DisabledIf("false")` 在逻辑上毫无意义。
+
+您可以使用`@DisabledIf`作为元注解来创建自定义组合注解。例如，您可以创建自定义的`@DisabledOnMac`注解，如下所示：
+
+```java
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@DisabledIf(
+    expression = "#{systemProperties['os.name'].toLowerCase().contains('mac')}",
+    reason = "Disabled on Mac OS"
+)
+public @interface DisabledOnMac {}
+```
+
