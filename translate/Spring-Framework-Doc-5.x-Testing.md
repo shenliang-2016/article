@@ -740,7 +740,7 @@ public @interface EnabledOnMac {}
 
  -  [Spring Expression Language](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions)（SpEL）表达式。例如：`@DisabledIf("#{systemProperties['os.name'].toLowerCase().contains('mac')}")`
  -  Spring [`Environment`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-environment) 中可用属性的占位符。例如：`@DisabledIf("${smoke.tests.disabled}")`
- - 文字文字。例如：`@DisabledIf("true")`
+ -  文字文字。例如：`@DisabledIf("true")`
 
 但请注意，不是属性占位符的动态解析结果的文本文字没有实用价值，因为`@DisabledIf("true")`相当于`@Disable`和`@DisabledIf("false")` 在逻辑上毫无意义。
 
@@ -886,4 +886,12 @@ void deleteOrder() { }
 ```
 
 参考 [Spring Annotation Programming Model](https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model) 页面获取更多细节。
+
+### 3.5 Spring TestContext 框架
+
+Spring TestContext Framework（位于 `org.springframework.test.context` 包中）提供了通用的，注解驱动的单元测试和集成测试支持，它与使用中的测试框架无关。TestContext 框架也非常重视约定优于配置，合理的默认值可以通过基于注解的配置覆盖。
+
+除了通用测试基础设施之外，TestContext 框架还为 JUnit 4，JUnit Jupiter（AKA JUnit 5）和 TestNG 提供了显式支持。对于 JUnit 4 和 TestNG，Spring 提供了 `abstract` 支持类。此外，Spring 为 JUnit 4 提供了一个自定义 JUnit `Runner`和自定义 JUnit `Rules`，并为 JUnit Jupiter 提供了一个自定义 `Extension`，可以编写所谓的 POJO 测试类。POJO测试类不需要扩展特定的类层次结构，例如 `abstract` 支持类。
+
+以下部分概述了 TestContext 框架的内部结构。如果您只对使用框架感兴趣并且不想使用自己的自定义监听器或自定义加载器扩展它，请随意直接进入配置 ([context management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management), [dependency injection](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-fixture-di), [transaction management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-tx)), [support classes](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes), 和 [annotation support](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 部分。
 
