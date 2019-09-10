@@ -895,3 +895,32 @@ Spring TestContext Framework（位于 `org.springframework.test.context` 包中�
 
 以下部分概述了 TestContext 框架的内部结构。如果您只对使用框架感兴趣并且不想使用自己的自定义监听器或自定义加载器扩展它，请随意直接进入配置 ([context management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management), [dependency injection](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-fixture-di), [transaction management](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-tx)), [support classes](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes), 和 [annotation support](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 部分。
 
+#### 3.5.1. 关键抽象
+
+框架的核心包括 `TestContextManager` 类和 `TestContext`，`TestExecutionListener` 和 `SmartContextLoader` 接口。为每个测试类创建一个 `TestContextManager`（例如，用于在 JUnit Jupiter 中的单个测试类中执行所有测试方法）。反过来，`TestContextManager` 管理一个保存当前测试上下文的 `TestContext` 。随着测试的进行，`TestContextManager` 也会更新 `TestContext` 的状态，并委托给 `TestExecutionListener` 实现，它通过提供依赖注入，管理事务等来检测实际的测试执行。 `SmartContextLoader` 负责为给定的测试类加载 `ApplicationContext` 。参见 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/package-summary.html) 和 Spring 测试套件以获取更多信息和各种实现的示例。
+
+##### `TestContext`
+
+`TestContext` 封装了执行测试的上下文（与使用中的实际测试框架无关），并为其负责的测试实例提供上下文管理和缓存支持。如果请求，`TestContext` 也委托给一个 `SmartContextLoader` 来加载 `ApplicationContext` 。
+
+##### `TestContextManager`
+
+`TestContextManager` 是 Spring TestContext Framework 的主要入口点，负责管理单个 `TestContext` 并在明确定义的测试执行点向每个注册的 `TestExecutionListener` 发送信号事件：
+
+ - 在特定测试框架的任何“before class”或“before all”方法之前。
+ - 测试实例后处理。
+ - 在特定测试框架的任何“before”或“before each”方法之前。
+ - 在执行测试方法之前，但在测试设置之后。
+ - 执行测试方法后立即但在测试拆除之前。
+ - 在特定测试框架的任何“after”或“after each”方法之后。
+ - 在特定测试框架的任何“after class”或“after all”方法之后。
+
+##### `TestExecutionListener`
+
+`TestExecutionListener` 定义了API，用于响应由注册监听器的 `TestContextManager` 发布的测试执行事件。请参阅 [`TestExecutionListener`配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tel-config) 。
+
+##### `Context Loaders`
+
+`ContextLoader` 是一个策略接口，用于为 Spring TestContext Framework 管理的集成测试加载 `ApplicationContext` 。您应该实现 `SmartContextLoader` 而不是此接口，以提供对带注解的类，活动 Bean 定义配置文件，测试属性源，上下文层次结构和 `WebApplicationContext` 的支持。
+
+`SmartContextLoader` 是Spring 3.1 中引入的 `ContextLoader` 接口的扩展，取代了最初的最小 `ContextLoader` SPI。具体来说，`SmartContextLoader` 可以选择处理资源位置，带注解的类或上下文初始化器。此外，`SmartContextLoader` 可以在它加载的上下文中设置活动 bean 定义配置文件和测试属性源。
