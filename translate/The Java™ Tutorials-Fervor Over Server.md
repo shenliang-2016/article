@@ -7873,3 +7873,57 @@ JNDI定义了在执行命名和目录操作过程中可以抛出的异常的类�
 
 有关服务提供者机制的详细信息，请参阅 [JNDI Tutorial](https://docs.oracle.com/javase/jndi/tutorial/provider/index.html) 。
 
+## 软件设置
+
+**需要的软件**
+
+下面是你需要的软件/系统的列表：
+
+- [Java 平台软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#JDK)
+- [服务提供者软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#PROVIDER)
+- [命名和目录服务器软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#SERVER)
+
+------
+
+**Java 平台软件**
+
+JNDI 包含在 Java SE Platform 中。
+
+要运行 applet，您可以使用任何兼容 Java 的 Web 浏览器，例如 Firefox 或 Internet Explorer v5 或更高版本。为确保您的 applet 充分利用 Java 平台软件的最新功能，您可以在 Web 浏览器中使用 Java Plug-in。
+
+**服务提供者软件**
+
+JNDI API 是用于访问任何命名或目录服务的通用 API。通过在 JNDI下 插入服务提供程序，可以实现对命名或目录服务的实际访问。有关 JNDI 体系结构和服务提供者角色的概述，请参阅 [JNDI概述](https://docs.oracle.com/javase/tutorial/jndi/overview/index.html) 课程。
+
+*服务提供者*是将 JNDI API 映射到命名或目录服务器的实际调用的软件。通常，服务提供者的角色与命名/目录服务器的角色不同。在客户端/服务器软件的术语中，JNDI 和服务提供者是*client*（称为*JNDI客户端*），命名/目录服务器是*server*。
+
+客户端和服务器可以以多种方式进行交互。在一种常见的方式中，它们使用网络协议，以便客户端和服务器可以在网络环境中自主存在。只要客户端符合指定的协议，服务器通常支持许多不同的客户端，而不仅仅是 JNDI 客户端。 JNDI 没有规定 JNDI 客户端和服务器之间的任何特定交互方式。例如，极端情况下，客户端和服务器可以是同一个实体。
+
+您需要获取将要使用的服务提供者的类。例如，如果您计划使用 JNDI 访问 LDAP 目录服务器，则需要 LDAP 服务提供程序的软件。
+
+JDK 附带以下服务提供者：
+
+- 轻量级目录协议（LDAP）
+- CORBA 通用对象服务命名（COS 命名）
+- RMI 注册
+- 域名服务（DNS）
+
+如果您对其他服务提供者感兴趣，请查看 [JNDI页面](http://www.oracle.com/technetwork/java/jndi/index.html) 获取下载信息。
+
+本教程仅使用LDAP服务提供程序。 使用LDAP服务提供程序时，您需要设置自己的服务器或访问现有服务器，如下所述。
+
+**命名和目录服务器软件**
+
+获得服务提供商软件后，您需要设置或访问相应的命名/目录服务器。设置命名/目录服务器通常是网络系统管理员的工作。不同的供应商的命名/目录服务器具有不同的安装过程。有些需要特殊的机器权限才能安装服务器。您应该参考命名/目录服务器软件的安装说明。
+
+对于本教程中的目录示例，您需要访问 LDAP 服务器。如果您想快速浏览一下 LDAP 检查的内容 [这里](http://en.wikipedia.org/wiki/LDAP) 。您可以使用您选择的任何 LDAP 兼容服务器。在许多平台（包括 Windows）上运行的 Oracle Directory Server 可在以下位置获取评估版本：[Oracle Directory Server](http://www.oracle.com/technetwork/testcontent/index-085178.html) 。
+
+你也可以从下面地址下载免费的 LDAP 服务器：
+
+- [OpenDS](http://opends.java.net/)
+- [OpenLDAP](http://www.openldap.org/)
+- [389 Directory Server](http://directory.fedoraproject.org/)
+- [Apache Directory Server](http://directory.apache.org/)
+
+一个可公开访问的服务器地址：[http://www.openldap.org/lists/#openldap-software](http://www.openldap.org/lists/#openldap-software) 。
+
