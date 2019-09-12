@@ -924,3 +924,32 @@ Spring TestContext Framework（位于 `org.springframework.test.context` 包中�
 `ContextLoader` 是一个策略接口，用于为 Spring TestContext Framework 管理的集成测试加载 `ApplicationContext` 。您应该实现 `SmartContextLoader` 而不是此接口，以提供对带注解的类，活动 Bean 定义配置文件，测试属性源，上下文层次结构和 `WebApplicationContext` 的支持。
 
 `SmartContextLoader` 是Spring 3.1 中引入的 `ContextLoader` 接口的扩展，取代了最初的最小 `ContextLoader` SPI。具体来说，`SmartContextLoader` 可以选择处理资源位置，带注解的类或上下文初始化器。此外，`SmartContextLoader` 可以在它加载的上下文中设置活动 bean 定义配置文件和测试属性源。
+
+Spring 提供以下实现：
+
+* `DelegatingSmartContextLoader`：两个默认加载器之一，它内部委托给`AnnotationConfigContextLoader`，`GenericXmlContextLoader` 或 `GenericGroovyXmlContextLoader`，具体取决于为测试类声明的配置或默认位置或默认配置类的存在。仅当 Groovy 位于类路径上时才启用 Groovy 支持。
+
+* `WebDelegatingSmartContextLoader`：两个默认加载器之一，它内部委托给`AnnotationConfigWebContextLoader`，`GenericXmlWebContextLoader` 或 `GenericGroovyXmlWebContextLoader`，具体取决于为测试类声明的配置或默认位置或默认配置类的存在。仅当测试类中存在`@WebAppConfiguration`时，才使用 Web `ContextLoader`。仅当 Groovy 位于类路径上时才启用 Groovy 支持。
+
+* `AnnotationConfigContextLoader`：从带注解的类中加载标准`ApplicationContext`。
+
+* `AnnotationConfigWebContextLoader`：从带注解的类中加载`WebApplicationContext`。
+
+* `GenericGroovyXmlContextLoader`：从 Groovy 脚本或 XML 配置文件的资源位置加载标准 `ApplicationContext`。
+
+* `GenericGroovyXmlWebContextLoader`：从 Groovy 脚本或 XML 配置文件的资源位置加载 `WebApplicationContext`。
+
+* `GenericXmlContextLoader`：从 XML 资源位置加载标准 `ApplicationContext`。
+
+* `GenericXmlWebContextLoader`：从 XML 资源位置加载 `WebApplicationContext`。
+
+* `GenericPropertiesContextLoader`：从 Java 属性文件加载标准 `ApplicationContext`。
+
+#### 3.5.2. 引导 TestContext 框架
+
+Spring TestContext Framework 内部的默认配置足以满足所有常见场景。但是，有时开发团队或第三方框架想要更改默认的 `ContextLoader`，实现自定义 `TestContext` 或 `ContextCache`，扩充 `ContextCustomizerFactory` 和 `TestExecutionListener` 实现的默认集，等等。对于 TestContext 框架如何操作的这种低级控制，Spring 提供了一个自举策略。
+
+`TestContextBootstrapper` 定义了用于引导 TestContext 框架的 SPI。 `TestContextBootstrapper`使用 `TestContextBootstrapper` 来加载当前测试的 `TestExecutionListener` 实现并构建它管理的 `TestContext`。您可以使用 `@BootstrapWith` 直接或作为元注解为测试类（或测试类层次结构）配置自定义引导策略。如果没有使用 `@BootstrapWith` 显式配置引导程序，则使用 `DefaultTestContextBootstrapper` 或 `WebTestContextBootstrapper`，具体取决于 `@WebAppConfiguration` 的存在。
+
+由于 `TestContextBootstrapper` SPI 将来可能会发生变化（以适应新的要求），我们强烈建议实现者不要直接实现这个接口，而是扩展 `AbstractTestContextBootstrapper` 或其中一个具体的子类。
+
