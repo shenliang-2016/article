@@ -953,3 +953,64 @@ Spring TestContext Framework 内部的默认配置足以满足所有常见场景
 
 由于 `TestContextBootstrapper` SPI 将来可能会发生变化（以适应新的要求），我们强烈建议实现者不要直接实现这个接口，而是扩展 `AbstractTestContextBootstrapper` 或其中一个具体的子类。
 
+#### 3.5.3. `TestExecutionListener` 配置
+
+Spring 提供了严格按照下列顺序默认注册的 `TestExecutionListener` 实现：
+
+- `ServletTestExecutionListener`：为`WebApplicationContext`配置 Servlet API 模拟。
+- `DirtiesContextBeforeModesTestExecutionListener`：为 “before” 模式处理 `@DirtiesContext` 注解。
+- `DependencyInjectionTestExecutionListener`：为测试实例提供依赖注入。
+- `DirtiesContextTestExecutionListener`：为 “after” 模式处理 `@DirtiesContext` 注解。
+- `TransactionalTestExecutionListener`：提供事务性测试执行以及默认回滚语义。
+- `SqlScriptsTestExecutionListener`：执行使用 `@Sql` 注解配置的 SQL 脚本。
+
+##### 注册自定义 `TestExecutionListener` 实现
+
+你可以使用 `@TestExecutionListeners` 注解为测试类或者它的子类注册自定义 `TestExecutionListener` 实现。参考 [annotation support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 以及 [`@TestExecutionListeners`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/TestExecutionListeners.html) 文档获取更多信息。
+
+##### 默认 `TestExecutionListener` 实现的自动发现
+
+使用 `@TestExecutionListeners` 注册自定义 `TestExecutionListener` 实现适用于在有限测试场景中使用的自定义侦听器。但是，如果需要在测试套件中使用自定义侦听器，则会变得很麻烦。从 Spring Framework 4.1 开始，通过支持通过 `SpringFactoriesLoader` 机制自动发现默认的 `TestExecutionListener` 实现来解决这个问题。
+
+具体来说，`spring-test` 模块在其 `META-INF/spring.factories` 属性文件中的 `org.springframework.test.context.TestExecutionListener` 键下声明所有核心默认的`TestExecutionListener`实现。第三方框架和开发人员可以通过他们自己的 `META-INF/spring.factories` 属性文件以相同的方式将自己的 `TestExecutionListener` 实现贡献给默认侦听器列表。
+
+#####  `TestExecutionListener` 实现排序
+
+当 TestContext 框架通过上述 `SpringFactoriesLoader` 机制发现默认的 `TestExecutionListener` 实现时，实例化的侦听器使用 Spring 的 `AnnotationAwareOrderComparator` 进行排序，它遵循 Spring 的 `Ordered` 接口和 `@Order` 注解进行排序。Spring 提供的 `AbstractTestExecutionListener` 和所有默认的 `TestExecutionListener` 实现都使用适当的值实现 `Ordered`。因此，第三方框架和开发人员应确保通过实现 `Ordered` 或声明 `@Order` 以正确的顺序注册其默认的 `TestExecutionListener` 实现。有关为每个核心侦听器分配的值的详细信息，请参阅核心默认 `TestExecutionListener` 实现的 `getOrder()` 方法文档。
+
+##### 合并 `TestExecutionListener` 实现
+
+如果通过 `@TestExecutionListeners` 注册了自定义 `TestExecutionListener`，则不会注册默认侦听器。在大多数常见的测试场景中，除了任何自定义侦听器之外，这还有效地迫使开发人员手动声明所有默认侦听器。以下清单演示了这种配置风格：
+
+```java
+@ContextConfiguration
+@TestExecutionListeners({
+    MyCustomTestExecutionListener.class,
+    ServletTestExecutionListener.class,
+    DirtiesContextBeforeModesTestExecutionListener.class,
+    DependencyInjectionTestExecutionListener.class,
+    DirtiesContextTestExecutionListener.class,
+    TransactionalTestExecutionListener.class,
+    SqlScriptsTestExecutionListener.class
+})
+public class MyTest {
+    // class body...
+}
+```
+
+这种方法的挑战在于它要求开发人员确切地知道默认情况下注册了哪些监听器。此外，默认侦听器集可能在不同发行版之间发生变化 - 例如，Spring Framework 4.1 中引入了 `SqlScriptsTestExecutionListener` ，Spring Framework 4.2 中引入了 `DirtiesContextBeforeModesTestExecutionListener`。此外，Spring Security 等第三方框架使用上述 [自动发现机制](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tel-config-automatic-discovery) 注册了自己的默认 `TestExecutionListener` 实现。
+
+为了避免必须知道并重新声明所有默认侦听器，可以将 `@TestExecutionListeners` 的 `mergeMode` 属性设置为 `MergeMode.MERGE_WITH_DEFAULTS`。 `MERGE_WITH_DEFAULTS` 表示本地声明的侦听器应该与默认侦听器合并。合并算法确保从列表中删除重复项，并根据 `AnnotationAwareOrderComparator` 的语义对生成的合并侦听器集进行排序，如 [`TestExecutionListener`实现排序](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tel-config-ordering) 中所述。如果一个监听器实现了 `Ordered` 或者使用 `@Order` 进行了注解，它可以影响它与默认值合并的位置。否则，在合并时，本地声明的侦听器将附加到默认侦听器列表中。
+
+例如，如果前一个示例中的 `MyCustomTestExecutionListener` 类将其 `order` 值（例如，`500`）配置为小于 `ServletTestExecutionListener`（恰好是`1000`）的顺序，则 `MyCustomTestExecutionListener` 可以自动与 `ServletTestExecutionListener` 前面的默认列表合并，前面的示例可以替换为以下示例：
+
+```java
+@ContextConfiguration
+@TestExecutionListeners(
+    listeners = MyCustomTestExecutionListener.class,
+    mergeMode = MERGE_WITH_DEFAULTS
+)
+public class MyTest {
+    // class body...
+}
+```
