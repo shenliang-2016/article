@@ -1,31 +1,20 @@
-### Java 应用设置
+# RMI
 
-为了在你的应用中使用 JNDI，你需要配置它的编译和执行环境。
+Java 远程方法调用 (RMI) 系统允许运行在一个 Java 虚拟机中的对象调用运行在另一个 Java 虚拟机中的对象。RMI 为使用 Java 语言编写的程序提供了远程通信。
 
-**导入 JNDI 类**
+------
 
-下面是 JNDI 包：
+**注意：** 如果你想要与一个现存的 IDL 程序通信，那么你应该使用 Java IDL 而不是 RMI。
 
-- [`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html)
-- [`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html)
-- [`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html)
-- [`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html)
-- [`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html)
+------
 
-此课程中的示例使用前两个包中的类和接口。您需要将这两个包导入您的程序或导入您使用的各个类和接口。以下两行从两个包`javax.naming`和`javax.naming.directory`导入所有类和接口。
+本课程提供了 RMI 系统的简要介绍，然后深入一个完整的客户端/服务器示例，该示例使用了 RMI 的独特能力在运行时加载并执行用户自定义的任务。例子中的服务器实现了通用计算引擎，客户端使用它来计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 的值。
 
-```java
-import javax.naming.*;
-import javax.naming.directory.*;
-```
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**RMI 应用概览**](https://docs.oracle.com/javase/tutorial/rmi/overview.html) 描述 RMI 系统并列出它的优点。另外，此章节提供了由客户端和服务器构成的典型 RMI 应用的描述。同时介绍了一些重要的术语。
 
-**编译环境**
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**编写 RMI 服务器**](https://docs.oracle.com/javase/tutorial/rmi/server.html) 深入计算引擎服务器代码。本章节将教会你如何设计实现一个 RMI 服务器。
 
-要编译使用 JNDI 的程序，您需要访问 JNDI 类。[Java SE 6](https://docs.oracle.com/javase/tutorial/jndi/software/package.html) 已经包含了 JNDI 类，因此如果您正在使用它，则无需采取进一步的操作。
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**创建客户端程序**](https://docs.oracle.com/javase/tutorial/rmi/client.html) 分析一个可能的计算引擎客户端，并以其为例展示了一个 RMI 客户端的重要特性。
 
-**执行环境**
-
-要运行使用 JNDI 的程序，您需要访问程序使用的任何服务提供程序的 JNDI 类和类。[Java Runtime Environment（JRE）6](https://docs.oracle.com/javase/tutorial/jndi/software/package.html) 已经包含用于 LDAP，COS 命名，RMI 注册的服务提供程序、 JNDI 类和DNS。
-
-如果您正在使用其他服务提供程序，则需要在 *JAVA_HOME*`/jre/lib/ext` 目录中下载并安装其存档文件，其中*JAVA_HOME* 是包含 JRE 的目录。[JNDI页面](http://www.oracle.com/technetwork/java/jndi/index.html#download) 列出了一些服务提供者。您可以下载这些提供者或使用其他供应商的提供者。
+[![trail icon](https://docs.oracle.com/javase/tutorial/images/coreIcon.gif)**编译并运行示例**](https://docs.oracle.com/javase/tutorial/rmi/example.html) 向你展示如何编译并运行计算引擎服务器和客户端。
 
