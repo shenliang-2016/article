@@ -1,41 +1,10 @@
-## 编写 RMI 服务器
+## 创建客户端程序
 
-计算引擎服务器接受来自客户端的任务，执行任务，返回结果。服务器代码由接口和类组成。接口定义了可以从客户端调用的方法。实质上，该接口定义了远程对象的客户端视图。对应的类提供了接口实现。
+计算引擎是个相对简单的程序：它执行传递给它的任务。计算引擎的客户端更复杂一些。客户端需要调用计算引擎，同时还需要定义需要计算引擎执行的任务。
 
-[设计远程接口](https://docs.oracle.com/javase/tutorial/rmi/designing.html)
+两个类构成了我们例子中的客户端。第一个类，`ComputePi` ，查找并调用一个 `Compute` 对象。第二个类，`Pi`，实现 `Task` 接口，定义由计算引擎完成的工作。`Pi` 类的工作是计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 的若干位小数值。
 
-本节介绍 `Compute` 接口，提供客户端和服务器之间的连接。你将同时学到 RMI API ，它支持了该通信过程。
-
-[实现远程接口](https://docs.oracle.com/javase/tutorial/rmi/implementing.html)
-
-本节研究实现 `Compute` 接口的类，也就是远程对象实现。该类同时提供了构成服务器程序的其它代码，包括一个 `main` 方法来创建远程对象实例，使用 RMI 注册表注册它，并配置一个安全管理器。
-
-### 设计远程接口
-
-计算引擎的核心是一个协议，它允许将任务提交给计算引擎，计算引擎运行这些任务，将这些任务的结果返回给客户端。此协议在计算引擎支持的接口中表示。该协议的远程通信如下图所示。
-
-![remote communication between a client and the compute engine](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-3.gif)
-
-每个接口都包含一个方法。计算引擎的远程接口`Compute` 可以将任务提交给引擎。客户端接口 `Task` 定义计算引擎如何执行提交的任务。
-
- [`compute.Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 接口定义了可远程访问的部分，计算引擎本身。下面是 `Compute` 接口的源代码：
-
-```java
-package compute;
-
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-
-public interface Compute extends Remote {
-    <T> T executeTask(Task<T> t) throws RemoteException;
-}
-```
-
-通过扩展接口`java.rmi.Remote`，`Compute`接口将自己标识为这样一个接口，其方法可以从另一个 Java 虚拟机调用。实现此接口的任何对象都可以是远程对象。
-
-作为远程接口的成员，`executeTask`方法是一种远程方法。因此，必须将此方法定义为能够抛出`java.rmi.RemoteException`。RMI 系统从远程方法调用抛出此异常，以指示发生了通信故障或协议错误。`RemoteException`是一个已检查的异常，因此任何调用远程方法的代码都需要通过捕获它或在其`throws`子句中声明它来处理此异常。
-
-计算引擎所需的第二个接口是`Task`接口，它是`Compute`接口中`executeTask`方法的参数类型。 [`compute.Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口定义了计算引擎与它需要做的工作之间的接口，提供开始工作的方式。这是`Task`接口的源代码：
+非远程的 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口定义如下：
 
 ```java
 package compute;
@@ -45,16 +14,151 @@ public interface Task<T> {
 }
 ```
 
-`Task`接口定义了一个单独的方法`execute`，它没有参数，也没有抛出异常。因为接口不扩展`Remote`，所以此接口中的方法不需要在`throws`子句中列出`java.rmi.RemoteException`。
+调用 `Compute` 对象的方法的代码必须获取对该对象的引用，创建一个 `Task` 对象，然后请求执行该任务。任务类 `Pi` 的定义将在后面展示。一个 `Pi` 对象是用一个参数构造的，结果是所需的精度。任务执行的结果是一个 `java.math.BigDecimal` 表示 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)值，计算到指定的精度。
 
-`Task`接口有一个类型参数`T`，它表示任务计算的结果类型。该接口的`execute`方法返回计算结果，因此其返回类型为`T`。
+这里是 [`client.ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 的源代码，主要的客户端类：
 
-反过来，`Compute`接口的`executeTask`方法返回传递给它的`Task`实例的执行结果。因此，`executeTask`方法有自己的类型参数`T`，它将自己的返回类型与传递的`Task`实例的结果类型相关联。
+```java
+package client;
 
-RMI 使用 Java 对象序列化机制在 Java 虚拟机之间按值传输对象。对于要被视为可序列化的对象，其类必须实现`java.io.Serializable`标记接口。因此，实现`Task`接口的类也必须实现`Serializable`，用于任务结果的对象类也必须实现。
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.math.BigDecimal;
+import compute.Compute;
 
-只要它们是`Task`类型的实现，可以通过`Compute`对象运行不同类型的任务。实现此接口的类可以包含计算任务所需的任何数据以及计算所需的任何其他方法。
+public class ComputePi {
+    public static void main(String args[]) {
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        try {
+            String name = "Compute";
+            Registry registry = LocateRegistry.getRegistry(args[0]);
+            Compute comp = (Compute) registry.lookup(name);
+            Pi task = new Pi(Integer.parseInt(args[1]));
+            BigDecimal pi = comp.executeTask(task);
+            System.out.println(pi);
+        } catch (Exception e) {
+            System.err.println("ComputePi exception:");
+            e.printStackTrace();
+        }
+    }    
+}
+```
 
-以下解释 RMI 如何使这个简单的计算引擎成为可能。因为 RMI 可以假设`Task`对象是用Java编程语言编写的，所以计算引擎之前不知道的`Task`对象的实现会根据需要由 RMI 下载到计算引擎的 Java 虚拟机中。此功能使计算引擎的客户端能够定义要在服务器计算机上运行的新类型的任务，而无需在该计算机上显式安装代码。
+与 `ComputeEngine` 服务器一样，客户端首先安装安全管理器。此步骤是必需的，因为接收服务器远程对象的存根的过程可能需要从服务器下载类定义。要使 RMI 下载类，必须使用安全管理器。
 
-由`ComputeEngine`类实现的计算引擎实现了`Compute`接口，通过调用`executeTask`方法，可以将不同的任务提交给它。这些任务使用任务执行的`execute`方法运行，并将结果返回给远程客户端。
+在安装安全管理器之后，客户端构造一个名称，用于查找 `Compute` 远程对象，使用与 `ComputeEngine` 相同的名称来绑定其远程对象。此外，客户端使用 `LocateRegistry.getRegistry` API 来合成对服务器主机上的注册表的远程引用。第一个命令行参数 `args[0]` 的值是运行 `Compute` 对象的远程主机的名称。然后，客户端在注册表上调用 `lookup` 方法，以便在服务器主机的注册表中按名称查找远程对象。使用的 `LocateRegistry.getRegistry` 的特定重载，它有一个 `String` 参数，返回对命名主机和默认注册表端口 `1099` 的注册表的引用。您必须使用具有 `int` 参数的重载，如果注册表是在 `1099` 以外的端口上创建的。
+
+接下来，客户端创建一个新的 `Pi` 对象，将第二个命令行参数 `args[1]` 的值传递给 `Pi` 构造函数，解析为整数。此参数指示计算中使用的小数位数。最后，客户端调用 `Compute` 远程对象的 `executeTask` 方法。传递给 `executeTask` 调用的对象返回一个类型为 `BigDecimal` 的对象，程序将该变量存储在变量 `result` 中。最后，程序打印结果。下图描述了 `ComputePi` 客户端，`rmiregistry` 和 `ComputeEngine` 之间的消息流。
+
+![the flow of messages between the compute engine, the registry, and the client.](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-4.gif)
+
+`Pi` 类实现 `Task` 接口，并将 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)的值计算为指定小数位的值。对于此示例，实际算法并不重要。重要的是该算法的计算成本很高，这意味着您希望在有能力的服务器上执行该算法。
+
+这里是 [`client.Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 的源代码，该类实现了 `Task` 接口：
+
+```java
+package client;
+
+import compute.Task;
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+public class Pi implements Task<BigDecimal>, Serializable {
+
+    private static final long serialVersionUID = 227L;
+
+    /** constants used in pi computation */
+    private static final BigDecimal FOUR =
+        BigDecimal.valueOf(4);
+
+    /** rounding mode to use during pi computation */
+    private static final int roundingMode = 
+        BigDecimal.ROUND_HALF_EVEN;
+
+    /** digits of precision after the decimal point */
+    private final int digits;
+    
+    /**
+     * Construct a task to calculate pi to the specified
+     * precision.
+     */
+    public Pi(int digits) {
+        this.digits = digits;
+    }
+
+    /**
+     * Calculate pi.
+     */
+    public BigDecimal execute() {
+        return computePi(digits);
+    }
+
+    /**
+     * Compute the value of pi to the specified number of 
+     * digits after the decimal point.  The value is 
+     * computed using Machin's formula:
+     *
+     *          pi/4 = 4*arctan(1/5) - arctan(1/239)
+     *
+     * and a power series expansion of arctan(x) to 
+     * sufficient precision.
+     */
+    public static BigDecimal computePi(int digits) {
+        int scale = digits + 5;
+        BigDecimal arctan1_5 = arctan(5, scale);
+        BigDecimal arctan1_239 = arctan(239, scale);
+        BigDecimal pi = arctan1_5.multiply(FOUR).subtract(
+                                  arctan1_239).multiply(FOUR);
+        return pi.setScale(digits, 
+                           BigDecimal.ROUND_HALF_UP);
+    }
+    /**
+     * Compute the value, in radians, of the arctangent of 
+     * the inverse of the supplied integer to the specified
+     * number of digits after the decimal point.  The value
+     * is computed using the power series expansion for the
+     * arc tangent:
+     *
+     * arctan(x) = x - (x^3)/3 + (x^5)/5 - (x^7)/7 + 
+     *     (x^9)/9 ...
+     */   
+    public static BigDecimal arctan(int inverseX, 
+                                    int scale) 
+    {
+        BigDecimal result, numer, term;
+        BigDecimal invX = BigDecimal.valueOf(inverseX);
+        BigDecimal invX2 = 
+            BigDecimal.valueOf(inverseX * inverseX);
+
+        numer = BigDecimal.ONE.divide(invX,
+                                      scale, roundingMode);
+
+        result = numer;
+        int i = 1;
+        do {
+            numer = 
+                numer.divide(invX2, scale, roundingMode);
+            int denom = 2 * i + 1;
+            term = 
+                numer.divide(BigDecimal.valueOf(denom),
+                             scale, roundingMode);
+            if ((i % 2) != 0) {
+                result = result.subtract(term);
+            } else {
+                result = result.add(term);
+            }
+            i++;
+        } while (term.compareTo(BigDecimal.ZERO) != 0);
+        return result;
+    }
+}
+```
+
+请注意，所有可序列化的类，无论是直接还是间接地实现 `Serializable` 接口，都必须声明一个名为 `serialVersionUID` 的 `private` `static` `final` 字段，以保证版本之间的序列化兼容性。如果没有发布该类的先前版本，则该字段的值可以是任何 `long` 值，类似于 `Pi` 使用的 `227L`，只要该值在将来的版本中一致使用即可。如果在没有明确的 `serialVersionUID` 声明的情况下发布了该类的先前版本，但与该版本的序列化兼容性很重要，则必须将先前版本的默认隐式计算值用于新版本的显式声明的值。可以针对先前版本运行 `serialver` 工具以确定它的默认计算值。
+
+这个例子最有趣的特性是 `Compute` 实现对象永远不需要 `Pi` 类的定义，直到 `Pi` 对象作为 `executeTask` 方法的参数传入。此时，类的代码由 RMI 加载到 `Compute` 对象的 Java 虚拟机中，调用 `execute` 方法，并执行任务的代码。结果，在 `Pi` 任务的情况下是一个 `BigDecimal` 对象，被传递回客户端，在那里它用于打印计算结果。
+
+提供的 `Task` 对象计算 `Pi` 的值这一事实与 `ComputeEngine` 对象无关。您还可以实现一项任务，例如，使用概率算法生成随机素数。该任务也是计算密集型的，因此是传递给 `ComputeEngine` 的一个很好的候选者，但它需要非常不同的代码。当 `Task` 对象传递给 `Compute` 对象时，也可以下载此代码。就像计算算法一样 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)在需要时引入，生成随机素数的代码将在需要时引入。 `Compute` 对象只知道它接收的每个对象都实现了 `execute` 方法。`Compute`对象不知道，也不需要知道实现的作用。
+
