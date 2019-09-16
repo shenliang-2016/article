@@ -1,64 +1,78 @@
-## 同步
+### 内存一致性错误
 
-线程主要通过共享对字段的访问和引用字段引用的对象进行通信。这种通信形式非常有效，但可能产生两种错误：*线程干扰*和*内存一致性错误*。防止这些错误所需的工具是 *synchronization*。
+当不同的线程具有应该是相同数据的不一致视图时，会发生*内存一致性错误*。内存一致性错误的原因很复杂，超出了本教程的范围。幸运的是，程序员不需要详细了解这些原因。所需要的只是避免它们的策略。
 
-但是，同步可能会引入*线程争用*，当两个或多个线程同时尝试访问同一资源时会导致 Java 运行时更慢地执行一个或多个线程，甚至暂停执行。[Starvation and livelock](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html) 是线程争用的形式。有关详细信息，请参阅 [Liveness](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 。
+避免内存一致性错误的关键是理解 *happen-before* 关系。这种关系只是保证一个特定语句的内存写入对另一个特定语句可见。要查看此内容，请考虑以下示例。假设定义并初始化了一个简单的 `int` 字段：
 
-本节涵盖以下主题：
+```
+int counter = 0;
+```
 
-- [线程干扰](https://docs.oracle.com/javase/tutorial/essential/concurrency/interfere.html) 描述了当多个线程访问共享数据时如何引入错误。
-- [内存一致性错误](https://docs.oracle.com/javase/tutorial/essential/concurrency/memconsist.html) 描述由共享内存的不一致视图导致的错误。
-- [同步方法](https://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html) 描述了一个简单的习惯用法，可以有效地防止线程干扰和内存一致性错误。
-- [隐式锁和同步](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) 描述了一种更通用的同步习惯用法，并描述了同步是如何基于隐式锁工作的。
-- [原子访问](https://docs.oracle.com/javase/tutorial/essential/concurrency/atomic.html) 讨论不能被其他线程干扰的操作的一般概念。
+ `counter` 字段由两个线程共享，A 和 B。假定线程 A 增加 `counter`：
 
-### 线程干扰
+```
+counter++;
+```
 
-考虑下面的 [`Counter`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/Counter.java) ：
+然后，不久之后，线程B打印出 `counter`：
+
+```
+System.out.println(counter);
+```
+
+如果两个语句已在同一个线程中执行，则可以安全地假设打印出的值为“1”。但是如果这两个语句是在不同的线程中执行的，那么打印出的值可能是“0”，因为不能保证线程 A 对 `counter` 的更改对于线程 B 是可见的 - 除非程序员已经建立了这两个陈述之间的 `happens-before` 关系。
+
+有几种行为可以创造 `happens-before` 关系。其中之一是同步，我们将在以下部分中看到。
+
+我们已经看到了两种创造 `happens-before` 关系的行为。
+
+ - 当一个语句调用 `Thread.start` 时，与该语句有一个 `happens-before` 关系的每个语句也与新线程执行的每个语句都有一个 `happens-before` 关系。新线程可以看到导致创建新线程的代码的影响。
+ - 当一个线程终止并导致另一个线程中的 `Thread.join` 返回时，终止线程执行的所有语句与成功连接后的所有语句都有一个 `happens-before` 关系。现在，执行连接的线程可以看到线程中代码的效果。
+
+可以创建 `happens-before` 关系的操作列表参考 [Summary page of the `java.util.concurrent`package](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility) 。
+
+### 同步方法
+
+Java 编程语言提供了两种基本的同步习语：*synchronized methods* 和 *synchronized statements*。下两节将介绍两者中较为复杂的同步语句。本节介绍同步方法。
+
+要使方法同步，只需在其声明中添加 `synchronized` 关键字：
 
 ```java
-class Counter {
+public class SynchronizedCounter {
     private int c = 0;
 
-    public void increment() {
+    public synchronized void increment() {
         c++;
     }
 
-    public void decrement() {
+    public synchronized void decrement() {
         c--;
     }
 
-    public int value() {
+    public synchronized int value() {
         return c;
     }
-
 }
 ```
 
-`Counter` 的设计是为了每次调用 `increment` 都会将1加到 `c`，每次调用 `decrement` 都会从 `c` 中减去1。但是，如果从多个线程引用 `Counter` 对象，则线程之间的干扰可能会阻止这种情况按预期发生。
+如果 `count` 是 `SynchronizedCounter` 的一个实例，那么使这些方法同步有两个影响：
 
-当两个操作在不同的线程中运行但是对相同的数据进行操作时会发生干扰*interleave*。这意味着这两个操作由多个步骤组成，并且步骤序列重叠。
+ - 首先，对同一对象的两个同步方法的调用不可能进行交错。当一个线程正在为对象执行同步方法时，所有其他线程调用同一对象的同步方法阻塞（暂停执行）直到第一个线程完成对象。
+ - 其次，当同步方法退出时，它会自动与同一对象的同步方法的*任何后续调用*建立 ` happens-before ` 关系。这可以保证所有线程都可以看到对象状态的更改。
 
-对于 `Counter` 实例的操作似乎不可能交错，因为 `c` 上的两个操作都是单个简单的语句。但是，即使是简单的语句也可以由虚拟机转换为多个步骤。我们不会检查虚拟机采取的具体步骤 - 只需知道单个表达式 `c++` 可以分解为三个步骤：
+请注意，构造函数无法同步 - 将 `synchronized` 关键字与构造函数一起使用是一种语法错误。同步构造函数没有意义，因为只有创建对象的线程在构造时才能访问它。
 
-1. 检索 `c` 的当前值。
-2. 将检索值增加1。
-3. 将递增的值存回 `c`。
+------
 
-表达式 `c--` 可以以相同的方式分解，除了第二步是减少而不是增量。
+**警告：** 构造将在线程之间共享的对象时，要非常小心，对对象的引用不会过早“泄漏”。例如，假设您要维护一个包含每个类实例的 `List` 调用实例。您可能想要将以下行添加到构造函数中：
 
-假设线程 A 调用 `increment` ，在大约同一时间线程 B 调用 `decrement`。如果 `c` 的初始值为 `0`，则它们的交错动作可能遵循以下顺序：
+```java
+instances.add(this);
+```
 
-1. 线程A：检索 `c`。
+但是其他线程可以在构造对象完成之前使用 `instances` 来访问对象。
 
-2. 线程B：检索 `c`。
+------
 
-3. 线程A：增加检索值；结果是1。
+同步方法启用了一种简单的策略来防止线程干扰和内存一致性错误：如果一个对象对多个线程可见，则对该对象变量的所有读取或写入都是通过 `synchronized` 方法完成的。（一个重要的例外：`final` 字段，在构造对象后无法修改，可以通过非同步方法安全地读取，一旦构造了对象）这种策略是有效的，但可能会带来 [活性]( https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 的问题，我们将在本课后面看到。
 
-4. 线程B：减少检索值；结果是-1。
-
-5. 线程A：将结果存储在 `c` 中；`c` 现在是1。
-
-6. 线程B：将结果存储在 `c` 中；`c` 现在是-1。
-
-线程 A 的结果丢失，被线程 B 覆盖。这种特殊的交错只是一种可能性。在不同情况下，可能是线程 B 的结果丢失，或者根本没有错误。因为它们是不可预测的，所以难以检测和修复线程干扰错误。
