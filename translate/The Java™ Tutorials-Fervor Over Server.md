@@ -7879,9 +7879,9 @@ JNDI定义了在执行命名和目录操作过程中可以抛出的异常的类�
 
 下面是你需要的软件/系统的列表：
 
--[Java 平台软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#JDK)
--[服务提供者软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#PROVIDER)
--[命名和目录服务器软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#SERVER)
+- [Java 平台软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#JDK)
+- [服务提供者软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#PROVIDER)
+- [命名和目录服务器软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#SERVER)
 
 ------
 
@@ -7903,10 +7903,10 @@ JNDI API 是用于访问任何命名或目录服务的通用 API。通过在 JND
 
 JDK 附带以下服务提供者：
 
--轻量级目录协议（LDAP）
--CORBA 通用对象服务命名（COS 命名）
--RMI 注册
--域名服务（DNS）
+- 轻量级目录协议（LDAP）
+- CORBA 通用对象服务命名（COS 命名）
+- RMI 注册
+- 域名服务（DNS）
 
 如果您对其他服务提供者感兴趣，请查看 [JNDI页面](http://www.oracle.com/technetwork/java/jndi/index.html) 获取下载信息。
 
@@ -7920,10 +7920,10 @@ JDK 附带以下服务提供者：
 
 你也可以从下面地址下载免费的 LDAP 服务器：
 
--[OpenDS](http://opends.java.net/)
--[OpenLDAP](http://www.openldap.org/)
--[389 Directory Server](http://directory.fedoraproject.org/)
--[Apache Directory Server](http://directory.apache.org/)
+- [OpenDS](http://opends.java.net/)
+- [OpenLDAP](http://www.openldap.org/)
+- [389 Directory Server](http://directory.fedoraproject.org/)
+- [Apache Directory Server](http://directory.apache.org/)
 
 一个可公开访问的服务器地址：[http://www.openldap.org/lists/#openldap-software](http://www.openldap.org/lists/#openldap-software) 。
 
@@ -7951,15 +7951,15 @@ JDK 附带以下服务提供者：
 
 本教程附带两个必须安装的模式文件：
 
--[`Schema for Java objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/java.schema)
--[`Schema for CORBA objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/corba.schema)
+- [`Schema for Java objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/java.schema)
+- [`Schema for CORBA objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/corba.schema)
 
 这些文件的格式是正式描述，可能无法直接复制并粘贴到服务器配置文件中。具体地，属性语法以 [RFC 2252](http://www.ietf.org/rfc/rfc2252.txt) 的形式描述。
 
 不同的目录服务器具有不同的配置其架构的方式。本教程包含一些用于在目录服务器上安装 Java 和 CORBA 模式的工具，这些模式允许通过 LDAP 修改其模式。以下是工具可以执行的任务列表。
 
-1.[`Create Java Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateJavaSchema.java)
-2.[`Create CORBA Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateCorbaSchema.java)
+1. [`Create Java Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateJavaSchema.java)
+2. [`Create CORBA Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateCorbaSchema.java)
 
 按照随附的 [`README文件`](https://docs.oracle.com/javase/tutorial/jndi/software/config/README-SCHEMA.TXT) 中的说明运行这些程序。
 
@@ -8003,45 +8003,45 @@ dn: o=JNDITutorial, dc=imc, dc=org
 
 **安装说明：Windows Active Directory。**
 
-1.根命名上下文不会是“o=jnditutorial”。它的形式为“dc=x,dc=y,dc=z”。您需要按照之前的**Namespace Setup**说明进行操作。
+1. 根命名上下文不会是“o=jnditutorial”。它的形式为“dc=x,dc=y,dc=z”。您需要按照之前的**Namespace Setup**说明进行操作。
 
-2.使用 Active Directory 管理控制台管理单元`ADSIEdit`将“inetOrgPerson”和“groupOfUniqueNames”的对象类和相关属性添加到 Active Directory 架构。“groupOfUniqueNames”在 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 中定义，“inetOrgPerson”在 [RFC 2798](http://www.ietf.org/rfc/rfc2798.txt) 中定义。
+2. 使用 Active Directory 管理控制台管理单元`ADSIEdit`将“inetOrgPerson”和“groupOfUniqueNames”的对象类和相关属性添加到 Active Directory 架构。“groupOfUniqueNames”在 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 中定义，“inetOrgPerson”在 [RFC 2798](http://www.ietf.org/rfc/rfc2798.txt) 中定义。
 
-3.默认情况下，Active Directory 中不允许使用本教程使用的某些层次关系。要启用这些关系，请使用 Active Directory 管理控制台管理单元`ADSIEdit`添加它们。
+3. 默认情况下，Active Directory 中不允许使用本教程使用的某些层次关系。要启用这些关系，请使用 Active Directory 管理控制台管理单元`ADSIEdit`添加它们。
 
-```
-objectclass: organizationalUnit
-possible superiors: domainDNS
-                    inetOrgPerson
-                    organizaton
-                    organizationalPerson
-                    organizationalUnit
-                    person
-                    top
+   ```
+   objectclass: organizationalUnit
+   possible superiors: domainDNS
+                       inetOrgPerson
+                       organizaton
+                       organizationalPerson
+                       organizationalUnit
+                       person
+                       top
+   
+   objectclass: groupOfUniqueNames
+   possible superiors: top
+   
+   objectclass: inetOrgPerson
+   possible superiors: container
+                       organizationalPerson
+                       person
+                       top
+   ```
 
-objectclass: groupOfUniqueNames
-possible superiors: top
+4. 从`tutorial.ldif`中的 Mark Twain 条目中删除两个“sn”属性中的一个。与 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 相反，Active Directory 将“sn”定义为单值属性。
 
-objectclass: inetOrgPerson
-possible superiors: container
-                    organizationalPerson
-                    person
-                    top
-```
+5. 使用`dcifde`command-line实用程序加载修改后的`tutorial.ldif`文件。
 
-4.从`tutorial.ldif`中的 Mark Twain 条目中删除两个“sn”属性中的一个。与 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 相反，Active Directory 将“sn”定义为单值属性。
+   ```
+   #ldif -i -v -k -f tutorial.ldif
+   ```
 
-5.使用`dcifde`command-line实用程序加载修改后的`tutorial.ldif`文件。
+6. 大多数示例假定已将目录设置为允许未经身份验证的读取和更新访问。您的 Active Directory 设置可能不允许您这样做。 请参阅**Access Control**安装说明。
 
-```
-#ldif -i -v -k -f tutorial.ldif
-```
+7. 读取条目有时会产生比教程中显示的更多的属性，因为 Active Directory 通常会返回一些内部属性。
 
-6.大多数示例假定已将目录设置为允许未经身份验证的读取和更新访问。您的 Active Directory 设置可能不允许您这样做。 请参阅**Access Control**安装说明。
-
-7.读取条目有时会产生比教程中显示的更多的属性，因为 Active Directory 通常会返回一些内部属性。
-
-8.创建条目可能需要指定其他特定于Active Directory的属性或使用其他对象类。
+8. 创建条目可能需要指定其他特定于Active Directory的属性或使用其他对象类。
 
 ### Java 应用设置
 
@@ -8051,11 +8051,11 @@ possible superiors: container
 
 下面是 JNDI 包：
 
--[`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html)
--[`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html)
--[`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html)
--[`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html)
--[`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html)
+- [`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html)
+- [`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html)
+- [`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html)
+- [`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html)
+- [`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html)
 
 此课程中的示例使用前两个包中的类和接口。您需要将这两个包导入您的程序或导入您使用的各个类和接口。以下两行从两个包`javax.naming`和`javax.naming.directory`导入所有类和接口。
 
@@ -8106,9 +8106,9 @@ RMI 应用通常由两个独立程序组成，服务器和客户端。典型的�
 
 分布式对象应用需要完成下列步骤：
 
--**定位远程对象：** 应用程序可以使用各种机制来获取对远程对象的引用。例如，应用程序可以使用 RMI 的简单命名工具 RMI 注册表注册其远程对象。或者，应用程序可以作为其他远程调用的一部分传递和返回远程对象引用。
--**与远程对象通信：** 远程对象之间的通信细节由 RMI 处理。对程序员来说，远程通信看起来与普通的 Java 方法调用没有什么不同。
--**加载传递过来的对象的类定义：** 因为 RMI 允许对象来回传递，所以它提供了加载对象的类定义以及传输对象数据的机制。
+- **定位远程对象：** 应用程序可以使用各种机制来获取对远程对象的引用。例如，应用程序可以使用 RMI 的简单命名工具 RMI 注册表注册其远程对象。或者，应用程序可以作为其他远程调用的一部分传递和返回远程对象引用。
+- **与远程对象通信：** 远程对象之间的通信细节由 RMI 处理。对程序员来说，远程通信看起来与普通的 Java 方法调用没有什么不同。
+- **加载传递过来的对象的类定义：** 因为 RMI 允许对象来回传递，所以它提供了加载对象的类定义以及传输对象数据的机制。
 
 下图描绘了一个 RMI 分布式应用程序，该应用程序使用 RMI 注册表来获取对远程对象的引用。服务器调用注册表以将名称与远程对象关联（或绑定）。客户端在服务器的注册表中按名称查找远程对象，然后在其上调用方法。该图还显示 RMI 系统使用现有的 Web 服务器在需要时从服务器到客户端以及从客户端到服务器加载对象的类定义。
 
@@ -8124,8 +8124,8 @@ RMI 的核心和独特功能之一是，如果未在接收者的 Java 虚拟机�
 
 通过实现*远程接口*，对象变成远程对象，具有以下特征：
 
--远程接口扩展接口 `java.rmi.Remote`。
--接口中的每个方法都声明 `java.rmi.RemoteException` 在它的 `throws` 子句中，除了所有的特定于应用的异常。
+- 远程接口扩展接口 `java.rmi.Remote`。
+- 接口中的每个方法都声明 `java.rmi.RemoteException` 在它的 `throws` 子句中，除了所有的特定于应用的异常。
 
 当对象从一个 Java 虚拟机传递到另一个 Java 虚拟机时，RMI 将远程对象与非远程对象区别对待。RMI 不是在接收 Java 虚拟机中复制实现对象，而是为远程对象传递远程*stub*。该存根充当远程对象的本地代表或代理，并且基本上对客户端来说是远程引用。客户端调用本地存根上的方法，该方法负责对远程对象执行方法调用。
 
@@ -8135,18 +8135,18 @@ RMI 的核心和独特功能之一是，如果未在接收者的 Java 虚拟机�
 
 使用 RMI 开发分布式应用程序涉及以下一般步骤：
 
-1.设计和实现分布式应用程序的组件。
-2.编译源代码。
-3.使类型网络可访问。
-4.启动应用程序。
+1. 设计和实现分布式应用程序的组件。
+2. 编译源代码。
+3. 使类型网络可访问。
+4. 启动应用程序。
 
 **设计并实现应用组件**
 
 首先，确定您的应用程序体系结构，包括哪些组件是本地对象以及哪些组件可以远程访问。这一步包括：
 
--**定义远程接口。**远程接口指定可由客户端远程调用的方法。客户端面向远程接口编程，而不是这些接口的实现类。这种接口的设计包括确定将用作参数的对象类型以及这些方法的返回值。如果尚不存在任何这些接口或类，则还需要定义它们。
--**实现远程对象。**远程对象必须实现一个或多个远程接口。远程对象类可以包括仅在本地可用的其他接口和方法的实现。如果要将任何本地类用于参数或返回任何这些方法的值，则必须同时实现它们。
--**实现客户端。**在定义远程接口后，包括在部署远程对象之后，可以随时实现使用远程对象的客户端。
+- **定义远程接口。**远程接口指定可由客户端远程调用的方法。客户端面向远程接口编程，而不是这些接口的实现类。这种接口的设计包括确定将用作参数的对象类型以及这些方法的返回值。如果尚不存在任何这些接口或类，则还需要定义它们。
+- **实现远程对象。**远程对象必须实现一个或多个远程接口。远程对象类可以包括仅在本地可用的其他接口和方法的实现。如果要将任何本地类用于参数或返回任何这些方法的值，则必须同时实现它们。
+- **实现客户端。**在定义远程接口后，包括在部署远程对象之后，可以随时实现使用远程对象的客户端。
 
 **编译源代码**
 
@@ -8421,9 +8421,9 @@ public class Pi implements Task<BigDecimal>, Serializable {
 
 此示例将接口，远程对象实现和客户端代码分为三个包：
 
--`compute` – [`Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 和 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口
--`engine` – [`ComputeEngine`](https://docs.oracle.com/javase/tutorial/rmi/examples/engine/ComputeEngine.java) 实现类
--`client` – [`ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 客户端代码和 [`Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 任务实现
+- `compute` – [`Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 和 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口
+- `engine` – [`ComputeEngine`](https://docs.oracle.com/javase/tutorial/rmi/examples/engine/ComputeEngine.java) 实现类
+- `client` – [`ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 客户端代码和 [`Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 任务实现
 
 首先，您需要构建接口 JAR 文件以提供给服务器和客户端开发人员。
 
@@ -8604,17 +8604,17 @@ java -cp /home/ann/src:/home/ann/public_html/classes/compute.jar
 
 上面的 `java` 命令定义了以下系统属性：
 
--`java.rmi.server.codebase` 属性指定位置，即代码库 URL，从中可以下载*来自*此服务器的类的定义。如果代码库指定了目录层次结构（而不是 JAR 文件），则必须在代码库 URL 的末尾包含尾部斜杠。
--`java.rmi.server.hostname` 属性指定要放入在此 Java 虚拟机中导出的远程对象的存根中的主机名或地址。此值是客户端在尝试传递远程方法调用时使用的主机名或地址。默认情况下，RMI 实现使用服务器的IP地址，如 `java.net.InetAddress.getLocalHost`  API所示。但是，有时，此地址不适用于所有客户端，并且完全限定的主机名将更有效。要确保 RMI 使用可从所有潜在客户端路由的服务器的主机名（或IP地址），请设置 `java.rmi.server.hostname` 属性。
--`java.security.policy` 属性用于指定包含您要授予的权限的策略文件。
+- `java.rmi.server.codebase` 属性指定位置，即代码库 URL，从中可以下载*来自*此服务器的类的定义。如果代码库指定了目录层次结构（而不是 JAR 文件），则必须在代码库 URL 的末尾包含尾部斜杠。
+- `java.rmi.server.hostname` 属性指定要放入在此 Java 虚拟机中导出的远程对象的存根中的主机名或地址。此值是客户端在尝试传递远程方法调用时使用的主机名或地址。默认情况下，RMI 实现使用服务器的IP地址，如 `java.net.InetAddress.getLocalHost`  API所示。但是，有时，此地址不适用于所有客户端，并且完全限定的主机名将更有效。要确保 RMI 使用可从所有潜在客户端路由的服务器的主机名（或IP地址），请设置 `java.rmi.server.hostname` 属性。
+- `java.security.policy` 属性用于指定包含您要授予的权限的策略文件。
 
 **启动客户端**
 
 注册表和计算引擎运行后，您可以启动客户端，指定以下内容：
 
--客户端使用 `java.rmi.server.codebase` 属性为其类（`Pi`类）提供服务的位置
--`java.security.policy` 属性，用于指定包含您要授予各种代码的权限的安全策略文件
--作为命令行参数，服务器的主机名（以便客户端知道 `Compute` 远程对象的位置）以及 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 计算中使用的小数位数。
+- 客户端使用 `java.rmi.server.codebase` 属性为其类（`Pi`类）提供服务的位置
+- `java.security.policy` 属性，用于指定包含您要授予各种代码的权限的安全策略文件
+- 作为命令行参数，服务器的主机名（以便客户端知道 `Compute` 远程对象的位置）以及 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 计算中使用的小数位数。
 
 在另一台主机（例如名为 `mysecondcomputer` 的主机）上启动客户端，如下所示：
 
@@ -8655,4 +8655,275 @@ java -cp /home/jones/src:/home/jones/public_html/classes/compute.jar
 因为 `ComputePi` 客户端在其类路径中同时具有 `Compute` 和 `Task` 接口，所以它从类路径加载它们的定义，而不是从服务器的代码库加载它们的定义。
 
 最后，当 `Pi` 对象在 `executeTask` 远程调用中传递给 `ComputeEngine` 对象时，`Pi` 类被加载到 `ComputeEngine` 服务器的 Java 虚拟机中。服务器从客户端的 Web 服务器或文件系统加载 `Pi` 类，具体取决于启动客户端时使用的代码库 URL 的类型。
+
+# 并发
+
+计算机用户理所当然地认为他们的系统一次可以做多件事。他们假设他们可以继续在文字处理器中工作，而其他应用程序则下载文件，管理打印队列和流式传输音频。即使是单个应用程序通常也希望一次完成多个任务。例如，流式音频应用程序必须同时从网络读取数字音频，解压缩，管理播放和更新其显示。文字处理器应始终准备好响应键盘和鼠标事件，无论重新格式化文本或更新显示有多繁忙。可以执行此类操作的软件称为并发软件。
+
+Java 平台的设计初衷是为了支持并发编程，在 Java 编程语言和 Java 类库中提供基本的并发支持。从 5.0 版开始，Java 平台还包含高级并发 API。本课程介绍了平台的基本并发支持，并总结了 `java.util.concurrent` 包中的一些高级 API。
+
+## 进程和线程
+
+在并发编程中，有两个基本的执行单元：*processes*和*threads*。在 Java 编程语言中，并发编程主要涉及线程。但是，进程也很重要。
+
+计算机系统通常具有许多活动进程和线程。即使在只有一个执行核心的系统中也是如此，因此在任何给定时刻只有一个线程实际执行。通过称为时间切片的 OS 功能，在进程和线程之间共享单个核的处理时间。
+
+对于具有多个处理器或具有多个执行核心的处理器的计算机系统来说，它变得越来越普遍。这极大地增强了系统并发执行进程和线程的能力 - 但即使在没有多个处理器或执行核心的简单系统上也可以实现并发。
+
+**进程**
+
+进程具有自包含的执行环境。进程通常具有完整的私有基本运行时资源集；特别是，每个进程都有自己的内存空间。
+
+流程通常被视为程序或应用程序的同义词。但是，用户看到的单个应用程序实际上可能是一组协作进程。为了促进进程之间的通信，大多数操作系统都支持*进程间通信*（IPC）资源，例如管道和套接字。IPC 不仅用于同一系统上的进程之间的通信，而且还用于不同系统上的进程。
+
+Java 虚拟机的大多数实现都作为单个进程运行。Java 应用程序可以使用 [`ProcessBuilder`](https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html) 对象创建其他进程。多进程应用程序超出了本课程的范围。
+
+**线程**
+
+线程有时被称为*轻量级进程*。进程和线程都提供执行环境，但创建新线程所需的资源比创建新进程要少。
+
+线程存在于进程中 - 每个进程至少有一个进程。线程共享进程的资源，包括内存和打开文件。这使得有效但可能有问题的通信成为可能。
+
+多线程执行是 Java 平台的基本特性。每个应用程序至少有一个线程 - 或几个，如果你把“系统”线程计算在内，它们执行内存管理和信号处理等操作。但是从应用程序员的角度来看，你只从一个线程开始，称为*主线程*。该线程具有创建其他线程的能力，我们将在下一节中进行演示。
+
+## 线程对象
+
+每个线程都与 [`Thread`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html) 类的实例相关联。使用 `Thread` 对象创建并发应用程序有两种基本策略。
+
+- 要直接控制线程创建和管理，只需在每次应用程序需要启动异步任务时实例化 `Thread`。
+- 要从应用程序的其余部分抽象线程管理，请将应用程序的任务传递给执行程序。
+
+本节介绍 `Thread` 对象的使用。执行器与 [其他高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一起讨论。
+
+### 定义并启动线程
+
+创建 `Thread` 实例的应用程序必须提供将在该线程中运行的代码。有两种方法可以做到这一点：
+
+- *提供一个Runnable对象。* [`Runnable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html) 接口定义了一个单独的方法 `run`， 意味着包含在线程中执行的代码。 `Runnable` 对象被传递给 `Thread` 构造函数，如 [`HelloRunnable`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloRunnable.java) 示例：
+
+  ```java
+  public class HelloRunnable implements Runnable {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new Thread(new HelloRunnable())).start();
+      }
+  
+  }
+  ```
+
+- *Subclass Thread。* `Thread` 类本身实现 `Runnable`，尽管它的 `run` 方法什么都不做。应用程序可以子类化 `Thread`，提供自己的 `run` 实现，如 [`HelloThread`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloThread.java) 例：
+
+  ```java
+  public class HelloThread extends Thread {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new HelloThread()).start();
+      }
+  
+  }
+  ```
+
+请注意，两个示例都调用 `Thread.start` 以启动新线程。
+
+你应该使用哪些习语？使用 `Runnable` 对象的第一个习语是更通用的，因为 `Runnable` 对象可以子类化除了 `Thread` 之外的类。第二个习惯用法在简单的应用程序中更容易使用，但受限于你的任务类必须是 `Thread` 的后代。本课重点介绍第一种方法，它将 `Runnable` 任务与执行任务的 `Thread` 对象分开。这种方法不仅更灵活，而且适用于后面介绍的高级线程管理 API。
+
+`Thread` 类定义了许多对线程管理有用的方法。这些包括 `static` 方法，它们提供有关调用方法的线程的信息或影响其状态。从管理线程和 `Thread` 对象所涉及的其他线程调用其他方法。我们将在以下部分中研究其中一些方法。
+
+### 使用 `sleep` 暂停执行
+
+`Thread.sleep` 导致当前线程暂停执行指定的时间段。这是使处理器时间可用于应用程序的其他线程或可能在计算机系统上运行的其他应用程序的有效方法。 `sleep` 方法也可用于调步，如下面的示例所示，并等待具有被理解为具有时间要求的职责的另一个线程，如后面部分中的 `SimpleThreads` 示例。
+
+提供了两个重载版本的`sleep`：一个指定睡眠时间为毫秒，另一个指定睡眠时间为纳秒。但是，这些睡眠时间并不能保证精确，因为它们受到底层操作系统提供的设施的限制。此外，睡眠周期可以通过中断终止，我们将在后面的部分中看到。在任何情况下，您都不能假设调用 `sleep` 将在指定的时间段内暂停该线程。
+
+ [`SleepMessages`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SleepMessages.java) 示例使用 `sleep` 来按照四秒时间间隔打印消息：
+
+```java
+public class SleepMessages {
+    public static void main(String args[])
+        throws InterruptedException {
+        String importantInfo[] = {
+            "Mares eat oats",
+            "Does eat oats",
+            "Little lambs eat ivy",
+            "A kid will eat ivy too"
+        };
+
+        for (int i = 0;
+             i < importantInfo.length;
+             i++) {
+            //Pause for 4 seconds
+            Thread.sleep(4000);
+            //Print a message
+            System.out.println(importantInfo[i]);
+        }
+    }
+}
+```
+
+请注意，`main` 声明它 `throws InterruptedException`。 当 `sleep` 处于活动状态时，当另一个线程中断当前线程时，则 `sleep` 抛出一个异常。由于此应用程序尚未定义另一个导致中断的线程，因此无需捕获 `InterruptedException`。
+
+### 中断
+
+*interrupt* 表示线程应该停止它正在做的事情并做其他事情。由程序员决定线程如何响应中断，但线程终止是很常见的。这是本课程中强调的用法。
+
+线程通过在要被打断的线程 `Thread` 对象上调用 [`interrupt`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#interrupt--) 来发送中断。为使中断机制正常工作，被中断的线程必须支持自己的中断。
+
+**支持中断**
+
+线程如何支持自己的中断？这取决于它目前正在做什么。如果线程经常调用抛出 `InterruptedException` 的方法，它只会在捕获该异常后从 `run` 方法返回。例如，假设 `SleepMessages` 示例中的中心消息循环位于线程的 `Runnable` 对象的 `run` 方法中。然后可以按如下方式修改它以支持中断：
+
+```java
+for (int i = 0; i < importantInfo.length; i++) {
+    // Pause for 4 seconds
+    try {
+        Thread.sleep(4000);
+    } catch (InterruptedException e) {
+        // We've been interrupted: no more messages.
+        return;
+    }
+    // Print a message
+    System.out.println(importantInfo[i]);
+}
+```
+
+抛出 `InterruptedException` 的许多方法，例如 `sleep`，被设计为取消当前操作并在收到中断时立即返回。
+
+如果一个线程长时间没有调用抛出 `InterruptedException` 的方法怎么办？那么它必须定期调用 `Thread.interrupted`，如果收到中断则返回 `true`。例如：
+
+```java
+for (int i = 0; i < inputs.length; i++) {
+    heavyCrunch(inputs[i]);
+    if (Thread.interrupted()) {
+        // We've been interrupted: no more crunching.
+        return;
+    }
+}
+```
+
+在这个简单的例子中，代码只是测试中断并退出线程（如果已收到）。在更复杂的应用程序中，抛出 `InterruptedException` 可能更有意义：
+
+```java
+if (Thread.interrupted()) {
+    throw new InterruptedException();
+}
+```
+
+这允许中断处理代码集中在 `catch` 子句中。
+
+**中断状态标识**
+
+中断机制使用称为*中断状态*的内部标志实现。调用 `Thread.interrupt` 设置此标志。当线程通过调用静态方法 `Thread.interrupted` 检查中断时，中断状态被清除。非静态 `isInterrupted` 方法，一个线程用来查询另一个线程的中断状态，不会改变中断状态标志。
+
+按照惯例，任何通过抛出 `InterruptedException` 退出的方法都会在执行此操作时清除中断状态。但是，通过另一个调用 `interrupt` 的线程，总是可以立即再次设置中断状态。
+
+### Joins
+
+`join` 方法允许一个线程等待另一个线程的完成。如果 `t` 是一个线程正在执行的 `Thread` 对象，
+
+```
+t.join();
+```
+
+导致当前线程暂停执行，直到`t`的线程终止。 `join` 的重载允许程序员指定等待期。但是，与 `sleep` 一样，`join`依赖于操作系统的计时，所以你不应该假设 `join`  将等到你指定的时间。
+
+就像 `sleep` 一样，`join` 通过退出 `InterruptedException` 来响应中断。
+
+### 简单的线程例子
+
+以下示例汇总了本节的一些概念。[`SimpleThreads`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java) 由两个线程组成。第一个是每个 Java 应用程序都有的主线程。主线程从 `Runnable` 对象 `MessageLoop` 创建一个新线程，并等待它完成。如果 `MessageLoop` 线程需要很长时间才能完成，主线程会中断它。
+
+`MessageLoop` 线程打印出一系列消息。如果在打印完所有消息之前被中断，则 `MessageLoop` 线程将打印一条消息并退出。
+
+```java
+public class SimpleThreads {
+
+    // Display a message, preceded by
+    // the name of the current thread
+    static void threadMessage(String message) {
+        String threadName =
+            Thread.currentThread().getName();
+        System.out.format("%s: %s%n",
+                          threadName,
+                          message);
+    }
+
+    private static class MessageLoop
+        implements Runnable {
+        public void run() {
+            String importantInfo[] = {
+                "Mares eat oats",
+                "Does eat oats",
+                "Little lambs eat ivy",
+                "A kid will eat ivy too"
+            };
+            try {
+                for (int i = 0;
+                     i < importantInfo.length;
+                     i++) {
+                    // Pause for 4 seconds
+                    Thread.sleep(4000);
+                    // Print a message
+                    threadMessage(importantInfo[i]);
+                }
+            } catch (InterruptedException e) {
+                threadMessage("I wasn't done!");
+            }
+        }
+    }
+
+    public static void main(String args[])
+        throws InterruptedException {
+
+        // Delay, in milliseconds before
+        // we interrupt MessageLoop
+        // thread (default one hour).
+        long patience = 1000 * 60 * 60;
+
+        // If command line argument
+        // present, gives patience
+        // in seconds.
+        if (args.length > 0) {
+            try {
+                patience = Long.parseLong(args[0]) * 1000;
+            } catch (NumberFormatException e) {
+                System.err.println("Argument must be an integer.");
+                System.exit(1);
+            }
+        }
+
+        threadMessage("Starting MessageLoop thread");
+        long startTime = System.currentTimeMillis();
+        Thread t = new Thread(new MessageLoop());
+        t.start();
+
+        threadMessage("Waiting for MessageLoop thread to finish");
+        // loop until MessageLoop
+        // thread exits
+        while (t.isAlive()) {
+            threadMessage("Still waiting...");
+            // Wait maximum of 1 second
+            // for MessageLoop thread
+            // to finish.
+            t.join(1000);
+            if (((System.currentTimeMillis() - startTime) > patience)
+                  && t.isAlive()) {
+                threadMessage("Tired of waiting!");
+                t.interrupt();
+                // Shouldn't be long now
+                // -- wait indefinitely
+                t.join();
+            }
+        }
+        threadMessage("Finally!");
+    }
+}
+```
 

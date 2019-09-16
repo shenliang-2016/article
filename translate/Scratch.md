@@ -1,255 +1,271 @@
-## 编译并运行示例
+# 并发
 
-现在，计算引擎示例的代码已经完成，它需要被编译并运行。
+计算机用户理所当然地认为他们的系统一次可以做多件事。他们假设他们可以继续在文字处理器中工作，而其他应用程序则下载文件，管理打印队列和流式传输音频。即使是单个应用程序通常也希望一次完成多个任务。例如，流式音频应用程序必须同时从网络读取数字音频，解压缩，管理播放和更新其显示。文字处理器应始终准备好响应键盘和鼠标事件，无论重新格式化文本或更新显示有多繁忙。可以执行此类操作的软件称为并发软件。
 
-[编译示例程序](https://docs.oracle.com/javase/tutorial/rmi/compiling.html)
+Java 平台的设计初衷是为了支持并发编程，在 Java 编程语言和 Java 类库中提供基本的并发支持。从 5.0 版开始，Java 平台还包含高级并发 API。本课程介绍了平台的基本并发支持，并总结了 `java.util.concurrent` 包中的一些高级 API。
 
-本节中，你将学到编译组成计算引擎示例的服务器和客户端程序。
+## 进程和线程
 
-[运行示例代码](https://docs.oracle.com/javase/tutorial/rmi/running.html)
+在并发编程中，有两个基本的执行单元：*processes*和*threads*。在 Java 编程语言中，并发编程主要涉及线程。但是，进程也很重要。
 
-最后，你运行服务器和客户端程序计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)值。
+计算机系统通常具有许多活动进程和线程。即使在只有一个执行核心的系统中也是如此，因此在任何给定时刻只有一个线程实际执行。通过称为时间切片的 OS 功能，在进程和线程之间共享单个核的处理时间。
 
-### 编译示例程序
+对于具有多个处理器或具有多个执行核心的处理器的计算机系统来说，它变得越来越普遍。这极大地增强了系统并发执行进程和线程的能力 - 但即使在没有多个处理器或执行核心的简单系统上也可以实现并发。
 
-在部署了计算引擎等服务的实际场景中，开发人员可能会创建一个 Java Archive（JAR）文件，其中包含用于实现服务器类的 `Compute` 和 `Task` 接口以及用于实现客户端程序的客户端程序。接下来，开发人员（可能是接口 JAR 文件的相同开发人员）将编写 `Compute` 接口的实现，并将该服务部署在客户端可用的机器上。客户端程序的开发人员可以使用 JAR 文件中包含的 `Compute` 和 `Task` 接口，并独立开发使用 `Compute` 服务的任务和客户端程序。
+**进程**
 
-在本节中，您将学习如何设置 JAR 文件，服务器类和客户端类。您将看到客户端的 `Pi` 类将在运行时下载到服务器。此外，`Compute` 和 `Task` 接口将在运行时从服务器下载到注册表。
+进程具有自包含的执行环境。进程通常具有完整的私有基本运行时资源集；特别是，每个进程都有自己的内存空间。
 
-此示例将接口，远程对象实现和客户端代码分为三个包：
+流程通常被视为程序或应用程序的同义词。但是，用户看到的单个应用程序实际上可能是一组协作进程。为了促进进程之间的通信，大多数操作系统都支持*进程间通信*（IPC）资源，例如管道和套接字。IPC 不仅用于同一系统上的进程之间的通信，而且还用于不同系统上的进程。
 
-- `compute` – [`Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 和 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口
-- `engine` – [`ComputeEngine`](https://docs.oracle.com/javase/tutorial/rmi/examples/engine/ComputeEngine.java) 实现类
-- `client` – [`ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 客户端代码和 [`Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 任务实现
+Java 虚拟机的大多数实现都作为单个进程运行。Java 应用程序可以使用 [`ProcessBuilder`](https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html) 对象创建其他进程。多进程应用程序超出了本课程的范围。
 
-首先，您需要构建接口 JAR 文件以提供给服务器和客户端开发人员。
+**线程**
 
-**构建接口类的 JAR 文件**
+线程有时被称为*轻量级进程*。进程和线程都提供执行环境，但创建新线程所需的资源比创建新进程要少。
 
-首先，您需要在 `compute` 包中编译接口源文件，然后构建包含其类文件的 JAR 文件。假设用户 `waldo` 编写了这些接口并将源文件放在 Windows 上的目录 `c:\home\waldo\src\compute` 或 Solaris OS 或 Linux 上的目录 `/home/waldo/src/compute` 中。给定这些路径，您可以使用以下命令编译接口并创建 JAR 文件：
+线程存在于进程中 - 每个进程至少有一个进程。线程共享进程的资源，包括内存和打开文件。这使得有效但可能有问题的通信成为可能。
 
-**Microsoft Windows**:
+多线程执行是 Java 平台的基本特性。每个应用程序至少有一个线程 - 或几个，如果你把“系统”线程计算在内，它们执行内存管理和信号处理等操作。但是从应用程序员的角度来看，你只从一个线程开始，称为*主线程*。该线程具有创建其他线程的能力，我们将在下一节中进行演示。
 
-```shell
-cd c:\home\waldo\src
-javac compute\Compute.java compute\Task.java
-jar cvf compute.jar compute\*.class
+## 线程对象
+
+每个线程都与 [`Thread`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html) 类的实例相关联。使用 `Thread` 对象创建并发应用程序有两种基本策略。
+
+* 要直接控制线程创建和管理，只需在每次应用程序需要启动异步任务时实例化 `Thread`。
+* 要从应用程序的其余部分抽象线程管理，请将应用程序的任务传递给执行程序。
+
+本节介绍 `Thread` 对象的使用。执行器与 [其他高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一起讨论。
+
+### 定义并启动线程
+
+创建 `Thread` 实例的应用程序必须提供将在该线程中运行的代码。有两种方法可以做到这一点：
+
+- *提供一个Runnable对象。* [`Runnable`](https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html) 接口定义了一个单独的方法 `run`， 意味着包含在线程中执行的代码。 `Runnable` 对象被传递给 `Thread` 构造函数，如 [`HelloRunnable`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloRunnable.java) 示例：
+
+  ```java
+  public class HelloRunnable implements Runnable {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new Thread(new HelloRunnable())).start();
+      }
+  
+  }
+  ```
+
+- *Subclass Thread。* `Thread` 类本身实现 `Runnable`，尽管它的 `run` 方法什么都不做。应用程序可以子类化 `Thread`，提供自己的 `run` 实现，如 [`HelloThread`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/HelloThread.java) 例：
+
+  ```java
+  public class HelloThread extends Thread {
+  
+      public void run() {
+          System.out.println("Hello from a thread!");
+      }
+  
+      public static void main(String args[]) {
+          (new HelloThread()).start();
+      }
+  
+  }
+  ```
+
+请注意，两个示例都调用 `Thread.start` 以启动新线程。
+
+你应该使用哪些习语？使用 `Runnable` 对象的第一个习语是更通用的，因为 `Runnable` 对象可以子类化除了 `Thread` 之外的类。第二个习惯用法在简单的应用程序中更容易使用，但受限于你的任务类必须是 `Thread` 的后代。本课重点介绍第一种方法，它将 `Runnable` 任务与执行任务的 `Thread` 对象分开。这种方法不仅更灵活，而且适用于后面介绍的高级线程管理 API。
+
+`Thread` 类定义了许多对线程管理有用的方法。这些包括 `static` 方法，它们提供有关调用方法的线程的信息或影响其状态。从管理线程和 `Thread` 对象所涉及的其他线程调用其他方法。我们将在以下部分中研究其中一些方法。
+
+### 使用 `sleep` 暂停执行
+
+`Thread.sleep` 导致当前线程暂停执行指定的时间段。这是使处理器时间可用于应用程序的其他线程或可能在计算机系统上运行的其他应用程序的有效方法。 `sleep` 方法也可用于调步，如下面的示例所示，并等待具有被理解为具有时间要求的职责的另一个线程，如后面部分中的 `SimpleThreads` 示例。
+
+提供了两个重载版本的`sleep`：一个指定睡眠时间为毫秒，另一个指定睡眠时间为纳秒。但是，这些睡眠时间并不能保证精确，因为它们受到底层操作系统提供的设施的限制。此外，睡眠周期可以通过中断终止，我们将在后面的部分中看到。在任何情况下，您都不能假设调用 `sleep` 将在指定的时间段内暂停该线程。
+
+ [`SleepMessages`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SleepMessages.java) 示例使用 `sleep` 来按照四秒时间间隔打印消息：
+
+```java
+public class SleepMessages {
+    public static void main(String args[])
+        throws InterruptedException {
+        String importantInfo[] = {
+            "Mares eat oats",
+            "Does eat oats",
+            "Little lambs eat ivy",
+            "A kid will eat ivy too"
+        };
+
+        for (int i = 0;
+             i < importantInfo.length;
+             i++) {
+            //Pause for 4 seconds
+            Thread.sleep(4000);
+            //Print a message
+            System.out.println(importantInfo[i]);
+        }
+    }
+}
 ```
 
-**Solaris OS or Linux**:
+请注意，`main` 声明它 `throws InterruptedException`。 当 `sleep` 处于活动状态时，当另一个线程中断当前线程时，则 `sleep` 抛出一个异常。由于此应用程序尚未定义另一个导致中断的线程，因此无需捕获 `InterruptedException`。
 
-```shell
-cd /home/waldo/src
-javac compute/Compute.java compute/Task.java
-jar cvf compute.jar compute/*.class
+### 中断
+
+*interrupt* 表示线程应该停止它正在做的事情并做其他事情。由程序员决定线程如何响应中断，但线程终止是很常见的。这是本课程中强调的用法。
+
+线程通过在要被打断的线程 `Thread` 对象上调用 [`interrupt`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#interrupt--) 来发送中断。为使中断机制正常工作，被中断的线程必须支持自己的中断。
+
+**支持中断**
+
+线程如何支持自己的中断？这取决于它目前正在做什么。如果线程经常调用抛出 `InterruptedException` 的方法，它只会在捕获该异常后从 `run` 方法返回。例如，假设 `SleepMessages` 示例中的中心消息循环位于线程的 `Runnable` 对象的 `run` 方法中。然后可以按如下方式修改它以支持中断：
+
+```java
+for (int i = 0; i < importantInfo.length; i++) {
+    // Pause for 4 seconds
+    try {
+        Thread.sleep(4000);
+    } catch (InterruptedException e) {
+        // We've been interrupted: no more messages.
+        return;
+    }
+    // Print a message
+    System.out.println(importantInfo[i]);
+}
 ```
 
-------
+抛出 `InterruptedException` 的许多方法，例如 `sleep`，被设计为取消当前操作并在收到中断时立即返回。
 
-由于 `-v` 选项，`jar` 命令显示以下输出：
+如果一个线程长时间没有调用抛出 `InterruptedException` 的方法怎么办？那么它必须定期调用 `Thread.interrupted`，如果收到中断则返回 `true`。例如：
 
-```
-added manifest
-adding: compute/Compute.class(in = 307) (out= 201)(deflated 34%)
-adding: compute/Task.class(in = 217) (out= 149)(deflated 31%)
-```
-
-现在，您可以将 `compute.jar` 文件分发给服务器和客户端应用程序的开发人员，以便他们可以使用这些接口。
-
-使用 `javac` 编译器构建服务器端或客户端类之后，如果其他 Java 虚拟机需要动态下载其中任何类，则必须确保将其类文件放在网络可访问的位置。在此示例中，对于 Solaris OS 或 Linux，此位置为`/home/user/public_html/classes`，因为许多 Web 服务器允许通过构造为 `http://host/~*user*/` 的 HTTP URL 访问用户的 `public_html` 目录。如果您的 Web 服务器不支持此约定，则可以在 Web 服务器的层次结构中使用其他位置，或者您可以使用文件 URL。文件 URL 在 Solaris OS 或 Linux 上采用 `file:/home/user/public_html/classes/`形式，在 Windows 上采用`file:/c:/home/user/public_html/classes/`形式。您也可以根据需要选择其他类型的 URL。
-
-类文件的网络可访问性使 RMI 运行时能够在需要时下载代码。RMI 不是为代码下载定义自己的协议，而是使用 Java 平台支持的 URL 协议（例如 HTTP）来下载代码。请注意，使用完整的重量级 Web 服务器来提供这些类文件是不必要的。例如，可以在以下位置找到一个简单的 HTTP 服务器，该服务器提供使类可通过 HTTP 在 RMI 中下载所需的功能。
-另请参见 [远程方法调用主页](http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136424.html) 。
-
-**构建服务器类**
-
-`engine` 包只包含一个服务器端实现类，`ComputeEngine`，远程接口 `Compute` 的实现。
-
-假设用户 `ann`，`ComputeEngine` 类的开发人员，已将 `ComputeEngine.java` 放在 Windows 上的目录 `c:\home\ann\src\engine` 或 Solaris OS 或 Linux 上的目录 `/home/ann/src/engine` 中。她正在为客户端部署类文件，以便在她的 `public_html` 目录的子目录中下载，在 Windows 上运行 `c:\home\ann\public_html\classes` 或在Solaris OS 或 Linux 上运行 `/home/ann/public_html/classes` 。这个位置可以通过一些 Web 服务器访问为 `http://host:port/~ann/classes/`。
-
-`ComputeEngine` 类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建服务器类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\ann\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/ann/public_html/classes`中。给定这些路径，您可以使用以下命令来构建服务器类：
-
-**Microsoft Windows**:
-
-```
-cd c:\home\ann\src
-javac -cp c:\home\ann\public_html\classes\compute.jar
-    engine\ComputeEngine.java
+```java
+for (int i = 0; i < inputs.length; i++) {
+    heavyCrunch(inputs[i]);
+    if (Thread.interrupted()) {
+        // We've been interrupted: no more crunching.
+        return;
+    }
+}
 ```
 
-**Solaris OS or Linux**:
+在这个简单的例子中，代码只是测试中断并退出线程（如果已收到）。在更复杂的应用程序中，抛出 `InterruptedException` 可能更有意义：
 
-```
-cd /home/ann/src
-javac -cp /home/ann/public_html/classes/compute.jar
-    engine/ComputeEngine.java
-```
-
-`ComputeEngine` 的存根类实现了 `Compute` 接口，它指的是 `Task` 接口。因此，这两个接口的类定义需要是网络可访问的，以便存根被其他 Java 虚拟机（如注册表的 Java 虚拟机）接收。客户端 Java 虚拟机已经在其类路径中具有这些接口，因此实际上不需要下载它们的定义。 `public_html` 目录下的 `compute.jar` 文件可以用于此目的。
-
-现在，计算引擎已准备好部署。您现在可以这样做，或者您可以等到构建客户端之后。
-
-**构建客户端类**
-
-`client` 包包含两个类，`ComputePi`，主客户端程序，以及 `Pi`，客户端实现 `Task` 接口。
-
-假设用户 `jones`（客户端类的开发人员）已将 `ComputePi.java` 和 `Pi.java` 放在 Windows 上的目录 `c:\home\jones\src\client` 或 Solaris OS 或 Linux上的 `/home/jones/src/client` 目录。他正在为计算引擎部署类文件，以便在他的 `public_html` 目录的子目录中下载，在 Windows 上的 `c:\home\jones\public_html\classes` 或在 Solaris OS 或 Linux上的`/home/jones/public_html/classes` 下载。这个位置可以通过一些 Web 服务器访问为 `http://*host*:*port*/~jones/classes/`。
-
-客户端类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建客户端类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\jones\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/jones/public_html/classes` 中。给定这些路径，您可以使用以下命令来构建客户端类：
-
-**Microsoft Windows**:
-
-```
-cd c:\home\jones\src
-javac -cp c:\home\jones\public_html\classes\compute.jar
-    client\ComputePi.java client\Pi.java
-mkdir c:\home\jones\public_html\classes\client
-cp client\Pi.class
-    c:\home\jones\public_html\classes\client
+```java
+if (Thread.interrupted()) {
+    throw new InterruptedException();
+}
 ```
 
-**Solaris OS or Linux**:
+这允许中断处理代码集中在 `catch` 子句中。
+
+**中断状态标识**
+
+中断机制使用称为*中断状态*的内部标志实现。调用 `Thread.interrupt` 设置此标志。当线程通过调用静态方法 `Thread.interrupted` 检查中断时，中断状态被清除。非静态 `isInterrupted` 方法，一个线程用来查询另一个线程的中断状态，不会改变中断状态标志。
+
+按照惯例，任何通过抛出 `InterruptedException` 退出的方法都会在执行此操作时清除中断状态。但是，通过另一个调用 `interrupt` 的线程，总是可以立即再次设置中断状态。
+
+### Joins
+
+`join` 方法允许一个线程等待另一个线程的完成。如果 `t` 是一个线程正在执行的 `Thread` 对象，
 
 ```
-cd /home/jones/src
-javac -cp /home/jones/public_html/classes/compute.jar
-    client/ComputePi.java client/Pi.java
-mkdir /home/jones/public_html/classes/client
-cp client/Pi.class
-    /home/jones/public_html/classes/client
+t.join();
 ```
 
-只需要将 `Pi` 类放在 `public_html\classes\client` 目录中，因为只需要 `Pi` 类可以下载到计算引擎的 Java 虚拟机。现在，您可以运行服务器，然后运行客户端。
+导致当前线程暂停执行，直到`t`的线程终止。 `join` 的重载允许程序员指定等待期。但是，与 `sleep` 一样，`join`依赖于操作系统的计时，所以你不应该假设 `join`  将等到你指定的时间。
 
-### 运行示例程序
+就像 `sleep` 一样，`join` 通过退出 `InterruptedException` 来响应中断。
 
-**一个安全提示**
+### 简单的线程例子
 
-服务器和客户端程序在安装了安全管理器的情况下运行。运行任一程序时，需要指定安全策略文件，以便为代码授予其运行所需的安全权限。这是一个例子 [policy file to use with the server program](https://docs.oracle.com/javase/tutorial/rmi/examples/server.policy)：
+以下示例汇总了本节的一些概念。[`SimpleThreads`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/SimpleThreads.java) 由两个线程组成。第一个是每个 Java 应用程序都有的主线程。主线程从 `Runnable` 对象 `MessageLoop` 创建一个新线程，并等待它完成。如果 `MessageLoop` 线程需要很长时间才能完成，主线程会中断它。
 
+`MessageLoop` 线程打印出一系列消息。如果在打印完所有消息之前被中断，则 `MessageLoop` 线程将打印一条消息并退出。
+
+```java
+public class SimpleThreads {
+
+    // Display a message, preceded by
+    // the name of the current thread
+    static void threadMessage(String message) {
+        String threadName =
+            Thread.currentThread().getName();
+        System.out.format("%s: %s%n",
+                          threadName,
+                          message);
+    }
+
+    private static class MessageLoop
+        implements Runnable {
+        public void run() {
+            String importantInfo[] = {
+                "Mares eat oats",
+                "Does eat oats",
+                "Little lambs eat ivy",
+                "A kid will eat ivy too"
+            };
+            try {
+                for (int i = 0;
+                     i < importantInfo.length;
+                     i++) {
+                    // Pause for 4 seconds
+                    Thread.sleep(4000);
+                    // Print a message
+                    threadMessage(importantInfo[i]);
+                }
+            } catch (InterruptedException e) {
+                threadMessage("I wasn't done!");
+            }
+        }
+    }
+
+    public static void main(String args[])
+        throws InterruptedException {
+
+        // Delay, in milliseconds before
+        // we interrupt MessageLoop
+        // thread (default one hour).
+        long patience = 1000 * 60 * 60;
+
+        // If command line argument
+        // present, gives patience
+        // in seconds.
+        if (args.length > 0) {
+            try {
+                patience = Long.parseLong(args[0]) * 1000;
+            } catch (NumberFormatException e) {
+                System.err.println("Argument must be an integer.");
+                System.exit(1);
+            }
+        }
+
+        threadMessage("Starting MessageLoop thread");
+        long startTime = System.currentTimeMillis();
+        Thread t = new Thread(new MessageLoop());
+        t.start();
+
+        threadMessage("Waiting for MessageLoop thread to finish");
+        // loop until MessageLoop
+        // thread exits
+        while (t.isAlive()) {
+            threadMessage("Still waiting...");
+            // Wait maximum of 1 second
+            // for MessageLoop thread
+            // to finish.
+            t.join(1000);
+            if (((System.currentTimeMillis() - startTime) > patience)
+                  && t.isAlive()) {
+                threadMessage("Tired of waiting!");
+                t.interrupt();
+                // Shouldn't be long now
+                // -- wait indefinitely
+                t.join();
+            }
+        }
+        threadMessage("Finally!");
+    }
+}
 ```
-grant codeBase "file:/home/ann/src/" {
-    permission java.security.AllPermission;
-};
-```
-
-[policy file to use with the client program](https://docs.oracle.com/javase/tutorial/rmi/examples/client.policy) 的例子：
-
-```
-grant codeBase "file:/home/jones/src/" {
-    permission java.security.AllPermission;
-};
-```
-
-对于两个示例策略文件，所有权限都授予程序的本地类路径中的类，因为本地应用程序代码是受信任的，但是没有权限授予从其他位置下载的代码。因此，计算引擎服务器限制它执行的任务（其代码不可信并且可能是恶意的）执行任何需要安全权限的操作。示例客户端的 `Pi` 任务不需要任何权限来执行。
-
-在此示例中，服务器程序的策略文件名为 `server.policy`，客户端程序的策略文件名为 `client.policy`。
-
-**启动服务器**
-
-在启动计算引擎之前，您需要启动 RMI 注册表。RMI 注册表是一个简单的服务器端引导程序命名工具，它使远程客户端能够获取对初始远程对象的引用。它可以使用 `rmiregistry` 命令启动。在执行 `rmiregistry` 之前，必须确保运行 `rmiregistry` 的 shell 或窗口没有设置 `CLASSPATH` 环境变量或者有一个不包含任何您希望下载到客户端的远程对象的类路径的 `CLASSPATH` 环境变量。
-
-要在服务器上启动注册表，请执行 `rmiregistry` 命令。 此命令不产生输出，通常在后台运行。对于此示例，注册表在主机 `mycomputer` 上启动。
-
-**Microsoft Windows** (使用 `javaw` 如果 `start` 不可用):
-
-```
-start rmiregistry
-```
-
-**Solaris OS or Linux**:
-
-```
-rmiregistry &
-```
-
-默认情况下，注册表在端口1099上运行。要在其他端口上启动注册表，请在命令行上指定端口号。不要忘记取消设置 `CLASSPATH` 环境变量。
-
-**Microsoft Windows**:
-
-```
-start rmiregistry 2001
-```
-
-**Solaris OS or Linux**:
-
-```
-rmiregistry 2001 &
-```
-
-注册表启动后，您可以启动服务器。您需要确保 `compute.jar` 文件和远程对象实现类都在您的类路径中。启动计算引擎时，需要使用 `java.rmi.server.codebase` 属性指定服务器的类可通过网络访问。在这个例子中，可供下载的服务器端类是 `Compute` 和 `Task` 接口，可以在用户 `ann` 的 `public_html\classes` 目录的 `compute.jar` 文件中找到。计算引擎服务器在主机 `mycomputer` 上启动，该主机是启动注册表的主机。
-
-**Microsoft Windows**:
-
-```
-java -cp c:\home\ann\src;c:\home\ann\public_html\classes\compute.jar
-     -Djava.rmi.server.codebase=file:/c:/home/ann/public_html/classes/compute.jar
-     -Djava.rmi.server.hostname=mycomputer.example.com
-     -Djava.security.policy=server.policy
-        engine.ComputeEngine
-```
-
-**Solaris OS or Linux**:
-
-```
-java -cp /home/ann/src:/home/ann/public_html/classes/compute.jar
-     -Djava.rmi.server.codebase=http://mycomputer/~ann/classes/compute.jar
-     -Djava.rmi.server.hostname=mycomputer.example.com
-     -Djava.security.policy=server.policy
-        engine.ComputeEngine
-```
-
-上面的 `java` 命令定义了以下系统属性：
-
- - `java.rmi.server.codebase` 属性指定位置，即代码库 URL，从中可以下载*来自*此服务器的类的定义。如果代码库指定了目录层次结构（而不是 JAR 文件），则必须在代码库 URL 的末尾包含尾部斜杠。
- - `java.rmi.server.hostname` 属性指定要放入在此 Java 虚拟机中导出的远程对象的存根中的主机名或地址。此值是客户端在尝试传递远程方法调用时使用的主机名或地址。默认情况下，RMI 实现使用服务器的IP地址，如 `java.net.InetAddress.getLocalHost`  API所示。但是，有时，此地址不适用于所有客户端，并且完全限定的主机名将更有效。要确保 RMI 使用可从所有潜在客户端路由的服务器的主机名（或IP地址），请设置 `java.rmi.server.hostname` 属性。
- - `java.security.policy` 属性用于指定包含您要授予的权限的策略文件。
-
-**启动客户端**
-
-注册表和计算引擎运行后，您可以启动客户端，指定以下内容：
-
- - 客户端使用 `java.rmi.server.codebase` 属性为其类（`Pi`类）提供服务的位置
- - `java.security.policy` 属性，用于指定包含您要授予各种代码的权限的安全策略文件
- - 作为命令行参数，服务器的主机名（以便客户端知道 `Compute` 远程对象的位置）以及 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 计算中使用的小数位数。
-
-在另一台主机（例如名为 `mysecondcomputer` 的主机）上启动客户端，如下所示：
-
-------
-
-**Microsoft Windows**:
-
-```
-java -cp c:\home\jones\src;c:\home\jones\public_html\classes\compute.jar
-     -Djava.rmi.server.codebase=file:/c:/home/jones/public_html/classes/
-     -Djava.security.policy=client.policy
-        client.ComputePi mycomputer.example.com 45
-```
-
-**Solaris OS or Linux**:
-
-```
-java -cp /home/jones/src:/home/jones/public_html/classes/compute.jar
-     -Djava.rmi.server.codebase=http://mysecondcomputer/~jones/classes/
-     -Djava.security.policy=client.policy
-        client.ComputePi mycomputer.example.com 45
-```
-
-请注意，类路径是在命令行上设置的，以便解释器可以找到客户端类和包含接口的 JAR 文件。另请注意，指定目录层次结构的 `java.rmi.server.codebase` 属性的值以尾部斜杠结尾。
-
-启动客户端后，将显示以下输出：
-
-```
-3.141592653589793238462643383279502884197169399
-```
-
-下图说明了 `rmiregistry`，`ComputeEngine` 服务器和 `ComputePi` 客户端在程序执行期间获取类的位置。
-
-![the registry, the compute engine, and the client obtaining classes during program execution](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-5.gif)
-
-当 `ComputeEngine` 服务器在注册表中绑定其远程对象引用时，注册表会下载存根类依赖的 `Compute` 和 `Task` 接口。这些类是从 `ComputeEngine` 服务器的 Web 服务器或文件系统下载的，具体取决于启动服务器时使用的代码库 URL 的类型。
-
-因为 `ComputePi` 客户端在其类路径中同时具有 `Compute` 和 `Task` 接口，所以它从类路径加载它们的定义，而不是从服务器的代码库加载它们的定义。
-
-最后，当 `Pi` 对象在 `executeTask` 远程调用中传递给 `ComputeEngine` 对象时，`Pi` 类被加载到 `ComputeEngine` 服务器的 Java 虚拟机中。服务器从客户端的 Web 服务器或文件系统加载 `Pi` 类，具体取决于启动客户端时使用的代码库 URL 的类型。
 
