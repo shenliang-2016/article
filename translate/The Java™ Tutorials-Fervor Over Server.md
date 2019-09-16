@@ -7879,9 +7879,9 @@ JNDI定义了在执行命名和目录操作过程中可以抛出的异常的类�
 
 下面是你需要的软件/系统的列表：
 
-- [Java 平台软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#JDK)
-- [服务提供者软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#PROVIDER)
-- [命名和目录服务器软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#SERVER)
+-[Java 平台软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#JDK)
+-[服务提供者软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#PROVIDER)
+-[命名和目录服务器软件](https://docs.oracle.com/javase/tutorial/jndi/software/index.html#SERVER)
 
 ------
 
@@ -7903,10 +7903,10 @@ JNDI API 是用于访问任何命名或目录服务的通用 API。通过在 JND
 
 JDK 附带以下服务提供者：
 
-- 轻量级目录协议（LDAP）
-- CORBA 通用对象服务命名（COS 命名）
-- RMI 注册
-- 域名服务（DNS）
+-轻量级目录协议（LDAP）
+-CORBA 通用对象服务命名（COS 命名）
+-RMI 注册
+-域名服务（DNS）
 
 如果您对其他服务提供者感兴趣，请查看 [JNDI页面](http://www.oracle.com/technetwork/java/jndi/index.html) 获取下载信息。
 
@@ -7920,10 +7920,10 @@ JDK 附带以下服务提供者：
 
 你也可以从下面地址下载免费的 LDAP 服务器：
 
-- [OpenDS](http://opends.java.net/)
-- [OpenLDAP](http://www.openldap.org/)
-- [389 Directory Server](http://directory.fedoraproject.org/)
-- [Apache Directory Server](http://directory.apache.org/)
+-[OpenDS](http://opends.java.net/)
+-[OpenLDAP](http://www.openldap.org/)
+-[389 Directory Server](http://directory.fedoraproject.org/)
+-[Apache Directory Server](http://directory.apache.org/)
 
 一个可公开访问的服务器地址：[http://www.openldap.org/lists/#openldap-software](http://www.openldap.org/lists/#openldap-software) 。
 
@@ -7951,15 +7951,15 @@ JDK 附带以下服务提供者：
 
 本教程附带两个必须安装的模式文件：
 
-- [`Schema for Java objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/java.schema)
-- [`Schema for CORBA objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/corba.schema)
+-[`Schema for Java objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/java.schema)
+-[`Schema for CORBA objects`](https://docs.oracle.com/javase/tutorial/jndi/software/config/corba.schema)
 
 这些文件的格式是正式描述，可能无法直接复制并粘贴到服务器配置文件中。具体地，属性语法以 [RFC 2252](http://www.ietf.org/rfc/rfc2252.txt) 的形式描述。
 
 不同的目录服务器具有不同的配置其架构的方式。本教程包含一些用于在目录服务器上安装 Java 和 CORBA 模式的工具，这些模式允许通过 LDAP 修改其模式。以下是工具可以执行的任务列表。
 
-1. [`Create Java Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateJavaSchema.java)
-2. [`Create CORBA Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateCorbaSchema.java)
+1.[`Create Java Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateJavaSchema.java)
+2.[`Create CORBA Schema`](https://docs.oracle.com/javase/tutorial/jndi/software/config/CreateCorbaSchema.java)
 
 按照随附的 [`README文件`](https://docs.oracle.com/javase/tutorial/jndi/software/config/README-SCHEMA.TXT) 中的说明运行这些程序。
 
@@ -8003,45 +8003,45 @@ dn: o=JNDITutorial, dc=imc, dc=org
 
 **安装说明：Windows Active Directory。**
 
-1. 根命名上下文不会是“o=jnditutorial”。它的形式为“dc=x,dc=y,dc=z”。您需要按照之前的**Namespace Setup**说明进行操作。
+1.根命名上下文不会是“o=jnditutorial”。它的形式为“dc=x,dc=y,dc=z”。您需要按照之前的**Namespace Setup**说明进行操作。
 
-2. 使用 Active Directory 管理控制台管理单元`ADSIEdit`将“inetOrgPerson”和“groupOfUniqueNames”的对象类和相关属性添加到 Active Directory 架构。“groupOfUniqueNames”在 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 中定义，“inetOrgPerson”在 [RFC 2798](http://www.ietf.org/rfc/rfc2798.txt) 中定义。
+2.使用 Active Directory 管理控制台管理单元`ADSIEdit`将“inetOrgPerson”和“groupOfUniqueNames”的对象类和相关属性添加到 Active Directory 架构。“groupOfUniqueNames”在 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 中定义，“inetOrgPerson”在 [RFC 2798](http://www.ietf.org/rfc/rfc2798.txt) 中定义。
 
-3. 默认情况下，Active Directory 中不允许使用本教程使用的某些层次关系。要启用这些关系，请使用 Active Directory 管理控制台管理单元`ADSIEdit`添加它们。
+3.默认情况下，Active Directory 中不允许使用本教程使用的某些层次关系。要启用这些关系，请使用 Active Directory 管理控制台管理单元`ADSIEdit`添加它们。
 
-   ```
-   objectclass: organizationalUnit
-   possible superiors: domainDNS
-                       inetOrgPerson
-                       organizaton
-                       organizationalPerson
-                       organizationalUnit
-                       person
-                       top
-   
-   objectclass: groupOfUniqueNames
-   possible superiors: top
-   
-   objectclass: inetOrgPerson
-   possible superiors: container
-                       organizationalPerson
-                       person
-                       top
-   ```
+```
+objectclass: organizationalUnit
+possible superiors: domainDNS
+                    inetOrgPerson
+                    organizaton
+                    organizationalPerson
+                    organizationalUnit
+                    person
+                    top
 
-4. 从`tutorial.ldif`中的 Mark Twain 条目中删除两个“sn”属性中的一个。与 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 相反，Active Directory 将“sn”定义为单值属性。
+objectclass: groupOfUniqueNames
+possible superiors: top
 
-5. 使用`dcifde`command-line实用程序加载修改后的`tutorial.ldif`文件。
+objectclass: inetOrgPerson
+possible superiors: container
+                    organizationalPerson
+                    person
+                    top
+```
 
-   ```
-   #ldif -i -v -k -f tutorial.ldif
-   ```
+4.从`tutorial.ldif`中的 Mark Twain 条目中删除两个“sn”属性中的一个。与 [RFC 2256](http://www.ietf.org/rfc/rfc2256.txt) 相反，Active Directory 将“sn”定义为单值属性。
 
-6. 大多数示例假定已将目录设置为允许未经身份验证的读取和更新访问。您的 Active Directory 设置可能不允许您这样做。 请参阅**Access Control**安装说明。
+5.使用`dcifde`command-line实用程序加载修改后的`tutorial.ldif`文件。
 
-7. 读取条目有时会产生比教程中显示的更多的属性，因为 Active Directory 通常会返回一些内部属性。
+```
+#ldif -i -v -k -f tutorial.ldif
+```
 
-8. 创建条目可能需要指定其他特定于Active Directory的属性或使用其他对象类。
+6.大多数示例假定已将目录设置为允许未经身份验证的读取和更新访问。您的 Active Directory 设置可能不允许您这样做。 请参阅**Access Control**安装说明。
+
+7.读取条目有时会产生比教程中显示的更多的属性，因为 Active Directory 通常会返回一些内部属性。
+
+8.创建条目可能需要指定其他特定于Active Directory的属性或使用其他对象类。
 
 ### Java 应用设置
 
@@ -8051,11 +8051,11 @@ dn: o=JNDITutorial, dc=imc, dc=org
 
 下面是 JNDI 包：
 
-- [`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html)
-- [`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html)
-- [`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html)
-- [`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html)
-- [`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html)
+-[`javax.naming`](https://docs.oracle.com/javase/8/docs/api/javax/naming/package-summary.html)
+-[`javax.naming.directory`](https://docs.oracle.com/javase/8/docs/api/javax/naming/directory/package-summary.html)
+-[`javax.naming.event`](https://docs.oracle.com/javase/8/docs/api/javax/naming/event/package-summary.html)
+-[`javax.naming.ldap`](https://docs.oracle.com/javase/8/docs/api/javax/naming/ldap/package-summary.html)
+-[`javax.naming.spi`](https://docs.oracle.com/javase/8/docs/api/javax/naming/spi/package-summary.html)
 
 此课程中的示例使用前两个包中的类和接口。您需要将这两个包导入您的程序或导入您使用的各个类和接口。以下两行从两个包`javax.naming`和`javax.naming.directory`导入所有类和接口。
 
@@ -8106,9 +8106,9 @@ RMI 应用通常由两个独立程序组成，服务器和客户端。典型的�
 
 分布式对象应用需要完成下列步骤：
 
-- **定位远程对象：** 应用程序可以使用各种机制来获取对远程对象的引用。例如，应用程序可以使用 RMI 的简单命名工具 RMI 注册表注册其远程对象。或者，应用程序可以作为其他远程调用的一部分传递和返回远程对象引用。
-- **与远程对象通信：** 远程对象之间的通信细节由 RMI 处理。对程序员来说，远程通信看起来与普通的 Java 方法调用没有什么不同。
-- **加载传递过来的对象的类定义：** 因为 RMI 允许对象来回传递，所以它提供了加载对象的类定义以及传输对象数据的机制。
+-**定位远程对象：** 应用程序可以使用各种机制来获取对远程对象的引用。例如，应用程序可以使用 RMI 的简单命名工具 RMI 注册表注册其远程对象。或者，应用程序可以作为其他远程调用的一部分传递和返回远程对象引用。
+-**与远程对象通信：** 远程对象之间的通信细节由 RMI 处理。对程序员来说，远程通信看起来与普通的 Java 方法调用没有什么不同。
+-**加载传递过来的对象的类定义：** 因为 RMI 允许对象来回传递，所以它提供了加载对象的类定义以及传输对象数据的机制。
 
 下图描绘了一个 RMI 分布式应用程序，该应用程序使用 RMI 注册表来获取对远程对象的引用。服务器调用注册表以将名称与远程对象关联（或绑定）。客户端在服务器的注册表中按名称查找远程对象，然后在其上调用方法。该图还显示 RMI 系统使用现有的 Web 服务器在需要时从服务器到客户端以及从客户端到服务器加载对象的类定义。
 
@@ -8124,8 +8124,8 @@ RMI 的核心和独特功能之一是，如果未在接收者的 Java 虚拟机�
 
 通过实现*远程接口*，对象变成远程对象，具有以下特征：
 
-- 远程接口扩展接口 `java.rmi.Remote`。
-- 接口中的每个方法都声明 `java.rmi.RemoteException` 在它的 `throws` 子句中，除了所有的特定于应用的异常。
+-远程接口扩展接口 `java.rmi.Remote`。
+-接口中的每个方法都声明 `java.rmi.RemoteException` 在它的 `throws` 子句中，除了所有的特定于应用的异常。
 
 当对象从一个 Java 虚拟机传递到另一个 Java 虚拟机时，RMI 将远程对象与非远程对象区别对待。RMI 不是在接收 Java 虚拟机中复制实现对象，而是为远程对象传递远程*stub*。该存根充当远程对象的本地代表或代理，并且基本上对客户端来说是远程引用。客户端调用本地存根上的方法，该方法负责对远程对象执行方法调用。
 
@@ -8135,18 +8135,18 @@ RMI 的核心和独特功能之一是，如果未在接收者的 Java 虚拟机�
 
 使用 RMI 开发分布式应用程序涉及以下一般步骤：
 
-1. 设计和实现分布式应用程序的组件。
-2. 编译源代码。
-3. 使类型网络可访问。
-4. 启动应用程序。
+1.设计和实现分布式应用程序的组件。
+2.编译源代码。
+3.使类型网络可访问。
+4.启动应用程序。
 
 **设计并实现应用组件**
 
 首先，确定您的应用程序体系结构，包括哪些组件是本地对象以及哪些组件可以远程访问。这一步包括：
 
-- **定义远程接口。**远程接口指定可由客户端远程调用的方法。客户端面向远程接口编程，而不是这些接口的实现类。这种接口的设计包括确定将用作参数的对象类型以及这些方法的返回值。如果尚不存在任何这些接口或类，则还需要定义它们。
-- **实现远程对象。**远程对象必须实现一个或多个远程接口。远程对象类可以包括仅在本地可用的其他接口和方法的实现。如果要将任何本地类用于参数或返回任何这些方法的值，则必须同时实现它们。
-- **实现客户端。**在定义远程接口后，包括在部署远程对象之后，可以随时实现使用远程对象的客户端。
+-**定义远程接口。**远程接口指定可由客户端远程调用的方法。客户端面向远程接口编程，而不是这些接口的实现类。这种接口的设计包括确定将用作参数的对象类型以及这些方法的返回值。如果尚不存在任何这些接口或类，则还需要定义它们。
+-**实现远程对象。**远程对象必须实现一个或多个远程接口。远程对象类可以包括仅在本地可用的其他接口和方法的实现。如果要将任何本地类用于参数或返回任何这些方法的值，则必须同时实现它们。
+-**实现客户端。**在定义远程接口后，包括在部署远程对象之后，可以随时实现使用远程对象的客户端。
 
 **编译源代码**
 
@@ -8400,4 +8400,259 @@ public class Pi implements Task<BigDecimal>, Serializable {
 这个例子最有趣的特性是 `Compute` 实现对象永远不需要 `Pi` 类的定义，直到 `Pi` 对象作为 `executeTask` 方法的参数传入。此时，类的代码由 RMI 加载到 `Compute` 对象的 Java 虚拟机中，调用 `execute` 方法，并执行任务的代码。结果，在 `Pi` 任务的情况下是一个 `BigDecimal` 对象，被传递回客户端，在那里它用于打印计算结果。
 
 提供的 `Task` 对象计算 `Pi` 的值这一事实与 `ComputeEngine` 对象无关。您还可以实现一项任务，例如，使用概率算法生成随机素数。该任务也是计算密集型的，因此是传递给 `ComputeEngine` 的一个很好的候选者，但它需要非常不同的代码。当 `Task` 对象传递给 `Compute` 对象时，也可以下载此代码。就像计算算法一样 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)在需要时引入，生成随机素数的代码将在需要时引入。 `Compute` 对象只知道它接收的每个对象都实现了 `execute` 方法。`Compute`对象不知道，也不需要知道实现的作用。
+
+## 编译并运行示例
+
+现在，计算引擎示例的代码已经完成，它需要被编译并运行。
+
+[编译示例程序](https://docs.oracle.com/javase/tutorial/rmi/compiling.html)
+
+本节中，你将学到编译组成计算引擎示例的服务器和客户端程序。
+
+[运行示例代码](https://docs.oracle.com/javase/tutorial/rmi/running.html)
+
+最后，你运行服务器和客户端程序计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)值。
+
+### 编译示例程序
+
+在部署了计算引擎等服务的实际场景中，开发人员可能会创建一个 Java Archive（JAR）文件，其中包含用于实现服务器类的 `Compute` 和 `Task` 接口以及用于实现客户端程序的客户端程序。接下来，开发人员（可能是接口 JAR 文件的相同开发人员）将编写 `Compute` 接口的实现，并将该服务部署在客户端可用的机器上。客户端程序的开发人员可以使用 JAR 文件中包含的 `Compute` 和 `Task` 接口，并独立开发使用 `Compute` 服务的任务和客户端程序。
+
+在本节中，您将学习如何设置 JAR 文件，服务器类和客户端类。您将看到客户端的 `Pi` 类将在运行时下载到服务器。此外，`Compute` 和 `Task` 接口将在运行时从服务器下载到注册表。
+
+此示例将接口，远程对象实现和客户端代码分为三个包：
+
+-`compute` – [`Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 和 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口
+-`engine` – [`ComputeEngine`](https://docs.oracle.com/javase/tutorial/rmi/examples/engine/ComputeEngine.java) 实现类
+-`client` – [`ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 客户端代码和 [`Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 任务实现
+
+首先，您需要构建接口 JAR 文件以提供给服务器和客户端开发人员。
+
+**构建接口类的 JAR 文件**
+
+首先，您需要在 `compute` 包中编译接口源文件，然后构建包含其类文件的 JAR 文件。假设用户 `waldo` 编写了这些接口并将源文件放在 Windows 上的目录 `c:\home\waldo\src\compute` 或 Solaris OS 或 Linux 上的目录 `/home/waldo/src/compute` 中。给定这些路径，您可以使用以下命令编译接口并创建 JAR 文件：
+
+**Microsoft Windows**:
+
+```shell
+cd c:\home\waldo\src
+javac compute\Compute.java compute\Task.java
+jar cvf compute.jar compute\*.class
+```
+
+**Solaris OS or Linux**:
+
+```shell
+cd /home/waldo/src
+javac compute/Compute.java compute/Task.java
+jar cvf compute.jar compute/*.class
+```
+
+------
+
+由于 `-v` 选项，`jar` 命令显示以下输出：
+
+```
+added manifest
+adding: compute/Compute.class(in = 307) (out= 201)(deflated 34%)
+adding: compute/Task.class(in = 217) (out= 149)(deflated 31%)
+```
+
+现在，您可以将 `compute.jar` 文件分发给服务器和客户端应用程序的开发人员，以便他们可以使用这些接口。
+
+使用 `javac` 编译器构建服务器端或客户端类之后，如果其他 Java 虚拟机需要动态下载其中任何类，则必须确保将其类文件放在网络可访问的位置。在此示例中，对于 Solaris OS 或 Linux，此位置为`/home/user/public_html/classes`，因为许多 Web 服务器允许通过构造为 `http://host/~*user*/` 的 HTTP URL 访问用户的 `public_html` 目录。如果您的 Web 服务器不支持此约定，则可以在 Web 服务器的层次结构中使用其他位置，或者您可以使用文件 URL。文件 URL 在 Solaris OS 或 Linux 上采用 `file:/home/user/public_html/classes/`形式，在 Windows 上采用`file:/c:/home/user/public_html/classes/`形式。您也可以根据需要选择其他类型的 URL。
+
+类文件的网络可访问性使 RMI 运行时能够在需要时下载代码。RMI 不是为代码下载定义自己的协议，而是使用 Java 平台支持的 URL 协议（例如 HTTP）来下载代码。请注意，使用完整的重量级 Web 服务器来提供这些类文件是不必要的。例如，可以在以下位置找到一个简单的 HTTP 服务器，该服务器提供使类可通过 HTTP 在 RMI 中下载所需的功能。
+另请参见 [远程方法调用主页](http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136424.html) 。
+
+**构建服务器类**
+
+`engine` 包只包含一个服务器端实现类，`ComputeEngine`，远程接口 `Compute` 的实现。
+
+假设用户 `ann`，`ComputeEngine` 类的开发人员，已将 `ComputeEngine.java` 放在 Windows 上的目录 `c:\home\ann\src\engine` 或 Solaris OS 或 Linux 上的目录 `/home/ann/src/engine` 中。她正在为客户端部署类文件，以便在她的 `public_html` 目录的子目录中下载，在 Windows 上运行 `c:\home\ann\public_html\classes` 或在Solaris OS 或 Linux 上运行 `/home/ann/public_html/classes` 。这个位置可以通过一些 Web 服务器访问为 `http://host:port/~ann/classes/`。
+
+`ComputeEngine` 类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建服务器类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\ann\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/ann/public_html/classes`中。给定这些路径，您可以使用以下命令来构建服务器类：
+
+**Microsoft Windows**:
+
+```
+cd c:\home\ann\src
+javac -cp c:\home\ann\public_html\classes\compute.jar
+    engine\ComputeEngine.java
+```
+
+**Solaris OS or Linux**:
+
+```
+cd /home/ann/src
+javac -cp /home/ann/public_html/classes/compute.jar
+    engine/ComputeEngine.java
+```
+
+`ComputeEngine` 的存根类实现了 `Compute` 接口，它指的是 `Task` 接口。因此，这两个接口的类定义需要是网络可访问的，以便存根被其他 Java 虚拟机（如注册表的 Java 虚拟机）接收。客户端 Java 虚拟机已经在其类路径中具有这些接口，因此实际上不需要下载它们的定义。 `public_html` 目录下的 `compute.jar` 文件可以用于此目的。
+
+现在，计算引擎已准备好部署。您现在可以这样做，或者您可以等到构建客户端之后。
+
+**构建客户端类**
+
+`client` 包包含两个类，`ComputePi`，主客户端程序，以及 `Pi`，客户端实现 `Task` 接口。
+
+假设用户 `jones`（客户端类的开发人员）已将 `ComputePi.java` 和 `Pi.java` 放在 Windows 上的目录 `c:\home\jones\src\client` 或 Solaris OS 或 Linux上的 `/home/jones/src/client` 目录。他正在为计算引擎部署类文件，以便在他的 `public_html` 目录的子目录中下载，在 Windows 上的 `c:\home\jones\public_html\classes` 或在 Solaris OS 或 Linux上的`/home/jones/public_html/classes` 下载。这个位置可以通过一些 Web 服务器访问为 `http://*host*:*port*/~jones/classes/`。
+
+客户端类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建客户端类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\jones\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/jones/public_html/classes` 中。给定这些路径，您可以使用以下命令来构建客户端类：
+
+**Microsoft Windows**:
+
+```
+cd c:\home\jones\src
+javac -cp c:\home\jones\public_html\classes\compute.jar
+    client\ComputePi.java client\Pi.java
+mkdir c:\home\jones\public_html\classes\client
+cp client\Pi.class
+    c:\home\jones\public_html\classes\client
+```
+
+**Solaris OS or Linux**:
+
+```
+cd /home/jones/src
+javac -cp /home/jones/public_html/classes/compute.jar
+    client/ComputePi.java client/Pi.java
+mkdir /home/jones/public_html/classes/client
+cp client/Pi.class
+    /home/jones/public_html/classes/client
+```
+
+只需要将 `Pi` 类放在 `public_html\classes\client` 目录中，因为只需要 `Pi` 类可以下载到计算引擎的 Java 虚拟机。现在，您可以运行服务器，然后运行客户端。
+
+### 运行示例程序
+
+**一个安全提示**
+
+服务器和客户端程序在安装了安全管理器的情况下运行。运行任一程序时，需要指定安全策略文件，以便为代码授予其运行所需的安全权限。这是一个例子 [policy file to use with the server program](https://docs.oracle.com/javase/tutorial/rmi/examples/server.policy)：
+
+```
+grant codeBase "file:/home/ann/src/" {
+    permission java.security.AllPermission;
+};
+```
+
+[policy file to use with the client program](https://docs.oracle.com/javase/tutorial/rmi/examples/client.policy) 的例子：
+
+```
+grant codeBase "file:/home/jones/src/" {
+    permission java.security.AllPermission;
+};
+```
+
+对于两个示例策略文件，所有权限都授予程序的本地类路径中的类，因为本地应用程序代码是受信任的，但是没有权限授予从其他位置下载的代码。因此，计算引擎服务器限制它执行的任务（其代码不可信并且可能是恶意的）执行任何需要安全权限的操作。示例客户端的 `Pi` 任务不需要任何权限来执行。
+
+在此示例中，服务器程序的策略文件名为 `server.policy`，客户端程序的策略文件名为 `client.policy`。
+
+**启动服务器**
+
+在启动计算引擎之前，您需要启动 RMI 注册表。RMI 注册表是一个简单的服务器端引导程序命名工具，它使远程客户端能够获取对初始远程对象的引用。它可以使用 `rmiregistry` 命令启动。在执行 `rmiregistry` 之前，必须确保运行 `rmiregistry` 的 shell 或窗口没有设置 `CLASSPATH` 环境变量或者有一个不包含任何您希望下载到客户端的远程对象的类路径的 `CLASSPATH` 环境变量。
+
+要在服务器上启动注册表，请执行 `rmiregistry` 命令。 此命令不产生输出，通常在后台运行。对于此示例，注册表在主机 `mycomputer` 上启动。
+
+**Microsoft Windows** (使用 `javaw` 如果 `start` 不可用):
+
+```
+start rmiregistry
+```
+
+**Solaris OS or Linux**:
+
+```
+rmiregistry &
+```
+
+默认情况下，注册表在端口1099上运行。要在其他端口上启动注册表，请在命令行上指定端口号。不要忘记取消设置 `CLASSPATH` 环境变量。
+
+**Microsoft Windows**:
+
+```
+start rmiregistry 2001
+```
+
+**Solaris OS or Linux**:
+
+```
+rmiregistry 2001 &
+```
+
+注册表启动后，您可以启动服务器。您需要确保 `compute.jar` 文件和远程对象实现类都在您的类路径中。启动计算引擎时，需要使用 `java.rmi.server.codebase` 属性指定服务器的类可通过网络访问。在这个例子中，可供下载的服务器端类是 `Compute` 和 `Task` 接口，可以在用户 `ann` 的 `public_html\classes` 目录的 `compute.jar` 文件中找到。计算引擎服务器在主机 `mycomputer` 上启动，该主机是启动注册表的主机。
+
+**Microsoft Windows**:
+
+```
+java -cp c:\home\ann\src;c:\home\ann\public_html\classes\compute.jar
+     -Djava.rmi.server.codebase=file:/c:/home/ann/public_html/classes/compute.jar
+     -Djava.rmi.server.hostname=mycomputer.example.com
+     -Djava.security.policy=server.policy
+        engine.ComputeEngine
+```
+
+**Solaris OS or Linux**:
+
+```
+java -cp /home/ann/src:/home/ann/public_html/classes/compute.jar
+     -Djava.rmi.server.codebase=http://mycomputer/~ann/classes/compute.jar
+     -Djava.rmi.server.hostname=mycomputer.example.com
+     -Djava.security.policy=server.policy
+        engine.ComputeEngine
+```
+
+上面的 `java` 命令定义了以下系统属性：
+
+-`java.rmi.server.codebase` 属性指定位置，即代码库 URL，从中可以下载*来自*此服务器的类的定义。如果代码库指定了目录层次结构（而不是 JAR 文件），则必须在代码库 URL 的末尾包含尾部斜杠。
+-`java.rmi.server.hostname` 属性指定要放入在此 Java 虚拟机中导出的远程对象的存根中的主机名或地址。此值是客户端在尝试传递远程方法调用时使用的主机名或地址。默认情况下，RMI 实现使用服务器的IP地址，如 `java.net.InetAddress.getLocalHost`  API所示。但是，有时，此地址不适用于所有客户端，并且完全限定的主机名将更有效。要确保 RMI 使用可从所有潜在客户端路由的服务器的主机名（或IP地址），请设置 `java.rmi.server.hostname` 属性。
+-`java.security.policy` 属性用于指定包含您要授予的权限的策略文件。
+
+**启动客户端**
+
+注册表和计算引擎运行后，您可以启动客户端，指定以下内容：
+
+-客户端使用 `java.rmi.server.codebase` 属性为其类（`Pi`类）提供服务的位置
+-`java.security.policy` 属性，用于指定包含您要授予各种代码的权限的安全策略文件
+-作为命令行参数，服务器的主机名（以便客户端知道 `Compute` 远程对象的位置）以及 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 计算中使用的小数位数。
+
+在另一台主机（例如名为 `mysecondcomputer` 的主机）上启动客户端，如下所示：
+
+------
+
+**Microsoft Windows**:
+
+```
+java -cp c:\home\jones\src;c:\home\jones\public_html\classes\compute.jar
+     -Djava.rmi.server.codebase=file:/c:/home/jones/public_html/classes/
+     -Djava.security.policy=client.policy
+        client.ComputePi mycomputer.example.com 45
+```
+
+**Solaris OS or Linux**:
+
+```
+java -cp /home/jones/src:/home/jones/public_html/classes/compute.jar
+     -Djava.rmi.server.codebase=http://mysecondcomputer/~jones/classes/
+     -Djava.security.policy=client.policy
+        client.ComputePi mycomputer.example.com 45
+```
+
+请注意，类路径是在命令行上设置的，以便解释器可以找到客户端类和包含接口的 JAR 文件。另请注意，指定目录层次结构的 `java.rmi.server.codebase` 属性的值以尾部斜杠结尾。
+
+启动客户端后，将显示以下输出：
+
+```
+3.141592653589793238462643383279502884197169399
+```
+
+下图说明了 `rmiregistry`，`ComputeEngine` 服务器和 `ComputePi` 客户端在程序执行期间获取类的位置。
+
+![the registry, the compute engine, and the client obtaining classes during program execution](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-5.gif)
+
+当 `ComputeEngine` 服务器在注册表中绑定其远程对象引用时，注册表会下载存根类依赖的 `Compute` 和 `Task` 接口。这些类是从 `ComputeEngine` 服务器的 Web 服务器或文件系统下载的，具体取决于启动服务器时使用的代码库 URL 的类型。
+
+因为 `ComputePi` 客户端在其类路径中同时具有 `Compute` 和 `Task` 接口，所以它从类路径加载它们的定义，而不是从服务器的代码库加载它们的定义。
+
+最后，当 `Pi` 对象在 `executeTask` 远程调用中传递给 `ComputeEngine` 对象时，`Pi` 类被加载到 `ComputeEngine` 服务器的 Java 虚拟机中。服务器从客户端的 Web 服务器或文件系统加载 `Pi` 类，具体取决于启动客户端时使用的代码库 URL 的类型。
 

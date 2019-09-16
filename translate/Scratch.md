@@ -1,164 +1,255 @@
-## 创建客户端程序
+## 编译并运行示例
 
-计算引擎是个相对简单的程序：它执行传递给它的任务。计算引擎的客户端更复杂一些。客户端需要调用计算引擎，同时还需要定义需要计算引擎执行的任务。
+现在，计算引擎示例的代码已经完成，它需要被编译并运行。
 
-两个类构成了我们例子中的客户端。第一个类，`ComputePi` ，查找并调用一个 `Compute` 对象。第二个类，`Pi`，实现 `Task` 接口，定义由计算引擎完成的工作。`Pi` 类的工作是计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 的若干位小数值。
+[编译示例程序](https://docs.oracle.com/javase/tutorial/rmi/compiling.html)
 
-非远程的 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口定义如下：
+本节中，你将学到编译组成计算引擎示例的服务器和客户端程序。
 
-```java
-package compute;
+[运行示例代码](https://docs.oracle.com/javase/tutorial/rmi/running.html)
 
-public interface Task<T> {
-    T execute();
-}
+最后，你运行服务器和客户端程序计算 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)值。
+
+### 编译示例程序
+
+在部署了计算引擎等服务的实际场景中，开发人员可能会创建一个 Java Archive（JAR）文件，其中包含用于实现服务器类的 `Compute` 和 `Task` 接口以及用于实现客户端程序的客户端程序。接下来，开发人员（可能是接口 JAR 文件的相同开发人员）将编写 `Compute` 接口的实现，并将该服务部署在客户端可用的机器上。客户端程序的开发人员可以使用 JAR 文件中包含的 `Compute` 和 `Task` 接口，并独立开发使用 `Compute` 服务的任务和客户端程序。
+
+在本节中，您将学习如何设置 JAR 文件，服务器类和客户端类。您将看到客户端的 `Pi` 类将在运行时下载到服务器。此外，`Compute` 和 `Task` 接口将在运行时从服务器下载到注册表。
+
+此示例将接口，远程对象实现和客户端代码分为三个包：
+
+- `compute` – [`Compute`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Compute.java) 和 [`Task`](https://docs.oracle.com/javase/tutorial/rmi/examples/compute/Task.java) 接口
+- `engine` – [`ComputeEngine`](https://docs.oracle.com/javase/tutorial/rmi/examples/engine/ComputeEngine.java) 实现类
+- `client` – [`ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 客户端代码和 [`Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 任务实现
+
+首先，您需要构建接口 JAR 文件以提供给服务器和客户端开发人员。
+
+**构建接口类的 JAR 文件**
+
+首先，您需要在 `compute` 包中编译接口源文件，然后构建包含其类文件的 JAR 文件。假设用户 `waldo` 编写了这些接口并将源文件放在 Windows 上的目录 `c:\home\waldo\src\compute` 或 Solaris OS 或 Linux 上的目录 `/home/waldo/src/compute` 中。给定这些路径，您可以使用以下命令编译接口并创建 JAR 文件：
+
+**Microsoft Windows**:
+
+```shell
+cd c:\home\waldo\src
+javac compute\Compute.java compute\Task.java
+jar cvf compute.jar compute\*.class
 ```
 
-调用 `Compute` 对象的方法的代码必须获取对该对象的引用，创建一个 `Task` 对象，然后请求执行该任务。任务类 `Pi` 的定义将在后面展示。一个 `Pi` 对象是用一个参数构造的，结果是所需的精度。任务执行的结果是一个 `java.math.BigDecimal` 表示 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)值，计算到指定的精度。
+**Solaris OS or Linux**:
 
-这里是 [`client.ComputePi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/ComputePi.java) 的源代码，主要的客户端类：
-
-```java
-package client;
-
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.math.BigDecimal;
-import compute.Compute;
-
-public class ComputePi {
-    public static void main(String args[]) {
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
-        try {
-            String name = "Compute";
-            Registry registry = LocateRegistry.getRegistry(args[0]);
-            Compute comp = (Compute) registry.lookup(name);
-            Pi task = new Pi(Integer.parseInt(args[1]));
-            BigDecimal pi = comp.executeTask(task);
-            System.out.println(pi);
-        } catch (Exception e) {
-            System.err.println("ComputePi exception:");
-            e.printStackTrace();
-        }
-    }    
-}
+```shell
+cd /home/waldo/src
+javac compute/Compute.java compute/Task.java
+jar cvf compute.jar compute/*.class
 ```
 
-与 `ComputeEngine` 服务器一样，客户端首先安装安全管理器。此步骤是必需的，因为接收服务器远程对象的存根的过程可能需要从服务器下载类定义。要使 RMI 下载类，必须使用安全管理器。
+------
 
-在安装安全管理器之后，客户端构造一个名称，用于查找 `Compute` 远程对象，使用与 `ComputeEngine` 相同的名称来绑定其远程对象。此外，客户端使用 `LocateRegistry.getRegistry` API 来合成对服务器主机上的注册表的远程引用。第一个命令行参数 `args[0]` 的值是运行 `Compute` 对象的远程主机的名称。然后，客户端在注册表上调用 `lookup` 方法，以便在服务器主机的注册表中按名称查找远程对象。使用的 `LocateRegistry.getRegistry` 的特定重载，它有一个 `String` 参数，返回对命名主机和默认注册表端口 `1099` 的注册表的引用。您必须使用具有 `int` 参数的重载，如果注册表是在 `1099` 以外的端口上创建的。
+由于 `-v` 选项，`jar` 命令显示以下输出：
 
-接下来，客户端创建一个新的 `Pi` 对象，将第二个命令行参数 `args[1]` 的值传递给 `Pi` 构造函数，解析为整数。此参数指示计算中使用的小数位数。最后，客户端调用 `Compute` 远程对象的 `executeTask` 方法。传递给 `executeTask` 调用的对象返回一个类型为 `BigDecimal` 的对象，程序将该变量存储在变量 `result` 中。最后，程序打印结果。下图描述了 `ComputePi` 客户端，`rmiregistry` 和 `ComputeEngine` 之间的消息流。
-
-![the flow of messages between the compute engine, the registry, and the client.](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-4.gif)
-
-`Pi` 类实现 `Task` 接口，并将 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)的值计算为指定小数位的值。对于此示例，实际算法并不重要。重要的是该算法的计算成本很高，这意味着您希望在有能力的服务器上执行该算法。
-
-这里是 [`client.Pi`](https://docs.oracle.com/javase/tutorial/rmi/examples/client/Pi.java) 的源代码，该类实现了 `Task` 接口：
-
-```java
-package client;
-
-import compute.Task;
-import java.io.Serializable;
-import java.math.BigDecimal;
-
-public class Pi implements Task<BigDecimal>, Serializable {
-
-    private static final long serialVersionUID = 227L;
-
-    /** constants used in pi computation */
-    private static final BigDecimal FOUR =
-        BigDecimal.valueOf(4);
-
-    /** rounding mode to use during pi computation */
-    private static final int roundingMode = 
-        BigDecimal.ROUND_HALF_EVEN;
-
-    /** digits of precision after the decimal point */
-    private final int digits;
-    
-    /**
-     * Construct a task to calculate pi to the specified
-     * precision.
-     */
-    public Pi(int digits) {
-        this.digits = digits;
-    }
-
-    /**
-     * Calculate pi.
-     */
-    public BigDecimal execute() {
-        return computePi(digits);
-    }
-
-    /**
-     * Compute the value of pi to the specified number of 
-     * digits after the decimal point.  The value is 
-     * computed using Machin's formula:
-     *
-     *          pi/4 = 4*arctan(1/5) - arctan(1/239)
-     *
-     * and a power series expansion of arctan(x) to 
-     * sufficient precision.
-     */
-    public static BigDecimal computePi(int digits) {
-        int scale = digits + 5;
-        BigDecimal arctan1_5 = arctan(5, scale);
-        BigDecimal arctan1_239 = arctan(239, scale);
-        BigDecimal pi = arctan1_5.multiply(FOUR).subtract(
-                                  arctan1_239).multiply(FOUR);
-        return pi.setScale(digits, 
-                           BigDecimal.ROUND_HALF_UP);
-    }
-    /**
-     * Compute the value, in radians, of the arctangent of 
-     * the inverse of the supplied integer to the specified
-     * number of digits after the decimal point.  The value
-     * is computed using the power series expansion for the
-     * arc tangent:
-     *
-     * arctan(x) = x - (x^3)/3 + (x^5)/5 - (x^7)/7 + 
-     *     (x^9)/9 ...
-     */   
-    public static BigDecimal arctan(int inverseX, 
-                                    int scale) 
-    {
-        BigDecimal result, numer, term;
-        BigDecimal invX = BigDecimal.valueOf(inverseX);
-        BigDecimal invX2 = 
-            BigDecimal.valueOf(inverseX * inverseX);
-
-        numer = BigDecimal.ONE.divide(invX,
-                                      scale, roundingMode);
-
-        result = numer;
-        int i = 1;
-        do {
-            numer = 
-                numer.divide(invX2, scale, roundingMode);
-            int denom = 2 * i + 1;
-            term = 
-                numer.divide(BigDecimal.valueOf(denom),
-                             scale, roundingMode);
-            if ((i % 2) != 0) {
-                result = result.subtract(term);
-            } else {
-                result = result.add(term);
-            }
-            i++;
-        } while (term.compareTo(BigDecimal.ZERO) != 0);
-        return result;
-    }
-}
+```
+added manifest
+adding: compute/Compute.class(in = 307) (out= 201)(deflated 34%)
+adding: compute/Task.class(in = 217) (out= 149)(deflated 31%)
 ```
 
-请注意，所有可序列化的类，无论是直接还是间接地实现 `Serializable` 接口，都必须声明一个名为 `serialVersionUID` 的 `private` `static` `final` 字段，以保证版本之间的序列化兼容性。如果没有发布该类的先前版本，则该字段的值可以是任何 `long` 值，类似于 `Pi` 使用的 `227L`，只要该值在将来的版本中一致使用即可。如果在没有明确的 `serialVersionUID` 声明的情况下发布了该类的先前版本，但与该版本的序列化兼容性很重要，则必须将先前版本的默认隐式计算值用于新版本的显式声明的值。可以针对先前版本运行 `serialver` 工具以确定它的默认计算值。
+现在，您可以将 `compute.jar` 文件分发给服务器和客户端应用程序的开发人员，以便他们可以使用这些接口。
 
-这个例子最有趣的特性是 `Compute` 实现对象永远不需要 `Pi` 类的定义，直到 `Pi` 对象作为 `executeTask` 方法的参数传入。此时，类的代码由 RMI 加载到 `Compute` 对象的 Java 虚拟机中，调用 `execute` 方法，并执行任务的代码。结果，在 `Pi` 任务的情况下是一个 `BigDecimal` 对象，被传递回客户端，在那里它用于打印计算结果。
+使用 `javac` 编译器构建服务器端或客户端类之后，如果其他 Java 虚拟机需要动态下载其中任何类，则必须确保将其类文件放在网络可访问的位置。在此示例中，对于 Solaris OS 或 Linux，此位置为`/home/user/public_html/classes`，因为许多 Web 服务器允许通过构造为 `http://host/~*user*/` 的 HTTP URL 访问用户的 `public_html` 目录。如果您的 Web 服务器不支持此约定，则可以在 Web 服务器的层次结构中使用其他位置，或者您可以使用文件 URL。文件 URL 在 Solaris OS 或 Linux 上采用 `file:/home/user/public_html/classes/`形式，在 Windows 上采用`file:/c:/home/user/public_html/classes/`形式。您也可以根据需要选择其他类型的 URL。
 
-提供的 `Task` 对象计算 `Pi` 的值这一事实与 `ComputeEngine` 对象无关。您还可以实现一项任务，例如，使用概率算法生成随机素数。该任务也是计算密集型的，因此是传递给 `ComputeEngine` 的一个很好的候选者，但它需要非常不同的代码。当 `Task` 对象传递给 `Compute` 对象时，也可以下载此代码。就像计算算法一样 ![pi符号](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif)在需要时引入，生成随机素数的代码将在需要时引入。 `Compute` 对象只知道它接收的每个对象都实现了 `execute` 方法。`Compute`对象不知道，也不需要知道实现的作用。
+类文件的网络可访问性使 RMI 运行时能够在需要时下载代码。RMI 不是为代码下载定义自己的协议，而是使用 Java 平台支持的 URL 协议（例如 HTTP）来下载代码。请注意，使用完整的重量级 Web 服务器来提供这些类文件是不必要的。例如，可以在以下位置找到一个简单的 HTTP 服务器，该服务器提供使类可通过 HTTP 在 RMI 中下载所需的功能。
+另请参见 [远程方法调用主页](http://www.oracle.com/technetwork/java/javase/tech/index-jsp-136424.html) 。
+
+**构建服务器类**
+
+`engine` 包只包含一个服务器端实现类，`ComputeEngine`，远程接口 `Compute` 的实现。
+
+假设用户 `ann`，`ComputeEngine` 类的开发人员，已将 `ComputeEngine.java` 放在 Windows 上的目录 `c:\home\ann\src\engine` 或 Solaris OS 或 Linux 上的目录 `/home/ann/src/engine` 中。她正在为客户端部署类文件，以便在她的 `public_html` 目录的子目录中下载，在 Windows 上运行 `c:\home\ann\public_html\classes` 或在Solaris OS 或 Linux 上运行 `/home/ann/public_html/classes` 。这个位置可以通过一些 Web 服务器访问为 `http://host:port/~ann/classes/`。
+
+`ComputeEngine` 类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建服务器类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\ann\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/ann/public_html/classes`中。给定这些路径，您可以使用以下命令来构建服务器类：
+
+**Microsoft Windows**:
+
+```
+cd c:\home\ann\src
+javac -cp c:\home\ann\public_html\classes\compute.jar
+    engine\ComputeEngine.java
+```
+
+**Solaris OS or Linux**:
+
+```
+cd /home/ann/src
+javac -cp /home/ann/public_html/classes/compute.jar
+    engine/ComputeEngine.java
+```
+
+`ComputeEngine` 的存根类实现了 `Compute` 接口，它指的是 `Task` 接口。因此，这两个接口的类定义需要是网络可访问的，以便存根被其他 Java 虚拟机（如注册表的 Java 虚拟机）接收。客户端 Java 虚拟机已经在其类路径中具有这些接口，因此实际上不需要下载它们的定义。 `public_html` 目录下的 `compute.jar` 文件可以用于此目的。
+
+现在，计算引擎已准备好部署。您现在可以这样做，或者您可以等到构建客户端之后。
+
+**构建客户端类**
+
+`client` 包包含两个类，`ComputePi`，主客户端程序，以及 `Pi`，客户端实现 `Task` 接口。
+
+假设用户 `jones`（客户端类的开发人员）已将 `ComputePi.java` 和 `Pi.java` 放在 Windows 上的目录 `c:\home\jones\src\client` 或 Solaris OS 或 Linux上的 `/home/jones/src/client` 目录。他正在为计算引擎部署类文件，以便在他的 `public_html` 目录的子目录中下载，在 Windows 上的 `c:\home\jones\public_html\classes` 或在 Solaris OS 或 Linux上的`/home/jones/public_html/classes` 下载。这个位置可以通过一些 Web 服务器访问为 `http://*host*:*port*/~jones/classes/`。
+
+客户端类依赖于 `Compute` 和 `Task` 接口，它们包含在 `compute.jar`  JAR 文件中。因此，在构建客户端类时，需要在类路径中使用 `compute.jar` 文件。假设 `compute.jar` 文件位于 Windows 上的目录 `c:\home\jones\public_html\classes` 或 Solaris OS 或 Linux 上的目录 `/home/jones/public_html/classes` 中。给定这些路径，您可以使用以下命令来构建客户端类：
+
+**Microsoft Windows**:
+
+```
+cd c:\home\jones\src
+javac -cp c:\home\jones\public_html\classes\compute.jar
+    client\ComputePi.java client\Pi.java
+mkdir c:\home\jones\public_html\classes\client
+cp client\Pi.class
+    c:\home\jones\public_html\classes\client
+```
+
+**Solaris OS or Linux**:
+
+```
+cd /home/jones/src
+javac -cp /home/jones/public_html/classes/compute.jar
+    client/ComputePi.java client/Pi.java
+mkdir /home/jones/public_html/classes/client
+cp client/Pi.class
+    /home/jones/public_html/classes/client
+```
+
+只需要将 `Pi` 类放在 `public_html\classes\client` 目录中，因为只需要 `Pi` 类可以下载到计算引擎的 Java 虚拟机。现在，您可以运行服务器，然后运行客户端。
+
+### 运行示例程序
+
+**一个安全提示**
+
+服务器和客户端程序在安装了安全管理器的情况下运行。运行任一程序时，需要指定安全策略文件，以便为代码授予其运行所需的安全权限。这是一个例子 [policy file to use with the server program](https://docs.oracle.com/javase/tutorial/rmi/examples/server.policy)：
+
+```
+grant codeBase "file:/home/ann/src/" {
+    permission java.security.AllPermission;
+};
+```
+
+[policy file to use with the client program](https://docs.oracle.com/javase/tutorial/rmi/examples/client.policy) 的例子：
+
+```
+grant codeBase "file:/home/jones/src/" {
+    permission java.security.AllPermission;
+};
+```
+
+对于两个示例策略文件，所有权限都授予程序的本地类路径中的类，因为本地应用程序代码是受信任的，但是没有权限授予从其他位置下载的代码。因此，计算引擎服务器限制它执行的任务（其代码不可信并且可能是恶意的）执行任何需要安全权限的操作。示例客户端的 `Pi` 任务不需要任何权限来执行。
+
+在此示例中，服务器程序的策略文件名为 `server.policy`，客户端程序的策略文件名为 `client.policy`。
+
+**启动服务器**
+
+在启动计算引擎之前，您需要启动 RMI 注册表。RMI 注册表是一个简单的服务器端引导程序命名工具，它使远程客户端能够获取对初始远程对象的引用。它可以使用 `rmiregistry` 命令启动。在执行 `rmiregistry` 之前，必须确保运行 `rmiregistry` 的 shell 或窗口没有设置 `CLASSPATH` 环境变量或者有一个不包含任何您希望下载到客户端的远程对象的类路径的 `CLASSPATH` 环境变量。
+
+要在服务器上启动注册表，请执行 `rmiregistry` 命令。 此命令不产生输出，通常在后台运行。对于此示例，注册表在主机 `mycomputer` 上启动。
+
+**Microsoft Windows** (使用 `javaw` 如果 `start` 不可用):
+
+```
+start rmiregistry
+```
+
+**Solaris OS or Linux**:
+
+```
+rmiregistry &
+```
+
+默认情况下，注册表在端口1099上运行。要在其他端口上启动注册表，请在命令行上指定端口号。不要忘记取消设置 `CLASSPATH` 环境变量。
+
+**Microsoft Windows**:
+
+```
+start rmiregistry 2001
+```
+
+**Solaris OS or Linux**:
+
+```
+rmiregistry 2001 &
+```
+
+注册表启动后，您可以启动服务器。您需要确保 `compute.jar` 文件和远程对象实现类都在您的类路径中。启动计算引擎时，需要使用 `java.rmi.server.codebase` 属性指定服务器的类可通过网络访问。在这个例子中，可供下载的服务器端类是 `Compute` 和 `Task` 接口，可以在用户 `ann` 的 `public_html\classes` 目录的 `compute.jar` 文件中找到。计算引擎服务器在主机 `mycomputer` 上启动，该主机是启动注册表的主机。
+
+**Microsoft Windows**:
+
+```
+java -cp c:\home\ann\src;c:\home\ann\public_html\classes\compute.jar
+     -Djava.rmi.server.codebase=file:/c:/home/ann/public_html/classes/compute.jar
+     -Djava.rmi.server.hostname=mycomputer.example.com
+     -Djava.security.policy=server.policy
+        engine.ComputeEngine
+```
+
+**Solaris OS or Linux**:
+
+```
+java -cp /home/ann/src:/home/ann/public_html/classes/compute.jar
+     -Djava.rmi.server.codebase=http://mycomputer/~ann/classes/compute.jar
+     -Djava.rmi.server.hostname=mycomputer.example.com
+     -Djava.security.policy=server.policy
+        engine.ComputeEngine
+```
+
+上面的 `java` 命令定义了以下系统属性：
+
+ - `java.rmi.server.codebase` 属性指定位置，即代码库 URL，从中可以下载*来自*此服务器的类的定义。如果代码库指定了目录层次结构（而不是 JAR 文件），则必须在代码库 URL 的末尾包含尾部斜杠。
+ - `java.rmi.server.hostname` 属性指定要放入在此 Java 虚拟机中导出的远程对象的存根中的主机名或地址。此值是客户端在尝试传递远程方法调用时使用的主机名或地址。默认情况下，RMI 实现使用服务器的IP地址，如 `java.net.InetAddress.getLocalHost`  API所示。但是，有时，此地址不适用于所有客户端，并且完全限定的主机名将更有效。要确保 RMI 使用可从所有潜在客户端路由的服务器的主机名（或IP地址），请设置 `java.rmi.server.hostname` 属性。
+ - `java.security.policy` 属性用于指定包含您要授予的权限的策略文件。
+
+**启动客户端**
+
+注册表和计算引擎运行后，您可以启动客户端，指定以下内容：
+
+ - 客户端使用 `java.rmi.server.codebase` 属性为其类（`Pi`类）提供服务的位置
+ - `java.security.policy` 属性，用于指定包含您要授予各种代码的权限的安全策略文件
+ - 作为命令行参数，服务器的主机名（以便客户端知道 `Compute` 远程对象的位置）以及 ![the pi symbol](https://docs.oracle.com/javase/tutorial/figures/rmi/pi.gif) 计算中使用的小数位数。
+
+在另一台主机（例如名为 `mysecondcomputer` 的主机）上启动客户端，如下所示：
+
+------
+
+**Microsoft Windows**:
+
+```
+java -cp c:\home\jones\src;c:\home\jones\public_html\classes\compute.jar
+     -Djava.rmi.server.codebase=file:/c:/home/jones/public_html/classes/
+     -Djava.security.policy=client.policy
+        client.ComputePi mycomputer.example.com 45
+```
+
+**Solaris OS or Linux**:
+
+```
+java -cp /home/jones/src:/home/jones/public_html/classes/compute.jar
+     -Djava.rmi.server.codebase=http://mysecondcomputer/~jones/classes/
+     -Djava.security.policy=client.policy
+        client.ComputePi mycomputer.example.com 45
+```
+
+请注意，类路径是在命令行上设置的，以便解释器可以找到客户端类和包含接口的 JAR 文件。另请注意，指定目录层次结构的 `java.rmi.server.codebase` 属性的值以尾部斜杠结尾。
+
+启动客户端后，将显示以下输出：
+
+```
+3.141592653589793238462643383279502884197169399
+```
+
+下图说明了 `rmiregistry`，`ComputeEngine` 服务器和 `ComputePi` 客户端在程序执行期间获取类的位置。
+
+![the registry, the compute engine, and the client obtaining classes during program execution](https://docs.oracle.com/javase/tutorial/figures/rmi/rmi-5.gif)
+
+当 `ComputeEngine` 服务器在注册表中绑定其远程对象引用时，注册表会下载存根类依赖的 `Compute` 和 `Task` 接口。这些类是从 `ComputeEngine` 服务器的 Web 服务器或文件系统下载的，具体取决于启动服务器时使用的代码库 URL 的类型。
+
+因为 `ComputePi` 客户端在其类路径中同时具有 `Compute` 和 `Task` 接口，所以它从类路径加载它们的定义，而不是从服务器的代码库加载它们的定义。
+
+最后，当 `Pi` 对象在 `executeTask` 远程调用中传递给 `ComputeEngine` 对象时，`Pi` 类被加载到 `ComputeEngine` 服务器的 Java 虚拟机中。服务器从客户端的 Web 服务器或文件系统加载 `Pi` 类，具体取决于启动客户端时使用的代码库 URL 的类型。
 
