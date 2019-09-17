@@ -1014,3 +1014,145 @@ public class MyTest {
     // class body...
 }
 ```
+
+#### 3.5.4. 上下文管理
+
+每个 `TestContext` 都为它负责的测试实例提供上下文管理和缓存支持。测试实例不会自动接收对配置的 `ApplicationContext` 的访问权限。但是，如果测试类实现了 `ApplicationContextAware` 接口，则会向测试实例提供对 `ApplicationContext` 的引用。请注意，`AbstractJUnit4SpringContextTests` 和 `AbstractTestNGSpringContextTests` 实现 `ApplicationContextAware`，因此，自动提供对 `ApplicationContext` 的访问。
+
+> @Autowired ApplicationContext
+>
+> 作为另一种实现 `ApplicationContextAware` 接口的方法，你可以通过 `@Autowired` 注解将你的测试类的上下文注入到字段或者方法上，如下面例子所示：
+>
+> ````java
+> @RunWith(SpringRunner.class)
+> @ContextConfiguration
+> public class MyTest {
+> 
+>     @Autowired 
+>     private ApplicationContext applicationContext;
+> 
+>     // class body...
+> }
+> ````
+>
+> 类似地，如果你的测试被配置为加载一个 `WebApplicationContext` ，你可以将该 web 应用上下文注射到你的测试中，如下面例子所示：
+>
+> ````java
+> @RunWith(SpringRunner.class)
+> @WebAppConfiguration 
+> @ContextConfiguration
+> public class MyWebAppTest {
+> 
+>     @Autowired 
+>     private WebApplicationContext wac;
+> 
+>     // class body...
+> }
+> ````
+>
+> 通过使用 `@Autowired` 进行的依赖注入由 `DependencyInjectionTestExecutionListener` 提供，它默认被配置(参考  [Dependency Injection of Test Fixtures](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-fixture-di) )。
+
+使用 TestContext 框架的测试类无需扩展任何特定的类或者实现任何特定的接口以配置它们的应用上下文。相反，配置是通过在类层面声明 `@ContextConfiguration` 注解来获取。如果你的测试类没有显式声明应用上下文资源位置活着注解修饰的类，则配置的 `ContextLoader` 决定如何从默认位置或者默认配置类加载上下文。除了上下文资源位置和注解修饰的类，应用上下文还可以通过应用上下文初始化器配置。
+
+接下来的章节解释如何使用 Spring 的 `@ContextConfiguration` 注解配置测试 `ApplicationContext` ，或者使用 XML 配置文件，Groovy 脚本，注解修饰的类(典型的事 `@Configuration` 类)，或者上下文初始化器。另外，你可以实现并配置你自己的自定义 `SmartContextLoader` 用于高级场景。
+
+- [使用 XML 资源进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-xml)
+- [使用 Groovy 脚本进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-groovy)
+- [Context Configuration with Annotated Classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-javaconfig)
+- [Mixing XML, Groovy Scripts, and Annotated Classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-mixed-config)
+- [Context Configuration with Context Initializers](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
+- [Context Configuration Inheritance](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
+- [Context Configuration with Environment Profiles](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
+- [Context Configuration with Test Property Sources](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
+- [Loading a `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
+- [Context Caching](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching)
+- [Context Hierarchies](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-ctx-hierarchies)
+
+##### 使用 XML 资源进行上下文配置
+
+要使用 XML 配置文件为测试加载 `ApplicationContext`，请使用 `@IntextConfiguration` 注解修饰测试类，并使用包含 XML 配置元数据的资源位置的数组配置 `locations` 属性。普通路径或相对路径（例如，`context.xml`）被视为相对于定义测试类的包的类路径资源。以斜杠开头的路径被视为绝对类路径位置（例如，`/org/example/config.xml`）。表示资源 URL 的路径（即，以 `classpath:`，`file:`，`http:` 等为前缀的路径）使用原样。
+
+````java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from "/app-config.xml" and
+// "/test-config.xml" in the root of the classpath
+@ContextConfiguration(locations={"/app-config.xml", "/test-config.xml"}) 
+public class MyTest {
+    // class body...
+}
+````
+
+`@ContextConfiguration` 通过标准的 Java `value` 属性支持 `locations` 属性的别名。因此，如果您不需要在 `@IntextConfiguration` 中声明其他属性，则可以省略 `locations` 属性名称的声明，并使用以下示例中演示的速记格式声明资源位置：
+
+````java
+@RunWith(SpringRunner.class)
+@ContextConfiguration({"/app-config.xml", "/test-config.xml"}) 
+public class MyTest {
+    // class body...
+}
+````
+
+如果同时省略 `@ContextConfiguration` 注解中的 `locations` 和 `value` 属性，TestContext 框架会尝试检测默认的 XML 资源位置。具体来说，`GenericXmlContextLoader` 和 `GenericXmlWebContextLoader` 根据测试类的名称检测默认位置。如果您的类名为 `com.example.MyTest`，则 `GenericXmlContextLoader` 将从 `"classpath:com/example/MyTest-context.xml"` 中加载您的应用程序上下文。以下示例显示了如何执行此操作：
+
+````java
+package com.example;
+
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from
+// "classpath:com/example/MyTest-context.xml"
+@ContextConfiguration 
+public class MyTest {
+    // class body...
+}
+````
+
+##### 使用 Groovy 脚本进行上下文配置
+
+通过使用 [Groovy Bean Definition DSL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#groovy-bean-definition-dsl) 的 Groovy 脚本为测试加载 `ApplicationContext`，您可以使用 `@IntextConfiguration` 注解修饰您的测试类，并使用包含 Groovy 脚本资源位置的数组配置 `locations` 或 `value` 属性。Groovy 脚本的资源查找语义与  [XML configuration files](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-xml) 中描述的相同。
+
+> 启用 Groovy 脚本支持
+>
+> 如果 Groovy 在类路径上，则自动支持使用 Groovy 脚本在 Spring TestContext Framework 中加载 `ApplicationContext`。
+
+下面的例子展示了如何指定 Groovy 配置文件：
+
+```java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from "/AppConfig.groovy" and
+// "/TestConfig.groovy" in the root of the classpath
+@ContextConfiguration({"/AppConfig.groovy", "/TestConfig.Groovy"}) 
+public class MyTest {
+    // class body...
+}
+```
+
+如果同时省略 `@IntextConfiguration` 注解中的 `locations` 和 `value` 属性，TestContext 框架会尝试检测默认的 Groovy 脚本。具体来说，`GenericGroovyXmlContextLoader` 和 `GenericGroovyXmlWebContextLoader` 根据测试类的名称检测默认位置。如果您的类名为 `com.example.MyTest`，则 Groovy 上下文加载器将从 `"classpath:com/example/MyTestContext.groovy"` 中加载您的应用程序上下文。以下示例显示了如何使用默认值：
+
+```java
+package com.example;
+
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from
+// "classpath:com/example/MyTestContext.groovy"
+@ContextConfiguration 
+public class MyTest {
+    // class body...
+}
+```
+
+> 同时声明 XML 配置和 Groovy 脚本
+>
+> 您可以使用 `@ContextConfiguration` 的 `locations` 或 `value` 属性同时声明 XML 配置文件和 Groovy 脚本。如果配置的资源位置的路径以 `.xml` 结尾，则使用 `XmlBeanDefinitionReader` 加载它。否则，使用 `GroovyBeanDefinitionReader` 加载它。
+>
+> 以下清单显示了如何在集成测试中将两者结合使用：
+>
+> ````java
+> @RunWith(SpringRunner.class)
+> // ApplicationContext will be loaded from
+> // "/app-config.xml" and "/TestConfig.groovy"
+> @ContextConfiguration({ "/app-config.xml", "/TestConfig.groovy" })
+> public class MyTest {
+>     // class body...
+> }
+> ````
+
