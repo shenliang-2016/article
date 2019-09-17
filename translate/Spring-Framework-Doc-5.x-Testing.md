@@ -1058,7 +1058,7 @@ public class MyTest {
 
 - [使用 XML 资源进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-xml)
 - [使用 Groovy 脚本进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-groovy)
-- [Context Configuration with Annotated Classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-javaconfig)
+- [使用注解类进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-javaconfig)
 - [Mixing XML, Groovy Scripts, and Annotated Classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-mixed-config)
 - [Context Configuration with Context Initializers](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
 - [Context Configuration Inheritance](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
@@ -1155,4 +1155,60 @@ public class MyTest {
 >     // class body...
 > }
 > ````
+
+##### 使用注解类进行上下文配置
+
+使用注解修饰的类为测试加载 `ApplicationContext`（参见 [Java-based container configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-java) ），您可以使用 `@ContextConfiguration` 注解修饰您的测试类，并使用包含对注解修饰类的引用的数组配置 `classes` 属性。以下示例显示了如何执行此操作：
+
+````java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from AppConfig and TestConfig
+@ContextConfiguration(classes = {AppConfig.class, TestConfig.class}) 
+public class MyTest {
+    // class body...
+}
+````
+
+> 注解修饰的类
+>
+> 术语“注解修饰的类”表示如下之一：
+>
+> - 使用 `@Configuration` 注解修饰的类。
+> - 组件 (也就是，使用 `@Component`， `@Service`， `@Repository`，或者其他模版注解)。
+> - 兼容 JSR-330 的类，由 `javax.inject` 注解修饰。
+> - 包含 `@Bean` 方法的任何其他类。
+>
+> 参考 [`@Configuration`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/context/annotation/Configuration.html) 和 [`@Bean`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/context/annotation/Bean.html) 文档获取有关注解类的配置和语义的更多信息，请特别注意对 `@Bean` Lite模式的讨论。
+
+如果省略 `@IntextConfiguration` 注解中的 `classes` 属性，TestContext 框架会尝试检测是否存在默认配置类。具体来说，`AnnotationConfigContextLoader` 和 `AnnotationConfigWebContextLoader` 检测满足配置类实现要求的测试类的所有 `static` 嵌套类，如  [`@Configuration`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/context/annotation/Configuration.html)  文档中所述。请注意，配置类的名称是任意的。此外，如果需要，测试类可以包含多个 `static` 嵌套配置类。在下面的示例中，`OrderServiceTest` 类声明了一个名为 `Config` 的 `static` 嵌套配置类，它自动用于加载测试类的 `ApplicationContext`：
+
+````java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from the
+// static nested Config class
+@ContextConfiguration 
+public class OrderServiceTest {
+
+    @Configuration
+    static class Config {
+
+        // this bean will be injected into the OrderServiceTest class
+        @Bean
+        public OrderService orderService() {
+            OrderService orderService = new OrderServiceImpl();
+            // set properties, etc.
+            return orderService;
+        }
+    }
+
+    @Autowired
+    private OrderService orderService;
+
+    @Test
+    public void testOrderService() {
+        // test the orderService
+    }
+
+}
+````
 
