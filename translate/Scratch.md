@@ -1,78 +1,74 @@
-### 内存一致性错误
+### 内在锁和同步
 
-当不同的线程具有应该是相同数据的不一致视图时，会发生*内存一致性错误*。内存一致性错误的原因很复杂，超出了本教程的范围。幸运的是，程序员不需要详细了解这些原因。所需要的只是避免它们的策略。
+同步是围绕一个称为*内部锁*或*监视器锁*的内部实体构建的。（API规范通常将此实体简称为“监视器”。）内部锁在同步的两个方面都发挥作用：强制对对象状态进行独占访问，并建立对可见性至关重要的先发生关系。
 
-避免内存一致性错误的关键是理解 *happen-before* 关系。这种关系只是保证一个特定语句的内存写入对另一个特定语句可见。要查看此内容，请考虑以下示例。假设定义并初始化了一个简单的 `int` 字段：
+每个对象都有一个与之关联的内在锁。按照惯例，需要对对象字段进行独占和一致访问的线程必须在访问对象之前*获取*对象的内部锁，然后在完成它时*释放*内部锁。一个线程被称为*拥有*获取锁定和释放锁定之间的内在锁定。只要一个线程拥有一个内部锁，没有其他线程可以获得相同的锁。另一个线程在尝试获取锁时将阻塞。
 
-```
-int counter = 0;
-```
+当线程释放内部锁时，在该操作与同一锁的任何后续获取之间建立先发生关系。
 
- `counter` 字段由两个线程共享，A 和 B。假定线程 A 增加 `counter`：
+**同步方法中的锁**
 
-```
-counter++;
-```
+当线程调用 `synchronized` 方法时，它会自动获取该方法对象的内部锁，并在方法返回时释放它。即使返回是由未捕获的异常引起的，也会发生锁定释放。
 
-然后，不久之后，线程B打印出 `counter`：
+您可能想知道在调用静态同步方法时会发生什么，因为静态方法与类相关联，而不是与对象相关联。在这种情况下，线程获取与类关联的 `Class` 对象的内部锁。因此，对类的静态字段的访问由与该类的任何实例的锁不同的锁控制。
 
-```
-System.out.println(counter);
-```
+**同步语句**
 
-如果两个语句已在同一个线程中执行，则可以安全地假设打印出的值为“1”。但是如果这两个语句是在不同的线程中执行的，那么打印出的值可能是“0”，因为不能保证线程 A 对 `counter` 的更改对于线程 B 是可见的 - 除非程序员已经建立了这两个陈述之间的 `happens-before` 关系。
-
-有几种行为可以创造 `happens-before` 关系。其中之一是同步，我们将在以下部分中看到。
-
-我们已经看到了两种创造 `happens-before` 关系的行为。
-
- - 当一个语句调用 `Thread.start` 时，与该语句有一个 `happens-before` 关系的每个语句也与新线程执行的每个语句都有一个 `happens-before` 关系。新线程可以看到导致创建新线程的代码的影响。
- - 当一个线程终止并导致另一个线程中的 `Thread.join` 返回时，终止线程执行的所有语句与成功连接后的所有语句都有一个 `happens-before` 关系。现在，执行连接的线程可以看到线程中代码的效果。
-
-可以创建 `happens-before` 关系的操作列表参考 [Summary page of the `java.util.concurrent`package](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility) 。
-
-### 同步方法
-
-Java 编程语言提供了两种基本的同步习语：*synchronized methods* 和 *synchronized statements*。下两节将介绍两者中较为复杂的同步语句。本节介绍同步方法。
-
-要使方法同步，只需在其声明中添加 `synchronized` 关键字：
+创建同步代码的另一种方法是使用 *synchronized 语句*。与 `synchronized` 方法不同，`synchronized` 语句必须指定提供内部锁的对象：
 
 ```java
-public class SynchronizedCounter {
-    private int c = 0;
+public void addName(String name) {
+    synchronized(this) {
+        lastName = name;
+        nameCount++;
+    }
+    nameList.add(name);
+}
+```
 
-    public synchronized void increment() {
-        c++;
+在这个例子中，`addName` 方法需要将更改同步到 `lastName` 和 `nameCount`，但也需要避免同步其他对象方法的调用。（从同步代码调用其他对象的方法可能会产生 [活性](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 部分中描述的问题。）如果没有同步语句，为了调用 `nameList.add` 方法这个唯一目的，必须有一个单独的，不同步的方法。
+
+同步语句对于通过细粒度同步提高并发性也很有用。例如，假设类 `MsLunch` 有两个实例字段，`c1` 和 `c2`，它们从不一起使用。必须同步这些字段的所有更新，但没有理由阻止 `c1` 的更新与 `c2` 的更新交错 - 这样做会通过创建不必要的阻塞来减少并发性。我们不是使用同步方法或者使用与 `this` 相关联的锁，而是仅创建两个对象来提供锁。
+
+```java
+public class MsLunch {
+    private long c1 = 0;
+    private long c2 = 0;
+    private Object lock1 = new Object();
+    private Object lock2 = new Object();
+
+    public void inc1() {
+        synchronized(lock1) {
+            c1++;
+        }
     }
 
-    public synchronized void decrement() {
-        c--;
-    }
-
-    public synchronized int value() {
-        return c;
+    public void inc2() {
+        synchronized(lock2) {
+            c2++;
+        }
     }
 }
 ```
 
-如果 `count` 是 `SynchronizedCounter` 的一个实例，那么使这些方法同步有两个影响：
+谨慎使用这个习语。您必须绝对确保对受影响字段的访问进行交错是否安全。
 
- - 首先，对同一对象的两个同步方法的调用不可能进行交错。当一个线程正在为对象执行同步方法时，所有其他线程调用同一对象的同步方法阻塞（暂停执行）直到第一个线程完成对象。
- - 其次，当同步方法退出时，它会自动与同一对象的同步方法的*任何后续调用*建立 ` happens-before ` 关系。这可以保证所有线程都可以看到对象状态的更改。
+**可重入同步**
 
-请注意，构造函数无法同步 - 将 `synchronized` 关键字与构造函数一起使用是一种语法错误。同步构造函数没有意义，因为只有创建对象的线程在构造时才能访问它。
+回想一下，线程无法获取另一个线程拥有的锁。但是一个线程*可以*获得它已经拥有的锁。允许线程多次获取相同的锁可启用*可重入同步*。这描述了一种情况，其中同步代码直接或间接地调用也包含同步代码的方法，并且两组代码使用相同的锁。在没有可重入同步的情况下，同步代码必须采取许多额外的预防措施，以避免线程导致自身阻塞。
 
-------
+### 原子访问
 
-**警告：** 构造将在线程之间共享的对象时，要非常小心，对对象的引用不会过早“泄漏”。例如，假设您要维护一个包含每个类实例的 `List` 调用实例。您可能想要将以下行添加到构造函数中：
+在编程中，*原子*动作是一次有效发生的动作。原子动作不能在中间停止：它要么完全发生，要么根本不发生。在动作完成之前，原子动作的副作用是不可见的。
 
-```java
-instances.add(this);
-```
+我们已经看到一个增量表达式，比如 `c++`，没有描述原子动作。即使非常简单的表达式也可以定义可以分解为其他操作的复杂操作。但是，您可以指定原子操作：
 
-但是其他线程可以在构造对象完成之前使用 `instances` 来访问对象。
+ - 引用变量和大多数原始变量的读取和写入（除了 `long` 和 `double` 之外的所有类型）都是原子的。
+ - 对*所有*声明为 `volatile` 变量的读取和写入（*包括* `long` 和 `double` 变量）都是原子的。
 
-------
+原子动作不能交错，因此可以使用它们而不必担心线程干扰。但是，这并不能消除所有同步原子操作的需要，因为仍然可能存在内存一致性错误。使用 `volatile` 变量可以降低内存一致性错误的风险，因为对 `volatile` 变量的任何写入都会建立与之后读取相同变量的先发生关系。这意味着对 `volatile` 变量的更改始终对其他线程可见。更重要的是，它还意味着当一个线程读取一个 `volatile` 变量时，它不仅会看到 `volatile` 的最新变化，还会看到导致变化的代码的副作用。
 
-同步方法启用了一种简单的策略来防止线程干扰和内存一致性错误：如果一个对象对多个线程可见，则对该对象变量的所有读取或写入都是通过 `synchronized` 方法完成的。（一个重要的例外：`final` 字段，在构造对象后无法修改，可以通过非同步方法安全地读取，一旦构造了对象）这种策略是有效的，但可能会带来 [活性]( https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 的问题，我们将在本课后面看到。
+使用简单的原子变量访问比通过同步代码访问这些变量更有效，但程序员需要更加小心以避免内存一致性错误。额外的努力是否值得取决于应用程序的大小和复杂性。
+
+[`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html) 包中的一些类提供了原子方法不依赖于同步。我们将在 [高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一节中讨论它们。
 
