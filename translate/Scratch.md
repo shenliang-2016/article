@@ -1,74 +1,62 @@
-### 内在锁和同步
+## 活性
 
-同步是围绕一个称为*内部锁*或*监视器锁*的内部实体构建的。（API规范通常将此实体简称为“监视器”。）内部锁在同步的两个方面都发挥作用：强制对对象状态进行独占访问，并建立对可见性至关重要的先发生关系。
+并发应用程序及时执行的能力被称为其活性。本节描述了最常见的活性问题，即 [死锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/deadlock.html) 。并继续简要描述其他两个活性问题，[饥饿和活锁](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html) 。
 
-每个对象都有一个与之关联的内在锁。按照惯例，需要对对象字段进行独占和一致访问的线程必须在访问对象之前*获取*对象的内部锁，然后在完成它时*释放*内部锁。一个线程被称为*拥有*获取锁定和释放锁定之间的内在锁定。只要一个线程拥有一个内部锁，没有其他线程可以获得相同的锁。另一个线程在尝试获取锁时将阻塞。
+### 死锁
 
-当线程释放内部锁时，在该操作与同一锁的任何后续获取之间建立先发生关系。
+*死锁*描述了两个或多个线程永远被阻塞，等待彼此的情况。下面是一个例子。
 
-**同步方法中的锁**
-
-当线程调用 `synchronized` 方法时，它会自动获取该方法对象的内部锁，并在方法返回时释放它。即使返回是由未捕获的异常引起的，也会发生锁定释放。
-
-您可能想知道在调用静态同步方法时会发生什么，因为静态方法与类相关联，而不是与对象相关联。在这种情况下，线程获取与类关联的 `Class` 对象的内部锁。因此，对类的静态字段的访问由与该类的任何实例的锁不同的锁控制。
-
-**同步语句**
-
-创建同步代码的另一种方法是使用 *synchronized 语句*。与 `synchronized` 方法不同，`synchronized` 语句必须指定提供内部锁的对象：
+Alphonse 和 Gaston 是朋友，也很有礼貌的信徒。严格的礼貌规则是，当你向朋友鞠躬时，你必须保持鞠躬，直到你的朋友有机会还礼。不幸的是，这条规则没有考虑到两个朋友可能同时互相鞠躬的可能性。这个示例应用程序 [`Deadlock`](https://docs.oracle.com/javase/tutorial/essential/concurrency/examples/Deadlock.java) 模拟了这种可能性：
 
 ```java
-public void addName(String name) {
-    synchronized(this) {
-        lastName = name;
-        nameCount++;
-    }
-    nameList.add(name);
-}
-```
-
-在这个例子中，`addName` 方法需要将更改同步到 `lastName` 和 `nameCount`，但也需要避免同步其他对象方法的调用。（从同步代码调用其他对象的方法可能会产生 [活性](https://docs.oracle.com/javase/tutorial/essential/concurrency/liveness.html) 部分中描述的问题。）如果没有同步语句，为了调用 `nameList.add` 方法这个唯一目的，必须有一个单独的，不同步的方法。
-
-同步语句对于通过细粒度同步提高并发性也很有用。例如，假设类 `MsLunch` 有两个实例字段，`c1` 和 `c2`，它们从不一起使用。必须同步这些字段的所有更新，但没有理由阻止 `c1` 的更新与 `c2` 的更新交错 - 这样做会通过创建不必要的阻塞来减少并发性。我们不是使用同步方法或者使用与 `this` 相关联的锁，而是仅创建两个对象来提供锁。
-
-```java
-public class MsLunch {
-    private long c1 = 0;
-    private long c2 = 0;
-    private Object lock1 = new Object();
-    private Object lock2 = new Object();
-
-    public void inc1() {
-        synchronized(lock1) {
-            c1++;
+public class Deadlock {
+    static class Friend {
+        private final String name;
+        public Friend(String name) {
+            this.name = name;
+        }
+        public String getName() {
+            return this.name;
+        }
+        public synchronized void bow(Friend bower) {
+            System.out.format("%s: %s"
+                + "  has bowed to me!%n", 
+                this.name, bower.getName());
+            bower.bowBack(this);
+        }
+        public synchronized void bowBack(Friend bower) {
+            System.out.format("%s: %s"
+                + " has bowed back to me!%n",
+                this.name, bower.getName());
         }
     }
 
-    public void inc2() {
-        synchronized(lock2) {
-            c2++;
-        }
+    public static void main(String[] args) {
+        final Friend alphonse =
+            new Friend("Alphonse");
+        final Friend gaston =
+            new Friend("Gaston");
+        new Thread(new Runnable() {
+            public void run() { alphonse.bow(gaston); }
+        }).start();
+        new Thread(new Runnable() {
+            public void run() { gaston.bow(alphonse); }
+        }).start();
     }
 }
 ```
 
-谨慎使用这个习语。您必须绝对确保对受影响字段的访问进行交错是否安全。
+当 `Deadlock` 运行时，两个线程在尝试调用 `bowBack` 时极有可能会阻塞。这两个块都不会结束，因为每个线程都在等待另一个线程退出 `bow`。
 
-**可重入同步**
+### 饥饿和活锁
 
-回想一下，线程无法获取另一个线程拥有的锁。但是一个线程*可以*获得它已经拥有的锁。允许线程多次获取相同的锁可启用*可重入同步*。这描述了一种情况，其中同步代码直接或间接地调用也包含同步代码的方法，并且两组代码使用相同的锁。在没有可重入同步的情况下，同步代码必须采取许多额外的预防措施，以避免线程导致自身阻塞。
+与死锁相比，饥饿和活锁不是常见的问题，但仍然是并发软件的每个设计者都可能遇到的问题。
 
-### 原子访问
+**饥饿**
 
-在编程中，*原子*动作是一次有效发生的动作。原子动作不能在中间停止：它要么完全发生，要么根本不发生。在动作完成之前，原子动作的副作用是不可见的。
+*Starvation* 描述了线程无法获得对共享资源的正常访问而无法取得进展的情况。当“贪婪”线程使共享资源长时间不可用时，就会发生这种情况。例如，假设一个对象提供了一个通常需要很长时间才能返回的同步方法。如果一个线程经常调用此方法，则就可能会经常阻塞对同一对象进行频繁同步访问的其他线程。
 
-我们已经看到一个增量表达式，比如 `c++`，没有描述原子动作。即使非常简单的表达式也可以定义可以分解为其他操作的复杂操作。但是，您可以指定原子操作：
+**活锁**
 
- - 引用变量和大多数原始变量的读取和写入（除了 `long` 和 `double` 之外的所有类型）都是原子的。
- - 对*所有*声明为 `volatile` 变量的读取和写入（*包括* `long` 和 `double` 变量）都是原子的。
-
-原子动作不能交错，因此可以使用它们而不必担心线程干扰。但是，这并不能消除所有同步原子操作的需要，因为仍然可能存在内存一致性错误。使用 `volatile` 变量可以降低内存一致性错误的风险，因为对 `volatile` 变量的任何写入都会建立与之后读取相同变量的先发生关系。这意味着对 `volatile` 变量的更改始终对其他线程可见。更重要的是，它还意味着当一个线程读取一个 `volatile` 变量时，它不仅会看到 `volatile` 的最新变化，还会看到导致变化的代码的副作用。
-
-使用简单的原子变量访问比通过同步代码访问这些变量更有效，但程序员需要更加小心以避免内存一致性错误。额外的努力是否值得取决于应用程序的大小和复杂性。
-
-[`java.util.concurrent`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html) 包中的一些类提供了原子方法不依赖于同步。我们将在 [高级并发对象](https://docs.oracle.com/javase/tutorial/essential/concurrency/highlevel.html) 一节中讨论它们。
+线程通常用于响应另一个线程的操作。如果另一个线程的操作也是对另一个线程的操作的响应，则可能导致*livelock*。与死锁一样，活锁线程无法取得进一步进展。但是，线程没有被阻塞 - 他们只是太忙于相互回应以恢复工作。这相当于两个试图在走廊里互相通过的人：Alphonse 向左移动让 Gaston 通过，而 Gaston 向右移动让 Alphonse 通过。看到他们仍然互相阻挡，Alphone 向右移动，而 Gaston 向左移动。他们还在互相阻挡，所以......
 
