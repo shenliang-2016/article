@@ -1059,9 +1059,9 @@ public class MyTest {
 - [使用 XML 资源进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-xml)
 - [使用 Groovy 脚本进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-groovy)
 - [使用注解类进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-javaconfig)
-- [Mixing XML, Groovy Scripts, and Annotated Classes](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-mixed-config)
-- [Context Configuration with Context Initializers](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
-- [Context Configuration Inheritance](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
+- [混合 XML, Groovy 脚本, 以及注解修饰的类](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-mixed-config)
+- [使用上下文初始化器进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
+- [上下文配置继承](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
 - [Context Configuration with Environment Profiles](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
 - [Context Configuration with Test Property Sources](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
 - [Loading a `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
@@ -1209,6 +1209,102 @@ public class OrderServiceTest {
         // test the orderService
     }
 
+}
+````
+
+##### 混合 XML, Groovy 脚本, 以及注解修饰的类
+
+有时可能需要混合 XML 配置文件，Groovy 脚本和注解修饰的类（通常是 `@Configuration` 类）来为您的测试配置 `ApplicationContext`。例如，如果在生产中使用 XML 配置，你可能会决定要使用 `@Configuration` 类为测试配置特定的 Spring 管理的组件，反之亦然。
+
+此外，一些第三方框架（如 Spring Boot）为同时从不同类型的资源加载 `ApplicationContext` 提供了一流的支持（例如，XML 配置文件，Groovy 脚本和 `@Configuration` 类）。历史上，Spring Framework 并未支持这样配置标准部署。因此，Spring Framework 在 `spring-test` 模块中提供的大多数 `SmartContextLoader` 实现仅支持每个测试上下文的一种资源类型。但是，这并不意味着您不能同时使用两者。一般规则的一个例外是 `GenericGroovyXmlContextLoader` 和 `GenericGroovyXmlWebContextLoader` 同时支持 XML 配置文件和 Groovy 脚本。此外，第三方框架可以选择通过 `@ContextConfiguration` 支持 `locations` 和 `classes` 的声明，并且，通过 TestContext 框架中的标准测试支持，您有以下选项。
+
+如果要使用资源位置（例如，XML 或 Groovy）和 `@Configuration` 类来配置测试，则必须选择一个作为入口点，并且必须包含或导入另一个。例如，在 XML 或 Groovy 脚本中，您可以通过使用组件扫描包含 `@Configuration` 类或将它们定义为普通的 Spring bean，而在 `@Configuration` 类中，您可以使用 `@ImportResource` 来导入 XML 配置 文件或 Groovy 脚本。请注意，此行为在语义上等同于您在生产中配置应用程序的方式：在生产配置中，您可以定义一组 XML 或 Groovy 资源位置，或者从中加载生成 `ApplicationContext` 的一组 `@Configuration` 类， 但您仍然可以自由地包含或导入其他类型的配置。
+
+##### 使用上下文初始化器进行上下文配置
+
+要使用上下文初始化程序为测试配置 `ApplicationContext`，请使用 `@IntextConfiguration` 注解修饰您的测试类，并使用包含对实现 `ApplicationContextInitializer` 的类的引用的数组配置 `initializers` 属性。然后使用声明的上下文初始值设定项初始化为测试加载的 `ConfigurableApplicationContext`。请注意，每个声明的初始化程序支持的具体 `ConfigurableApplicationContext` 类型必须与使用中的 `SmartContextLoader` 创建的 `ApplicationContext` 类型兼容（通常是 `GenericApplicationContext`）。此外，调用初始化器的顺序取决于它们是否实现了 Spring 的 `Ordered` 接口，或者是使用 Spring 的 `@Order` 注解，或者使用标准的 `@Priority` 注解进行注释。以下示例显示了如何使用初始化器：
+
+````java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from TestConfig
+// and initialized by TestAppCtxInitializer
+@ContextConfiguration(
+    classes = TestConfig.class,
+    initializers = TestAppCtxInitializer.class) 
+public class MyTest {
+    // class body...
+}
+````
+
+您还可以完全省略 `@IntextConfiguration` 中的 XML 配置文件，Groovy 脚本或注解修饰的类的声明，而是仅声明 `ApplicationContextInitializer` 类，然后负责在上下文中注册 bean  - 例如，通过以编程方式加载 bean XML 文件或配置类中的定义。以下示例显示了如何执行此操作：
+
+````java
+@RunWith(SpringRunner.class)
+// ApplicationContext will be initialized by EntireAppInitializer
+// which presumably registers beans in the context
+@ContextConfiguration(initializers = EntireAppInitializer.class) 
+public class MyTest {
+    // class body...
+}
+````
+
+##### 上下文配置继承
+
+`@ContextConfiguration` supports boolean `inheritLocations` and `inheritInitializers` attributes that denote whether resource locations or annotated classes and context initializers declared by superclasses should be inherited. The default value for both flags is `true`. This means that a test class inherits the resource locations or annotated classes as well as the context initializers declared by any superclasses. Specifically, the resource locations or annotated classes for a test class are appended to the list of resource locations or annotated classes declared by superclasses. Similarly, the initializers for a given test class are added to the set of initializers defined by test superclasses. Thus, subclasses have the option of extending the resource locations, annotated classes, or context initializers.
+
+If the `inheritLocations` or `inheritInitializers` attribute in `@ContextConfiguration` is set to `false`, the resource locations or annotated classes and the context initializers, respectively, for the test class shadow and effectively replace the configuration defined by superclasses.
+
+In the next example, which uses XML resource locations, the `ApplicationContext` for `ExtendedTest` is loaded from `base-config.xml` and `extended-config.xml`, in that order. Beans defined in `extended-config.xml` can, therefore, override (that is, replace) those defined in `base-config.xml`. The following example shows how one class can extend another and use both its own configuration file and the superclass’s configuration file:
+
+````
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from "/base-config.xml"
+// in the root of the classpath
+@ContextConfiguration("/base-config.xml") 
+public class BaseTest {
+    // class body...
+}
+
+// ApplicationContext will be loaded from "/base-config.xml" and
+// "/extended-config.xml" in the root of the classpath
+@ContextConfiguration("/extended-config.xml") 
+public class ExtendedTest extends BaseTest {
+    // class body...
+}
+````
+
+Similarly, in the next example, which uses annotated classes, the `ApplicationContext` for `ExtendedTest` is loaded from the `BaseConfig` and `ExtendedConfig` classes, in that order. Beans defined in `ExtendedConfig` can, therefore, override (that is, replace) those defined in `BaseConfig`. The following example shows how one class can extend another and use both its own configuration class and the superclass’s configuration class:
+
+````
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from BaseConfig
+@ContextConfiguration(classes = BaseConfig.class) 
+public class BaseTest {
+    // class body...
+}
+
+// ApplicationContext will be loaded from BaseConfig and ExtendedConfig
+@ContextConfiguration(classes = ExtendedConfig.class) 
+public class ExtendedTest extends BaseTest {
+    // class body...
+}
+````
+
+In the next example, which uses context initializers, the `ApplicationContext` for `ExtendedTest` is initialized by using `BaseInitializer` and `ExtendedInitializer`. Note, however, that the order in which the initializers are invoked depends on whether they implement Spring’s `Ordered` interface or are annotated with Spring’s `@Order` annotation or the standard `@Priority` annotation. The following example shows how one class can extend another and use both its own initializer and the superclass’s initializer:
+
+````
+@RunWith(SpringRunner.class)
+// ApplicationContext will be initialized by BaseInitializer
+@ContextConfiguration(initializers = BaseInitializer.class) 
+public class BaseTest {
+    // class body...
+}
+
+// ApplicationContext will be initialized by BaseInitializer
+// and ExtendedInitializer
+@ContextConfiguration(initializers = ExtendedInitializer.class) 
+public class ExtendedTest extends BaseTest {
+    // class body...
 }
 ````
 
