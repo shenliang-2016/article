@@ -1250,13 +1250,13 @@ public class MyTest {
 
 ##### 上下文配置继承
 
-`@ContextConfiguration` supports boolean `inheritLocations` and `inheritInitializers` attributes that denote whether resource locations or annotated classes and context initializers declared by superclasses should be inherited. The default value for both flags is `true`. This means that a test class inherits the resource locations or annotated classes as well as the context initializers declared by any superclasses. Specifically, the resource locations or annotated classes for a test class are appended to the list of resource locations or annotated classes declared by superclasses. Similarly, the initializers for a given test class are added to the set of initializers defined by test superclasses. Thus, subclasses have the option of extending the resource locations, annotated classes, or context initializers.
+`@ContextConfiguration` 支持 boolean 类型的 ` inheritLocations` 和 `inheritInitializers` 属性，这些属性表示是否应继承超类声明的资源位置或注解修饰的类和上下文初始化器。两个标志的默认值是 `true`。这意味着测试类继承资源位置或注解修饰的类以及任何超类声明的上下文初始化器。具体而言，测试类的资源位置或注解修饰的类将附加到超类声明的资源位置列表或注解修饰的类。类似地，给定测试类的初始化器被添加到由测试超类定义的初始化器集中。因此，子类可以选择扩展资源位置，注解修饰的类或上下文初始化器。
 
-If the `inheritLocations` or `inheritInitializers` attribute in `@ContextConfiguration` is set to `false`, the resource locations or annotated classes and the context initializers, respectively, for the test class shadow and effectively replace the configuration defined by superclasses.
+如果 `@IntextConfiguration` 中的 `inheritLocations` 或 `inheritInitializers` 属性设置为 `false`，则测试类的资源位置或注解修饰的类和上下文初始化器分别替换超类定义的配置。
 
-In the next example, which uses XML resource locations, the `ApplicationContext` for `ExtendedTest` is loaded from `base-config.xml` and `extended-config.xml`, in that order. Beans defined in `extended-config.xml` can, therefore, override (that is, replace) those defined in `base-config.xml`. The following example shows how one class can extend another and use both its own configuration file and the superclass’s configuration file:
+在下一个使用 XML 资源位置的示例中，`ExtendedTest` 的 `ApplicationContext` 按顺序从 `base-config.xml` 和 `extended-config.xml` 加载。因此，`extended-config.xml` 中定义的 bean 可以覆盖（即替换）`base-config.xml` 中定义的 bean。以下示例显示了一个类如何扩展另一个类并使用其自己的配置文件和超类的配置文件：
 
-````
+````java
 @RunWith(SpringRunner.class)
 // ApplicationContext will be loaded from "/base-config.xml"
 // in the root of the classpath
@@ -1273,9 +1273,9 @@ public class ExtendedTest extends BaseTest {
 }
 ````
 
-Similarly, in the next example, which uses annotated classes, the `ApplicationContext` for `ExtendedTest` is loaded from the `BaseConfig` and `ExtendedConfig` classes, in that order. Beans defined in `ExtendedConfig` can, therefore, override (that is, replace) those defined in `BaseConfig`. The following example shows how one class can extend another and use both its own configuration class and the superclass’s configuration class:
+类似地，在下一个使用注解修饰的类的示例中，`ExtendedTest` 的 `ApplicationContext` 按顺序从 `BaseConfig` 和 `ExtendedConfig` 类加载。因此，在 `ExtendedConfig` 中定义的 Bean 可以覆盖（即替换）在 `BaseConfig` 中定义的那些。以下示例显示了一个类如何扩展另一个类并使用它自己的配置类和超类的配置类：
 
-````
+````java
 @RunWith(SpringRunner.class)
 // ApplicationContext will be loaded from BaseConfig
 @ContextConfiguration(classes = BaseConfig.class) 
@@ -1290,9 +1290,9 @@ public class ExtendedTest extends BaseTest {
 }
 ````
 
-In the next example, which uses context initializers, the `ApplicationContext` for `ExtendedTest` is initialized by using `BaseInitializer` and `ExtendedInitializer`. Note, however, that the order in which the initializers are invoked depends on whether they implement Spring’s `Ordered` interface or are annotated with Spring’s `@Order` annotation or the standard `@Priority` annotation. The following example shows how one class can extend another and use both its own initializer and the superclass’s initializer:
+在下一个使用上下文初始化器的示例中，使用 `BaseInitializer` 和 `ExtendedInitializer` 初始化 `ExtendedTest` 的 `ApplicationContext`。但是请注意，调用初始化器的顺序取决于它们是否实现了 Spring 的 `Ordered` 接口，或者是使用 Spring 的 `@Order` 注解还是标准的 `@Priority` 注解进行注释。以下示例显示了一个类如何扩展另一个类并使用它自己的初始化器和超类的初始化器：
 
-````
+````java
 @RunWith(SpringRunner.class)
 // ApplicationContext will be initialized by BaseInitializer
 @ContextConfiguration(initializers = BaseInitializer.class) 
