@@ -1062,7 +1062,7 @@ public class MyTest {
 - [混合 XML, Groovy 脚本, 以及注解修饰的类](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-mixed-config)
 - [使用上下文初始化器进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
 - [上下文配置继承](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
-- [Context Configuration with Environment Profiles](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
+- [使用环境配置进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
 - [Context Configuration with Test Property Sources](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
 - [Loading a `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
 - [Context Caching](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching)
@@ -1305,6 +1305,265 @@ public class BaseTest {
 @ContextConfiguration(initializers = ExtendedInitializer.class) 
 public class ExtendedTest extends BaseTest {
     // class body...
+}
+````
+
+##### 使用环境配置进行上下文配置
+
+Spring 3.1在框架中引入了环境和配置文件概念（AKA “bean定义配置文件”）的第一类支持，并且可以配置集成测试以激活各种测试场景的特定 bean 定义配置文件。这是通过使用 `@ActiveProfiles` 注解注释测试类并提供在加载测试的 `ApplicationContext` 时应该激活的配置文件列表来实现的。
+
+> 您可以将 `@ActiveProfiles` 用于新的 `SmartContextLoader` SPI 的任何实现，但是旧的 `ContextLoader`  SPI 的实现不支持 `@ActiveProfiles`。
+
+考虑两个使用 XML 配置和 `@Configuration` 类的示例：
+
+````xml
+<!-- app-config.xml -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xsi:schemaLocation="...">
+
+    <bean id="transferService"
+            class="com.bank.service.internal.DefaultTransferService">
+        <constructor-arg ref="accountRepository"/>
+        <constructor-arg ref="feePolicy"/>
+    </bean>
+
+    <bean id="accountRepository"
+            class="com.bank.repository.internal.JdbcAccountRepository">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <bean id="feePolicy"
+        class="com.bank.service.internal.ZeroFeePolicy"/>
+
+    <beans profile="dev">
+        <jdbc:embedded-database id="dataSource">
+            <jdbc:script
+                location="classpath:com/bank/config/sql/schema.sql"/>
+            <jdbc:script
+                location="classpath:com/bank/config/sql/test-data.sql"/>
+        </jdbc:embedded-database>
+    </beans>
+
+    <beans profile="production">
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/datasource"/>
+    </beans>
+
+    <beans profile="default">
+        <jdbc:embedded-database id="dataSource">
+            <jdbc:script
+                location="classpath:com/bank/config/sql/schema.sql"/>
+        </jdbc:embedded-database>
+    </beans>
+
+</beans>
+````
+
+````java
+package com.bank.service;
+
+@RunWith(SpringRunner.class)
+// ApplicationContext will be loaded from "classpath:/app-config.xml"
+@ContextConfiguration("/app-config.xml")
+@ActiveProfiles("dev")
+public class TransferServiceTest {
+
+    @Autowired
+    private TransferService transferService;
+
+    @Test
+    public void testTransferService() {
+        // test the transferService
+    }
+}
+````
+
+当运行 `TransferServiceTest` 时，它的 `ApplicationContext` 是从类路径根目录中的 `app-config.xml` 配置文件加载的。如果你检查 `app-config.xml`，你会发现 `accountRepository`  bean依赖于 `dataSource` bean。但是，`dataSource` 未定义为顶级 bean。相反，`dataSource` 定义了三次：在 `production` 配置文件中，在 `dev` 配置文件中，以及在`default` 配置文件中。
+
+通过使用 `@ActiveProfiles("dev")` 注解修饰 `TransferServiceTest`，我们指示 Spring TestContext Framework 加载 `ApplicationContext`，并将活动的配置文件设置为 `{"dev"}`。因此，创建嵌入式数据库并使用测试数据进行填充，并将 `accountRepository` bean 连接到对开发 `DataSource` 的引用。这可能是我们在集成测试中想要的。
+
+将 bean 分配给 `default` 配置文件有时很有用。仅当没有专门激活其他配置文件时，才会包含默认配置文件中的 Bean。您可以使用它来定义要在应用程序的默认状态中使用的“降级” bean。例如，您可以显式地为 `dev` 和 `production` 配置文件提供数据源，但是当这两个配置文件都不活动时，将内存数据源定义为默认值。
+
+以下代码清单演示了如何使用 `@Configuration` 类而不是 XML 实现相同的配置和集成测试：
+
+````java
+@Configuration
+@Profile("dev")
+public class StandaloneDataConfig {
+
+    @Bean
+    public DataSource dataSource() {
+        return new EmbeddedDatabaseBuilder()
+            .setType(EmbeddedDatabaseType.HSQL)
+            .addScript("classpath:com/bank/config/sql/schema.sql")
+            .addScript("classpath:com/bank/config/sql/test-data.sql")
+            .build();
+    }
+}
+````
+
+````java
+@Configuration
+@Profile("production")
+public class JndiDataConfig {
+
+    @Bean(destroyMethod="")
+    public DataSource dataSource() throws Exception {
+        Context ctx = new InitialContext();
+        return (DataSource) ctx.lookup("java:comp/env/jdbc/datasource");
+    }
+}
+````
+
+````java
+@Configuration
+@Profile("default")
+public class DefaultDataConfig {
+
+    @Bean
+    public DataSource dataSource() {
+        return new EmbeddedDatabaseBuilder()
+            .setType(EmbeddedDatabaseType.HSQL)
+            .addScript("classpath:com/bank/config/sql/schema.sql")
+            .build();
+    }
+}
+````
+
+````java
+@Configuration
+public class TransferServiceConfig {
+
+    @Autowired DataSource dataSource;
+
+    @Bean
+    public TransferService transferService() {
+        return new DefaultTransferService(accountRepository(), feePolicy());
+    }
+
+    @Bean
+    public AccountRepository accountRepository() {
+        return new JdbcAccountRepository(dataSource);
+    }
+
+    @Bean
+    public FeePolicy feePolicy() {
+        return new ZeroFeePolicy();
+    }
+
+}
+````
+
+````java
+package com.bank.service;
+
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {
+        TransferServiceConfig.class,
+        StandaloneDataConfig.class,
+        JndiDataConfig.class,
+        DefaultDataConfig.class})
+@ActiveProfiles("dev")
+public class TransferServiceTest {
+
+    @Autowired
+    private TransferService transferService;
+
+    @Test
+    public void testTransferService() {
+        // test the transferService
+    }
+}
+````
+
+在这个变体中，我们将 XML 配置拆分为四个独立的 `@Configuration` 类：
+
+ - `TransferServiceConfig`：使用 `@Autowired` 通过依赖注入获取 `dataSource`。
+ - `StandaloneDataConfig`：为适用于开发人员测试的嵌入式数据库定义 `dataSource`。
+ - `JndiDataConfig`：定义在生产环境中从 JNDI 检索的 `dataSource`。
+ - `DefaultDataConfig`：为默认的嵌入式数据库定义 `dataSource`，以防没有配置文件处于活动状态。
+
+与基于 XML 的配置示例一样，我们仍然使用 `@ActiveProfiles("dev")` 注解修释 `TransferServiceTest`，但这次我们使用 `@ContextConfiguration` 注解指定所有四个配置类。测试类的主体本身保持完全不变。
+
+通常情况下，在给定项目中的多个测试类中使用单组配置文件。因此，为了避免重复声明 `@ActiveProfiles` 注解，可以在基类上声明一次 `@ActiveProfiles`，子类自动从基类继承 `@ActiveProfiles` 配置。在下面的示例中，`@ActiveProfiles`（以及其他注解）的声明已被移动到抽象超类，`AbstractIntegrationTest`：
+
+````java
+package com.bank.service;
+
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {
+        TransferServiceConfig.class,
+        StandaloneDataConfig.class,
+        JndiDataConfig.class,
+        DefaultDataConfig.class})
+@ActiveProfiles("dev")
+public abstract class AbstractIntegrationTest {
+}
+````
+
+````java
+package com.bank.service;
+
+// "dev" profile inherited from superclass
+public class TransferServiceTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private TransferService transferService;
+
+    @Test
+    public void testTransferService() {
+        // test the transferService
+    }
+}
+````
+
+`@ActiveProfiles` 还支持 `inheritProfiles` 属性，可用于禁用活动配置文件的继承，如以下示例所示：
+
+````java
+package com.bank.service;
+
+// "dev" profile overridden with "production"
+@ActiveProfiles(profiles = "production", inheritProfiles = false)
+public class ProductionTransferServiceTest extends AbstractIntegrationTest {
+    // test body
+}
+````
+
+此外，有时需要以编程方式而不是声明性地解析测试的活动配置文件 - 例如，基于：
+
+ - 当前的操作系统。
+ - 是否在持续集成构建服务器上执行测试。
+ - 存在某些环境变量。
+ - 存在自定义类级注解。
+ - 其他问题。
+
+要以编程方式解析活动 Bean 定义概要文件，您可以实现自定义 `ActiveProfilesResolver` 并使用 `@ActiveProfiles` 的 `resolver` 属性进行注册。有关详细信息，请参阅相应的 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/ActiveProfilesResolver.html) 。以下示例演示如何实现和注册自定义 `OperatingSystemActiveProfilesResolver`：
+
+````java
+package com.bank.service;
+
+// "dev" profile overridden programmatically via a custom resolver
+@ActiveProfiles(
+    resolver = OperatingSystemActiveProfilesResolver.class,
+    inheritProfiles = false)
+public class TransferServiceTest extends AbstractIntegrationTest {
+    // test body
+}
+````
+
+````java
+package com.bank.service.test;
+
+public class OperatingSystemActiveProfilesResolver implements ActiveProfilesResolver {
+
+    @Override
+    String[] resolve(Class<?> testClass) {
+        String profile = ...;
+        // determine the value of profile based on the operating system
+        return new String[] {profile};
+    }
 }
 ````
 
