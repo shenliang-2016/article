@@ -1064,9 +1064,9 @@ public class MyTest {
 - [上下文配置继承](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
 - [使用环境配置进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
 - [使用测试属性源进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
-- [Loading a `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
-- [Context Caching](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching)
-- [Context Hierarchies](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-ctx-hierarchies)
+- [加载 `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
+- [上下文缓存](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching)
+- [上下文层级结构](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-ctx-hierarchies)
 
 ##### 使用 XML 资源进行上下文配置
 
@@ -1667,6 +1667,110 @@ public class BaseTest {
 @ContextConfiguration
 public class ExtendedTest extends BaseTest {
     // ...
+}
+````
+
+##### 加载 `WebApplicationContext`
+
+Spring 3.2 引入了对在集成测试中加载 `WebApplicationContext` 的支持。要指示 TestContext 框架加载 `WebApplicationContext` 而不是标准的 `ApplicationContext`，您可以使用 `@WebAppConfiguration` 注解修饰相应的测试类。
+
+测试类上存在 `@WebAppConfiguration` ，指示 TestContext 框架（TCF）应为您的集成测试加载 `WebApplicationContext`（WAC）。在后台，TCF 确保创建一个 `MockServletContext` 并提供给测试的 WAC。默认情况下，`MockServletContext` 的基本资源路径设置为 `src/main/webapp`。这被解释为相对于 JVM 根目录的路径（通常是项目的路径）。如果您熟悉 Maven 项目中 Web 应用程序的目录结构，您就知道 `src/main/webapp` 是 WAR 根目录的默认位置。如果需要覆盖此缺省值，则可以提供 `@WebAppConfiguration` 注解的备用路径（例如，`@WebAppConfiguration("src/test/webapp")`）。如果您希望从类路径而不是文件系统引用基本资源路径，则可以使用 Spring 的 `classpath:` 前缀。
+
+请注意，Spring 对 `WebApplicationContext` 实现的测试支持与其对标准 `ApplicationContext` 实现的支持相同。使用 `WebApplicationContext` 进行测试时，可以使用 `@ContextConfiguration` 自由声明 XML 配置文件，Groovy 脚本或 `@Configuration` 类。您也可以自由使用任何其他测试注解，例如 `@ActiveProfiles`，`@TestExecutionListeners`，`@Sql`，`@Rollback`等。
+
+本节中的其余示例显示了用于加载 `WebApplicationContext` 的一些配置选项。以下示例显示了 TestContext 框架对约定优于配置的支持：
+
+示例 1. 约定
+
+````java
+@RunWith(SpringRunner.class)
+
+// defaults to "file:src/main/webapp"
+@WebAppConfiguration
+
+// detects "WacTests-context.xml" in the same package
+// or static nested @Configuration classes
+@ContextConfiguration
+
+public class WacTests {
+    //...
+}
+````
+
+如果使用 `@WebAppConfiguration` 注解测试类而未指定资源基路径，则资源路径有效地默认为 `file:src/main/ webapp`。类似地，如果你声明 `@IntextConfiguration` 而没有指定资源 `locations`，带注解的 `classes` 或上下文 `initializers`，Spring 会尝试使用约定来检测你的配置是否存在（即 `WacTests-context.xml` 在与 `WacTests` 类或静态嵌套 `@Configuration` 类相同的包中。
+
+以下示例说明如何使用 `@WebAppConfiguration` 显式声明资源基路径，并使用 `@ContextConfiguration` 显式声明 XML 资源位置：
+
+示例 2. 默认资源语义
+
+````java
+@RunWith(SpringRunner.class)
+
+// file system resource
+@WebAppConfiguration("webapp")
+
+// classpath resource
+@ContextConfiguration("/spring/test-servlet-config.xml")
+
+public class WacTests {
+    //...
+}
+````
+
+这里要注意的重要一点是具有这两个注解的路径的不同语义。默认情况下，`@WebAppConfiguration` 资源路径是基于文件系统的，而 `@IntextConfiguration` 资源位置是基于类路径的。
+
+以下示例显示我们可以通过指定 Spring 资源前缀来覆盖两个注解的默认资源语义：
+
+示例 3. 显式资源语义
+
+````java
+@RunWith(SpringRunner.class)
+
+// classpath resource
+@WebAppConfiguration("classpath:test-web-resources")
+
+// file system resource
+@ContextConfiguration("file:src/main/webapp/WEB-INF/servlet-config.xml")
+
+public class WacTests {
+    //...
+}
+````
+
+将此示例中的注解与前一个示例进行对比。
+
+*使用 Web Mocks*
+
+为了提供全面的 Web 测试支持，Spring 3.2 引入了一个默认启用的 `ServletTestExecutionListener`。当针对一个 `WebApplicationContext`，此 [`TestExecutionListener`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-key-abstractions)  在每个测试方法之前使用 Spring Web 的 `RequestContextHolder` 设置默认的线程局部状态，并根据用 `@WebAppConfiguration` 配置的基本资源路径创建一个 `MockHttpServletRequest`，一个 `MockHttpServletResponse` 和一个 `ServletWebRequest`。 `ServletTestExecutionListener` 还确保可以将 `MockHttpServletResponse` 和 `ServletWebRequest` 注入到测试实例中，并且一旦测试完成，它就会清除线程本地状态。
+
+一旦为测试加载了 `WebApplicationContext`，您可能会发现需要与 Web 模拟进行交互 - 例如，设置测试夹具或在调用 Web 组件后执行断言。以下示例显示可以将哪些模拟自动装配到测试实例中。请注意，`WebApplicationContext` 和 `MockServletContext` 都在测试套件中缓存，而其他模拟由 `ServletTestExecutionListener` 按照测试方法进行管理。
+
+示例 4. 注入模拟
+
+````java
+@WebAppConfiguration
+@ContextConfiguration
+public class WacTests {
+
+    @Autowired
+    WebApplicationContext wac; // cached
+
+    @Autowired
+    MockServletContext servletContext; // cached
+
+    @Autowired
+    MockHttpSession session;
+
+    @Autowired
+    MockHttpServletRequest request;
+
+    @Autowired
+    MockHttpServletResponse response;
+
+    @Autowired
+    ServletWebRequest webRequest;
+
+    //...
 }
 ````
 
