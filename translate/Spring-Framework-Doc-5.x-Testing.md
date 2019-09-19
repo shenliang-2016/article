@@ -1774,3 +1774,121 @@ public class WacTests {
 }
 ````
 
+##### 上下文缓存
+
+一旦 TestContext 框架为测试加载 `ApplicationContext`（或 `WebApplicationContext`），该上下文就会被缓存并重用于在同一测试套件中声明相同唯一上下文配置的所有后续测试。要了解缓存的工作原理，了解“独特”和“测试套件”的含义非常重要。
+
+可以通过用于加载它的配置参数的组合唯一地标识 `ApplicationContext`。因此，配置参数的唯一组合用于生成用于缓存上下文的键。TestContext 框架使用以下配置参数来构建上下文缓存键：
+
+- `locations` (来自 `@ContextConfiguration`)
+- `classes` (来自 `@ContextConfiguration`)
+- `contextInitializerClasses` (来自 `@ContextConfiguration`)
+- `contextCustomizers` (来自 `ContextCustomizerFactory`)
+- `contextLoader` (来自 `@ContextConfiguration`)
+- `parent` (来自 `@ContextHierarchy`)
+- `activeProfiles` (来自 `@ActiveProfiles`)
+- `propertySourceLocations` (来自 `@TestPropertySource`)
+- `propertySourceProperties` (来自 `@TestPropertySource`)
+- `resourceBasePath` (来自 `@WebAppConfiguration`)
+
+例如，如果 `TestClassA` 为 `@ContextConfiguration` 的 `locations`（或 `value`）属性指定 `{"app-config.xml", "test-config.xml"}`，则 TestContext 框架加载对应的 `ApplicationContext` 并将其存储在仅基于这些位置的键下的 `static` 上下文缓存中。因此，如果 `TestClassB` 还为其位置定义了 `{"app-config.xml", "test-config.xml"}`（通过继承显式或隐式），但没有定义 `@WebAppConfiguration`，则不同的 ` ContextLoader`，不同的活动配置文件，不同的上下文初始化器，不同的测试属性源或不同的父上下文，然后两个测试类共享相同的 `ApplicationContext`。这意味着加载应用程序上下文的设置成本仅产生一次（每个测试套件），并且后续测试执行要快得多。
+
+> 测试套件和分支流程
+>
+> Spring TestContext 框架将应用程序上下文存储在静态缓存中。这意味着上下文实际上存储在 `static` 变量中。换句话说，如果测试在单独的进程中执行，则在每次测试执行之间清除静态高速缓存，这有效地禁用了高速缓存机制。
+>
+> 要从缓存机制中受益，所有测试必须在同一进程或测试套件中运行。这可以通过在 IDE 中作为一个组执行所有测试来实现。类似地，当使用诸如 Ant，Maven 或 Gradle 之类的构建框架执行测试时，确保构建框架不在测试之间进行分支是很重要的。例如，如果 Maven Surefire 插件的 [`forkMode`](https://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#forkMode) 设置为 `always` 或者 `pertest`，TestContext 框架无法在测试类之间缓存应用程序上下文，因此构建过程运行速度明显更慢。
+
+从 Spring Framework 4.3 开始，上下文缓存的大小受限于默认的最大大小 32 。每当达到最大大小时，最近最少使用（LRU）淘汰策略用于淘汰和关闭过时的上下文。您可以通过设置名为 `spring.test.context.cache.maxSize` 的 JVM 系统属性，从命令行或构建脚本配置最大大小。或者，您可以使用 `SpringProperties` API 以编程方式设置相同的属性。
+
+由于在给定的测试套件中加载大量应用程序上下文会导致套件执行不必要的长时间，因此确切地知道已加载和缓存了多少上下文通常是有益的。要查看基础上下文缓存的统计信息，可以将 `org.springframework.test.context.cache` 日志记录类别的日志级别设置为 `DEBUG`。
+
+在某些特殊的情况下，测试会破坏应用程序上下文并需要重新加载（例如，通过修改 bean 定义或应用程序对象的状态），您可以使用 `@DirtiesContext` 注解测试类或测试方法（请参阅在 [`@DirtiesContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-dirtiescontext) 中的 `@DirtiesContext` 的讨论）。这指示 Spring 在运行需要相同应用程序上下文的下一个测试之前从缓存中删除上下文并重建应用程序上下文。请注意，`@DirtiesContext` 注解的支持由 `DirtiesContextBeforeModesTestExecutionListener` 和 `DirtiesContextTestExecutionListener` 提供，它们默认启用。
+
+##### 上下文层级结构
+
+在编写依赖于已加载的 Spring `ApplicationContext` 的集成测试时，通常可以针对单个上下文进行测试。但是，有时候在 `ApplicationContext` 实例的层次结构中进行测试是有益的，甚至是必要的。例如，如果您正在开发 Spring MVC Web 应用程序，那么您通常会有一个由 Spring 的 `ContextLoaderListener` 加载的根 `WebApplicationContext` 和一个由 Spring 的 `DispatcherServlet` 加载的子 `WebApplicationContext`。这将生成父子上下文层次结构，其中共享组件和基础结构配置在根上下文中声明，并由特定于 Web 的组件在子上下文中使用。可以在 Spring Batch 应用程序中找到另一个用例，其中您经常有一个父上下文，它提供共享批处理基础结构的配置，以及一个用于配置特定批处理作业的子上下文。
+
+从 Spring Framework 3.2.2 开始，您可以编写使用上下文层次结构的集成测试，方法是在单个测试类或测试类层次结构中使用 `@ContextHierarchy` 注解声明上下文配置。如果在测试类层次结构中的多个类上声明了上下文层次结构，则还可以合并或覆盖上下文层次结构中特定的命名级别的上下文配置。合并层次结构中给定级别的配置时，配置资源类型（即 XML 配置文件或带注解的类）必须一致。否则，在使用不同资源类型配置的上下文层次结构中具有不同级别是完全可以接受的。
+
+本节中剩余的基于 JUnit 4 的示例显示了需要使用上下文层次结构的集成测试的常见配置方案。
+
+*使用上下文层级结构的单个测试类*
+
+`ControllerIntegrationTests` 表示 Spring MVC Web 应用程序的典型集成测试场景，它声明了一个由两个级别组成的上下文层次结构，一个用于根 `WebApplicationContext`（使用 `TestAppConfig` `@Configuration` 类加载），另一个用于调度servlet `WebApplicationContext`（使用 `WebConfig` `@Configuration` 类加载）。自动装配到测试实例中的 `WebApplicationContext` 是子上下文（即层次结构中最低的上下文）。以下清单显示了此配置方案：
+
+````java
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextHierarchy({
+    @ContextConfiguration(classes = TestAppConfig.class),
+    @ContextConfiguration(classes = WebConfig.class)
+})
+public class ControllerIntegrationTests {
+
+    @Autowired
+    private WebApplicationContext wac;
+
+    // ...
+}
+````
+
+*具有隐式父上下文的类层次结构*
+
+此示例中的测试类定义测试类层次结构中的上下文层次结构。 `AbstractWebTests` 在 Spring 驱动的 Web 应用程序中声明了根 `WebApplicationContext` 的配置。但请注意，`AbstractWebTests` 不会声明`@ContextHierarchy`。因此，`AbstractWebTests` 的子类可以选择参与上下文层次结构或遵循 `@ContextConfiguration` 的标准语义。 `SoapWebServiceTests` 和 `RestWebServiceTests` 都扩展了 `AbstractWebTests` 并使用 `@ContextHierarchy` 定义了一个上下文层次结构。结果是加载了三个应用程序上下文（一个用于 `@ContextConfiguration` 的每个声明），并且基于 `AbstractWebTests` 中的配置加载的应用程序上下文被设置为为具体子类加载的每个上下文的父上下文。以下清单显示了此配置方案：
+
+````java
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextConfiguration("file:src/main/webapp/WEB-INF/applicationContext.xml")
+public abstract class AbstractWebTests {}
+
+@ContextHierarchy(@ContextConfiguration("/spring/soap-ws-config.xml")
+public class SoapWebServiceTests extends AbstractWebTests {}
+
+@ContextHierarchy(@ContextConfiguration("/spring/rest-ws-config.xml")
+public class RestWebServiceTests extends AbstractWebTests {}
+````
+
+*具有合并的上下文层次结构配置的类层次*
+
+此示例中的类显示了命名层次结构级别的使用，以便合并上下文层次结构中特定级别的配置。 `BaseTests` 在层次结构中定义了两个级别，`parent` 和 `child`。 `ExtendedTests` 扩展了 `BaseTests` 并指示 Spring TestContext Framework 合并 `child` 层次结构级别的上下文配置，确保在 `@IntextConfiguration` 中 `name` 属性中声明的名称都是 `child`。结果是加载了三个应用程序上下文：一个用于 `/app-config.xml`，一个用于 `/user-config.xml`，另一个用于 `{"/user-config.xml", "/order-config.xml"}`。与前面的示例一样，从 `/app-config.xml` 加载的应用程序上下文被设置为从 `/user-config.xml` 和 `{"/user-config.xml", "/order-config.xml"}` 加载的上下文的父上下文。以下清单显示了此配置方案：
+
+````java
+@RunWith(SpringRunner.class)
+@ContextHierarchy({
+    @ContextConfiguration(name = "parent", locations = "/app-config.xml"),
+    @ContextConfiguration(name = "child", locations = "/user-config.xml")
+})
+public class BaseTests {}
+
+@ContextHierarchy(
+    @ContextConfiguration(name = "child", locations = "/order-config.xml")
+)
+public class ExtendedTests extends BaseTests {}
+````
+
+*具有重写的上下文层次结构配置的类层次结构*
+
+与前面的示例相比，此示例演示了如何通过将 `@ContextConfiguration` 中的 `inheritLocations` 标志设置为 `false` 来覆盖上下文层次结构中给定命名级别的配置。因此，`ExtendedTests` 的应用程序上下文仅从 `/test-user-config.xml` 加载，并将其父设置为从 `/app-config.xml` 加载的上下文。以下清单显示了此配置方案：
+
+````java
+@RunWith(SpringRunner.class)
+@ContextHierarchy({
+    @ContextConfiguration(name = "parent", locations = "/app-config.xml"),
+    @ContextConfiguration(name = "child", locations = "/user-config.xml")
+})
+public class BaseTests {}
+
+@ContextHierarchy(
+    @ContextConfiguration(
+        name = "child",
+        locations = "/test-user-config.xml",
+        inheritLocations = false
+))
+public class ExtendedTests extends BaseTests {}
+````
+
+> 在上下文层次结构中清理上下文
+> 如果在其上下文配置为上下文层次结构的一部分的测试中使用 `@DirtiesContext`，则可以使用 `hierarchyMode` 标志来控制如何清除上下文高速缓存。有关更多详细信息，请参阅 [Spring Testing Annotations](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-dirtiescontext) 中的 `@DirtiesContext` 和 [`@DirtiesContext`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/annotation/DirtiesContext.html)  javadoc 的讨论。
+
