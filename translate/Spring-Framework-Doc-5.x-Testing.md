@@ -1063,7 +1063,7 @@ public class MyTest {
 - [使用上下文初始化器进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-initializers)
 - [上下文配置继承](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-inheritance)
 - [使用环境配置进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-env-profiles)
-- [Context Configuration with Test Property Sources](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
+- [使用测试属性源进行上下文配置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-property-sources)
 - [Loading a `WebApplicationContext`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-web)
 - [Context Caching](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching)
 - [Context Hierarchies](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-ctx-hierarchies)
@@ -1564,6 +1564,109 @@ public class OperatingSystemActiveProfilesResolver implements ActiveProfilesReso
         // determine the value of profile based on the operating system
         return new String[] {profile};
     }
+}
+````
+
+##### 使用测试属性源进行上下文配置
+
+Spring 3.1在框架中引入了具有属性源层次结构的环境概念的第一类支持。从 Spring 4.1 开始，您可以使用特定于测试的属性源配置集成测试。与 `@Configuration` 类上使用的 `@PropertySource` 注解相比，您可以在测试类上声明 `@TestPropertySource` 注解，以声明测试属性文件或内联属性的资源位置。这些测试属性源被添加到 `Environment` 中的 `PropertySources` 集合中，用于为注解的集成测试加载的 `ApplicationContext`。
+
+> 你可以使用 `@TestPropertySource` 和 `SmartContextLoader` SPI 的任何实现，但是旧的 `ContextLoader`  SPI 的实现不支持 `@TestPropertySource`。
+>
+> `SmartContextLoader` 的实现通过 `MergedContextConfiguration` 中的 `getPropertySourceLocations()` 和 `getPropertySourceProperties()` 方法获得对合并的测试属性源值的访问。
+
+###### 声明测试属性源
+
+您可以使用 `@TestPropertySource` 的 `locations` 或 `value` 属性配置测试属性文件。
+
+支持传统和基于 XML 的属性文件格式 - 例如，`"classpath:/com/example/test.properties"` 或 `"file:///path/to/file.xml"`。
+
+每条路径都被解释为 Spring `Resources`。普通路径（例如，`"test.properties"`）被视为相对于定义测试类的包的类路径资源。以斜杠开头的路径被视为绝对类路径资源（例如：`"/org/example/test.xml"`）。引用 URL 的路径（例如，前缀为 `classpath:`，`file:` 或 `http:` 的路径）通过使用指定的资源协议加载。不允许使用资源位置通配符（例如 `***/**.properties`）：每个位置必须只对应一个 `.properties` 或 `.xml` 资源。
+
+以下示例使用测试属性文件：
+
+````java
+@ContextConfiguration
+@TestPropertySource("/test.properties") 
+public class MyIntegrationTests {
+    // class body...
+}
+````
+
+您可以使用 `@TestPropertySource` 的 `properties` 属性以键值对的形式配置内联属性，如下一个示例所示。所有键值对都被添加到封闭的 `Environment` 中，作为具有最高优先级的单个测试 `PropertySource`。
+
+键值对支持的语法与为 Java 属性文件中的条目定义的语法相同：
+
+- `key=value`
+- `key:value`
+- `key value`
+
+以下示例设置两个内联属性：
+
+````java
+@ContextConfiguration
+@TestPropertySource(properties = {"timezone = GMT", "port: 4242"}) 
+public class MyIntegrationTests {
+    // class body...
+}
+````
+
+###### 默认属性文件探测
+
+如果 `@TestPropertySource` 被声明为空注解（即，没有 `locations` 或 `properties` 属性的显式值），则尝试检测相对于声明注解的类的默认属性文件。例如，如果注解修饰的测试类是 `com.example.MyTest`，则相应的默认属性文件是 `classpath:com/example/MyTest.properties`。如果无法检测到默认值，则抛出 `IllegalStateException`。
+
+###### 优先级
+
+测试属性源的优先级高于从操作系统环境，Java 系统属性或应用程序通过使用 `@PropertySource` 或以编程方式声明性地添加的属性源的优先级。因此，测试属性源可用于有选择地覆盖系统和应用程序属性源中定义的属性。此外，内联属性的优先级高于从资源位置加载的属性。
+
+在下一个示例中，`timezone` 和 `port` 属性以及 `"/test.properties"` 中定义的任何属性都会覆盖在系统和应用程序属性源中定义的同名属性。此外，如果 `/test.properties` 文件定义 `timezone` 和 `port` 属性的条目，那么这些属性将被使用 `properties` 属性声明的内联属性覆盖。以下示例显示如何在文件和内联中指定属性：
+
+````java
+@ContextConfiguration
+@TestPropertySource(
+    locations = "/test.properties",
+    properties = {"timezone = GMT", "port: 4242"}
+)
+public class MyIntegrationTests {
+    // class body...
+}
+````
+
+###### 继承和覆盖测试属性源
+
+`@TestPropertySource` 支持 boolean 类型的 ` inheritLocations` 和 `inheritProperties` 属性，这些属性表示属性文件的资源位置和超类声明的内联属性是否应该被继承。两个标志的默认值是 `true`。这意味着测试类继承了任何超类声明的位置和内联属性。具体而言，测试类的位置和内联属性将附加到超类声明的位置和内联属性。因此，子类可以选择扩展位置和内联属性。请注意，稍后出现的属性会影响（即覆盖）先前出现的同名属性。此外，上述优先规则也适用于继承的测试属性源。
+
+如果 `@TestPropertySource` 中的 `inheritLocations` 或 `inheritProperties` 属性设置为 `false`，则测试类的位置或内联属性分别影响并有效地替换超类定义的配置。
+
+在下一个例子中，只使用 `base.properties` 文件作为测试属性源加载 `BaseTest` 的 `ApplicationContext`。相反，使用 `base.properties` 和 `extended.properties` 文件作为测试属性源位置来加载 `ExtendedTest` 的 `ApplicationContext`。以下示例显示如何使用 `properties` 文件在子类及其超类中定义属性：
+
+````java
+@TestPropertySource("base.properties")
+@ContextConfiguration
+public class BaseTest {
+    // ...
+}
+
+@TestPropertySource("extended.properties")
+@ContextConfiguration
+public class ExtendedTest extends BaseTest {
+    // ...
+}
+````
+
+在下一个示例中，仅使用内联的 `key1` 属性加载 `BaseTest` 的 `ApplicationContext`。相反，`ExtendedTest` 的 `ApplicationContext` 是使用内联的 `key1` 和 `key2` 属性加载的。以下示例显示如何使用内联属性在子类及其超类中定义属性：
+
+````java
+@TestPropertySource(properties = "key1 = value1")
+@ContextConfiguration
+public class BaseTest {
+    // ...
+}
+
+@TestPropertySource(properties = "key2 = value2")
+@ContextConfiguration
+public class ExtendedTest extends BaseTest {
+    // ...
 }
 ````
 
