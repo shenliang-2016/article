@@ -2086,3 +2086,11 @@ public class SessionScopedBeanTests {
 }
 ````
 
+#### 3.5.7. 事务管理
+
+在 TestContext 框架中，事务由 `TransactionalTestExecutionListener` 管理，默认情况下配置它，即使您没有在测试类上显式声明 `@TestExecutionListeners`。但是，要启用对事务的支持，必须在 `ApplicationContext` 中配置一个 `PlatformTransactionManager` bean，该 bean 加载了 `@ContextConfiguration` 语义（稍后会提供更多详细信息）。此外，您必须在类或方法级别为测试声明 Spring 的 `@Transactional` 注解。
+
+##### 测试管理的事务
+
+测试管理的事务是通过使用 `TransactionalTestExecutionListener` 以编程方式管理的事务，或者通过使用 `TestTransaction`（稍后描述）以编程方式管理的事务。您不应该将这些事务与 Spring 管理的事务（在为测试加载的 `ApplicationContext` 中直接由 Spring 管理的事务）或应用程序管理的事务（在测试调用的应用程序代码中以编程方式管理的事务）混淆。Spring 管理和应用程序管理的事务通常参与测试管理的事务。但是，如果 Spring 管理或应用程序管理的事务配置了除 `REQUIRED` 或 `SUPPORTS` 以外的任何传播类型，则应谨慎使用（请参阅[事务传播](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#tx-propagation) 获取有关详细信息）。
+
