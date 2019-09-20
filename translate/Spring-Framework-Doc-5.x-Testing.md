@@ -1991,3 +1991,98 @@ public class HibernateTitleRepositoryTests {
 >
 > 指定的限定符值表示要注入的特定 `DataSource` bean，将类型匹配集缩小到特定 bean。它的值与相应的 `<bean>` 定义中的 `<qualifier>` 声明匹配。bean 名称用作"降级"限定符值，因此您可以有效地在那里按名称指向特定的 bean（如前所示，假设 `myDataSource` 是 bean `id`）。
 
+#### 3.5.6. 测试请求和会话范围的Bean
+
+Spring 从早年开始就支持 [请求和会话范围的bean](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-factory-scopes-other) 。从 Spring 3.2 开始，您可以按照以下步骤测试请求范围和会话范围的 bean：
+
+ - 确保通过使用 `@WebAppConfiguration` 注解测试类来为测试加载 `WebApplicationContext`。
+ - 将模拟请求或会话注入测试实例，并根据需要准备测试夹具。
+ - 调用从配置的 `WebApplicationContext` 中检索到的 Web 组件（具有依赖项注入）。
+ - 对模拟执行断言。
+
+下一个代码段显示了登录用例的 XML 配置。请注意，`userService` bean 依赖于请求范围的 `loginAction`  bean。此外，`LoginAction` 通过使用 [SpEL表达式](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions) 来实例化，以检索来自当前 HTTP 请求的用户名和密码。在我们的测试中，我们希望通过 TestContext 框架管理的模拟配置这些请求参数。以下清单显示了此用例的配置：
+
+*示例 5. 请求范围的 bean 配置*
+
+````xml
+<beans>
+
+    <bean id="userService" class="com.example.SimpleUserService"
+            c:loginAction-ref="loginAction"/>
+
+    <bean id="loginAction" class="com.example.LoginAction"
+            c:username="#{request.getParameter('user')}"
+            c:password="#{request.getParameter('pswd')}"
+            scope="request">
+        <aop:scoped-proxy/>
+    </bean>
+
+</beans>
+````
+
+在 `RequestScopedBeanTests` 中，我们将 `UserService`（即被测试的主题）和 `MockHttpServletRequest` 注入我们的测试实例。在我们的 `requestScope()` 测试方法中，我们通过在提供的 `MockHttpServletRequest` 中设置请求参数来设置我们的测试夹具。当在我们的 `userService` 上调用 `loginUser()` 方法时，我们可以确保用户服务可以访问当前 `MockHttpServletRequest` 的请求范围的 `loginAction`（也就是我们刚设置的那个参数）。然后，我们可以根据用户名和密码的已知输入对结果执行断言。以下清单显示了如何执行此操作：
+
+*示例 6. 请求范围的 bean 测试*
+
+````java
+@RunWith(SpringRunner.class)
+@ContextConfiguration
+@WebAppConfiguration
+public class RequestScopedBeanTests {
+
+    @Autowired UserService userService;
+    @Autowired MockHttpServletRequest request;
+
+    @Test
+    public void requestScope() {
+        request.setParameter("user", "enigma");
+        request.setParameter("pswd", "$pr!ng");
+
+        LoginResults results = userService.loginUser();
+        // assert results
+    }
+}
+````
+
+以下代码片段类似于我们之前针对请求范围的 bean 看到的代码片段。但是，这次，`userService` bean依赖于会话范围的 `userPreferences` bean。请注意，`UserPreferences` bean是使用 SpEL 表达式实例化的，该表达式从当前 HTTP 会话中检索主题。在我们的测试中，我们需要在 TestContext 框架管理的模拟会话中配置主题。以下示例显示了如何执行此操作：
+
+*示例 7. 会话范围的 bean 配置*
+
+````xml
+<beans>
+
+    <bean id="userService" class="com.example.SimpleUserService"
+            c:userPreferences-ref="userPreferences" />
+
+    <bean id="userPreferences" class="com.example.UserPreferences"
+            c:theme="#{session.getAttribute('theme')}"
+            scope="session">
+        <aop:scoped-proxy/>
+    </bean>
+
+</beans>
+````
+
+在 `SessionScopedBeanTests` 中，我们将 `UserService` 和 `MockHttpSession` 注入我们的测试实例。在我们的 `sessionScope()` 测试方法中，我们通过在提供的 `MockHttpSession` 中设置预期的 `theme` 属性来设置我们的测试夹具。当我们的 `userService` 上调用 `processUserPreferences()` 方法时，我们可以确保用户服务可以访问当前 `MockHttpSession` 的会话范围的 `userPreferences`，我们可以根据配置的主题对结果执行断言。以下示例显示了如何执行此操作：
+
+*示例 8. 会话范围 bean 测试*
+
+````java
+@RunWith(SpringRunner.class)
+@ContextConfiguration
+@WebAppConfiguration
+public class SessionScopedBeanTests {
+
+    @Autowired UserService userService;
+    @Autowired MockHttpSession session;
+
+    @Test
+    public void sessionScope() throws Exception {
+        session.setAttribute("theme", "blue");
+
+        Results results = userService.processUserPreferences();
+        // assert results
+    }
+}
+````
+
