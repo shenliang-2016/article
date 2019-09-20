@@ -2094,3 +2094,213 @@ public class SessionScopedBeanTests {
 
 测试管理的事务是通过使用 `TransactionalTestExecutionListener` 以编程方式管理的事务，或者通过使用 `TestTransaction`（稍后描述）以编程方式管理的事务。您不应该将这些事务与 Spring 管理的事务（在为测试加载的 `ApplicationContext` 中直接由 Spring 管理的事务）或应用程序管理的事务（在测试调用的应用程序代码中以编程方式管理的事务）混淆。Spring 管理和应用程序管理的事务通常参与测试管理的事务。但是，如果 Spring 管理或应用程序管理的事务配置了除 `REQUIRED` 或 `SUPPORTS` 以外的任何传播类型，则应谨慎使用（请参阅[事务传播](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#tx-propagation) 获取有关详细信息）。
 
+> *抢先超时和测试管理的事务*
+>
+> 当将来自测试框架的任何形式的抢先超时与 Spring 的测试管理事务结合使用时，必须小心。
+>
+> 具体来说，在调用当前测试方法之前，Spring 的测试支持将事务状态绑定到当前线程（通过 `java.lang.ThreadLocal` 变量）。如果测试框架在新线程中调用当前测试方法以支持抢占超时，则在测试管理的事务中将不会调用在当前测试方法中执行的任何操作。因此，任何此类操作的结果都不会与测试管理的事务一起回滚。相反，即使测试管理的事务由 Spring 正确回滚，这些操作也将被提交到持久存储 - 例如，关系数据库。
+>
+> 可能发生的情况包括但不限于以下情况。
+>
+>  -  JUnit 4 的 `@Test(timeout = ...)` 支持和 `TimeOut` 规则
+>  -  JUnit Jupiter 在 `org.junit.jupiter.api.Assertions` 类中的 `assertTimeoutPreemptively(...)` 方法
+>  -  TestNG 的 `@Test(timeOut = ...)` 支持
+
+##### 开启和关闭事务
+
+使用 `@Transactional` 注解修饰测试方法会导致测试在一个事务中运行，该事务默认情况下会在测试完成后自动回滚。如果测试类使用 `@Transactional` 注解修饰，则该类层次结构中的每个测试方法都在事务中运行。未使用 `@Transactional`（在类或方法级别）注解修饰的测试方法不在事务中运行。此外，使用 `@Transactional` 注解但将 `propagation` 类型设置为 `NOT_SUPPORTED` 的测试不在事务中运行。
+
+注意 [`AbstractTransactionalJUnit4SpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-junit4) 和 [`AbstractTransactionalTestNGSpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-testng) 被预配置为在类级别支持事务。
+
+下面的例子展示了一个常见的基于 Hibernate 的 `UserRepository` 的集成测试类：
+
+````java
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = TestConfig.class)
+@Transactional
+public class HibernateUserRepositoryTests {
+
+    @Autowired
+    HibernateUserRepository repository;
+
+    @Autowired
+    SessionFactory sessionFactory;
+
+    JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    @Test
+    public void createUser() {
+        // track initial state in test database:
+        final int count = countRowsInTable("user");
+
+        User user = new User(...);
+        repository.save(user);
+
+        // Manual flush is required to avoid false positive in test
+        sessionFactory.getCurrentSession().flush();
+        assertNumUsers(count + 1);
+    }
+
+    protected int countRowsInTable(String tableName) {
+        return JdbcTestUtils.countRowsInTable(this.jdbcTemplate, tableName);
+    }
+
+    protected void assertNumUsers(int expected) {
+        assertEquals("Number of rows in the [user] table.", expected, countRowsInTable("user"));
+    }
+}
+````
+
+如 [Transaction Rollback and Commit Behavior](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx-rollback-and-commit-behavior) 中所述，在 `createUser()` 方法运行之后没有必要清理数据库，因为所有对数据库的修改都会自动被 `TransactionalTestExecutionListener` 回滚。
+
+##### 事务回滚和提交行为
+
+默认情况下，测试事务将在测试执行完成之后自动回滚。不过，事务提交和回滚行为可以通过 `@Commit` 和 `@Rollback` 注解进行声明式配置。参考 [annotation support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 部分中的相应内容获取更多细节。
+
+##### 编程式事务管理
+
+从 Spring Framework 4.1开始，你可以通过编程方式与测试管理的事务交互，使用 `static` 方法 `TestTransaction` 。比如，你可以在测试方法中，测试方法前，或者测试方法后使用 `TestTransaction` ，以开始活着结束当前测试管理的事务活着配置当前测试管理的事务的回滚或者提交行为。当 `TransactionalTestExecutionListener` 启用时对 `TestTransaction` 的支持自动可用。
+
+下面的例子展示了 `TestTransaciton` 的一些特性。参考 [`TestTransaction`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/transaction/TestTransaction.html) 文档获取更多细节。
+
+````java
+@ContextConfiguration(classes = TestConfig.class)
+public class ProgrammaticTransactionManagementTests extends
+        AbstractTransactionalJUnit4SpringContextTests {
+
+    @Test
+    public void transactionalTest() {
+        // assert initial state in test database:
+        assertNumUsers(2);
+
+        deleteFromTables("user");
+
+        // changes to the database will be committed!
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        assertFalse(TestTransaction.isActive());
+        assertNumUsers(0);
+
+        TestTransaction.start();
+        // perform other actions against the database that will
+        // be automatically rolled back after the test completes...
+    }
+
+    protected void assertNumUsers(int expected) {
+        assertEquals("Number of rows in the [user] table.", expected, countRowsInTable("user"));
+    }
+}
+````
+
+##### 执行事务之外的代码
+
+有时，您可能需要在事务性测试方法之前或之后，但在事务上下文之外执行某些代码 - 例如，在运行测试之前验证初始数据库状态或在测试运行后验证预期的事务提交行为（如果测试配置为提交事务）。对于这种情况，`TransactionalTestExecutionListener` 支持 `@BeforeTransaction` 和 `@AfterTransaction` 注解。您可以使用其中一个注解在测试类或测试接口中的任何 `void` 默认方法或者任何 `void` 方法，并且 `TransactionalTestExecutionListener` 确保您的事务之前的方法或事务方法在适当的时间运行。
+
+> 任何前置方法（例如使用 JUnit Jupiter 的 `@BeforeEach` 注解修饰的方法）和任何后置方法（例如使用 JUnit Jupiter 的 `@AfterEach` 注解修饰的方法）都在事务中运行。此外，对于未配置为在事务中运行的测试方法，不会运行使用 `@BeforeTransaction` 或 `@AfterTransaction` 注解修饰的方法。
+
+##### 配置事务管理器
+
+`TransactionalTestExecutionListener` 期望在 Spring `ApplicationContext` 中定义一个 `PlatformTransactionManager` bean 用于测试。如果在测试的 `ApplicationContext` 中有多个 `PlatformTransactionManager` 实例，你可以使用 `@Transactional("myTxMgr")` 或 `@Transactional(transactionManager = "myTxMgr")` 或 `TransactionManagementConfigurer` 来声明一个限定符，由 `@Configuration` 类实现。请参阅  [`TestContextTransactionUtils.retrieveTransactionManager()`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/transaction/TestContextTransactionUtils.html#retrieveTransactionManager-org.springframework.test.context.TestContext-java.lang.String-)  文档了解用于在测试的 `ApplicationContext` 中查找事务管理器的算法的详细信息。
+
+##### 演示所有与事务相关的注释
+
+以下基于 JUnit 4 的示例显示了一个虚构的集成测试场景，该场景突出显示了所有与事务相关的注解。该示例不是为了演示最佳实践，而是为了演示如何使用这些注解。有关更多信息和配置示例，请参阅 [annotation support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations) 部分。 [Transaction management for `@Sql`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-executing-sql-declaratively-tx) 包含一个使用 `@Sql` 进行声明性 SQL 脚本执行的附加示例，其中包含默认事务回滚语义。以下示例显示了相关注解：
+
+````java
+@RunWith(SpringRunner.class)
+@ContextConfiguration
+@Transactional(transactionManager = "txMgr")
+@Commit
+public class FictitiousTransactionalTest {
+
+    @BeforeTransaction
+    void verifyInitialDatabaseState() {
+        // logic to verify the initial state before a transaction is started
+    }
+
+    @Before
+    public void setUpTestDataWithinTransaction() {
+        // set up test data within the transaction
+    }
+
+    @Test
+    // overrides the class-level @Commit setting
+    @Rollback
+    public void modifyDatabaseWithinTransaction() {
+        // logic which uses the test data and modifies database state
+    }
+
+    @After
+    public void tearDownWithinTransaction() {
+        // execute "tear down" logic within the transaction
+    }
+
+    @AfterTransaction
+    void verifyFinalDatabaseState() {
+        // logic to verify the final state after transaction has rolled back
+    }
+
+}
+````
+
+> *在测试ORM代码时避免误报*
+>
+> 当您测试操作 Hibernate 会话或 JPA 持久性上下文的状态的应用程序代码时，请确保在运行该代码的测试方法中刷新基础工作单元。未能刷新基础工作单元可能会产生误报：您的测试通过，但相同的代码会在生产环境中引发异常。请注意，这适用于维护内存工作单元的任何 ORM 框架。在下面基于 Hibernate 的示例测试用例中，一个方法演示了误报，另一个方法正确地暴露了刷新会话的结果：
+>
+> ````java
+> // ...
+> 
+> @Autowired
+> SessionFactory sessionFactory;
+> 
+> @Transactional
+> @Test // no expected exception!
+> public void falsePositive() {
+>     updateEntityInHibernateSession();
+>     // False positive: an exception will be thrown once the Hibernate
+>     // Session is finally flushed (i.e., in production code)
+> }
+> 
+> @Transactional
+> @Test(expected = ...)
+> public void updateWithSessionFlush() {
+>     updateEntityInHibernateSession();
+>     // Manual flush is required to avoid false positive in test
+>     sessionFactory.getCurrentSession().flush();
+> }
+> 
+> // ...
+> ````
+>
+> 下面的例子展示了 JPA 中对应的方法：
+>
+> ````java
+> // ...
+> 
+> @PersistenceContext
+> EntityManager entityManager;
+> 
+> @Transactional
+> @Test // no expected exception!
+> public void falsePositive() {
+>     updateEntityInJpaPersistenceContext();
+>     // False positive: an exception will be thrown once the JPA
+>     // EntityManager is finally flushed (i.e., in production code)
+> }
+> 
+> @Transactional
+> @Test(expected = ...)
+> public void updateWithEntityManagerFlush() {
+>     updateEntityInJpaPersistenceContext();
+>     // Manual flush is required to avoid false positive in test
+>     entityManager.flush();
+> }
+> 
+> // ...
+> ````
+
