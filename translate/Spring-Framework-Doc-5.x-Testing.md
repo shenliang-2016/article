@@ -1892,3 +1892,102 @@ public class ExtendedTests extends BaseTests {}
 > 在上下文层次结构中清理上下文
 > 如果在其上下文配置为上下文层次结构的一部分的测试中使用 `@DirtiesContext`，则可以使用 `hierarchyMode` 标志来控制如何清除上下文高速缓存。有关更多详细信息，请参阅 [Spring Testing Annotations](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-testing-annotation-dirtiescontext) 中的 `@DirtiesContext` 和 [`@DirtiesContext`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/annotation/DirtiesContext.html)  javadoc 的讨论。
 
+#### 3.5.5. 测试夹具的依赖注入
+
+当您使用 `DependencyInjectionTestExecutionListener`（默认配置）时，测试实例的依赖项将从您使用 `@ContextConfiguration` 或相关注解配置的应用程序上下文中的 bean 中注入。您可以使用 setter injection，field injection 或同时使用两者，具体取决于您选择的注解以及是否将它们放在 setter 方法或字段上。如果您正在使用 JUnit Jupiter，您也可以选择使用构造函数注入（请参阅 [使用 `SpringExtension` 的依赖注入](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit-jupiter-di) ）。为了与 Spring 的基于注解的注入支持保持一致，您还可以使用 Spring 的 `@Autowired` 注解或来自 JSR-330 的 `@Inject` 注解来进行字段和 setter 注入。
+
+> 对于 JUnit Jupiter 以外的测试框架，TestContext 框架不参与测试类的实例化。因此，对构造函数使用 `@Autowired` 或 `@Inject` 对测试类没有影响。
+
+> 虽然在生产代码中不鼓励字段注入，但字段注入在测试代码中实际上非常自然。差异的基本原理是您永远不会直接实例化您的测试类。因此，不需要在测试类上调用 `public` 构造函数或 setter 方法。
+
+因为 `@Autowired` 用于执行 [按类型自动装配](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#beans-factory-autowire ) ，如果你有多个相同类型的 bean 定义，你不能依赖这种方法来处理那些特定的 bean。在这种情况下，您可以将 `@Autowired` 与 `@ Qualifier` 结合使用。从 Spring 3.0 开始，您还可以选择将 `@Inject` 与 `@ Named` 结合使用。或者，如果您的测试类可以访问其 `ApplicationContext`，则可以使用（例如）调用 `applicationContext.getBean("titleRepository", TitleRepository.class)` 来执行显式查找。
+
+如果您不希望将依赖项注入应用于测试实例，请不要使用 `@Autowired` 或 `@Inject` 注解字段或 setter 方法。或者，您可以通过使用 `@TestExecutionListeners` 显式配置您的类并从侦听器列表中省略 `DependencyInjectionTestExecutionListener.class` 来完全禁用依赖注入。
+
+考虑测试 `HibernateTitleRepository` 类的场景，如 [目标](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-goals) 部分中所述。接下来的两个代码清单演示了在字段和 setter 方法中使用 `@Autowired`。在所有示例代码列表之后给出应用程序上下文配置。
+
+> 以下代码清单中的依赖项注入行为并非特定于 JUnit 4。相同的 DI 技术可与任何支持的测试框架结合使用。
+>
+> 以下示例调用静态断言方法，例如 `assertNotNull()`，但不使用 `Assert` 进行调用。在这种情况下，假设该方法是通过示例中未显示的 `import static` 声明正确导入的。
+
+第一个代码清单显示了一个基于 JUnit 4 的测试类实现，它使用 `@Autowired` 进行字段注入：
+
+````java
+@RunWith(SpringRunner.class)
+// specifies the Spring configuration to load for this test fixture
+@ContextConfiguration("repository-config.xml")
+public class HibernateTitleRepositoryTests {
+
+    // this instance will be dependency injected by type
+    @Autowired
+    private HibernateTitleRepository titleRepository;
+
+    @Test
+    public void findById() {
+        Title title = titleRepository.findById(new Long(10));
+        assertNotNull(title);
+    }
+}
+````
+
+或者，您可以将类配置为使用 `@Autowired` 进行 setter 注入，如下所示：
+
+````java
+@RunWith(SpringRunner.class)
+// specifies the Spring configuration to load for this test fixture
+@ContextConfiguration("repository-config.xml")
+public class HibernateTitleRepositoryTests {
+
+    // this instance will be dependency injected by type
+    private HibernateTitleRepository titleRepository;
+
+    @Autowired
+    public void setTitleRepository(HibernateTitleRepository titleRepository) {
+        this.titleRepository = titleRepository;
+    }
+
+    @Test
+    public void findById() {
+        Title title = titleRepository.findById(new Long(10));
+        assertNotNull(title);
+    }
+}
+````
+
+前面的代码清单使用 `@IntextConfiguration` 注解引用相同的 XML 上下文配置文件（即 `repository-config.xml`）。以下显示了此配置：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- this bean will be injected into the HibernateTitleRepositoryTests class -->
+    <bean id="titleRepository" class="com.foo.repository.hibernate.HibernateTitleRepository">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <!-- configuration elided for brevity -->
+    </bean>
+
+</beans>
+````
+
+> 如果你从一个 Spring 提供的测试基类扩展，该类恰巧在其一个 setter 方法上使用 `@Autowired`，你可能在应用程序上下文中定义了多个受影响类型的 bean（例如，多个 `DataSource` bean）。在这种情况下，您可以覆盖 setter 方法并使用 `@Qualifier` 注解来指示特定的目标 bean，如下所示（但请确保也委托给超类中的重写方法）：
+>
+> ````java
+> // ...
+> 
+>     @Autowired
+>     @Override
+>     public void setDataSource(@Qualifier("myDataSource") DataSource dataSource) {
+>         super.setDataSource(dataSource);
+>     }
+> 
+> // ...
+> ````
+>
+> 指定的限定符值表示要注入的特定 `DataSource` bean，将类型匹配集缩小到特定 bean。它的值与相应的 `<bean>` 定义中的 `<qualifier>` 声明匹配。bean 名称用作"降级"限定符值，因此您可以有效地在那里按名称指向特定的 bean（如前所示，假设 `myDataSource` 是 bean `id`）。
+
