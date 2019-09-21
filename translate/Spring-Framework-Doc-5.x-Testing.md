@@ -2430,15 +2430,15 @@ public void userTest {
 
 您可以使用 `@SqlConfig` 注解配置脚本解析和错误处理。`@SqlConfig` 在声明为集成测试类的类级别注解时，将用作测试类层次结构中所有 SQL 脚本的全局配置。如果直接使用 `@Sql` 注解的 `config` 属性来声明，则 `@SqlConfig` 用作在 `@Sql` 注解中声明的 SQL 脚本的本地配置。`@SqlConfig` 中的每个属性都有一个隐式默认值，该默认值记录在相应属性的 javadoc 中。不幸的是，由于 Java 语言规范中为注解属性定义了规则，因此无法为注解属性分配 `null` 值。因此，为了支持覆盖继承的全局配置，`@SqlConfig` 属性的显式默认值为 `""`（对于字符串）或 `DEFAULT`（对于枚举）。这种方法通过提供除 `""` 或 `"DEFAULT"` 以外的其他值，从而使 `@SqlConfig` 的本地声明选择性地覆盖 `@SqlConfig` 的全局声明中的各个属性。只要本地 `@SqlConfig` 属性不提供除 `""` 或 `"DEFAULT"` 以外的显式值，就会继承全局 `@SqlConfig` 属性。因此，显式本地配置将覆盖全局配置。
 
-The configuration options provided by `@Sql` and `@SqlConfig` are equivalent to those supported by `ScriptUtils` and `ResourceDatabasePopulator` but are a superset of those provided by the `<jdbc:initialize-database/>` XML namespace element. See the javadoc of individual attributes in [`@Sql`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/Sql.html) and [`@SqlConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlConfig.html) for details.
+由 `@Sql` 和 `@SqlConfig` 提供的配置选项等价于 `ScriptUtils` 和 `ResourceDatabasePopulator` 提供的支持，但是却是 `<jdbc:initialize-database/>` XML 命名空间元素提供的选项的超集。参考 [`@Sql`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/Sql.html) 和 [`@SqlConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlConfig.html) 文档获取更多细节。
 
-**Transaction management for @Sql**
+**@Sql 的事务管理**
 
-By default, the `SqlScriptsTestExecutionListener` infers the desired transaction semantics for scripts configured by using `@Sql`. Specifically, SQL scripts are run without a transaction, within an existing Spring-managed transaction (for example, a transaction managed by the `TransactionalTestExecutionListener` for a test annotated with `@Transactional`), or within an isolated transaction, depending on the configured value of the `transactionMode` attribute in `@SqlConfig` and the presence of a `PlatformTransactionManager` in the test’s `ApplicationContext`. As a bare minimum, however, a `javax.sql.DataSource` must be present in the test’s `ApplicationContext`.
+默认情况下，`SqlScriptsTestExecutionListener` 会为使用 `@Sql` 配置的脚本推断所需的事务语义。具体来说，SQL 脚本在没有事务的情况下运行，而是在现有的 Spring 管理的事务中运行（例如，由 ` TransactionalTestExecutionListener` 管理的事务对带有 `@Transactional` 注解的测试进行管理），或者在隔离的事务中运行，具体取决于配置 `@SqlConfig` 中的 `transactionMode` 属性的值，以及测试的 `ApplicationContext` 中是否存在 `PlatformTransactionManager`。不过，最低限度是，测试的 `ApplicationContext` 中必须存在一个 `javax.sql.DataSource`。
 
-If the algorithms used by `SqlScriptsTestExecutionListener` to detect a `DataSource` and `PlatformTransactionManager` and infer the transaction semantics do not suit your needs, you can specify explicit names by setting the `dataSource` and `transactionManager` attributes of `@SqlConfig`. Furthermore, you can control the transaction propagation behavior by setting the `transactionMode` attribute of `@SqlConfig` (for example, whether scripts should be run in an isolated transaction). Although a thorough discussion of all supported options for transaction management with `@Sql` is beyond the scope of this reference manual, the javadoc for [`@SqlConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlConfig.html) and [`SqlScriptsTestExecutionListener`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlScriptsTestExecutionListener.html) provide detailed information, and the following example shows a typical testing scenario that uses JUnit Jupiter and transactional tests with `@Sql`:
+如果 `SqlScriptsTestExecutionListener` 用来检测 `DataSource` 和 `PlatformTransactionManager` 并推断事务语义的算法不符合您的需要，则可以通过设置 `@SqlConfig` 的 `dataSource` 和 `transactionManager` 属性来显式指定名称。此外，您可以通过设置 `@SqlConfig` 的 `transactionMode` 属性来控制事务传播行为（例如，是否应在隔离的事务中运行脚本）。尽管对使用 `@Sql` 进行事务管理的所有受支持选项的详尽讨论超出了本参考手册的范围，但是 [`@SqlConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlConfig.html) 和 [`SqlScriptsTestExecutionListener`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlScriptsTestExecutionListener.html) 文档提供了详细信息，下面的示例显示了一个典型的测试场景，该场景使用 JUnit Jupiter 和带有 `@Sql` 的事务测试：
 
-````
+````java
 @SpringJUnitConfig(TestDatabaseConfig.class)
 @Transactional
 class TransactionalSqlScriptsTests {
@@ -2469,4 +2469,5 @@ class TransactionalSqlScriptsTests {
 }
 ````
 
-Note that there is no need to clean up the database after the `usersTest()` method is run, since any changes made to the database (either within the test method or within the `/test-data.sql` script) are automatically rolled back by the `TransactionalTestExecutionListener` (see [transaction management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx) for details).
+注意，在运行 `usersTest()` 方法后，无需清理数据库，因为对数据库所做的任何更改（在 test 方法内或在 `/test-data.sql` 脚本内）都是会自动通过 `TransactionalTestExecutionListener` 回滚的。有关详细信息，请参阅 [transaction management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx) 。
+
