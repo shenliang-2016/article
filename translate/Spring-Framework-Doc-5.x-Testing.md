@@ -2336,19 +2336,19 @@ public void databaseTest {
 }
 ````
 
-Note that `ResourceDatabasePopulator` internally delegates to `ScriptUtils` for parsing and running SQL scripts. Similarly, the `executeSqlScript(..)` methods in [`AbstractTransactionalJUnit4SpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-junit4) and [`AbstractTransactionalTestNGSpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-testng) internally use a `ResourceDatabasePopulator` to run SQL scripts. See the javadoc for the various `executeSqlScript(..)` methods for further details.
+注意，`ResourceDatabasePopulator` 内部委托给 `ScriptUtils` 来解析和运行 SQL 脚本。类似地，[`AbstractTransactionalJUnit4SpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-junit4) 和[`AbstractTransactionalTestNGSpringContextTests`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-support-classes-testng) 中的 `executeSqlScript(..)` 方法在内部使用 `ResourceDatabasePopulator` 运行 SQL 脚本。有关更多详细信息，请参见Javadoc中的各种 `executeSqlScript(..)` 方法。
 
-##### Executing SQL scripts declaratively with @Sql
+##### 使用 @Sql 声明式执行 SQL 脚本
 
-In addition to the aforementioned mechanisms for running SQL scripts programmatically, you can declaratively configure SQL scripts in the Spring TestContext Framework. Specifically, you can declare the `@Sql` annotation on a test class or test method to configure the resource paths to SQL scripts that should be run against a given database before or after an integration test method. Note that method-level declarations override class-level declarations and that support for `@Sql` is provided by the `SqlScriptsTestExecutionListener`, which is enabled by default.
+除了上述用于以编程方式运行 SQL 脚本的机制之外，您还可以在 Spring TestContext Framework 中声明性地配置 SQL 脚本。具体来说，您可以在测试类或测试方法上声明 `@Sql` 注解，以配置应在集成测试方法之前或之后针对给定数据库运行的 SQL 脚本的资源路径。请注意，方法级别的声明会覆盖类级别的声明，并且 `SqlScriptsTestExecutionListener` 会默认开启对 `@Sql` 的支持。
 
-###### Path Resource Semantics
+###### 路径资源语义
 
-Each path is interpreted as a Spring `Resource`. A plain path (for example, `"schema.sql"`) is treated as a classpath resource that is relative to the package in which the test class is defined. A path starting with a slash is treated as an absolute classpath resource (for example, `"/org/example/schema.sql"`). A path that references a URL (for example, a path prefixed with `classpath:`, `file:`, `http:`) is loaded by using the specified resource protocol.
+每个路径都被解释为 Spring `Resource`。普通路径（例如 `"schema.sql"`）被视为相对于定义测试类的包的路径的类路径资源。以斜杠开头的路径被视为绝对类路径资源（例如，`"/org/example/schema.sql"`）。通过使用指定的资源协议来加载引用 URL 的路径（例如，以 `classpath:`，`file:`，`http:` 开头的路径）。
 
-The following example shows how to use `@Sql` at the class level and at the method level within a JUnit Jupiter based integration test class:
+以下示例显示了如何在基于 JUnit Jupiter 的集成测试类中的类级别和方法级别使用 `@Sql`：
 
-````
+````java
 @SpringJUnitConfig
 @Sql("/test-schema.sql")
 class DatabaseTests {
@@ -2366,20 +2366,20 @@ class DatabaseTests {
 }
 ````
 
-###### Default Script Detection
+###### 默认脚本探测
 
-If no SQL scripts are specified, an attempt is made to detect a `default` script, depending on where `@Sql` is declared. If a default cannot be detected, an `IllegalStateException` is thrown.
+如果没有指定 SQL 脚本，框架就会试图探测所谓的 `default` 脚本，取决于声明 `@Sql` 的位置。如果默认脚本没有探测到，将会抛出一个 `IllegalStateException` 。
 
-- Class-level declaration: If the annotated test class is `com.example.MyTest`, the corresponding default script is `classpath:com/example/MyTest.sql`.
-- Method-level declaration: If the annotated test method is named `testMethod()` and is defined in the class `com.example.MyTest`, the corresponding default script is `classpath:com/example/MyTest.testMethod.sql`.
+- 类级别的声明：如果注解修饰的测试类是 `com.example.MyTest`，对应的默认脚本就是 `classpath:com/example/MyTest.sql`。
+- 方法级别声明：如果注解修饰的测试类由 `testMethod()` 命名，并声明在类 `com.example.MyTest` 中，对应的默认脚本就是 `classpath:com/example/MyTest.testMethod.sql`。
 
-###### Declaring Multiple `@Sql` Sets
+###### 声明多个 `@Sql` 集合
 
-If you need to configure multiple sets of SQL scripts for a given test class or test method but with different syntax configuration, different error handling rules, or different execution phases per set, you can declare multiple instances of `@Sql`. With Java 8, you can use `@Sql` as a repeatable annotation. Otherwise, you can use the `@SqlGroup` annotation as an explicit container for declaring multiple instances of `@Sql`.
+如果您需要为给定的测试类或测试方法配置多组 SQL 脚本，但使用不同的语法配置，不同的错误处理规则或每组不同的执行阶段，则可以声明多个 `@Sql` 实例。在 Java 8 中，您可以将 `@Sql` 用作可重复的注解。否则，您可以使用 `@SqlGroup` 注解作为显式容器来声明多个 `@Sql` 实例。
 
-The following example shows how to use `@Sql` as a repeatable annotation with Java 8:
+以下示例显示了如何在 Java 8 中将 `@Sql` 用作可重复注解：
 
-````
+````java
 @Test
 @Sql(scripts = "/test-schema.sql", config = @SqlConfig(commentPrefix = "`"))
 @Sql("/test-user-data.sql")
@@ -2388,11 +2388,11 @@ public void userTest {
 }
 ````
 
-In the scenario presented in the preceding example, the `test-schema.sql` script uses a different syntax for single-line comments.
+在以上示例中呈现的场景中，`test-schema.sql` 脚本对单行注解使用了不同的语法。
 
-The following example is identical to the preceding example, except that the `@Sql` declarations are grouped together within `@SqlGroup`, for compatibility with Java 6 and Java 7.
+除了与 Java 6 和 Java 7 兼容之外，以下示例与上述示例相同，不同之处在于在 `@SqlGroup` 中将 `@Sql` 声明分组在一起。
 
-````
+````java
 @Test
 @SqlGroup({
     @Sql(scripts = "/test-schema.sql", config = @SqlConfig(commentPrefix = "`")),
@@ -2403,11 +2403,11 @@ public void userTest {
 }
 ````
 
-###### Script Execution Phases
+###### 脚本执行阶段
 
-By default, SQL scripts are executed before the corresponding test method. However, if you need to run a particular set of scripts after the test method (for example, to clean up database state), you can use the `executionPhase` attribute in `@Sql`, as the following example shows:
+默认情况下，SQL 脚本在相应的测试方法之前执行。但是，如果需要在测试方法之后运行一组特定的脚本（例如，清理数据库状态），则可以使用 `@Sql` 中的 `executionPhase` 属性，如以下示例所示：
 
-````
+````java
 @Test
 @Sql(
     scripts = "create-test-data.sql",
@@ -2424,11 +2424,11 @@ public void userTest {
 }
 ````
 
-Note that `ISOLATED` and `AFTER_TEST_METHOD` are statically imported from `Sql.TransactionMode` and `Sql.ExecutionPhase`, respectively.
+注意 `ISOLATED` 和 `AFTER_TEST_METHOD` 是分别从 `Sql.TransactionMode` 和 `Sql.ExecutionPhase` 静态导入的。
 
-###### Script Configuration with `@SqlConfig`
+###### 使用 `@SqlConfig` 进行脚本配置
 
-You can configure script parsing and error handling by using the `@SqlConfig` annotation. When declared as a class-level annotation on an integration test class, `@SqlConfig` serves as global configuration for all SQL scripts within the test class hierarchy. When declared directly by using the `config` attribute of the `@Sql` annotation, `@SqlConfig` serves as local configuration for the SQL scripts declared within the enclosing `@Sql` annotation. Every attribute in `@SqlConfig` has an implicit default value, which is documented in the javadoc of the corresponding attribute. Due to the rules defined for annotation attributes in the Java Language Specification, it is, unfortunately, not possible to assign a value of `null` to an annotation attribute. Thus, in order to support overrides of inherited global configuration, `@SqlConfig` attributes have an explicit default value of either `""` (for Strings) or `DEFAULT` (for enumerations). This approach lets local declarations of `@SqlConfig` selectively override individual attributes from global declarations of `@SqlConfig` by providing a value other than `""` or `DEFAULT`. Global `@SqlConfig` attributes are inherited whenever local `@SqlConfig` attributes do not supply an explicit value other than `""` or `DEFAULT`. Explicit local configuration, therefore, overrides global configuration.
+您可以使用 `@SqlConfig` 注解配置脚本解析和错误处理。`@SqlConfig` 在声明为集成测试类的类级别注解时，将用作测试类层次结构中所有 SQL 脚本的全局配置。如果直接使用 `@Sql` 注解的 `config` 属性来声明，则 `@SqlConfig` 用作在 `@Sql` 注解中声明的 SQL 脚本的本地配置。`@SqlConfig` 中的每个属性都有一个隐式默认值，该默认值记录在相应属性的 javadoc 中。不幸的是，由于 Java 语言规范中为注解属性定义了规则，因此无法为注解属性分配 `null` 值。因此，为了支持覆盖继承的全局配置，`@SqlConfig` 属性的显式默认值为 `""`（对于字符串）或 `DEFAULT`（对于枚举）。这种方法通过提供除 `""` 或 `"DEFAULT"` 以外的其他值，从而使 `@SqlConfig` 的本地声明选择性地覆盖 `@SqlConfig` 的全局声明中的各个属性。只要本地 `@SqlConfig` 属性不提供除 `""` 或 `"DEFAULT"` 以外的显式值，就会继承全局 `@SqlConfig` 属性。因此，显式本地配置将覆盖全局配置。
 
 The configuration options provided by `@Sql` and `@SqlConfig` are equivalent to those supported by `ScriptUtils` and `ResourceDatabasePopulator` but are a superset of those provided by the `<jdbc:initialize-database/>` XML namespace element. See the javadoc of individual attributes in [`@Sql`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/Sql.html) and [`@SqlConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/jdbc/SqlConfig.html) for details.
 
