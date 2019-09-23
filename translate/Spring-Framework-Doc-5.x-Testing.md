@@ -2471,3 +2471,23 @@ class TransactionalSqlScriptsTests {
 
 注意，在运行 `usersTest()` 方法后，无需清理数据库，因为对数据库所做的任何更改（在 test 方法内或在 `/test-data.sql` 脚本内）都是会自动通过 `TransactionalTestExecutionListener` 回滚的。有关详细信息，请参阅 [transaction management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx) 。
 
+#### 3.5.9. 并行测试执行
+
+当使用 Spring TestContext Framework 时，Spring Framework 5.0 引入了对在单个 JVM 中并行执行测试的基本支持。通常，这意味着大多数测试类或测试方法可以并行执行，而无需更改测试代码或配置。
+
+> 配置并行测试执行的细节，参考你的测试框架的文档，或者构建工具或者 IDE 的文档。
+
+请记住，将并发引入测试套件可能会导致意外的副作用，奇怪的运行时行为以及间歇性或看似随机失败的测试。因此，对于何时不并行执行测试，Spring 团队提供了以下一般准则。
+
+如果测试符合以下条件，则不要并行执行测试：
+
+- 使用 Spring 的 `@DirtiesContext` 支持。
+- 使用 JUnit 4 的 `@FixMethodOrder` 支持或旨在确保测试方法按特定顺序运行的任何测试框架功能。但是请注意，如果整个测试类是并行执行的，则此方法不适用。
+- 更改共享服务或系统（如数据库，消息代理，文件系统等）的状态。这适用于内存系统和外部系统。
+
+> 如果并行测试执行失败，并指出当前测试的 `ApplicationContext` 不再处于活动状态，则这通常意味着 `ApplicationContext` 已从另一个线程中的 `ContextCache` 中删除。
+>
+> 这可能是由于使用了 `@DirtiesContext` 或来自 `ContextCache` 的自动逐出。如果 `@DirtiesContext` 是罪魁祸首，则您需要找到一种避免使用 `@DirtiesContext` 的方法，或者从并行执行中排除此类测试。如果超过了 `ContextCache` 的最大大小，则可以增加缓存的最大大小。有关详细信息，请参见 [context caching](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-ctx-management-caching) 的讨论。
+>
+> 仅当基础的 `TestContext` 实现提供副本构造函数时，才能在 Spring TestContext Framework 中并行执行测试，如 [`TestContext`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/TestContext.html) 。在 Spring 中使用的 `DefaultTestContext` 提供了这样的构造函数。但是，如果您使用提供自定义 `TestContext` 实现的第三方库，则需要验证它是否适合并行测试执行。
+
