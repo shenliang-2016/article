@@ -2491,3 +2491,11 @@ class TransactionalSqlScriptsTests {
 >
 > 仅当基础的 `TestContext` 实现提供副本构造函数时，才能在 Spring TestContext Framework 中并行执行测试，如 [`TestContext`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/context/TestContext.html) 。在 Spring 中使用的 `DefaultTestContext` 提供了这样的构造函数。但是，如果您使用提供自定义 `TestContext` 实现的第三方库，则需要验证它是否适合并行测试执行。
 
+#### 3.5.10. TestContext Framework 支持类
+
+本节描述了支持 Spring TestContext Framework 的各种类。
+
+##### Spring JUnit 4 Runner
+
+Spring TestContext Framework 通过自定义运行程序（在 JUnit 4.12 或更高版本上受支持）提供了与 JUnit 4 的完全集成。通过使用 `@RunWith(SpringJUnit4ClassRunner.class)` 或更短的 `@RunWith(SpringRunner.class)` 变体对测试类进行注解，开发人员可以实现基于 JUnit 4 的标准单元测试和集成测试，同时获得 TestContext 框架的好处， 例如对加载应用程序上下文的支持，对测试实例的依赖项注入， 事务性测试方法执行等。如果您想将Spring TestContext Framework 与备用运行程序（例如 JUnit 4 的 `Parameterized` 运行程序）或第三方运行程序（例如 `MockitoJUnitRunner` ）一起使用，则可以选择使用 [Spring 对 JUnit 规则的支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit4-rules) 代替。
+
