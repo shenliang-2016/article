@@ -2619,15 +2619,15 @@ class SimpleWebTests {
 
 请参阅 [Spring JUnit Jupiter测试注释](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter) 中的 `@SpringJUnitConfig` 和 `@SpringJUnitWebConfig` 文档以获取更多详细信息。
 
-##### Dependency Injection with `SpringExtension`
+##### 使用 `SpringExtension` 进行依赖注入
 
-`SpringExtension` implements the [`ParameterResolver`](https://junit.org/junit5/docs/current/user-guide/#extensions-parameter-resolution) extension API from JUnit Jupiter, which lets Spring provide dependency injection for test constructors, test methods, and test lifecycle callback methods.
+`SpringExtension` 实现了来自 JUnit Jupiter 的 [`ParameterResolver`](https://junit.org/junit5/docs/current/user-guide/#extensions-parameter-resolution) 扩展API，它使 Spring 为测试提供依赖注入 构造函数，测试方法和测试生命周期回调方法。
 
-Specifically, `SpringExtension` can inject dependencies from the test’s `ApplicationContext` into test constructors and methods that are annotated with `@BeforeAll`, `@AfterAll`, `@BeforeEach`, `@AfterEach`, `@Test`, `@RepeatedTest`, `@ParameterizedTest`, and others.
+具体来说，`SpringExtension` 可以将测试的 `ApplicationContext` 中的依赖项注入到以 `@BeforeAll`，`@AfterAll`，`@BeforeEach`，`@AfterEach`，`@Test`，`@RepeatedTest`， `@ParameterizedTest` 进行注解的测试构造函数和方法中。
 
-###### Constructor Injection
+###### 构造器注入
 
-If a parameter in a constructor for a JUnit Jupiter test class is of type `ApplicationContext` (or a sub-type thereof) or is annotated or meta-annotated with `@Autowired`, `@Qualifier`, or `@Value`, Spring injects the value for that specific parameter with the corresponding bean from the test’s `ApplicationContext`. You can also directly annotate a test constructor with `@Autowired` if all of the parameters should be supplied by Spring.
+如果 JUnit Jupiter 测试类的构造函数中的参数的类型为 `ApplicationContext`（或其子类型），或者使用 `@Autowired`，`@Qualifier` 或 `@Value` 进行注解或元注解， Spring 使用来自测试的 `ApplicationContext` 中的相应 bean 注入该特定参数的值。如果所有参数都应由 Spring 提供，您也可以使用 `@Autowired` 直接注解测试构造函数。
 
 > If the constructor for a test class is itself annotated with `@Autowired`, Spring assumes the responsibility for resolving *all* parameters in the constructor. Consequently, no other `ParameterResolver` registered with JUnit Jupiter can resolve parameters for such a constructor.
 
@@ -2656,7 +2656,7 @@ class OrderServiceIntegrationTests {
 
 Note that this feature lets test dependencies be `final` and therefore immutable.
 
-###### Method Injection
+###### 方法注入
 
 If a parameter in a JUnit Jupiter test method or test lifecycle callback method is of type `ApplicationContext` (or a sub-type thereof) or is annotated or meta-annotated with `@Autowired`, `@Qualifier`, or `@Value`, Spring injects the value for that specific parameter with the corresponding bean from the test’s `ApplicationContext`.
 
@@ -2693,7 +2693,7 @@ class OrderServiceIntegrationTests {
 
 Note that the use of `@RepeatedTest` from JUnit Jupiter lets the test method gain access to the `RepetitionInfo`.
 
-##### TestNG Support Classes
+##### TestNG 支持类
 
 The `org.springframework.test.context.testng` package provides the following support classes for TestNG based test cases:
 
