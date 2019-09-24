@@ -2499,3 +2499,209 @@ class TransactionalSqlScriptsTests {
 
 Spring TestContext Framework 通过自定义运行程序（在 JUnit 4.12 或更高版本上受支持）提供了与 JUnit 4 的完全集成。通过使用 `@RunWith(SpringJUnit4ClassRunner.class)` 或更短的 `@RunWith(SpringRunner.class)` 变体对测试类进行注解，开发人员可以实现基于 JUnit 4 的标准单元测试和集成测试，同时获得 TestContext 框架的好处， 例如对加载应用程序上下文的支持，对测试实例的依赖项注入， 事务性测试方法执行等。如果您想将Spring TestContext Framework 与备用运行程序（例如 JUnit 4 的 `Parameterized` 运行程序）或第三方运行程序（例如 `MockitoJUnitRunner` ）一起使用，则可以选择使用 [Spring 对 JUnit 规则的支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit4-rules) 代替。
 
+下面的代码展示了将测试类配置为使用自定义的 Spring `Runner` 执行所需有的最小需求：
+
+````java
+@RunWith(SpringRunner.class)
+@TestExecutionListeners({})
+public class SimpleTest {
+
+    @Test
+    public void testMethod() {
+        // execute test logic...
+    }
+}
+````
+
+上面的例子中，`@TestExecutionListeners` 被配置了一个空列表，来禁用默认的监听器，这些默认的监听器将需要通过 `@ContextConfiguration` 配置的 `ApplicationContext`。
+
+##### Spring JUnit 4 Rules
+
+ `org.springframework.test.context.junit4.rules` 包提供了如下的 JUnit 4 规则 (JUnit 4.12 或更高版本支持)：
+
+- `SpringClassRule`
+- `SpringMethodRule`
+
+`SpringClassRule` 是支持 Spring TestContext Framework 的类级功能的 JUnit `TestRule`，而 `SpringMethodRule` 是支持 Spring TestContext Framework 的实例级和方法级功能的 JUnit `MethodRule`。
+
+与 `SpringRunner` 相比，Spring 基于规则的 JUnit 支持具有独立于任何 `org.junit.runner.Runner` 实现的优点，因此可以与现有的替代运行器（例如 JUnit 4 的 `Parameterized` ）或第三方组件（例如 `MockitoJUnitRunner`）结合使用。
+
+为了支持 TestContext 框架的全部功能，必须将 `SpringClassRule` 与 `SpringMethodRule` 结合使用。以下示例显示了在集成测试中声明这些规则的正确方法：
+
+```java
+// Optionally specify a non-Spring Runner via @RunWith(...)
+@ContextConfiguration
+public class IntegrationTest {
+
+    @ClassRule
+    public static final SpringClassRule springClassRule = new SpringClassRule();
+
+    @Rule
+    public final SpringMethodRule springMethodRule = new SpringMethodRule();
+
+    @Test
+    public void testMethod() {
+        // execute test logic...
+    }
+}
+```
+
+##### JUnit 4 Support Classes
+
+ `org.springframework.test.context.junit4` 包为基于 JUnit 4 的测试用例提供了下列支持类 (JUnit 4.12 或更高版本支持)：
+
+- `AbstractJUnit4SpringContextTests`
+- `AbstractTransactionalJUnit4SpringContextTests`
+
+`AbstractJUnit4SpringContextTests` 是一个抽象的基础测试类，它在 JUnit 4 环境中将 Spring TestContext Framework 与显式的 `ApplicationContext` 测试支持集成在一起。扩展 `AbstractJUnit4SpringContextTests` 时，您可以访问受保护的 `applicationContext` 实例变量，该变量可用于执行显式 bean 查找或测试整个上下文的状态。
+
+`AbstractTransactionalJUnit4SpringContextTests` 是 `AbstractJUnit4SpringContextTests` 的抽象事务扩展，为 JDBC 访问添加了一些便利功能。此类要求在 `ApplicationContext` 中定义一个 `javax.sql.DataSource` Bean 和一个 `PlatformTransactionManager` Bean。扩展 `AbstractTransactionalJUnit4SpringContextTests` 时，可以访问受保护的 `jdbcTemplate` 实例变量，该实例变量可用于运行 SQL 语句来查询数据库。您可以在运行与数据库相关的应用程序代码之前和之后使用此类查询来确认数据库状态，并且 Spring 确保此类查询在与应用程序代码相同的事务范围内运行。与 ORM 工具结合使用时，请确保避免 [误报](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx-false-positives) 。如 [JDBC测试支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-support-jdbc) 中所述，`AbstractTransactionalJUnit4SpringContextTests ` 还提供了方便的方法，通过使用上述 `jdbcTemplate` 委派给 `JdbcTestUtils` 中的方法。此外，`AbstractTransactionalJUnit4SpringContextTests` 提供了一种 `executeSqlScript(..)` 方法，用于针对已配置的 `DataSource` 运行 SQL 脚本。
+
+> 这些类为扩展提供了便利。如果您不希望将测试类绑定到特定于 Spring 的类层次结构，则可以使用 `@RunWith(SpringRunner.class)` 或 [Spring的JUnit规则](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit4-rules) 。
+
+##### SpringExtension for JUnit Jupiter
+
+Spring TestContext Framework 提供了与 JUnit 5 中引入的 JUnit Jupiter 测试框架的完全集成。通过使用 `@ExtendWith（SpringExtension.class）` 注解测试类，您可以实现基于 JUnit Jupiter 的标准单元测试和集成测试，并同时获得 TestContext 框架的好处，例如支持加载应用程序上下文，测试实例的依赖注入，事务性测试方法执行等。
+
+此外，得益于 JUnit Jupiter 中丰富的扩展API，Spring 在支持 JUnit 4 和 TestNG 的功能集之外提供了以下功能：
+
+- 对测试构造函数，测试方法和测试生命周期回调方法的依赖注入。有关更多信息，请参见 [使用`SpringExtension`进行依赖注入](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-junit-jupiter-di) 细节。
+- 基于 SpEL 表达式，环境变量，系统属性等，对 [条件测试执行](https://junit.org/junit5/docs/current/user-guide/#extensions-conditions) 的强大支持。请参阅 [Spring JUnit Jupiter测试注释](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter) 中的 `@EnabledIf` 和 `@DisabledIf` 文档以获取更多详细信息和示例。
+- 定制组合注解，结合了 Spring和JUnit Jupiter 的注解。请参阅 [测试的元注释支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-meta) 中的 `@TransactionalDevTestConfig` 和 `@TransactionalIntegrationTest` 示例以获取更多详细信息。
+
+以下代码清单显示了如何配置测试类以将 `SpringExtension` 与 `@ContextConfiguration` 结合使用：
+
+```java
+// Instructs JUnit Jupiter to extend the test with Spring support.
+@ExtendWith(SpringExtension.class)
+// Instructs Spring to load an ApplicationContext from TestConfig.class
+@ContextConfiguration(classes = TestConfig.class)
+class SimpleTests {
+
+    @Test
+    void testMethod() {
+        // execute test logic...
+    }
+}
+```
+
+由于您还可以在 JUnit 5 中使用注解作为元注解，因此 Spring 提供了由 `@SpringJUnitConfig` 和 `@SpringJUnitWebConfig` 组成的注解，以简化测试 `ApplicationContext` 和 JUnit Jupiter的配置。
+
+以下示例使用 `@SpringJUnitConfig` 来减少前一示例中使用的配置量：
+
+```java
+// Instructs Spring to register the SpringExtension with JUnit
+// Jupiter and load an ApplicationContext from TestConfig.class
+@SpringJUnitConfig(TestConfig.class)
+class SimpleTests {
+
+    @Test
+    void testMethod() {
+        // execute test logic...
+    }
+}
+```
+
+同样，以下示例使用 `@SpringJUnitWebConfig` 创建用于 JUnit Jupiter 的 `WebApplicationContext`：
+
+```java
+// Instructs Spring to register the SpringExtension with JUnit
+// Jupiter and load a WebApplicationContext from TestWebConfig.class
+@SpringJUnitWebConfig(TestWebConfig.class)
+class SimpleWebTests {
+
+    @Test
+    void testMethod() {
+        // execute test logic...
+    }
+}
+```
+
+请参阅 [Spring JUnit Jupiter测试注释](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-annotations-junit-jupiter) 中的 `@SpringJUnitConfig` 和 `@SpringJUnitWebConfig` 文档以获取更多详细信息。
+
+##### Dependency Injection with `SpringExtension`
+
+`SpringExtension` implements the [`ParameterResolver`](https://junit.org/junit5/docs/current/user-guide/#extensions-parameter-resolution) extension API from JUnit Jupiter, which lets Spring provide dependency injection for test constructors, test methods, and test lifecycle callback methods.
+
+Specifically, `SpringExtension` can inject dependencies from the test’s `ApplicationContext` into test constructors and methods that are annotated with `@BeforeAll`, `@AfterAll`, `@BeforeEach`, `@AfterEach`, `@Test`, `@RepeatedTest`, `@ParameterizedTest`, and others.
+
+###### Constructor Injection
+
+If a parameter in a constructor for a JUnit Jupiter test class is of type `ApplicationContext` (or a sub-type thereof) or is annotated or meta-annotated with `@Autowired`, `@Qualifier`, or `@Value`, Spring injects the value for that specific parameter with the corresponding bean from the test’s `ApplicationContext`. You can also directly annotate a test constructor with `@Autowired` if all of the parameters should be supplied by Spring.
+
+> If the constructor for a test class is itself annotated with `@Autowired`, Spring assumes the responsibility for resolving *all* parameters in the constructor. Consequently, no other `ParameterResolver` registered with JUnit Jupiter can resolve parameters for such a constructor.
+
+> Constructor injection for test classes must not be used in conjunction with JUnit Jupiter’s `@TestInstance(PER_CLASS)` support if `@DirtiesContext` is used to close the test’s `ApplicationContext` before or after test methods.
+>
+> The reason is that `@TestInstance(PER_CLASS)` instructs JUnit Jupiter to cache the test instance between test method invocations. Consequently, the test instance will retain references to beans that were originally injected from an `ApplicationContext` that has been subsequently closed. Since the constructor for the test class will only be invoked once in such scenarios, dependency injection will not occur again, and subsequent tests will interact with beans from the closed `ApplicationContext` which may result in errors.
+>
+> To use `@DirtiesContext` with "before test method" or "after test method" modes in conjunction with `@TestInstance(PER_CLASS)`, one must configure dependencies from Spring to be supplied via field or setter injection so that they can be re-injected between test method invocations.
+
+In the following example, Spring injects the `OrderService` bean from the `ApplicationContext` loaded from `TestConfig.class` into the `OrderServiceIntegrationTests` constructor.
+
+```
+@SpringJUnitConfig(TestConfig.class)
+class OrderServiceIntegrationTests {
+
+    private final OrderService orderService;
+
+    @Autowired
+    OrderServiceIntegrationTests(OrderService orderService) {
+        this.orderService = orderService.
+    }
+
+    // tests that use the injected OrderService
+}
+```
+
+Note that this feature lets test dependencies be `final` and therefore immutable.
+
+###### Method Injection
+
+If a parameter in a JUnit Jupiter test method or test lifecycle callback method is of type `ApplicationContext` (or a sub-type thereof) or is annotated or meta-annotated with `@Autowired`, `@Qualifier`, or `@Value`, Spring injects the value for that specific parameter with the corresponding bean from the test’s `ApplicationContext`.
+
+In the following example, Spring injects the `OrderService` from the `ApplicationContext` loaded from `TestConfig.class` into the `deleteOrder()` test method:
+
+```
+@SpringJUnitConfig(TestConfig.class)
+class OrderServiceIntegrationTests {
+
+    @Test
+    void deleteOrder(@Autowired OrderService orderService) {
+        // use orderService from the test's ApplicationContext
+    }
+}
+```
+
+Due to the robustness of the `ParameterResolver` support in JUnit Jupiter, you can also have multiple dependencies injected into a single method, not only from Spring but also from JUnit Jupiter itself or other third-party extensions.
+
+The following example shows how to have both Spring and JUnit Jupiter inject dependencies into the `placeOrderRepeatedly()` test method simultaneously.
+
+```
+@SpringJUnitConfig(TestConfig.class)
+class OrderServiceIntegrationTests {
+
+    @RepeatedTest(10)
+    void placeOrderRepeatedly(RepetitionInfo repetitionInfo,
+            @Autowired OrderService orderService) {
+
+        // use orderService from the test's ApplicationContext
+        // and repetitionInfo from JUnit Jupiter
+    }
+}
+```
+
+Note that the use of `@RepeatedTest` from JUnit Jupiter lets the test method gain access to the `RepetitionInfo`.
+
+##### TestNG Support Classes
+
+The `org.springframework.test.context.testng` package provides the following support classes for TestNG based test cases:
+
+- `AbstractTestNGSpringContextTests`
+- `AbstractTransactionalTestNGSpringContextTests`
+
+`AbstractTestNGSpringContextTests` is an abstract base test class that integrates the Spring TestContext Framework with explicit `ApplicationContext` testing support in a TestNG environment. When you extend `AbstractTestNGSpringContextTests`, you can access a `protected` `applicationContext` instance variable that you can use to perform explicit bean lookups or to test the state of the context as a whole.
+
+`AbstractTransactionalTestNGSpringContextTests` is an abstract transactional extension of `AbstractTestNGSpringContextTests` that adds some convenience functionality for JDBC access. This class expects a `javax.sql.DataSource` bean and a `PlatformTransactionManager` bean to be defined in the `ApplicationContext`. When you extend `AbstractTransactionalTestNGSpringContextTests`, you can access a `protected` `jdbcTemplate` instance variable that you can use to execute SQL statements to query the database. You can use such queries to confirm database state both before and after running database-related application code, and Spring ensures that such queries run in the scope of the same transaction as the application code. When used in conjunction with an ORM tool, be sure to avoid [false positives](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx-false-positives). As mentioned in [JDBC Testing Support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-support-jdbc), `AbstractTransactionalTestNGSpringContextTests` also provides convenience methods that delegate to methods in `JdbcTestUtils` by using the aforementioned `jdbcTemplate`. Furthermore, `AbstractTransactionalTestNGSpringContextTests` provides an `executeSqlScript(..)` method for running SQL scripts against the configured `DataSource`.
+
+> These classes are a convenience for extension. If you do not want your test classes to be tied to a Spring-specific class hierarchy, you can configure your own custom test classes by using `@ContextConfiguration`, `@TestExecutionListeners`, and so on and by manually instrumenting your test class with a `TestContextManager`. See the source code of `AbstractTestNGSpringContextTests` for an example of how to instrument your test class.
