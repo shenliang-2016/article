@@ -2629,17 +2629,17 @@ class SimpleWebTests {
 
 如果 JUnit Jupiter 测试类的构造函数中的参数的类型为 `ApplicationContext`（或其子类型），或者使用 `@Autowired`，`@Qualifier` 或 `@Value` 进行注解或元注解， Spring 使用来自测试的 `ApplicationContext` 中的相应 bean 注入该特定参数的值。如果所有参数都应由 Spring 提供，您也可以使用 `@Autowired` 直接注解测试构造函数。
 
-> If the constructor for a test class is itself annotated with `@Autowired`, Spring assumes the responsibility for resolving *all* parameters in the constructor. Consequently, no other `ParameterResolver` registered with JUnit Jupiter can resolve parameters for such a constructor.
+> 如果测试类的构造函数本身带有 `@Autowired` 注解，则 Spring 负责解析构造函数中的*所有*参数。因此，在 JUnit Jupiter 中注册的其他 `ParameterResolver` 无法解析此类构造函数的参数。
 
-> Constructor injection for test classes must not be used in conjunction with JUnit Jupiter’s `@TestInstance(PER_CLASS)` support if `@DirtiesContext` is used to close the test’s `ApplicationContext` before or after test methods.
+> 如果在测试方法之前或之后使用 `@DirtiesContext` 来关闭测试的 `ApplicationContext`，则不得与 JUnit Jupiter 的 `@TestInstance(PER_CLASS)` 支持一起用于测试类的构造函数注入。
 >
-> The reason is that `@TestInstance(PER_CLASS)` instructs JUnit Jupiter to cache the test instance between test method invocations. Consequently, the test instance will retain references to beans that were originally injected from an `ApplicationContext` that has been subsequently closed. Since the constructor for the test class will only be invoked once in such scenarios, dependency injection will not occur again, and subsequent tests will interact with beans from the closed `ApplicationContext` which may result in errors.
+> 原因是 `@TestInstance(PER_CLASS)` 指示 JUnit Jupiter 在测试方法调用之间缓存测试实例。因此，测试实例将保留对最初从 `ApplicationContext` 注入的 bean 的引用，该 `ApplicationContext` 随后会被关闭。由于在这种情况下测试类的构造函数将仅被调用一次，因此依赖注入不会再次发生，并且后续测试将与关闭的 `ApplicationContext` 中的 bean 进行交互，这可能会导致错误。
 >
-> To use `@DirtiesContext` with "before test method" or "after test method" modes in conjunction with `@TestInstance(PER_CLASS)`, one must configure dependencies from Spring to be supplied via field or setter injection so that they can be re-injected between test method invocations.
+> 若要将 `@DirtiesContext` 与 `@TestInstance(PER_CLASS)` 结合使用在“测试方法之前”或“测试方法之后”模式，必须配置 Spring 的依赖项，以通过字段或 `setter` 注入来提供，以便可以在测试方法调用之间重新注入它们。
 
-In the following example, Spring injects the `OrderService` bean from the `ApplicationContext` loaded from `TestConfig.class` into the `OrderServiceIntegrationTests` constructor.
+在下面的例子中，Spring 将由 `ApplicationContext` 从 `TestConfig.class` 加载的 `OrderService` 注入 `OrderServiceIntegrationTests` 构造器。
 
-```
+```java
 @SpringJUnitConfig(TestConfig.class)
 class OrderServiceIntegrationTests {
 
@@ -2654,15 +2654,15 @@ class OrderServiceIntegrationTests {
 }
 ```
 
-Note that this feature lets test dependencies be `final` and therefore immutable.
+请注意，此功能使测试依赖项为 `final` ，因此是不可变的。
 
 ###### 方法注入
 
-If a parameter in a JUnit Jupiter test method or test lifecycle callback method is of type `ApplicationContext` (or a sub-type thereof) or is annotated or meta-annotated with `@Autowired`, `@Qualifier`, or `@Value`, Spring injects the value for that specific parameter with the corresponding bean from the test’s `ApplicationContext`.
+如果 JUnit Jupiter 测试方法或测试生命周期回调方法中的参数是 `ApplicationContext` 类型（或其子类型），或者使用 `@Autowired`，`@Qualifier` 或 `@Value` 进行注解或元注解。Spring 会使用测试的 `ApplicationContext` 中的相应 bean 注入该特定参数的值。
 
-In the following example, Spring injects the `OrderService` from the `ApplicationContext` loaded from `TestConfig.class` into the `deleteOrder()` test method:
+在下面的示例中，Spring 将 `ApplicationContext` 从 `TestConfig.class` 加载的 `OrderService` 注入到 `deleteOrder()` 测试方法中：
 
-```
+```java
 @SpringJUnitConfig(TestConfig.class)
 class OrderServiceIntegrationTests {
 
@@ -2673,11 +2673,11 @@ class OrderServiceIntegrationTests {
 }
 ```
 
-Due to the robustness of the `ParameterResolver` support in JUnit Jupiter, you can also have multiple dependencies injected into a single method, not only from Spring but also from JUnit Jupiter itself or other third-party extensions.
+由于 JUnit Jupiter 中对 `ParameterResolver` 支持的强大功能，您不仅可以从 Spring 中，而且可以从 JUnit Jupiter 本身或其他第三方扩展中，将多个依赖项注入到单个方法中。
 
-The following example shows how to have both Spring and JUnit Jupiter inject dependencies into the `placeOrderRepeatedly()` test method simultaneously.
+下面的示例演示如何让 Spring 和 JUnit Jupiter 同时将依赖项注入到 `placeOrderRepeatedly()` 测试方法中。
 
-```
+```java
 @SpringJUnitConfig(TestConfig.class)
 class OrderServiceIntegrationTests {
 
@@ -2691,17 +2691,18 @@ class OrderServiceIntegrationTests {
 }
 ```
 
-Note that the use of `@RepeatedTest` from JUnit Jupiter lets the test method gain access to the `RepetitionInfo`.
+注意，通过使用 JUnit Jupiter 中的 `@RepeatedTest`，测试方法可以访问 `RepetitionInfo`。
 
 ##### TestNG 支持类
 
-The `org.springframework.test.context.testng` package provides the following support classes for TestNG based test cases:
+ `org.springframework.test.context.testng` 包为基于 TestNG 的测试提供了下列支持类：
 
 - `AbstractTestNGSpringContextTests`
 - `AbstractTransactionalTestNGSpringContextTests`
 
-`AbstractTestNGSpringContextTests` is an abstract base test class that integrates the Spring TestContext Framework with explicit `ApplicationContext` testing support in a TestNG environment. When you extend `AbstractTestNGSpringContextTests`, you can access a `protected` `applicationContext` instance variable that you can use to perform explicit bean lookups or to test the state of the context as a whole.
+`AbstractTestNGSpringContextTests` 是一个抽象的基础测试类，它将 Spring TestContext Framework 与 TestNG 环境中的显式 `ApplicationContext` 测试支持集成在一起。当扩展 `AbstractTestNGSpringContextTests` 时，可以访问一个 `protected` 的 `applicationContext` 实例变量，该变量可用于执行显式 bean 查找或测试整个上下文的状态。
 
-`AbstractTransactionalTestNGSpringContextTests` is an abstract transactional extension of `AbstractTestNGSpringContextTests` that adds some convenience functionality for JDBC access. This class expects a `javax.sql.DataSource` bean and a `PlatformTransactionManager` bean to be defined in the `ApplicationContext`. When you extend `AbstractTransactionalTestNGSpringContextTests`, you can access a `protected` `jdbcTemplate` instance variable that you can use to execute SQL statements to query the database. You can use such queries to confirm database state both before and after running database-related application code, and Spring ensures that such queries run in the scope of the same transaction as the application code. When used in conjunction with an ORM tool, be sure to avoid [false positives](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx-false-positives). As mentioned in [JDBC Testing Support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-support-jdbc), `AbstractTransactionalTestNGSpringContextTests` also provides convenience methods that delegate to methods in `JdbcTestUtils` by using the aforementioned `jdbcTemplate`. Furthermore, `AbstractTransactionalTestNGSpringContextTests` provides an `executeSqlScript(..)` method for running SQL scripts against the configured `DataSource`.
+`AbstractTransactionalTestNGSpringContextTests` 是 `AbstractTestNGSpringContextTests` 的抽象事务扩展，为 JDBC 访问添加了一些便利功能。此类要求在 `ApplicationContext` 中定义一个 `javax.sql.DataSource` Bean 和一个 `PlatformTransactionManager` Bean。扩展 `AbstractTransactionalTestNGSpringContextTests` 时，可以访问受保护的 `jdbcTemplate` 实例变量，该变量可用于执行 SQL 语句来查询数据库。您可以在运行与数据库相关的应用程序代码之前和之后使用此类查询来确认数据库状态，并且 Spring 确保此类查询在与应用程序代码相同的事务范围内运行。与 ORM 工具结合使用时，请确保避免 [误报](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-tx-false-positives) 。如 [JDBC测试支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#integration-testing-support-jdbc) 中所述，`AbstractTransactionalTestNGSpringContextTests ` 还提供了方便的方法，通过使用上述 `jdbcTemplate` 委派给 `JdbcTestUtils` 中的方法。此外，`AbstractTransactionalTestNGSpringContextTests` 提供了一种 `executeSqlScript(..)` 方法，用于针对已配置的 `DataSource` 运行 SQL 脚本。
 
-> These classes are a convenience for extension. If you do not want your test classes to be tied to a Spring-specific class hierarchy, you can configure your own custom test classes by using `@ContextConfiguration`, `@TestExecutionListeners`, and so on and by manually instrumenting your test class with a `TestContextManager`. See the source code of `AbstractTestNGSpringContextTests` for an example of how to instrument your test class.
+> 这些类为扩展提供了便利。如果您不希望将测试类绑定到特定于 Spring 的类层次结构，则可以通过使用 `@ContextConfiguration`，`@TestExecutionListeners` 等来配置自己的自定义测试类，并通过手动方式对测试类进行检测 一个 `TestContextManager`。有关如何检测您的测试类的示例，请参见 `AbstractTestNGSpringContextTests` 的源代码。
+
