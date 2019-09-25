@@ -2999,34 +2999,35 @@ public void test() throws Exception {
 }
 ```
 
-##### Streaming Responses
+##### 流式响应
 
-There are no options built into Spring MVC Test for container-less testing of streaming responses. Applications that make use of [Spring MVC streaming](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) options can use the [WebTestClient](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#webtestclient-stream) to perform end-to-end, integration tests against a running server. This is also supported in Spring Boot where you can [test a running server](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-running-server) with `WebTestClient`. One extra advantage is the ability to use the `StepVerifier` from project Reactor that allows declaring expectations on a stream of data.
+Spring MVC Test 中没有内置选项可用于流式响应的无容器测试。使用 [Spring MVC流式传输](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-ann-async-http-streaming) 选项的应用程序可以使用 [WebTestClient](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#webtestclient-stream) 执行端到端 ，针对正在运行的服务器进行集成测试。Spring Boot 也支持此功能，您可以在其中使用 `WebTestClient`  [测试正在运行的服务器](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-running-server) 。一个额外的优势是可以使用 Reactor 项目中的 `StepVerifier`，从而可以声明对数据流的期望。
 
-##### Filter Registrations
+##### 过滤器注册
 
-When setting up a `MockMvc` instance, you can register one or more Servlet `Filter` instances, as the following example shows:
+当我们配置 `MockMvc` 实例时，你可以注册一个或者多个 Servlet `Filter` 实例，如下面例子所示：
 
-```
+```java
 mockMvc = standaloneSetup(new PersonController()).addFilters(new CharacterEncodingFilter()).build();
 ```
 
-Registered filters are invoked through the `MockFilterChain` from `spring-test`, and the last filter delegates to the `DispatcherServlet`.
+已注册的过滤器通过 `spring-test` 中的 `MockFilterChain` 调用，最后一个过滤器委托给 `DispatcherServlet`。
 
-##### Spring MVC Test vs End-to-End Tests
+##### Spring MVC 测试 vs 端到端测试
 
-Spring MVC Test is built on Servlet API mock implementations from the `spring-test` module and does not rely on a running container. Therefore, there are some differences when compared to full end-to-end integration tests with an actual client and a live server running.
+Spring MVC Test 基于 `spring-test` 模块中的 Servlet API 模拟实现而构建，并且不依赖于运行中的容器。因此，与使用实际客户端和实时服务器运行的完整端到端集成测试相比，存在一些差异。
 
-The easiest way to think about this is by starting with a blank `MockHttpServletRequest`. Whatever you add to it is what the request becomes. Things that may catch you by surprise are that there is no context path by default; no `jsessionid` cookie; no forwarding, error, or async dispatches; and, therefore, no actual JSP rendering. Instead, “forwarded” and “redirected” URLs are saved in the `MockHttpServletResponse` and can be asserted with expectations.
+考虑这一点的最简单方法是从空白的 `MockHttpServletRequest` 开始。您添加到其中的内容就是请求的内容。可能令您感到惊讶的是，默认情况下没有上下文路径。没有 `jsessionid` cookie；没有转发，错误或异步调度；因此，没有实际的 JSP 呈现。取而代之的是，“转发” 和 “重定向” URL 保存在 `MockHttpServletResponse` 中，并且可以按预期进行断言。
 
-This means that, if you use JSPs, you can verify the JSP page to which the request was forwarded, but no HTML is rendered. In other words, the JSP is not invoked. Note, however, that all other rendering technologies that do not rely on forwarding, such as Thymeleaf and Freemarker, render HTML to the response body as expected. The same is true for rendering JSON, XML, and other formats through `@ResponseBody` methods.
+这意味着，如果您使用 JSP，则可以验证将请求转发到的 JSP 页面，但不会呈现 HTML。换句话说，不调用 JSP。但是请注意，不依赖转发的所有其他渲染技术（例如 Thymeleaf 和 Freemarker）都可以按预期将 HTML 渲染到响应主体。通过 `@ResponseBody` 方法呈现 JSON，XML 和其他格式也是如此。
 
-Alternatively, you may consider the full end-to-end integration testing support from Spring Boot with `@WebIntegrationTest`. See the [Spring Boot Reference Guide](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html#boot-features-testing-spring-boot-applications).
+或者，您可以考虑使用 `@WebIntegrationTest` 从 Spring Boot 获得完整的端到端集成测试支持。请参阅 [Spring Boot参考指南](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html#boot-features-testing-spring-boot-applications) 。
 
-There are pros and cons for each approach. The options provided in Spring MVC Test are different stops on the scale from classic unit testing to full integration testing. To be certain, none of the options in Spring MVC Test fall under the category of classic unit testing, but they are a little closer to it. For example, you can isolate the web layer by injecting mocked services into controllers, in which case you are testing the web layer only through the `DispatcherServlet` but with actual Spring configuration, as you might test the data access layer in isolation from the layers above it. Also, you can use the stand-alone setup, focusing on one controller at a time and manually providing the configuration required to make it work.
+每种方法都各有利弊。从经典的单元测试到全面的集成测试，Spring MVC Test 中提供的选项在规模上是不同的。可以肯定的是，Spring MVC Test 中的所有选项都不属于经典单元测试的范畴，但与之接近。例如，您可以通过将模拟服务注入到控制器中来隔离 Web 层，在这种情况下，您仅通过 `DispatcherServlet` 并使用实际的 Spring 配置来测试 Web 层，因为您可能会在与它上面这些层隔离的情况下测试数据访问层。另外，您可以使用独立设置，一次只关注一个控制器，然后手动提供使其工作所需的配置。
 
-Another important distinction when using Spring MVC Test is that, conceptually, such tests are the server-side, so you can check what handler was used, if an exception was handled with a HandlerExceptionResolver, what the content of the model is, what binding errors there were, and other details. That means that it is easier to write expectations, since the server is not a black box, as it is when testing it through an actual HTTP client. This is generally an advantage of classic unit testing: It is easier to write, reason about, and debug but does not replace the need for full integration tests. At the same time, it is important not to lose sight of the fact that the response is the most important thing to check. In short, there is room here for multiple styles and strategies of testing even within the same project.
+使用 Spring MVC Test 时的另一个重要区别是，从概念上讲，此类测试是服务器端的，因此您可以检查使用了哪个处理程序，如果使用 `HandlerExceptionResolver` 处理了异常，则模型的内容是什么，绑定错误是什么？还有其他细节。这意味着编写期望值更容易，因为服务器不是一个黑盒子，就像通过实际的 HTTP 客户端对其进行测试时那样。通常，这是经典单元测试的一个优势：编写，推理和调试更容易，但不能代替完全集成测试。同时，重要的是不要忽略检查响应是最重要的。简而言之，即使在同一项目中，也可以选择多种样式和测试策略。
 
-##### Further Examples
+##### 更对示例
 
-The framework’s own tests include [many sample tests](https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples) intended to show how to use Spring MVC Test. You can browse these examples for further ideas. Also, the [`spring-mvc-showcase`](https://github.com/spring-projects/spring-mvc-showcase) project has full test coverage based on Spring MVC Test.
+框架自己的测试包括 [许多示例测试](https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples) ，旨在展示如何使用 Spring MVC Test。您可以浏览这些示例以获取更多的点子。另外，[`spring-mvc-showcase`](https://github.com/spring-projects/spring-mvc-showcase) 项目具有基于 Spring MVC Test 的完整测试覆盖范围。
+
