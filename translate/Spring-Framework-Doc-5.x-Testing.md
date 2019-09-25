@@ -2706,3 +2706,208 @@ class OrderServiceIntegrationTests {
 
 > 这些类为扩展提供了便利。如果您不希望将测试类绑定到特定于 Spring 的类层次结构，则可以通过使用 `@ContextConfiguration`，`@TestExecutionListeners` 等来配置自己的自定义测试类，并通过手动方式对测试类进行检测 一个 `TestContextManager`。有关如何检测您的测试类的示例，请参见 `AbstractTestNGSpringContextTests` 的源代码。
 
+### 3.6. Spring MVC 测试框架
+
+The Spring MVC Test framework provides first class support for testing Spring MVC code with a fluent API that you can use with JUnit, TestNG, or any other testing framework. It is built on the [Servlet API mock objects](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/mock/web/package-summary.html) from the `spring-test` module and, hence, does not use a running Servlet container. It uses the `DispatcherServlet` to provide full Spring MVC runtime behavior and provides support for loading actual Spring configuration with the TestContext framework in addition to a standalone mode, in which you can manually instantiate controllers and test them one at a time.
+
+Spring MVC Test also provides client-side support for testing code that uses the `RestTemplate`. Client-side tests mock the server responses and also do not use a running server.
+
+> Spring Boot provides an option to write full, end-to-end integration tests that include a running server. If this is your goal, see the [Spring Boot reference page](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html#boot-features-testing-spring-boot-applications). For more information on the differences between out-of-container and end-to-end integration tests, see [Spring MVC Test vs End-to-End Tests](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-vs-end-to-end-integration-tests).
+
+#### 3.6.1. Server-Side Tests
+
+您可以使用 JUnit 或 TestNG 为 Spring MVC 控制器编写一个普通的单元测试。为此，实例化控制器，向其注入模拟或存根依赖，然后调用其方法（根据需要传递 `MockHttpServletRequest`，`MockHttpServletResponse` 和其他组件）。但是，在编写这样的单元测试时，仍有很多未经测试的内容：例如，请求映射，数据绑定，类型转换，验证等等。此外，其他控制器方法（例如，`@InitBinder`，`@ModelAttribute` 和 `@ExceptionHandler`）也可以作为请求处理生命周期的一部分来调用。
+
+Spring MVC Test 的目标是通过执行请求并通过实际的 `DispatcherServlet` 生成响应来提供一种测试控制器的有效方法。
+
+Spring MVC 测试类基于似于在 spring-test 模块中可用的 [Servlet API 的 mock 实现](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#mock-objects-servlet)  建立。这允许执行请求和生成响应，而无需在 Servlet 容器中运行。在大多数情况下，一切都应像在运行时一样工作，但有一些值得注意的例外，如 [Spring MVC测试与端到端测试](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-vs-end-to-end-integration-tests) 。以下基于 JUnit Jupiter 的示例使用 Spring MVC Test：
+
+```java
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringJUnitWebConfig(locations = "test-servlet-context.xml")
+class ExampleTests {
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setup(WebApplicationContext wac) {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
+    }
+
+    @Test
+    void getAccount() throws Exception {
+        this.mockMvc.perform(get("/accounts/1")
+                .accept(MediaType.parseMediaType("application/json;charset=UTF-8")))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType("application/json"))
+            .andExpect(jsonPath("$.name").value("Lee"));
+    }
+}
+```
+
+前面的测试依赖于 TestContext 框架对 `WebApplicationContext` 的支持，以从与测试类位于同一包中的 XML 配置文件加载 Spring 配置，但是还支持基于 Java 和基于 Groovy 的配置。参见这些 [样本测试](https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples/context) 。
+
+`MockMvc` 实例用于执行对 `/accounts/1` 的 `GET` 请求，并验证结果响应的状态为 `200`，内容类型为 `application/json`，响应主体具有名为 `name` 的 JSON 属性值为 `Lee`。 Jayway [JsonPath project](https://github.com/jayway/JsonPath) 支持 `jsonPath` 语法。本文档后面将讨论用于验证执行请求结果的许多其他选项。
+
+##### 静态导入
+
+[上一部分](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server) 中的示例中的 API 需要一些静态导入，例如 `MockMvcRequestBuilders.*` ，`MockMvcResultMatchers.*` 和 `MockMvcBuilders.*`。查找这些类的一种简单方法是搜索与 `MockMvc *` 相匹配的类型。如果您使用 Eclipse 或基于 Eclipse 的 Spring Tool Suite，请确保在 " Java→编辑器→Content Assist→收藏夹" 下的 Eclipse 首选项中将它们添加为“收藏的静态成员”。这样，您可以在键入静态方法名称的第一个字符后使用内容辅助。其他 IDE（例如 IntelliJ）可能不需要任何其他配置。检查对静态成员的代码完成的支持。
+
+##### 配置选择
+
+创建 `MockMvc` 实例的主要方法有两个。首先是通过 TestContext 框架加载 Spring MVC 配置，该框架加载 Spring 配置并将 `WebApplicationContext` 注入测试以用于构建 `MockMvc` 实例。以下示例显示了如何执行此操作：
+
+```java
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextConfiguration("my-servlet-context.xml")
+public class MyWebTests {
+
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+    }
+
+    // ...
+
+}
+```
+
+您的第二个选择是在不加载 Spring 配置的情况下手动创建控制器实例。而是自动创建了基本的默认配置，该配置与 MVC JavaConfig 或 MVC 命名空间大致相当。您可以在一定程度上对其进行自定义。以下示例显示了如何执行此操作：
+
+```java
+public class MyWebTests {
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        this.mockMvc = MockMvcBuilders.standaloneSetup(new AccountController()).build();
+    }
+
+    // ...
+
+}
+```
+
+你应该使用哪些配置选项？
+
+`webAppContextSetup` 加载您的实际 Spring MVC 配置，从而进行更完整的集成测试。由于 TestContext 框架缓存了已加载的 Spring 配置，因此即使您在测试套件中引入了更多测试，它也有助于保持测试的快速运行。此外，您可以通过 Spring 配置将模拟服务注入控制器中，以继续专注于测试 Web 层。下面的示例使用 Mockito 声明一个模拟服务：
+
+```xml
+<bean id="accountService" class="org.mockito.Mockito" factory-method="mock">
+    <constructor-arg value="org.example.AccountService"/>
+</bean>
+```
+
+然后，您可以将模拟服务注入测试中，以设置和验证您的期望，如以下示例所示：
+
+```java
+@RunWith(SpringRunner.class)
+@WebAppConfiguration
+@ContextConfiguration("test-servlet-context.xml")
+public class AccountTests {
+
+    @Autowired
+    private WebApplicationContext wac;
+
+    private MockMvc mockMvc;
+
+    @Autowired
+    private AccountService accountService;
+
+    // ...
+
+}
+```
+
+另一方面，`standaloneSetup` 更接近于单元测试。它一次测试一个控制器。您可以手动注入具有模拟依赖项的控制器，并且不涉及加载 Spring 配置。这样的测试更多地集中在样式上，使查看被测试的控制器是否需要任何特定的 Spring MVC 配置等工作变得更加容易。`standaloneSetup` 也是编写临时测试以验证特定行为或调试问题的一种非常方便的方法。
+
+与大多数“集成与单元测试”辩论一样，没有正确或错误的答案。但是，使用 `standaloneSetup` 确实意味着需要额外的 `webAppContextSetup` 测试来验证您的 Spring MVC 配置。另外，您可以使用 `webAppContextSetup` 编写所有测试，以便始终针对实际的 Spring MVC 配置进行测试。
+
+##### 配置特性
+
+无论使用哪种 MockMvc 构建器，所有 `MockMvcBuilder` 实现都提供一些常见且非常有用的功能。例如，您可以为所有请求声明一个 `Accept` 首部，并在所有响应中期望状态为 200 以及一个 `Content-Type` 首部，如下所示：
+
+```java
+// static import of MockMvcBuilders.standaloneSetup
+
+MockMvc mockMvc = standaloneSetup(new MusicController())
+        .defaultRequest(get("/").accept(MediaType.APPLICATION_JSON))
+        .alwaysExpect(status().isOk())
+        .alwaysExpect(content().contentType("application/json;charset=UTF-8"))
+        .build();
+```
+
+另外，第三方框架（和应用程序）可以预先打包安装说明，例如 `MockMvcConfigurer` 中的安装说明。Spring 框架具有一个这样的内置实现，可帮助保存和重用跨请求的 HTTP 会话。您可以按以下方式使用它：
+
+```java
+// static import of SharedHttpSessionConfigurer.sharedHttpSession
+
+MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new TestController())
+        .apply(sharedHttpSession())
+        .build();
+
+// Use mockMvc to perform requests...
+```
+
+参考 [`ConfigurableMockMvcBuilder`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/test/web/servlet/setup/ConfigurableMockMvcBuilder.html) 文档以获得所有 MockMvc 构建器功能的列表，或使用 IDE 探索可用选项。
+
+##### Performing Requests
+
+You can perform requests that use any HTTP method, as the following example shows:
+
+```
+mockMvc.perform(post("/hotels/{id}", 42).accept(MediaType.APPLICATION_JSON));
+```
+
+You can also perform file upload requests that internally use `MockMultipartHttpServletRequest` so that there is no actual parsing of a multipart request. Rather, you have to set it up to be similar to the following example:
+
+```
+mockMvc.perform(multipart("/doc").file("a1", "ABC".getBytes("UTF-8")));
+```
+
+You can specify query parameters in URI template style, as the following example shows:
+
+```
+mockMvc.perform(get("/hotels?thing={thing}", "somewhere"));
+```
+
+You can also add Servlet request parameters that represent either query or form parameters, as the following example shows:
+
+```
+mockMvc.perform(get("/hotels").param("thing", "somewhere"));
+```
+
+If application code relies on Servlet request parameters and does not check the query string explicitly (as is most often the case), it does not matter which option you use. Keep in mind, however, that query parameters provided with the URI template are decoded while request parameters provided through the `param(…)` method are expected to already be decoded.
+
+In most cases, it is preferable to leave the context path and the Servlet path out of the request URI. If you must test with the full request URI, be sure to set the `contextPath` and `servletPath` accordingly so that request mappings work, as the following example shows:
+
+```
+mockMvc.perform(get("/app/main/hotels/{id}").contextPath("/app").servletPath("/main"))
+```
+
+In the preceding example, it would be cumbersome to set the `contextPath` and `servletPath` with every performed request. Instead, you can set up default request properties, as the following example shows:
+
+```
+public class MyWebTests {
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        mockMvc = standaloneSetup(new AccountController())
+            .defaultRequest(get("/")
+            .contextPath("/app").servletPath("/main")
+            .accept(MediaType.APPLICATION_JSON)).build();
+    }
+```
+
+The preceding properties affect every request performed through the `MockMvc` instance. If the same property is also specified on a given request, it overrides the default value. That is why the HTTP method and URI in the default request do not matter, since they must be specified on every request.
