@@ -2714,7 +2714,7 @@ Spring MVC Test also provides client-side support for testing code that uses the
 
 > Spring Boot provides an option to write full, end-to-end integration tests that include a running server. If this is your goal, see the [Spring Boot reference page](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-testing.html#boot-features-testing-spring-boot-applications). For more information on the differences between out-of-container and end-to-end integration tests, see [Spring MVC Test vs End-to-End Tests](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-vs-end-to-end-integration-tests).
 
-#### 3.6.1. Server-Side Tests
+#### 3.6.1. 服务端测试
 
 您可以使用 JUnit 或 TestNG 为 Spring MVC 控制器编写一个普通的单元测试。为此，实例化控制器，向其注入模拟或存根依赖，然后调用其方法（根据需要传递 `MockHttpServletRequest`，`MockHttpServletResponse` 和其他组件）。但是，在编写这样的单元测试时，仍有很多未经测试的内容：例如，请求映射，数据绑定，类型转换，验证等等。此外，其他控制器方法（例如，`@InitBinder`，`@ModelAttribute` 和 `@ExceptionHandler`）也可以作为请求处理生命周期的一部分来调用。
 
@@ -2911,4 +2911,91 @@ public class MyWebTests {
 ```
 
 前面的属性会影响通过 `MockMvc` 实例执行的每个请求。如果在给定请求上也指定了相同的属性，则它将覆盖默认值。这就是默认请求中的 HTTP 方法和 URI 无关紧要的原因，因为必须在每个请求中都指定它们。
+
+##### 定义期望
+
+您可以通过在执行请求后附加一个或多个 `.andExpect(..)` 调用来定义期望，如以下示例所示：
+
+```java
+mockMvc.perform(get("/accounts/1")).andExpect(status().isOk());
+```
+
+`MockMvcResultMatchers.*` 提供了一些期望，其中一些期望被进一步封装在其它更精细的期望中。
+
+期望分为两大类。第一类断言验证响应的属性（例如，响应状态，标头和内容）。这些是要断言的最重要的结果。
+
+第二类断言超出了响应范围。这些断言使您可以检查 Spring MVC 的特定方面，例如哪种控制器方法处理了请求，是否引发和处理了异常，模型的内容是什么，选择了哪种视图，添加了哪些瞬态属性（flash attributes），等等。它们还使您可以检查 Servlet 的特定方面，例如请求和会话属性。
+
+以下测试断言绑定或验证失败：
+
+```java
+mockMvc.perform(post("/persons"))
+    .andExpect(status().isOk())
+    .andExpect(model().attributeHasErrors("person"));
+```
+
+很多时候，编写测试时，转储已执行请求的结果很有用。您可以按照以下方式进行操作，其中 `print()` 是来自 `MockMvcResultHandlers` 的静态导入：
+
+```java
+mockMvc.perform(post("/persons"))
+    .andDo(print())
+    .andExpect(status().isOk())
+    .andExpect(model().attributeHasErrors("person"));
+```
+
+只要请求处理不会引起未处理的异常，`print()` 方法会将所有可用的结果数据打印到 `System.out`。Spring Framework 4.2 引入了 `log()` 方法和 `print()` 方法的两个附加变体，一个接受 `OutputStream`，另一个接受 `Writer`。例如，调用 `print(System.err)` 将结果数据打印到 `System.err`，而调用 `print(myWriter)` 将结果数据打印到自定义编写器。如果您希望记录结果数据而不是打印结果，则可以调用 `log()` 方法，该方法将结果数据记录为 `org.springframework.test.web.servlet.result` 日志记录类别下的一条 `DEBUG` 消息。
+
+在某些情况下，您可能需要直接访问结果并验证无法通过其他手段验证的内容。可以通过在所有其他期望之后附加 `.andReturn()` 来实现，如以下示例所示：
+
+```java
+MvcResult mvcResult = mockMvc.perform(post("/persons")).andExpect(status().isOk()).andReturn();
+// ...
+```
+
+如果所有测试使用相同的期望，你可以在创建 `MockMvc` 实例时统一配置通用期望。如下面例子所示：
+
+```java
+standaloneSetup(new SimpleController())
+    .alwaysExpect(status().isOk())
+    .alwaysExpect(content().contentType("application/json;charset=UTF-8"))
+    .build()
+```
+
+注意，通用的期望总是被应用，除非创建一个单独的 `MockMvc` 实例，否则不能被覆盖。
+
+当 JSON 响应内容包含使用  [Spring HATEOAS](https://github.com/spring-projects/spring-hateoas) 创建的超链接时，可以使用 JsonPath 表达式来验证结果链接，如以下示例所示：
+
+```java
+mockMvc.perform(get("/people").accept(MediaType.APPLICATION_JSON))
+    .andExpect(jsonPath("$.links[?(@.rel == 'self')].href").value("http://localhost:8080/people"));
+```
+
+当XML响应内容包含使用  [Spring HATEOAS](https://github.com/spring-projects/spring-hateoas) 创建的超媒体链接时，您可以使用 XPath 表达式来验证生成的链接：
+
+```java
+Map<String, String> ns = Collections.singletonMap("ns", "http://www.w3.org/2005/Atom");
+mockMvc.perform(get("/handle").accept(MediaType.APPLICATION_XML))
+    .andExpect(xpath("/person/ns:link[@rel='self']/@href", ns).string("http://localhost:8080/people"));
+```
+
+##### 异步请求
+
+Servlet 3.0 异步请求，[在 Spring MVC 中受支持](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-ann-async) ，通过退出 Servlet 容器线程并允许应用程序异步计算响应，然后进行异步调度以完成对 Servlet 容器线程的处理。
+
+在 Spring MVC Test 中，可以通过以下方法测试异步请求：首先声明产生的异步值，然后手动执行异步分派，最后验证响应。下面是对返回 `DeferredResult`，`Callable` 或反应式类型（例如 Reactor `Mono`）的控制器方法的测试示例：
+
+```java
+@Test
+public void test() throws Exception {
+    MvcResult mvcResult = this.mockMvc.perform(get("/path"))
+        .andExpect(status().isOk()) 
+        .andExpect(request().asyncStarted()) 
+        .andExpect(request().asyncResult("body")) 
+        .andReturn();
+
+    this.mockMvc.perform(asyncDispatch(mvcResult)) 
+        .andExpect(status().isOk()) 
+        .andExpect(content().string("body"));
+}
+```
 
