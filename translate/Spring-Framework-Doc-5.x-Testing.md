@@ -3027,7 +3027,246 @@ Spring MVC Test 基于 `spring-test` 模块中的 Servlet API 模拟实现而构
 
 使用 Spring MVC Test 时的另一个重要区别是，从概念上讲，此类测试是服务器端的，因此您可以检查使用了哪个处理程序，如果使用 `HandlerExceptionResolver` 处理了异常，则模型的内容是什么，绑定错误是什么？还有其他细节。这意味着编写期望值更容易，因为服务器不是一个黑盒子，就像通过实际的 HTTP 客户端对其进行测试时那样。通常，这是经典单元测试的一个优势：编写，推理和调试更容易，但不能代替完全集成测试。同时，重要的是不要忽略检查响应是最重要的。简而言之，即使在同一项目中，也可以选择多种样式和测试策略。
 
-##### 更对示例
+##### 更多示例
 
 框架自己的测试包括 [许多示例测试](https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples) ，旨在展示如何使用 Spring MVC Test。您可以浏览这些示例以获取更多的点子。另外，[`spring-mvc-showcase`](https://github.com/spring-projects/spring-mvc-showcase) 项目具有基于 Spring MVC Test 的完整测试覆盖范围。
 
+#### 3.6.2. HtmlUnit 集成
+
+Spring 提供了 [MockMvc](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server) 和 [HtmlUnit](http://htmlunit.sourceforge.net/) 的集成。这简化了在在使用基于 HTML 的视图场景下端到端测试的执行。该集成允许你：
+
+- 通过使用诸如 [HtmlUnit](http://htmlunit.sourceforge.net/)， [WebDriver](https://www.seleniumhq.org/)，以及 [Geb](http://www.gebish.org/manual/current/#spock-junit-testng) 之类的工具简化 HTML 页面测试，而不需要部署到 Servlet 容器中。
+- 测试页面中的  JavaScript。
+- 选择性地使用模拟服务以加速测试。
+- 在容器内端到端测试和容器外集成测试之间共享逻辑。
+
+> MockMvc 使用不依赖 Servlet 容器的模板技术（例如 Thymeleaf，FreeMarker 等），但不使用 JSP，因为它们依赖 Servlet 容器。
+
+##### 为什么需要 HtmlUnit 集成？
+
+最明显的问题是“我为什么需要这个？” 最好的答案是通过探索一个非常基本的示例应用程序来找到的。假设您有一个 Spring MVC Web 应用程序，它支持对 `Message` 对象的 CRUD 操作。该应用程序还支持所有 `messages` 的分页。您将如何进行测试？
+
+使用 Spring MVC Test，如果我们可以创建 `Message` 实例，则我们就可以如下测试：
+
+```java
+MockHttpServletRequestBuilder createMessage = post("/messages/")
+        .param("summary", "Spring Rocks")
+        .param("text", "In case you didn't know, Spring Rocks!");
+
+mockMvc.perform(createMessage)
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/messages/123"));
+```
+
+如果我们要测试允许我们创建消息的表单视图怎么办？例如，假设我们的表单类似于以下代码段：
+
+```html
+<form id="messageForm" action="/messages/" method="post">
+    <div class="pull-right"><a href="/messages/">Messages</a></div>
+
+    <label for="summary">Summary</label>
+    <input type="text" class="required" id="summary" name="summary" value="" />
+
+    <label for="text">Message</label>
+    <textarea id="text" name="text"></textarea>
+
+    <div class="form-actions">
+        <input type="submit" value="Create" />
+    </div>
+</form>
+```
+
+我们如何确保表单产生正确的请求以创建新消息？最初的尝试可能类似于以下内容：
+
+```java
+mockMvc.perform(get("/messages/form"))
+        .andExpect(xpath("//input[@name='summary']").exists())
+        .andExpect(xpath("//textarea[@name='text']").exists());
+```
+
+此测试有一些明显的缺点。如果我们更新控制器以使用参数 `message` 而不是 `text`，即使 HTML 表单与控制器不同步，我们的表单测试也会继续通过。为了解决这个问题，我们可以结合以下两个测试：
+
+```java
+String summaryParamName = "summary";
+String textParamName = "text";
+mockMvc.perform(get("/messages/form"))
+        .andExpect(xpath("//input[@name='" + summaryParamName + "']").exists())
+        .andExpect(xpath("//textarea[@name='" + textParamName + "']").exists());
+
+MockHttpServletRequestBuilder createMessage = post("/messages/")
+        .param(summaryParamName, "Spring Rocks")
+        .param(textParamName, "In case you didn't know, Spring Rocks!");
+
+mockMvc.perform(createMessage)
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/messages/123"));
+```
+
+这样可以减少测试不正确通过的风险，但是仍然存在一些问题：
+
+- 如果页面上有多个表单怎么办？诚然，我们可以更新 XPath 表达式，但是由于我们考虑了更多因素，它们变得更加复杂：字段是正确的类型吗？是否启用了字段？等等。
+- 另一个问题是我们正在做我们期望的两倍的工作。我们必须首先验证视图，然后使用刚刚验证的相同参数提交视图。理想情况下，可以一次完成所有操作。
+- 最后，我们仍然无法解释某些事情。例如，如果表单也具有我们希望测试的 JavaScript 验证，该怎么办？
+
+总体问题是，测试网页不涉及单个交互。相反，它是用户如何与网页交互以及该网页与其他资源交互的组合。例如，表单视图的结果用作用户创建消息的输入。另外，我们的表单视图可以潜在地使用影响页面行为的其他资源，例如 JavaScript 验证。
+
+###### Integration Testing to the Rescue?
+
+为了解决前面提到的问题，我们可以执行端到端集成测试，但这有一些缺点。考虑测试允许我们翻阅消息的视图。 我们可能需要以下测试：
+
+- 我们的页面是否向用户显示通知，以指示消息为空时没有可用结果？
+
+- 我们的页面是否正确显示一条消息？
+
+- 我们的网页是否正确支持分页？
+
+要配置这些测试，我们需要确保我们的数据库包含正确的消息。这带来了许多其他挑战：
+
+- 确保数据库中包含正确的消息可能很繁琐。（考虑外键约束。）
+
+- 测试可能会变慢，因为每次测试都需要确保数据库处于正确的状态。
+
+- 由于我们的数据库需要处于特定状态，因此我们无法并行运行测试。
+
+- 对自动生成的 ID，时间戳等项目执行断言可能很困难。
+
+这些挑战并不意味着我们应该完全放弃端到端集成测试。相反，我们可以通过重构我们的详细测试以使用运行速度更快，更可靠且没有副作用的模拟服务来减少端到端集成测试的数量。然后，我们可以实施少量真正的端到端集成测试，以验证简单的工作流程，以确保一切正常工作。
+
+###### Enter HtmlUnit Integration
+
+So how can we achieve a balance between testing the interactions of our pages and still retain good performance within our test suite? The answer is: “By integrating MockMvc with HtmlUnit.”
+
+###### HtmlUnit Integration Options
+
+You have a number of options when you want to integrate MockMvc with HtmlUnit:
+
+- [MockMvc and HtmlUnit](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah): Use this option if you want to use the raw HtmlUnit libraries.
+- [MockMvc and WebDriver](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver): Use this option to ease development and reuse code between integration and end-to-end testing.
+- [MockMvc and Geb](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-geb): Use this option if you want to use Groovy for testing, ease development, and reuse code between integration and end-to-end testing.
+
+##### MockMvc and HtmlUnit
+
+This section describes how to integrate MockMvc and HtmlUnit. Use this option if you want to use the raw HtmlUnit libraries.
+
+###### MockMvc and HtmlUnit Setup
+
+First, make sure that you have included a test dependency on `net.sourceforge.htmlunit:htmlunit`. In order to use HtmlUnit with Apache HttpComponents 4.5+, you need to use HtmlUnit 2.18 or higher.
+
+We can easily create an HtmlUnit `WebClient` that integrates with MockMvc by using the `MockMvcWebClientBuilder`, as follows:
+
+```
+@Autowired
+WebApplicationContext context;
+
+WebClient webClient;
+
+@Before
+public void setup() {
+    webClient = MockMvcWebClientBuilder
+            .webAppContextSetup(context)
+            .build();
+}
+```
+
+> This is a simple example of using `MockMvcWebClientBuilder`. For advanced usage, see [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder).
+
+This ensures that any URL that references `localhost` as the server is directed to our `MockMvc` instance without the need for a real HTTP connection. Any other URL is requested by using a network connection, as normal. This lets us easily test the use of CDNs.
+
+###### MockMvc and HtmlUnit Usage
+
+Now we can use HtmlUnit as we normally would but without the need to deploy our application to a Servlet container. For example, we can request the view to create a message with the following:
+
+```
+HtmlPage createMsgFormPage = webClient.getPage("http://localhost/messages/form");
+```
+
+> The default context path is `""`. Alternatively, we can specify the context path, as described in [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder).
+
+Once we have a reference to the `HtmlPage`, we can then fill out the form and submit it to create a message, as the following example shows:
+
+```
+HtmlForm form = createMsgFormPage.getHtmlElementById("messageForm");
+HtmlTextInput summaryInput = createMsgFormPage.getHtmlElementById("summary");
+summaryInput.setValueAttribute("Spring Rocks");
+HtmlTextArea textInput = createMsgFormPage.getHtmlElementById("text");
+textInput.setText("In case you didn't know, Spring Rocks!");
+HtmlSubmitInput submit = form.getOneHtmlElementByAttribute("input", "type", "submit");
+HtmlPage newMessagePage = submit.click();
+```
+
+Finally, we can verify that a new message was created successfully. The following assertions use the [AssertJ](https://joel-costigliola.github.io/assertj/) library:
+
+```
+assertThat(newMessagePage.getUrl().toString()).endsWith("/messages/123");
+String id = newMessagePage.getHtmlElementById("id").getTextContent();
+assertThat(id).isEqualTo("123");
+String summary = newMessagePage.getHtmlElementById("summary").getTextContent();
+assertThat(summary).isEqualTo("Spring Rocks");
+String text = newMessagePage.getHtmlElementById("text").getTextContent();
+assertThat(text).isEqualTo("In case you didn't know, Spring Rocks!");
+```
+
+The preceding code improves on our [MockMvc test](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mock-mvc-test) in a number of ways. First, we no longer have to explicitly verify our form and then create a request that looks like the form. Instead, we request the form, fill it out, and submit it, thereby significantly reducing the overhead.
+
+Another important factor is that [HtmlUnit uses the Mozilla Rhino engine](http://htmlunit.sourceforge.net/javascript.html) to evaluate JavaScript. This means that we can also test the behavior of JavaScript within our pages.
+
+See the [HtmlUnit documentation](http://htmlunit.sourceforge.net/gettingStarted.html) for additional information about using HtmlUnit.
+
+###### Advanced `MockMvcWebClientBuilder`
+
+In the examples so far, we have used `MockMvcWebClientBuilder` in the simplest way possible, by building a `WebClient` based on the `WebApplicationContext` loaded for us by the Spring TestContext Framework. This approach is repeated in the following example:
+
+```
+@Autowired
+WebApplicationContext context;
+
+WebClient webClient;
+
+@Before
+public void setup() {
+    webClient = MockMvcWebClientBuilder
+            .webAppContextSetup(context)
+            .build();
+}
+```
+
+We can also specify additional configuration options, as the following example shows:
+
+```
+WebClient webClient;
+
+@Before
+public void setup() {
+    webClient = MockMvcWebClientBuilder
+        // demonstrates applying a MockMvcConfigurer (Spring Security)
+        .webAppContextSetup(context, springSecurity())
+        // for illustration only - defaults to ""
+        .contextPath("")
+        // By default MockMvc is used for localhost only;
+        // the following will use MockMvc for example.com and example.org as well
+        .useMockMvcForHosts("example.com","example.org")
+        .build();
+}
+```
+
+As an alternative, we can perform the exact same setup by configuring the `MockMvc` instance separately and supplying it to the `MockMvcWebClientBuilder`, as follows:
+
+```
+MockMvc mockMvc = MockMvcBuilders
+        .webAppContextSetup(context)
+        .apply(springSecurity())
+        .build();
+
+webClient = MockMvcWebClientBuilder
+        .mockMvcSetup(mockMvc)
+        // for illustration only - defaults to ""
+        .contextPath("")
+        // By default MockMvc is used for localhost only;
+        // the following will use MockMvc for example.com and example.org as well
+        .useMockMvcForHosts("example.com","example.org")
+        .build();
+```
+
+This is more verbose, but, by building the `WebClient` with a `MockMvc` instance, we have the full power of MockMvc at our fingertips.
+
+> For additional information on creating a `MockMvc` instance, see [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options).
