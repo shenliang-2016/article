@@ -3271,3 +3271,243 @@ webClient = MockMvcWebClientBuilder
 
 > 有关创建 `MockMvc` 实例的更多信息，参考 [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options)。
 
+##### MockMvc 和 WebDriver
+
+在前面的部分中，我们已经了解了如何将 MockMvc 与原始 HtmlUnit API 结合使用。在本节中，我们使用 Selenium [WebDriver](https://docs.seleniumhq.org/projects/webdriver/) 中的其他抽象使事情变得更加容易。
+
+###### 为什么集成 WebDriver 和 MockMvc？
+
+我们已经可以使用 HtmlUnit 和 MockMvc，那么为什么要使用 WebDriver？Selenium WebDriver 提供了一个非常优雅的 API，使我们可以轻松地组织代码。为了更好地说明其工作原理，我们在本节中研究一个示例。
+
+> 尽管属于 [Selenium](https://docs.seleniumhq.org/) 的一部分，WebDriver 并不需要 Selenium Server 来运行你的测试。
+
+假设我们需要确保正确创建一条消息。测试涉及找到 HTML 表单输入元素，将其填写并做出各种断言。
+
+这种方法会导致大量单独的测试，因为我们也想测试错误情况。例如，如果只填写表单的一部分，我们要确保得到一个错误。如果我们填写整个表格，那么新创建的消息将在之后显示。
+
+如果其中一个字段被命名为 “summary”，我们可能会在测试中的多个位置重复以下内容：
+
+```java
+HtmlTextInput summaryInput = currentPage.getHtmlElementById("summary");
+summaryInput.setValueAttribute(summary);
+```
+
+那么，如果我们将 `id` 更改为 `smry` 会发生什么呢？这样做将迫使我们更新所有测试以适配此更改。这违反了DRY原理，因此理想情况下，我们应将此代码提取到其自己的方法中，如下所示：
+
+```java
+public HtmlPage createMessage(HtmlPage currentPage, String summary, String text) {
+    setSummary(currentPage, summary);
+    // ...
+}
+
+public void setSummary(HtmlPage currentPage, String summary) {
+    HtmlTextInput summaryInput = currentPage.getHtmlElementById("summary");
+    summaryInput.setValueAttribute(summary);
+}
+```
+
+这样做可以确保在更改 UI 时不必更新所有测试。
+
+我们甚至可以更进一步，并将此逻辑放在代表我们当前所在的 `HtmlPage` 的 `Object` 中，如以下示例所示：
+
+```java
+public class CreateMessagePage {
+
+    final HtmlPage currentPage;
+
+    final HtmlTextInput summaryInput;
+
+    final HtmlSubmitInput submit;
+
+    public CreateMessagePage(HtmlPage currentPage) {
+        this.currentPage = currentPage;
+        this.summaryInput = currentPage.getHtmlElementById("summary");
+        this.submit = currentPage.getHtmlElementById("submit");
+    }
+
+    public <T> T createMessage(String summary, String text) throws Exception {
+        setSummary(summary);
+
+        HtmlPage result = submit.click();
+        boolean error = CreateMessagePage.at(result);
+
+        return (T) (error ? new CreateMessagePage(result) : new ViewMessagePage(result));
+    }
+
+    public void setSummary(String summary) throws Exception {
+        summaryInput.setValueAttribute(summary);
+    }
+
+    public static boolean at(HtmlPage page) {
+        return "Create Message".equals(page.getTitleText());
+    }
+}
+```
+
+以前，此模式被称为 [页面对象模式](https://github.com/SeleniumHQ/selenium/wiki/PageObjects) 。虽然我们当然可以使用 HtmlUnit 做到这一点，但 WebDriver 提供了一些我们在以下各节中探讨的工具，以使该模式的实现更加容易。
+
+###### MockMvc 和 WebDriver 配置
+
+要将 Selenium WebDriver 与 Spring MVC 测试框架一起使用，请确保您的项目包含对 `org.seleniumhq.selenium:selenium-htmlunit-driver` 的测试依赖项。
+
+我们可以使用 `MockMvcHtmlUnitDriverBuilder` 轻松创建一个与 MockMvc 集成的 Selenium WebDriver，如以下示例所示：
+
+```java
+    @Autowired
+    WebApplicationContext context;
+
+    WebDriver driver;
+
+    @Before
+    public void setup() {
+        driver = MockMvcHtmlUnitDriverBuilder
+                .webAppContextSetup(context)
+                .build();
+}
+```
+
+> 这是使用`MockMvcHtmlUnitDriverBuilder`的简单示例。有关更高级的用法，请参见[Advanced`MockMvcHtmlUnitDriverBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver-advanced-builder) 。
+
+前面的示例确保了在服务器上引用 `localhost` 的所有 URL 均定向到我们的 `MockMvc` 实例，而无需真正的 HTTP 连接。通常，通过使用网络连接来请求其他任何 URL。这使我们可以轻松测试 CDN 的使用。
+
+###### MockMvc 和 WebDriver 使用
+
+现在，我们可以像往常一样使用 WebDriver，而无需将应用程序部署到 Servlet 容器。例如，我们可以请求视图创建以下消息：
+
+```java
+CreateMessagePage page = CreateMessagePage.to(driver);
+```
+
+然后，我们可以填写表单并提交以创建一条消息，如下所示：
+
+```java
+ViewMessagePage viewMessagePage =
+        page.createMessage(ViewMessagePage.class, expectedSummary, expectedText);
+```
+
+通过利用页面对象模式，这在 [HtmlUnit test](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-usage) 示例基础上进行了改进。如我们在 [Why WebDriver and MockMvc?](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver-why) 中所说，我们可以将页面对象模式与 HtmlUnit 一起使用，但使用 WebDriver 则容易得多。考虑以下 `CreateMessagePage` 实现：
+
+```java
+public class CreateMessagePage
+        extends AbstractPage { 
+
+    
+    private WebElement summary;
+    private WebElement text;
+
+    
+    @FindBy(css = "input[type=submit]")
+    private WebElement submit;
+
+    public CreateMessagePage(WebDriver driver) {
+        super(driver);
+    }
+
+    public <T> T createMessage(Class<T> resultPage, String summary, String details) {
+        this.summary.sendKeys(summary);
+        this.text.sendKeys(details);
+        this.submit.click();
+        return PageFactory.initElements(driver, resultPage);
+    }
+
+    public static CreateMessagePage to(WebDriver driver) {
+        driver.get("http://localhost:9990/mail/messages/form");
+        return PageFactory.initElements(driver, CreateMessagePage.class);
+    }
+}
+```
+
+最后，我们可以验证是否成功创建了新消息。以下断言使用 [AssertJ](https://joel-costigliola.github.io/assertj/) 断言库：
+
+```java
+assertThat(viewMessagePage.getMessage()).isEqualTo(expectedMessage);
+assertThat(viewMessagePage.getSuccess()).isEqualTo("Successfully created a new message");
+```
+
+我们可以看到，`ViewMessagePage` 使我们可以与自定义域模型进行交互。例如，它公开了一个返回 `Message` 对象的方法：
+
+```java
+public Message getMessage() throws ParseException {
+    Message message = new Message();
+    message.setId(getId());
+    message.setCreated(getCreated());
+    message.setSummary(getSummary());
+    message.setText(getText());
+    return message;
+}
+```
+
+然后，我们可以在声明中使用富域对象。
+
+最后，我们一定不要忘记在测试完成后关闭 `WebDriver` 实例，如下所示：
+
+```java
+@After
+public void destroy() {
+    if (driver != null) {
+        driver.close();
+    }
+}
+```
+
+使用 WebDriver 的更多信息，参考 Selenium [WebDriver documentation](https://github.com/SeleniumHQ/selenium/wiki/Getting-Started) 。
+
+###### 高级 `MockMvcHtmlUnitDriverBuilder`
+
+在到目前为止的示例中，我们基于 Spring TestContext Framework 为我们加载的 `WebApplicationContext` 构建了 `WebDriver`，从而以最简单的方式使用了 `MockMvcHtmlUnitDriverBuilder`。在此重复此方法，如下所示：
+
+```java
+@Autowired
+WebApplicationContext context;
+
+WebDriver driver;
+
+@Before
+public void setup() {
+    driver = MockMvcHtmlUnitDriverBuilder
+            .webAppContextSetup(context)
+            .build();
+}
+```
+
+我们还可以指定其他配置选项，如下所示：
+
+```java
+    WebDriver driver;
+
+    @Before
+    public void setup() {
+        driver = MockMvcHtmlUnitDriverBuilder
+                // demonstrates applying a MockMvcConfigurer (Spring Security)
+                .webAppContextSetup(context, springSecurity())
+                // for illustration only - defaults to ""
+                .contextPath("")
+                // By default MockMvc is used for localhost only;
+                // the following will use MockMvc for example.com and example.org as well
+                .useMockMvcForHosts("example.com","example.org")
+                .build();
+}
+```
+
+另外，我们可以通过分别配置 `MockMvc` 实例并将其提供给 `MockMvcHtmlUnitDriverBuilder` 来执行完全相同的设置，如下所示：
+
+```java
+MockMvc mockMvc = MockMvcBuilders
+        .webAppContextSetup(context)
+        .apply(springSecurity())
+        .build();
+
+driver = MockMvcHtmlUnitDriverBuilder
+        .mockMvcSetup(mockMvc)
+        // for illustration only - defaults to ""
+        .contextPath("")
+        // By default MockMvc is used for localhost only;
+        // the following will use MockMvc for example.com and example.org as well
+        .useMockMvcForHosts("example.com","example.org")
+        .build();
+```
+
+这更加冗长，但是，通过使用 `MockMvc` 实例构建 `WebDriver`，我们可以轻而易举地拥有 MockMvc 的全部功能。
+
+> 有关创建 `MockMvc` 实例的更多信息，参考 [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options) 。
+
