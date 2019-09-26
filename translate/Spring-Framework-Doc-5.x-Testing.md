@@ -3132,29 +3132,29 @@ mockMvc.perform(createMessage)
 
 这些挑战并不意味着我们应该完全放弃端到端集成测试。相反，我们可以通过重构我们的详细测试以使用运行速度更快，更可靠且没有副作用的模拟服务来减少端到端集成测试的数量。然后，我们可以实施少量真正的端到端集成测试，以验证简单的工作流程，以确保一切正常工作。
 
-###### Enter HtmlUnit Integration
+###### 进入 HtmlUnit 集成
 
-So how can we achieve a balance between testing the interactions of our pages and still retain good performance within our test suite? The answer is: “By integrating MockMvc with HtmlUnit.”
+那么，如何在测试页面的交互性之间保持平衡，并在测试套件中保持良好的性能呢？答案是：“通过将 MockMvc 与 HtmlUnit 集成。”
 
-###### HtmlUnit Integration Options
+###### HtmlUnit 集成选项
 
-You have a number of options when you want to integrate MockMvc with HtmlUnit:
+要将 MockMvc 与 HtmlUnit 集成时，有很多选项：
 
-- [MockMvc and HtmlUnit](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah): Use this option if you want to use the raw HtmlUnit libraries.
-- [MockMvc and WebDriver](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver): Use this option to ease development and reuse code between integration and end-to-end testing.
-- [MockMvc and Geb](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-geb): Use this option if you want to use Groovy for testing, ease development, and reuse code between integration and end-to-end testing.
+- [MockMvc and HtmlUnit](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah): 如果要使用原始的 HtmlUnit 库，请使用此选项。
+- [MockMvc and WebDriver](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver): 使用此选项可以简化集成和端到端测试之间的开发和重用代码。
+- [MockMvc and Geb](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-geb): 如果要使用 Groovy 进行测试，简化开发并在集成和端到端测试之间重用代码，请使用此选项。
 
-##### MockMvc and HtmlUnit
+##### MockMvc 和 HtmlUnit
 
-This section describes how to integrate MockMvc and HtmlUnit. Use this option if you want to use the raw HtmlUnit libraries.
+本节介绍如何集成 MockMvc 和 HtmlUnit。如果要使用原始的 HtmlUnit 库，请使用此选项。
 
-###### MockMvc and HtmlUnit Setup
+###### MockMvc 和 HtmlUnit 配置
 
-First, make sure that you have included a test dependency on `net.sourceforge.htmlunit:htmlunit`. In order to use HtmlUnit with Apache HttpComponents 4.5+, you need to use HtmlUnit 2.18 or higher.
+首先，请确保您已包含对 `net.sourceforge.htmlunit:htmlunit` 的测试依赖项。为了将 HtmlUnit 与 Apache HttpComponents 4.5+ 一起使用，您需要使用 HtmlUnit 2.18 或更高版本。
 
-We can easily create an HtmlUnit `WebClient` that integrates with MockMvc by using the `MockMvcWebClientBuilder`, as follows:
+我们可以使用 `MockMvcWebClientBuilder` 轻松地创建一个与 MockMvc 集成的 HtmlUnit `WebClient`，如下所示：
 
-```
+```java
 @Autowired
 WebApplicationContext context;
 
@@ -3168,21 +3168,21 @@ public void setup() {
 }
 ```
 
-> This is a simple example of using `MockMvcWebClientBuilder`. For advanced usage, see [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder).
+> 这是使用 `MockMvcWebClientBuilder` 的简单例子。关于高级应用，参考 [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder) 。
 
-This ensures that any URL that references `localhost` as the server is directed to our `MockMvc` instance without the need for a real HTTP connection. Any other URL is requested by using a network connection, as normal. This lets us easily test the use of CDNs.
+这样可以确保在服务器上引用 `localhost` 的所有 URL 都定向到我们的 `MockMvc` 实例，而无需真正的 HTTP 连接。通常，通过使用网络连接来请求其他任何 URL。这使我们可以轻松测试 CDN 的使用。
 
-###### MockMvc and HtmlUnit Usage
+###### MockMvc 和 HtmlUnit 使用
 
-Now we can use HtmlUnit as we normally would but without the need to deploy our application to a Servlet container. For example, we can request the view to create a message with the following:
+现在，我们可以像往常一样使用 HtmlUnit，而无需将应用程序部署到 Servlet 容器。例如，我们可以请求视图创建以下消息：
 
-```
+```java
 HtmlPage createMsgFormPage = webClient.getPage("http://localhost/messages/form");
 ```
 
-> The default context path is `""`. Alternatively, we can specify the context path, as described in [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder).
+> 默认的上下文路径是 `""`。另外，我们可以指定上下文路径，参考 [Advanced `MockMvcWebClientBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-advanced-builder) 。
 
-Once we have a reference to the `HtmlPage`, we can then fill out the form and submit it to create a message, as the following example shows:
+一旦有了对 `HtmlPage` 的引用，我们就可以填写表单并将其提交以创建一条消息，如以下示例所示：
 
 ```
 HtmlForm form = createMsgFormPage.getHtmlElementById("messageForm");
@@ -3196,7 +3196,7 @@ HtmlPage newMessagePage = submit.click();
 
 Finally, we can verify that a new message was created successfully. The following assertions use the [AssertJ](https://joel-costigliola.github.io/assertj/) library:
 
-```
+```java
 assertThat(newMessagePage.getUrl().toString()).endsWith("/messages/123");
 String id = newMessagePage.getHtmlElementById("id").getTextContent();
 assertThat(id).isEqualTo("123");
@@ -3206,17 +3206,17 @@ String text = newMessagePage.getHtmlElementById("text").getTextContent();
 assertThat(text).isEqualTo("In case you didn't know, Spring Rocks!");
 ```
 
-The preceding code improves on our [MockMvc test](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mock-mvc-test) in a number of ways. First, we no longer have to explicitly verify our form and then create a request that looks like the form. Instead, we request the form, fill it out, and submit it, thereby significantly reducing the overhead.
+前面的代码在我们的 [MockMvc测试](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mock-mvc-test) 示例基础上进行了大量改进。首先，我们不再需要显式验证表单，然后创建类似于表单的请求。相反，我们请求表单，将其填写并提交，从而大大减少了开销。
 
-Another important factor is that [HtmlUnit uses the Mozilla Rhino engine](http://htmlunit.sourceforge.net/javascript.html) to evaluate JavaScript. This means that we can also test the behavior of JavaScript within our pages.
+另一个重要因素是 [HtmlUnit 使用 Mozilla Rhino 引擎](http://htmlunit.sourceforge.net/javascript.html) 评估 JavaScript。这意味着我们还可以在页面内测试 JavaScript 的行为。
 
-See the [HtmlUnit documentation](http://htmlunit.sourceforge.net/gettingStarted.html) for additional information about using HtmlUnit.
+有关使用 HtmlUnit 的其他信息，请参见 [HtmlUnit文档](http://htmlunit.sourceforge.net/gettingStarted.html) 。
 
-###### Advanced `MockMvcWebClientBuilder`
+###### 高级 `MockMvcWebClientBuilder`
 
-In the examples so far, we have used `MockMvcWebClientBuilder` in the simplest way possible, by building a `WebClient` based on the `WebApplicationContext` loaded for us by the Spring TestContext Framework. This approach is repeated in the following example:
+在前面的示例中，我们基于 Spring TestContext 框架为我们加载的 `WebApplicationContext` 构建了 `WebClient`，从而以最简单的方式使用了 `MockMvcWebClientBuilder`。在以下示例中重复此方法：
 
-```
+```java
 @Autowired
 WebApplicationContext context;
 
@@ -3230,9 +3230,9 @@ public void setup() {
 }
 ```
 
-We can also specify additional configuration options, as the following example shows:
+我们还可以指定其他配置选项，如以下示例所示：
 
-```
+```java
 WebClient webClient;
 
 @Before
@@ -3249,9 +3249,9 @@ public void setup() {
 }
 ```
 
-As an alternative, we can perform the exact same setup by configuring the `MockMvc` instance separately and supplying it to the `MockMvcWebClientBuilder`, as follows:
+或者，我们可以通过分别配置 `MockMvc` 实例并将其提供给 `MockMvcWebClientBuilder` 来执行完全相同的设置，如下所示：
 
-```
+```java
 MockMvc mockMvc = MockMvcBuilders
         .webAppContextSetup(context)
         .apply(springSecurity())
@@ -3267,6 +3267,7 @@ webClient = MockMvcWebClientBuilder
         .build();
 ```
 
-This is more verbose, but, by building the `WebClient` with a `MockMvc` instance, we have the full power of MockMvc at our fingertips.
+这更加冗长，但是，通过使用 `MockMvc` 实例构建 `WebClient`，我们可以轻而易举地拥有 MockMvc 的全部功能。
 
-> For additional information on creating a `MockMvc` instance, see [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options).
+> 有关创建 `MockMvc` 实例的更多信息，参考 [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options)。
+
