@@ -3511,3 +3511,92 @@ driver = MockMvcHtmlUnitDriverBuilder
 
 > 有关创建 `MockMvc` 实例的更多信息，参考 [Setup Choices](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-setup-options) 。
 
+##### MockMvc 和 Geb
+
+在前面的章节中，我们看到了如何使用 MockMvc 和 WebDriver。这一节中，我们将使用 [Geb](http://www.gebish.org/) 使我们的测试更加 Groovy 化。
+
+###### 为什么是 Geb 和 MockMvc？
+
+Geb 得到了 WebDriver 的支持，因此它提供了许多从WebDriver获得的 [相同的好处](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver-why) 。但是，Geb通过为我们处理一些样板代码使事情变得更加轻松。
+
+###### MockMvc 和 Geb 设置
+
+我们可以通过使用 MockMvc 的 Selenium WebDriver 很简单地初始化 Geb `Browser` ，如下所示：
+
+```java
+def setup() {
+    browser.driver = MockMvcHtmlUnitDriverBuilder
+        .webAppContextSetup(context)
+        .build()
+}
+```
+
+> 这是一个最简单的使用 `MockMvcHtmlUnitDriverBuilder` 的例子。更多高级应用，参考 [Advanced `MockMvcHtmlUnitDriverBuilder`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-webdriver-advanced-builder) 。
+
+这样可以确保在服务器上引用 `localhost` 的所有 URL 都定向到我们的 `MockMvc` 实例，而无需真正的 HTTP 连接。通常，通过使用网络连接来请求其他任何 URL。这使我们可以轻松测试 CDN 的使用。
+
+###### MockMvc 和 Geb 使用
+
+现在，我们可以像往常一样使用 Geb 了，而无需将应用程序部署到 Servlet 容器中。例如，我们可以请求视图创建以下消息：
+
+```
+to CreateMessagePage
+```
+
+接下来我们就可以填充表单并提交它来创建一条消息，如下所示：
+
+```
+when:
+form.summary = expectedSummary
+form.text = expectedMessage
+submit.click(ViewMessagePage)
+```
+
+找不到的所有无法识别的方法调用或属性访问或引用都将转发到当前页面对象。这消除了我们直接使用 WebDriver 时需要的许多样板代码。
+
+与直接使用 WebDriver 一样，这改进了我们的 [HtmlUnit测试](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#spring-mvc-test-server-htmlunit-mah-usage) 。如前所述，我们可以将页面对象模式与 HtmlUnit 和 WebDriver 一起使用，但使用 Geb 则更加容易。考虑我们新的基于 Groov y的 `CreateMessagePage` 实现：
+
+```
+class CreateMessagePage extends Page {
+    static url = 'messages/form'
+    static at = { assert title == 'Messages : Create'; true }
+    static content =  {
+        submit { $('input[type=submit]') }
+        form { $('form') }
+        errors(required:false) { $('label.error, .alert-error')?.text() }
+    }
+}
+```
+
+我们的 `CreateMessagePage` 扩展了 `Page`。我们不介绍 `Page` 的详细信息，但大体上，它包含了我们所有页面的通用功能。我们定义一个可在其中找到此页面的 URL。这使我们可以导航到页面，如下所示：
+
+```
+to CreateMessagePage
+```
+
+我们还有一个 `at` 闭包，它确定我们是否在指定页面上。如果我们在正确的页面上，它应该返回 `true` 。这就是为什么我们可以断言我们在正确的页面上的原因，如下所示：
+
+```
+then:
+at CreateMessagePage
+errors.contains('This field is required.')
+```
+
+> 我们在闭包中使用一个断言，以便我们可以确定在错误的页面上哪里出错了。
+
+接下来，我们创建一个 `content` 闭包，指定页面中所有感兴趣的区域。我们可以使用 [jQuery-ish Navigator API](http://www.gebish.org/manual/current/#the-jquery-ish-navigator-api) 来选择我们感兴趣的内容。
+
+最后，我们可以验证是否成功创建了新消息，如下所示：
+
+```
+then:
+at ViewMessagePage
+success == 'Successfully created a new message'
+id
+date
+summary == expectedSummary
+message == expectedMessage
+```
+
+有关如何充分利用 Geb 的更多详细信息，请参见 [The Book of Geb](http://www.gebish.org/manual/current/) 用户手册。
+
