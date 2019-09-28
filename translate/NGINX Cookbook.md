@@ -1965,3 +1965,33 @@ location / {
 
 HTTP 代理模块的配置指令非常庞大，如果您需要加密上游流量，至少应该启用验证。只需通过更改传递给`proxy_pass`指令的值的协议，就可以通过 HTTPS 进行代理。但是，这不会验证上游证书。其他指令（例如`proxy_ssl_certificate`和`proxy_ssl_certificate_key`）允许您锁定上游加密以增强安全性。您还可以指定`proxy_ssl_crl`或证书吊销列表，其中列出了不再被视为有效的证书。这些 SSL 代理指令有助于加强在您自己的网络内或公共互联网上的通信渠道的安全性。
 
+## 7.5 保护一个 Location
+
+### 问题
+
+你需要使用密码保护一个 Location。
+
+### 解决方案
+
+使用安全链接模块和 `secure_link_secret` 指令来限制对拥有该安全链接的用户的资源的访问：
+
+````
+location /resources {
+	secure_link_secret mySecret;
+	if ($secure_link = "") { return 403; }
+	
+	rewrite ^ /secured/$secure_link;
+}
+
+location /secured/ {
+	internal;
+	root /var/www;
+}
+````
+
+此配置创建一个内部和面向公开环境的位置块。面向公开环境的位置块 `/resources` 将返回 403 Forbidden，除非请求 URI 包含一个 `md5` 哈希字符串，可以使用提供给 `secure_link_secret` 指令的密码进行验证。除非已验证 URI 中的哈希，否则 `$secure_link` 变量为空字符串。
+
+### 讨论
+
+用密码保护资源是确保文件受到保护的好方法。该密码与 URI 结合使用。然后，此字符串将被 `md5` 散列，并且该 `md5` 散列的十六进制摘要在 URI 中使用。哈希将放入链接中，并由 NGINX 解析。NGINX 知道哈希之后的 URI 中所请求文件的路径。NGINX 还可以通过 `secure_link_secret` 指令了解您的秘密。NGINX 能够快速验证 `md5` 哈希并将 URI 存储在 `$secure_link` 变量中。如果无法验证哈希，则将变量设置为空字符串。请务必注意，传递给 `secure_link_secret` 的参数必须为静态字符串；它不能是变量。
+
