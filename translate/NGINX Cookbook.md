@@ -1995,3 +1995,38 @@ location /secured/ {
 
 用密码保护资源是确保文件受到保护的好方法。该密码与 URI 结合使用。然后，此字符串将被 `md5` 散列，并且该 `md5` 散列的十六进制摘要在 URI 中使用。哈希将放入链接中，并由 NGINX 解析。NGINX 知道哈希之后的 URI 中所请求文件的路径。NGINX 还可以通过 `secure_link_secret` 指令了解您的秘密。NGINX 能够快速验证 `md5` 哈希并将 URI 存储在 `$secure_link` 变量中。如果无法验证哈希，则将变量设置为空字符串。请务必注意，传递给 `secure_link_secret` 的参数必须为静态字符串；它不能是变量。
 
+## 7.6 使用密码创建安全链接
+
+### 问题
+
+你需要使用密码为你的应用产生安全链接。
+
+### 解决方案
+
+NGINX 中的安全链接模块接受 `md5` 哈希字符串的十六进制摘要，其中该字符串是 URI 路径和密钥的串联。在上一部分（第7.5节）的基础上，我们将创建安全链接，该链接将与前面的配置示例一起使用，前提是 */var/www/secured/index.html*  位置存在一个文件。要生成 `md5` 哈希的十六进制摘要，我们可以使用 Unix `openssl` 命令：
+
+````shell
+$ echo -n 'index.htmlmySecret' | openssl md5 -hex
+    (stdin)= a53bee08a4bf0bbea978ddf736363a12
+````
+
+在这里，我们显示了我们要保护的 URI，即 *index.html*，并与我们的密钥 `mySecret` 连接在一起。此字符串传递给 `openssl` 命令以输出 `md5` 十六进制摘要。
+
+以下是使用 Python 标准库中包含的 `hashlib` 库在 Python 中构造的同一哈希摘要的示例：
+
+````python
+import hashlib 
+hashlib.md5.(b'index.htmlmySecret').hexdigest() 'a53bee08a4bf0bbea978ddf736363a12'
+````
+
+现在我们有了这个散列摘要，可以将其用在 URL 中。我们的示例将是 www.example.co 通过我们的 */resources* 位置请求文件 */var/www/secured/index.html*。我们的完整 URL 如下：
+
+````
+www.example.com/resources/a53bee08a4bf0bbea978ddf736363a12/\
+    index.html
+````
+
+### 讨论
+
+可以多种方式，多种语言来生成摘要。唯一要记住的事情：URI 路径在密码之前，字符串中没有回车符，并使用 `md5` 哈希的十六进制摘要。
+
