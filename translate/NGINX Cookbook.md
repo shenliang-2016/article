@@ -2030,3 +2030,30 @@ www.example.com/resources/a53bee08a4bf0bbea978ddf736363a12/\
 
 可以多种方式，多种语言来生成摘要。唯一要记住的事情：URI 路径在密码之前，字符串中没有回车符，并使用 `md5` 哈希的十六进制摘要。
 
+## 7.7 使用超时时间保护 Location
+
+### 问题
+
+您需要保护一个关联链接的位置，该链接在将来的某个时间会过期，并且该链接特定于客户端。
+
+### 解决方案
+
+利用安全链接模块中包含的其他指令设置过期时间并在安全链接中使用变量：
+
+````
+location /resources {
+        root /var/www;
+        secure_link $arg_md5,$arg_expires;
+        secure_link_md5 "$secure_link_expires$uri$remote_addr
+       mySecret";
+        if ($secure_link = "") { return 403; }
+        if ($secure_link = "0") { return 410; }
+    }
+````
+
+`secure_link` 指令采用两个参数，并用逗号分隔。第一个参数是保存 `md5` 哈希值的变量。本示例使用 HTTP 参数 `md5`。第二个参数是一个变量，它以 Unix 纪元时间格式保存链接到期的时间。`secure_link_md5` 指令采用单个参数，该参数声明用于构造 `md5` 哈希值的字符串的格式。与其他配置一样，如果哈希未通过验证，则 `$secure_link` 变量将设置为空字符串。但是，在这种用法下，如果哈希匹配但时间已到期，则 `$secure_link` 变量将设置为0。
+
+### 讨论
+
+与第7.5节中所示的 `secure_link_secret` 相比，这种用于保护链接的用法更加灵活并且看上去更干净。通过这些指令，您可以在哈希字符串中使用 NGINX 可用的任意数量的变量。在散列字符串中使用用户特定的变量将增强您的安全性，因为用户将无法交易到安全资源的链接。建议使用 `$remote_addr` 或 `$http_x_forwarded_for` 之类的变量，或应用程序生成的会话 Cookie 标头。`secure_link` 的参数可以来自您喜欢的任何变量，并且可以使用任何最合适的名称。将 `$secure_link` 变量设置为什么样的条件将返回已知的 Forbidden 和 Gone HTTP 代码。HTTP 410 Gone 非常适合过期的链接，因为这种情况被认为是永久的。
+
