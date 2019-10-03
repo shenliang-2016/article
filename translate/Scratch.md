@@ -1,52 +1,35 @@
-## 7.13 动态 DDoS 缓解
+# 8 HTTP/2
+
+## 8.0 介绍
+
+HTTP/2 是 HTTP 协议的一个大版本。该版本中完成的很多工作都聚焦于传输层，诸如允许请求和响应服用一个 TCP 连接，通过压缩 HTTP 首部字段来提高效率，以及对请求优先级的支持。另外一个大的新特性是支持服务器推送消息给客户端。本章将详细介绍 NGINX 中开启 HTTP/2 的支持的基础配置，以及如何配置 gRPC 和 HTTP/2 服务器推送支持。
+
+## 8.1 基础配置
 
 ### 问题
 
-你需要动态分布式拒绝服务(DDoS) 缓解解决方案。
+你希望使用 HTTP/2。
 
 ### 解决方案
 
-使用 NGINX Plus 来创建一个集群敏感的速率阈值和自动黑名单：
+在你的 NGINX 服务器上开启 HTTP/2 ：
 
 ````
-limit_req_zone   $remote_addr zone=per_ip:1M rate=100r/s sync;
-                 # Cluster-aware rate limit
-limit_req_status 429;
-keyval_zone zone=sinbin:1M timeout=600 sync;
-              # Cluster-aware "sin bin" with
-              # 10-minute TTL
-keyval $remote_addr $in_sinbin zone=sinbin;
-              # Populate $in_sinbin with
-              # matched client IP addresses
 server {
-    listen 80;
-        location / {
-            if ($in_sinbin) {
-                set $limit_rate 50; # Restrict bandwidth of bad clients
-            }
-            limit_req zone=per_ip;
-                  # Apply the rate limit here
-            error_page 429 = @send_to_sinbin;
-                  # Excessive clients are moved to
-                  # this location
-            proxy_pass http://my_backend;
-        }
-        location @send_to_sinbin {
-            rewrite ^ /api/3/http/keyvals/sinbin break;
-                  # Set the URI of the
-                  # "sin bin" key-val
-            proxy_method POST;
-            proxy_set_body '{"$remote_addr":"1"}';
-            proxy_pass http://127.0.0.1:80;
-        }
-        location /api/ {
-            api write=on;
-            # directives to control access to the API
-        }
+        listen 443 ssl http2 default_server;
+        ssl_certificate    server.crt;
+        ssl_certificate_key server.key;
+        ... 
 }
 ````
 
 ### 讨论
 
-该解决方案使用同步速率限制和同步键值存储来动态响应 DDoS 攻击并减轻其影响。提供给 `limit_req_zone` 和 `keyval_zone` 指令的 `sync` 参数将共享内存区域与双活 `NGINX Plus` 集群中的其他计算机同步。该示例标识了每秒发送 100 个以上请求的客户端，而不管哪个 NGINX Plus 节点接收到该请求。当客户端超过速率限制时，通过调用 NGINX Plus API，将其 IP 地址添加到 “sin bin” 键值存储中。 "sin bin" 在整个群集中同步。无论哪个 NGINX Plus 节点收到请求，来自 "sin bin" 中的客户端的其他请求都将受到非常低的带宽限制。与完全拒绝请求相比，限制带宽是更可取的，因为它不会明确告知客户端 DDoS 缓解措施已生效。 10分钟后，客户端将自动从 "sin bin" 黑名单中移除。
+要打开 HTTP/2，只需将 `http2` 参数添加到 `listen` 指令。但是，要注意的是，尽管该协议不需要将连接包装在 SSL/TLS 中，但是 HTTP/2 客户端的某些实现仅在加密连接上支持 HTTP/2。另一个警告是，HTTP/2 规范将许多 TLS 1.2 加密套件列为黑名单，因此将使握手失败。NGINX 默认使用加密的不在黑名单中。要测试您的设置是否正确，您可以为 Chrome 和 Firefox 浏览器安装一个插件，该插件指示网站何时使用 HTTP/2，或者在命令行上使用 `nghttp` 实用工具。
+
+### 参考
+
+[HTTP/2 RFC Blacklisted Ciphers](https://tools.ietf.org/html/rfc7540#appendix-A)
+[Chrome HTTP2 and SPDY Indicator Plugin](https://chrome.google.com/webstore/detail/http2-and-spdy-indicator/mpbpobfflnpcgagjijhmgnchggcjblin)
+[Firefox HTTP2 Indicator Add-on](https://addons.mozilla.org/en-US/firefox/addon/http2-indicator/)
 
