@@ -1,25 +1,26 @@
-## 7.10 HTTP 严格传输安全
+## 7.12 满足任意数量的安全方法
 
 ### 问题
 
-你需要指示浏览器永远不要通过 HTTP 发送请求。
+你需要提供通过一个站点的安全保障的多种方法。
 
 ### 解决方案
 
-通过设定 `Strict-Transport-Security` 首部来使用 HTTP 严格传输安全(HSTS) 增强：
+使用 `satisfy` 指令来指示 NGINX 你希望满足站点使用的任意或者所有安全方法：
 
 ````
-add_header Strict-Transport-Security max-age=31536000;
+location / {
+        satisfy any;
+        allow 192.168.1.0/24;
+        deny  all;
+        auth_basic           "closed site";
+        auth_basic_user_file conf/htpasswd;
+}
 ````
 
-此配置将 `Strict-Transport-Security` 标头设置为最长使用期限为一年。这将指示浏览器在尝试向该域发出 HTTP 请求时始终执行内部重定向，以便所有请求都将通过 HTTPS 发出。
+此配置告诉 NGINX 用户对 `location /` 的请求需要满足一个安全方法：要么请求需要来自 `192.168.1.0/24` CIDR 块，要么请求可以提供用户名和密码，该信息可以从 *conf/htpasswd* 文件中找到。`satisfy` 指令携带两个选项值之一：`any` 或者 `all` 。
 
 ### 讨论
 
-对于某些应用程序，一个在中间攻击中被人篡改的 HTTP 请求可能会造成严重破坏。如果包含敏感信息的表单发布是通过 HTTP 发送的，则来自 NGINX 的 HTTPS 重定向将无法保存您；损坏同样会发生。这种可选的安全性增强功能通知浏览器从不发出 HTTP 请求，因此该请求绝不会未经加密发送。
-
-### 参考
-
-[RFC-6797 HTTP Strict Transport Security](https://tools.ietf.org/html/rfc6797)
-[OWASP HSTS Cheat Sheet](https://www.owasp.org/index.php/HTTP_Strict_Transport_Security_Cheat_Sheet)
+`satisfy` 指令可以提供多种方法向你的 web 应用认证你的身份。通过为 `satisfy` 指令指定 `any` 值，用户就必须满足所有的安全挑战之一。为 `satisfy` 指令指定 `all` 值时，用户必须满足所有的安全挑战。此指令可以结合 `http_access_module` ，`http_auth_basic_module` ，`http_auth_request_module` ，以及 `http_auth_jwt_module` 。只有在多个层次同时进行的安全机制才是可以信任的。`satisfy` 指令将帮助你为需要高级安全规则的 location 或者服务器实现可信安全性。
 
