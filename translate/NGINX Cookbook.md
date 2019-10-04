@@ -2428,3 +2428,9 @@ server {
 
 NGINX 还可以自动推送资源给客户端，如果被代理的应用包含一个 HTTP 响应首部，名为 `Link` 。该首部可以指示 NGINX 预加载特定资源。为了启用此特性，添加 `http2_push_preload on;` 到 NGINX 配置中。
 
+# 9 复杂媒体流
+
+## 9.0 介绍
+
+本章介绍 MPEG-4 或 Flash Video 格式的 NGINX 流媒体。NGINX 被广泛用于向大众分发和传输内容。NGINX 支持工业标准格式和流技术，本章将对此进行介绍。NGINX Plus 具有使用 HTTP Live Stream 模块动态分割内容的能力，以及提供已经分割的媒体的 HTTP 动态流的能力。NGINX 本身允许带宽限制，NGINX Plus 的高级功能提供了比特率限制，使您的内容能够以最有效的方式进行交付，同时保留服务器的资源以吸引最多的用户。
+
