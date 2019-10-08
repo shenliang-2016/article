@@ -2609,3 +2609,21 @@ Route53 具有基于地理位置的路由功能，使您可以将客户端路由
 
 [Amazon Route53 Global Server Load Balancing](https://docs.nginx.com/nginx/deployment-guides/amazon-web-services/route-53-global-server-load-balancing/)
 
+## 10.3 NLB 三明治
+
+### 问题
+
+您需要自动缩放 NGINX 开源层，并在应用程序服务器之间轻松轻松地分配负载。
+
+### 解决方案
+
+创建一个 *网络负载均衡器* (NBL)。在通过终端创建 NLB 过程中，你会被提示创建一个新的目标群组。如果你不是通过终端完成此操作，你将需要创建该资源并将其连接到 NLB 上的监听器。您可以使用启动配置创建一个 Auto Scaling 组，该启动配置预配了已安装 NGINX Open Source 的 EC2 实例。Auto Scaling 组具有可链接到目标组的配置，该目标组可将 Auto Scaling 组中的任何实例自动注册到首次启动时配置的目标组。目标组由 NLB 上的侦听器引用。将您的上游应用程序放在另一个网络负载平衡器和目标组的后面，然后将 NGINX 配置为代理到应用程序 NLB。
+
+### 讨论
+
+这种通用模式称为 NLB 三明治（请参见图10-1），将 NGINX Open Source 放在一个 NLB 后面的 Auto Scaling 组中，将应用程序 Auto Scaling 组放在另一个 NLB 后面。每层之间都具有 NLB 的原因是因为 NLB 在 Auto Scaling 组中工作得很好。它们会自动注册新节点并删除那些终止的节点，并运行状况检查并将流量仅传递到状况良好的节点。可能有必要为 NGINX 开源层构建第二个内部 NLB，因为它允许您应用程序中的服务通过 NGINX Auto Scaling 组调出其他服务，而无需离开网络并通过公共 NLB 重新进入。这使 NGINX 处于应用程序内所有网络流量的中间，使其成为应用程序流量路由的核心。这种模式以前称为弹性负载平衡器（ELB）三明治；但是，与 NGINX 配合使用时，首选 NLB，因为 NLB 是第4层负载平衡器，而 ELB 和 ALB 是第7层负载平衡器。第7层负载平衡器通过代理协议转换请求，并使用 NGINX 进行冗余处理。只有 NGINX 开源需要此模式，因为 NGINX Plus 中提供了 NLB 提供的功能集。
+
+![NLB sandwich](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/nginx/QQ20191008-162454.png)
+
+图10-1 此图描述了 NLB 夹心模式中的 NGINX，其中具有内部 NLB 供内部应用程序使用。用户向 App-1 发出请求，而 App-1 通过 NGINX 向 App-2 发出请求，以满足用户的请求。
+

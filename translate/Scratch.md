@@ -12,3 +12,7 @@
 
 这种通用模式称为 NLB 三明治（请参见图10-1），将 NGINX Open Source 放在一个 NLB 后面的 Auto Scaling 组中，将应用程序 Auto Scaling 组放在另一个 NLB 后面。每层之间都具有 NLB 的原因是因为 NLB 在 Auto Scaling 组中工作得很好。它们会自动注册新节点并删除那些终止的节点，并运行状况检查并将流量仅传递到状况良好的节点。可能有必要为 NGINX 开源层构建第二个内部 NLB，因为它允许您应用程序中的服务通过 NGINX Auto Scaling 组调出其他服务，而无需离开网络并通过公共 NLB 重新进入。这使 NGINX 处于应用程序内所有网络流量的中间，使其成为应用程序流量路由的核心。这种模式以前称为弹性负载平衡器（ELB）三明治；但是，与 NGINX 配合使用时，首选 NLB，因为 NLB 是第4层负载平衡器，而 ELB 和 ALB 是第7层负载平衡器。第7层负载平衡器通过代理协议转换请求，并使用 NGINX 进行冗余处理。只有 NGINX 开源需要此模式，因为 NGINX Plus 中提供了 NLB 提供的功能集。
 
+![NLB sandwich](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/nginx/QQ20191008-162454.png)
+
+图10-1 此图描述了 NLB 夹心模式中的 NGINX，其中具有内部 NLB 供内部应用程序使用。用户向 App-1 发出请求，而 App-1 通过 NGINX 向 App-2 发出请求，以满足用户的请求。
+
