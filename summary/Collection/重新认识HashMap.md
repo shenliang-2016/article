@@ -528,6 +528,13 @@ class Key implements Comparable<Key> {
 
 # **参考**
 
-# JDK1.7&JDK1.8 源码。CSDN博客频道，[HashMap多线程死循环问题](https://link.zhihu.com/?target=http%3A//blog.csdn.net/xuefeng0707/article/details/40797085)，2014。红黑联盟，[Java类集框架之HashMap(JDK1.8)源码剖析](https://link.zhihu.com/?target=http%3A//www.2cto.com/kf/201505/401433.html)，2015。CSDN博客频道，[ 教你初步了解红黑树](https://link.zhihu.com/?target=http%3A//blog.csdn.net/v_july_v/article/details/6105630)，2010。Java Code Geeks，[HashMap performance improvements in Java 8](https://link.zhihu.com/?target=http%3A//www.javacodegeeks.com/2014/04/hashmap-performance-improvements-in-java-8.html)，2014。Importnew，[危险！在HashMap中将可变对象用作Key](https://link.zhihu.com/?target=http%3A//www.importnew.com/13384.html)，2014。CSDN博客频道，[为什么一般hashtable的桶数会取一个素数](https://link.zhihu.com/?target=http%3A//blog.csdn.net/liuqiyao_01/article/details/14475159)，2013。
+1. JDK1.7&JDK1.8 源码。
+2. CSDN博客频道，[HashMap多线程死循环问题](https://link.zhihu.com/?target=http%3A//blog.csdn.net/xuefeng0707/article/details/40797085)，2014。
+3. 红黑联盟，[Java类集框架之HashMap(JDK1.8)源码剖析](https://link.zhihu.com/?target=http%3A//www.2cto.com/kf/201505/401433.html)，2015。
+4. CSDN博客频道，[ 教你初步了解红黑树](https://link.zhihu.com/?target=http%3A//blog.csdn.net/v_july_v/article/details/6105630)，2010。
+5. Java Code Geeks，[HashMap performance improvements in Java 8](https://link.zhihu.com/?target=http%3A//www.javacodegeeks.com/2014/04/hashmap-performance-improvements-in-java-8.html)，2014。
+6. Importnew，[危险！在HashMap中将可变对象用作Key](https://link.zhihu.com/?target=http%3A//www.importnew.com/13384.html)，2014。
+7. CSDN博客频道，[为什么一般hashtable的桶数会取一个素数](https://link.zhihu.com/?target=http%3A//blog.csdn.net/liuqiyao_01/article/details/14475159)，2013。
 
 发布于 2016-07-21
+
