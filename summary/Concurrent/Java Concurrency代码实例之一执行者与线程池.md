@@ -45,7 +45,7 @@ ExecutorService：执行者服务接口，具体的执行者类都继承自此�
 Executors：执行者工具类，大部分执行者的实例以及线程池都由它的工厂方法创建。
 先看一个例子：
 
-```text
+```java
 public class ExecutorExam {
     public static void main(String[] args) {
         ExecutorService service = Executors.newCachedThreadPool();
@@ -89,7 +89,7 @@ Future：泛型接口，代表依次异步执行的结果值，调用其get方�
 CompletionService：一种执行者，可将submit的多个任务的结果按照完成的先后顺序存入一个内部队列，然后可以使用take方法从队列中依次取出结果并移除，如果调用take时计算未完成则会阻塞。
 先看一个简单的例子，得到一个异步执行的整形值：
 
-```text
+```java
 public class CallableExam {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         ExecutorService service = Executors.newCachedThreadPool();
@@ -109,7 +109,7 @@ public class CallableExam {
 
 接下来是一个使用CompletionService的例子，创建5个线程计算一些值，执行完成后使用CompletionService依次取出结果并打印：
 
-```text
+```java
 public class CompletionServiceExam {
     public static void main(String[] args) throws InterruptedException, ExecutionException {
         ExecutorService service = Executors.newCachedThreadPool();
@@ -151,7 +151,7 @@ ScheduledExecutorService：另一种执行者，可以将提交的任务延期�
 ScheduledFuture：与Future接口类似，代表一个被调度执行的异步任务的返回值。
 下面的例子中ScheduledExecutorService的实例scheduler调度了两个任务，第一个任务使用scheduleAtFixedRate()方法每隔一秒重复打印“beep”，第二个任务使用schedule()方法在10秒后延迟执行，它的作用是取消第一个任务，代码如下：
 
-```text
+```java
 public class ScheduledExecutorServiceExam {
     public static void main(String[] args) {
         ScheduledExecutorService scheduler = new ScheduledThreadPoolExecutor(2);
@@ -178,7 +178,7 @@ public class ScheduledExecutorServiceExam {
 
 上面的例子中用到了TimeUnit，因此这里就先介绍一下。TimeUnit是Java Concurrency包引入的新式的表达时间间隔或延迟的单位。在JDK1.5后面引入的新类中，都使用TimeUnit作为时间的表达方式。例如：
 
-```text
+```java
 lock.tryLock(50L, TimeUnit.MILLISECONDS)
 public ScheduledFuture<?> schedule(Runnable command,                                       long delay, TimeUnit unit);
 ```
@@ -204,7 +204,7 @@ DAYS：天
 在前面的章节中我们已经多次使用了ExecutorService接口的对象，它的具体实现类主要有两个，分别是ThreadPoolExecutor和ScheduledExecutorService，它们都是某种线程池。
 在JDK1.8中，按照线程池的创建方法来看，应该有五种线程池，它们的创建方法如下所示：
 
-```text
+```java
 ExecutorService singleThreadPool = Executors.newSingleThreadExecutor();
 ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
 ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
@@ -214,7 +214,7 @@ ScheduledExecutorService scheduledPool = Executors.newScheduledThreadPool(5);
 
 而进一步查看源代码，这些方法最终都调用了ThreadPoolExecutor和ScheduledExecutorService的构造函数。而ScheduledExecutorService继承自ThreadPoolExecutor，因此最终所有线程池的构造函数都调用了ThreadPoolExecutor的如下构造函数：
 
-```text
+```java
 public ThreadPoolExecutor(int corePoolSize,
                           int maximumPoolSize,
                           long keepAliveTime,
@@ -236,7 +236,7 @@ public ThreadPoolExecutor(int corePoolSize,
 **固定调度线程池**：newScheduledThreadPool(n)创建，五个参数分别是 (n, Integer.MAX_VALUE, 0, NANOSECONDS, new DelayedWorkQueue())。含义是池中保持n个线程，多余的任务在DelayedWorkQueue中等待。
 先看第一个例子，测试单线程池、固定线程池和缓存线程池（注意增加和取消注释）：
 
-```text
+```java
 public class ThreadPoolExam {
     public static void main(String[] args) {
         //first test for singleThreadPool
@@ -277,7 +277,7 @@ private final int id;
 从运行结果可以看出，单线程池中的线程是顺序执行的。固定线程池（参数为2）中，永远最多只有两个线程并发执行。缓存线程池中，所有线程都并发执行。
 第二个例子，测试单线程调度线程池和固定调度线程池。
 
-```text
+```java
 public class ScheduledThreadPoolExam {
     public static void main(String[] args) {
         //first test for singleThreadScheduledPool
@@ -337,7 +337,7 @@ RecursiveTask：ForkJoinTask的两个具体子类之一，代表有返回值的F
 
 先来看一个使用RecursiveAction的例子，这段代码的目的是计算一个大型数组中每个元素x的一个公式的值，这个公式是sin(x)+cos(x)+tan(x)：
 
-```text
+```java
 public class RecursiveActionExam {
     private final static int NUMBER = 10000000;
 
@@ -381,7 +381,7 @@ class ComputeTask extends RecursiveAction {
 代码还是比较简单的，首先创建一个ForkJoinPool，然后new一个ComputeTask对象丢到线程池中运行。ComputeTask继承自RecursiveAction，实现了其compute()方法。这个方法中，当上界和下界的差小于一个值（这里是2）时，直接计算；否则创建两个子任务，并丢到线程池中。最值得注意的是compute()方法，这个方法里面体现了“分而治之”的思想，对程序员来说，叫递归思想更加合适。只不过普通的递归是在单线程中完成的，而这里的递归则把递归任务通过invokeAll()方法丢进了线程池中，让线程池来调度执行。运行结果是Time span = 3798。
 再看看单线程的情况：
 
-```text
+```java
 public class RecursiveSequenceExam {
     private final static int NUMBER = 10000000;
 
@@ -404,7 +404,7 @@ public class RecursiveSequenceExam {
 运行结果是Time span = 9354。
 由于我的CPU是4核的，再看看4线程的情况：
 
-```text
+```java
 public class Recusive4ThreadExam {
     private final static int NUMBER = 10000000;
 
@@ -452,7 +452,7 @@ class ArrayTask implements Runnable {
 
 下面来看一个更有意义的场景，寻找一个大型数组的最小值，这里我使用RecursiveTask（其实使用RecursiveAction也行，在它内部用一个成员变量保存结果即可）。代码如下：
 
-```text
+```java
 public class RecursiveFindMax {
     private static Random rand = new Random(47);
     private static final int NUMBER = 1000000;

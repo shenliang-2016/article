@@ -27,7 +27,7 @@
 
 Java放弃了指针，获得了更高的安全性和内存自动清理的能力。但是，它还是在一个角落里提供了类似于指针的功能，那就是sun.misc.Unsafe类，利用这个类，可以完成许多需要指针才能提供的功能，例如构造一个对象，但是不调用构造函数；找到对象中一个变量的地址，然后直接给它赋值，无视其final属性；通过地址直接操作数组；或者是进行CAS操作。例子如下：
 
-```text
+```java
 public class UnSafeExam {
     public static void main(String[] args) throws InstantiationException, NoSuchFieldException {
         //获得一个UnSafe实例
@@ -99,7 +99,7 @@ public class UnSafeExam {
 
 熟悉反射的人应该很快能够理解上面的代码，下面重点说说CAS这个操作。CAS即CompareAndSwap操作，在Unsafe中它有如下形式：
 
-```text
+```java
 public final native boolean compareAndSwapObject(Object var1, long var2, Object var4, Object var5);
 
 public final native boolean compareAndSwapInt(Object var1, long var2, int var4, int var5);
@@ -117,7 +117,7 @@ CAS是所有原子变量的原子性的基础，为什么一个看起来如此�
 所谓“线程安全的”，意思是在多线程的环境下，多次运行，其结果是不变的，或者说其结果是可预知的。若某些对变量的操作不能保持原子性，则其操作就不是线程安全的。
 为了说明原子性，来给出一个没有实现原子性的例子，例如i++这一条语句，它实际上会被编译为两条CPU指令，因此若一些线程在运行时被从中打断，就会造成不确定的后果，如下：
 
-```text
+```java
 public class IplusplusExam {
     private volatile static int i = 0;
 
@@ -146,7 +146,7 @@ public class IplusplusExam {
 
 若要保持一个变量改变数值时的原子性，目前Java最简单的方法就是使用相应的原子变量，例如AtomicInteger、AtomicBoolean和AtomicLong。再来看一个例子：
 
-```text
+```java
 public class AtomicIntegerExam {
     public static void main(String[] args) throws InterruptedException {
         AtomicInteger atomicInteger = new AtomicInteger(0);
@@ -175,7 +175,7 @@ public class AtomicIntegerExam {
 
 Java的变量有两种类型，原始类型和引用类型。上一章讲了原始类型对应的原子变量，这一章讲的便是原子引用AtomicReference，它的作用就是能够实现对引用类型的原子化更改。例子如下：
 
-```text
+```java
 public class AtomReferenceExam {
     public static void main(String[] args) throws InterruptedException {
         AtomicReference<Element> reference = new AtomicReference<>(new Element(0, 0));
@@ -216,7 +216,7 @@ public class AtomReferenceExam {
 值得注意的有两点，一是如果有好几个变量要同时进行原子化的改变，那么可以把这几个变量放到一个Java类中，做成一个所谓的POJO（Plain Ordinary Java Object）类，然后使用AtomicReference来操作这个类。
 第二点是以下这段代码：
 
-```text
+```java
 boolean flag = false;
 while (!flag) {
   Element storedElement = reference.get();
@@ -232,7 +232,7 @@ while (!flag) {
 AtomicIntegerFieldUpdater、AtomicLongFieldUpdater和AtomicReferenceFieldUpdater都被称为原子属性更新器。这些类的应用场景是：如果已经有一个写好的类，但是随着业务场景的变化，其中某些属性在写入的时候需要保持原子性，那么就可以使用以上的类来实现这种原子性，并保持类的原有接口不变。
 例子如下：
 
-```text
+```java
 public class AtomicIntegerFieldUpdaterExam {
     public static void main(String[] args) throws InterruptedException {
         Student student = new Student(0, "Alex Wang");
@@ -276,7 +276,7 @@ public class AtomicIntegerFieldUpdaterExam {
 
 AtomicIntegerArray、AtomicLongArray和AtomicReferenceArray是原子数组，数组中每个元素在改变时都可以保持原子性。例子如下：
 
-```text
+```java
 public class AtomicIntegerArrayExam {
     public static void main(String[] args) throws InterruptedException {
         AtomicIntegerArray array = new AtomicIntegerArray(5);
@@ -313,7 +313,7 @@ AtomicStampedReference和AtomicMarkableReference是atomic包中两个比较难�
 
 在介绍AtomicReference的时候已经说过，为了实现原子引用的原子性改变，需要用一种类似于自旋锁的代码写法，如下：
 
-```text
+```java
 boolean flag = false;
 while (!flag) {
   Element oldValue = reference.get();
@@ -333,7 +333,7 @@ ABA问题一般存在于链表、栈这类的并发数据结构中。从上面�
 
 
 
-```text
+```java
 public class ABAProblem {
     public static void main(String[] args) throws InterruptedException {
         MyStack<String> stack = new MyStack<>();
@@ -455,7 +455,7 @@ public class ABAProblem {
 
 运行结果是：
 
-```text
+```java
 Stack init:[A,B]
 Thread2 pop :[B]
 Thread2 pop :[]
@@ -474,7 +474,7 @@ ABA问题的实质是：在并发编程中，仅靠检查变量的值是无法�
 
 代码进行如下改动（仅改动MyStack）：
 
-```text
+```java
 static class MyStack<T> {
     //initialStamp = 0
     AtomicStampedReference<Node<T>> head = new AtomicStampedReference<>(null, 0);
@@ -537,7 +537,7 @@ static class MyStack<T> {
 
 在每次改动head保存的变量时，都同时给版本号加1，这样就避免了ABA问题的发生，运行结果如下：
 
-```text
+```java
 Stack init:[A,B]
 Thread2 pop :[B]
 Thread2 pop :[]

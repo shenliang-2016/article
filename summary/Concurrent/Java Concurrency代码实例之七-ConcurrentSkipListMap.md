@@ -1055,7 +1055,7 @@ ConcurrentSkipListMap与SimpleSkipListMap的迭代子几乎一致，区别仅仅
 
 ConcurrentSkipListMap结果：
 
-```text
+```java
 time span = 15351, map size = 7869679
 time span = 18580, map size = 7870682
 time span = 14383, map size = 7868385
@@ -1063,7 +1063,7 @@ time span = 14383, map size = 7868385
 
 TreeMap结果：
 
-```text
+```java
 time span = 17955, map size = 7869116
 time span = 18268, map size = 7868110
 time span = 17909, map size = 7868835
@@ -1190,7 +1190,7 @@ public class TreeMapExam2 {
 
 ConcurrentSkipListMap结果：
 
-```text
+```java
 time span = 15366, map size = 6946030
 time span = 15278, map size = 7058776
 time span = 16922, map size = 7104564
@@ -1198,7 +1198,7 @@ time span = 16922, map size = 7104564
 
 TreeMap结果：
 
-```text
+```java
 time span = 17321, map size = 7018860
 time span = 18690, map size = 7012174
 time span = 18121, map size = 7064320
@@ -1208,7 +1208,7 @@ time span = 18121, map size = 7064320
 
 ConcurrentSkipListMap结果：
 
-```text
+```java
 time span = 5104, map size = 975495
 time span = 5523, map size = 975249
 time span = 6085, map size = 975213
@@ -1216,7 +1216,7 @@ time span = 6085, map size = 975213
 
 TreeMap结果：
 
-```text
+```java
 time span = 7365, map size = 975387
 time span = 8208, map size = 975491
 time span = 8061, map size = 975543

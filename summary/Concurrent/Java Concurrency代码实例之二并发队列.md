@@ -38,7 +38,7 @@ BlockingQueue继承自Queue接口，因此也继承了Queue的两组操作方法
 
 在介绍具体的阻塞类之前，先来看看阻塞队列最常应用的场景，即生产者和消费者例子。一般而言，有n个生产者，各自生产产品，并放入队列。同时有m个消费者，各自从队列中取出产品消费。当队列已满时（队列可以在初始化时设置Capacity容量），生产者会在放入队列时阻塞；当队列空时，消费者会在取出产品时阻塞。代码如下：
 
-```text
+```java
 public class BlockingQueueExam {
     public static void main(String[] args) throws InterruptedException {
         BlockingQueue<String> blockingQueue = new LinkedBlockingQueue<>(3);
@@ -129,7 +129,7 @@ SynchronousQueue是一个比较特殊的阻塞队列，它具有以下几个特�
 5. SynchronousQueue如同ArrayedBlockingQueue一样，支持“公平”策略，在构造函数中可以传入false或true表示是否支持该策略。
 下面是一个例子，5个Producer产生产品，存入队列；5个Consumer从队列中取出产品，进行消费。
 
-```text
+```java
 public class SynchronizeQueueExam {
     public static void main(String[] args) {
         SynchronousQueue<String> queue = new SynchronousQueue<>(false);
@@ -216,7 +216,7 @@ public class SynchronizeQueueExam {
 7. 可以给定初始容量，这个容量会按照一定的算法自动扩充。
 下面是一个PriorityBlockingQueue的例子，例子中定义了一个按照字符串倒序排列的队列。5个生产者不断产生随机字符串放入队列，5个消费者不断从队列中取出随机字符串，可以看到若队列为空，取出的线程会等待；也可以看到同一个线程取出的字符串基本上是倒序的（因为不同线程同时存取元素，因此取出的字符串打印到屏幕上往往不是倒序的了）：
 
-```text
+```java
 public class PriorityBlockingQueueExam {
     public static void main(String[] args) {
         //创建一个初始容量为3，排序为字符串排序相反的队列
@@ -303,7 +303,7 @@ public class PriorityBlockingQueueExam {
 
 DelayQueue是一个延时优先级阻塞队列。队列中只能存入Delayed接口实现的对象，Delayed接口如下所示：
 
-```text
+```java
 public interface Delayed extends Comparable<Delayed> {
     long getDelay(TimeUnit unit);
 }
@@ -321,7 +321,7 @@ public interface Comparable<T> {
 4. 队列中不允许存储null，且iterator方法返回的值不能确保按顺序排列。
 下面是一个列子，特别需要注意getDelay和compareTo方法的实现：
 
-```text
+```java
 public class DelayQueueExam {
     public static void main(String[] args) throws InterruptedException {
         DelayQueue<DelayElement> queue = new DelayQueue<>();
@@ -381,7 +381,7 @@ TransferQueue继承自BlockingQueue，之所以将它独立成章，是因为它
 简单来说，TransferQueue提供了一个场所，生产者线程使用transfer方法传入一些对象并阻塞，直至这些对象被消费者线程全部取出。前面介绍的SynchronousQueue很像一个容量为0的TransferQueue。
 下面是一个例子，一个生产者使用transfer方法传输10个字符串，两个消费者线程则各取出5个字符串，可以看到生产者在transfer时会一直阻塞直到所有字符串被取出：
 
-```text
+```java
 public class TransferQueueExam {
     public static void main(String[] args) {
         TransferQueue<String> queue = new LinkedTransferQueue<>();
@@ -452,7 +452,7 @@ public class TransferQueueExam {
 5. getWaitingConsumerCount() 获取所有等待获取元素的消费线程数量。
 再来看两个生产者和两个消费者的例子：
 
-```text
+```java
 public class TransferQueueExam2 {
     public static void main(String[] args) {
         TransferQueue<String> queue = new LinkedTransferQueue<>();
@@ -543,7 +543,7 @@ public class TransferQueueExam2 {
 
 下面的例子中，我们使用参数控制，分别测试了四种队列在多个线程同时存储变量时的表现：
 
-```text
+```java
 public class ConcurrentLinkedQueueExam {
     private static final int TEST_INT = 10000000;
 
@@ -636,7 +636,7 @@ public class ConcurrentLinkedQueueExam {
 
 输入1，结果如下：
 
-```text
+```java
 Using LinkedList
 …
 Time span = 16613
@@ -645,7 +645,7 @@ queue size = 10296577
 
 输入2，结果如下：
 
-```text
+```java
 Using LinkedBlockingQueue
 …
 Time span = 16847
@@ -654,7 +654,7 @@ queue size = 0
 
 输入3，结果如下：
 
-```text
+```java
 Using ArrayBlockingQueue
 …
 Time span = 6815
@@ -663,7 +663,7 @@ queue size = 0
 
 输入4，结果如下：
 
-```text
+```java
 Using ConcurrentLinkedQueue
 …
 Time span = 22802
@@ -674,7 +674,7 @@ queue size = 0
 第一，非并发类例如LinkedList在多线程环境下运行是会出错的，结果的最后一行输出了队列的size值，只有它的size值不等于0，这说明在多线程运行时许多poll操作并没有弹出元素，甚至很多offer操作也没有能够正确插入元素。其他三种并发类都能够在多线程环境下正确运行；
 第二，并发类也不是完全不需要注意加锁，例如这一段代码：
 
-```text
+```java
 while (i < TEST_INT) {
     synchronized (Getter.class) {
         if (!queue.isEmpty()) {

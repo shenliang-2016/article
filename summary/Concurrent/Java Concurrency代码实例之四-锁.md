@@ -28,7 +28,7 @@
 
 在前文（[Java Concurrency代码实例之三原子变量 - 知乎专栏](https://zhuanlan.zhihu.com/p/27338395)）中曾经详细介绍过Unsafe类的指针和CAS操作，这里再介绍一下它的park和unpark操作。
 
-```text
+```java
 public native void park(boolean var1, long var2);
 public native void unpark(Object var1);
 ```
@@ -36,7 +36,7 @@ public native void unpark(Object var1);
 park方法用来阻塞一个线程，第一个参数用来指示后面的参数是绝对时间还是相对时间，true表示绝对时间，false表示从此刻开始后的相对时间。调用park的线程就阻塞在此处。
 upark用来释放某个线程的阻塞，线程用参数var1表示。例子如下：
 
-```text
+```java
 public class UnsafeParkExam {
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
@@ -94,7 +94,7 @@ public class UnsafeParkExam {
 
 直接使用Unsafe还是有诸多不便之处，因此lock包提供了一个辅助类LockSupport来封装了park和unpark，例子如下：
 
-```text
+```java
 public class LockSupportExam {
     public static void main(String[] args) {
         Thread t1 = new Thread() {
@@ -147,7 +147,7 @@ public class LockSupportExam {
 
 从例子中可以看出，使用LockSupport要比直接只用Unsafe更加便捷。除此之外，LockSupport还可以用来给线程设置一个Blocker对象，便于调试和检测线程，其原理是使用Unsafe的putObject方法直接设置Thread对象的parkBlocker属性，并在合适的时候读取这个Blocker对象，例子如下：
 
-```text
+```java
 public class LockSupportBlockerExam {
     public static void main(String[] args) {
         Thread t3 = new Thread() {
@@ -186,7 +186,7 @@ public class LockSupportBlockerExam {
 
 由于AQS非常复杂，从源代码入手很难看懂，最好的学习方法是看它是如何被使用的。这里有一个非常简单的例子SimpleLock，实现了一个最简单的排它锁。当有线程获得锁时，其他线程只能等待；当这个线程释放锁时，另一个线程可以竞争获取锁。
 
-```text
+```java
 public class SimpleLock {
     private static class Sync extends AbstractQueuedSynchronizer {
         @Override
@@ -270,7 +270,7 @@ public class SimpleLock {
 \3. 维持一个阻塞线程的队列，并在队列的每个节点中存储线程的状态等信息。
 AQS同时满足了这三个条件，首先，它提供了如下的状态值，以及相应的操作方法：
 
-```text
+```java
 private volatile int state;
 
 protected final int getState() {
@@ -296,7 +296,7 @@ state是一个volatile int类型，除了getter和setter方法外，还提供了
 从上面的例子中可以看出，通过继承时重写了两个方法tryAcquire和tryRelease，就可以实现一个具体的同步器。通过研究AQS的原理可以得知，它将一些复杂的操作封装在自己内部，留待继承者重写的方法仅有以下5个（除去构造函数）：
 \1. tryAcquire
 
-```text
+```java
 protected boolean tryAcquire(int arg) {
     throw new UnsupportedOperationException();
 }
@@ -305,7 +305,7 @@ protected boolean tryAcquire(int arg) {
 此方法是用来在多个线程竞争同步器时调用，作为AQS中acquire方法的第一个部分。若tryAcquire返回true，表明此线程获取了同步器；否则表明此线程没有获取同步器，而要进入队列等待同步器。在重写此方法时，仅需获取state的值，并通过CAS设置state的值，若成功则说明本线程竞争成功，否则说明线程竞争失败。
 \2. tryRelease
 
-```text
+```java
 protected boolean tryRelease(int arg) {
     throw new UnsupportedOperationException();
 }
@@ -314,7 +314,7 @@ protected boolean tryRelease(int arg) {
 此方法是用来释放同步器时调用，作为AQS中release方法的第一个部分。若tryRelease返回true，则表明当前线程可以正常释放同步器；否则不做其他操作。在重写此方法时，需要获取state的值，进行状态判断，然后依据具体情况将其设置为另一个值（一般设置为0）即可。
 \3. tryAcquireShared
 
-```text
+```java
 protected int tryAcquireShared(int arg) {
     throw new UnsupportedOperationException();
 }
@@ -323,7 +323,7 @@ protected int tryAcquireShared(int arg) {
 此方法与tryAcquire非常类似，不同的是它被用来实现共享锁时调用。由于共享锁允许多个线程同时获取同步器，而且在释放时也可以同时释放多个线程。因此在重写tryAcquireShared时要特别注意state的定义和读写方法。
 \4. tryReleaseShared
 
-```text
+```java
 protected boolean tryReleaseShared(int arg) {
     throw new UnsupportedOperationException();
 }
@@ -332,7 +332,7 @@ protected boolean tryReleaseShared(int arg) {
 此方法与tryRelease类似，不同的是它也被用来实现共享锁时调用。由于共享锁的特性，重写此方法时也要注意state的定义和读写方法。
 \5. isHeldExclusively
 
-```text
+```java
 protected boolean isHeldExclusively() {
     throw new UnsupportedOperationException();
 }
@@ -361,7 +361,7 @@ AQS已经把排它锁的加锁框架全部搭建好了，程序员只需要重�
 AQS不仅提供了排它锁，同时也提供了共享锁的框架。对于排它锁和共享锁，并没有明确的定义，此处根据本人自己的理解，给出一个定义。排它锁，即在一个时刻只有一个线程可以获取的锁，其他线程的加锁方法会被阻塞，直至拥有锁的线程释放该锁为止。共享锁，即在一个时刻允许多个线程同时获取的锁。根据场景的不同，可以构建多种不同类型的共享锁，有的共享锁允许定量的（n个）线程拥有锁，此外的线程在加锁时依然会被阻塞，每当一个线程释放一次锁，则后续的一个线程可以竞争获取该锁（例如Semaphore）；有的共享锁会阻塞所有的线程，但一旦执行某种释放操作，则所有被阻塞的线程会被同时唤醒（例如CountDownLatch）；有的共享锁需要与一个排它锁配合，实现对文件读写的各种同步（ReentrantReadWriteLock）。这些具体的同步器会在后续的章节或文章中介绍。
 根据SimpleLock，我们再试着实现一个最简单的共享锁SimpleSharedLock，代码如下：
 
-```text
+```java
 public class SimpleSharedLock {
     private static class Sync extends AbstractQueuedSynchronizer {
         @Override
@@ -460,7 +460,7 @@ public class SimpleSharedLock {
 
 假设有这样一种共享锁，它天生就阻塞所有调用lock的线程，但一旦有其他线程调用unlock，则唤醒所有线程，那么应该这样设计：
 
-```text
+```java
 public class SimpleSharedLock2 {
     private static class Sync extends AbstractQueuedSynchronizer {
         @Override
@@ -543,7 +543,7 @@ public class SimpleSharedLock2 {
 
 SimpleSharedLock2能够一次释放多个阻塞线程，现在我们设计一种共享锁，它允许n个线程同时获取锁，就仿佛该锁有n个许可证，每个许可证允许一个线程获取锁。释放时，每个线程会还回一个许可证让后续的线程竞争。
 
-```text
+```java
 public class SimpleSharedLock3 {
     private static class Sync extends AbstractQueuedSynchronizer {
         final int getPermits() {
@@ -650,7 +650,7 @@ public class SimpleSharedLock3 {
 
 与synchronize关键字相比，ReentrantLock更加灵活，唯一的不足是使用时必须使用try-finally模式来进行加解锁，下面是使用它的一个简单代码：
 
-```text
+```java
 public class ReentrantLockExam {
     public static void main(String[] args) {
         final ReentrantLock lock = new ReentrantLock();
@@ -687,7 +687,7 @@ public class ReentrantLockExam {
 
 Condition是与RentrantLock配合使用，来实现synchronize中的wait、notify功能的一个接口，其具体实现类为AQS中的ConditionObject。配合使用的方法如下所示（此示例来自JDK文档，本文做了扩充）：
 
-```text
+```java
 public class ConditionExam {
     public static void main(String[] args) {
         ExecutorService service = Executors.newCachedThreadPool();
@@ -770,7 +770,7 @@ public class ConditionExam {
 
 读写锁ReentrantWriteReadLock的用法比较难以理解，因此用一个大家都熟悉的场景来说明。假设一个班级有一块黑板（共享资源），有多个老师都需要在黑板上书写。老师在写之前，先要获取写锁（writeLock），在写的时候其他的老师和学生都不能在黑板上写或者读，老师写完之后，释放写锁。学生在读黑板之前，先要获取读锁（readLock），多个学生可以同时获取读锁，因此多个学生可以同时读取黑板上的内容，在读的时候其他老师不能在黑板上写，学生读完之后，释放读锁。直至所有学生都释放完读锁，才能够由老师获取写锁。例子代码如下：
 
-```text
+```java
 public class ReentrantReadWriteLockExam {
     public static Random rand = new Random(System.currentTimeMillis());
 

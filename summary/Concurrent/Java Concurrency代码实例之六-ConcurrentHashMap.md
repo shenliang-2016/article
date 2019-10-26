@@ -253,7 +253,7 @@ ConcurrentHashMap类中包含三个与Segment相关的成员变量：
 
 其中segments是Segment的原生数组，此数组的长度可以在ConcurrentHashMap的构造函数中使用并发度参数指定，其默认值为DEFAULT_CONCURRENCY_LEVEL=16。segmentShift是用来计算segments数组索引的位移量，而segmentMask则是用来计算索引的掩码值。例如并发度为16时（即segments数组长度为16），segmentShift为32-4=28（因为2的4次幂为16），而segmentMask则为1111（二进制），索引的计算式如下：
 
-```text
+```java
 int j = (hash >>> segmentShift) & segmentMask;
 ```
 

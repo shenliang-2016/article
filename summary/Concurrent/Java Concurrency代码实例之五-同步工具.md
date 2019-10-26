@@ -28,7 +28,7 @@ https://zhuanlan.zhihu.com/p/27546231
 
 CountDownLatch是一个用来同步多个线程的并发工具，n个线程启动后，分别调用CountDownLatch的await方法来等待其m个条件满足（m在初始化时指定）；每当有条件满足时，当前线程调用CountDownLatch的countDown方法，使得其m值减1；直至m值为0时，所有等待的线程被唤醒，继续执行。注意，CountDownLatch是一次性的，当条件满足后，它不能再回到初始状态，也不能阻止后续线程了。若要循环的阻塞多个线程，则考虑使用CyclicBarrier。 例如5匹马参加赛马比赛，需等待3个裁判到位后才能启动，代码如下：
 
-```text
+```java
 public class CountDownLatchExam {
     public static void main(String[] args) {
         CountDownLatch latch = new CountDownLatch(3);
@@ -98,7 +98,7 @@ CountDownLatch的原理在上一篇的4.7节“一次唤醒所有阻塞线程的
 
 Semaphore信号量，在多个任务争夺几个有限的共享资源时使用。调用acquire方法获取一个许可，成功获取的线程继续执行，否则就阻塞；调用release方法释放一个许可。每当有空余的许可时，阻塞的线程和其他线程可竞争许可。 下面的例子中，10辆车竞争3个许可证，有了许可证的车就可以入内访问资源，访问完成后释放许可证：
 
-```text
+```java
 public class SemaphoreExam {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(3);
@@ -149,7 +149,7 @@ Semaphore的原理在上一篇的4.8节“拥有多个许可证的共享锁”�
 
 CyclicBarrier可用来在某些栅栏点处同步多个线程，且可以多次使用，每次在栅栏点同步后，还可以激发一个事件。例如三个旅游者（线程）各自出发，依次到达三个城市，必须每个人都到达某个城市后（栅栏点），才能再次出发去向下一个城市，当他们每同步一次时，激发一个事件，输出一段文字。代码如下：
 
-```text
+```java
 public class CyclicBarrierExam {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(3, new Runnable() {
@@ -209,7 +209,7 @@ CyclicBarrier是依赖一个可重入锁ReentrantLock和它的一个Condition实
 
 Exchange专门用于成对的线程间同步的交换一个同类型的变量，这种交换是线程安全且高效的。直接来看一个例子：
 
-```text
+```java
 public class ExchangerExam {
     public static void main(String[] args) {
         Exchanger<String> exchanger = new Exchanger<>();
@@ -248,7 +248,7 @@ public class ExchangerExam {
 
 可以看到，代码中两个线程同步的交换了一个String。先执行exchange方法的线程会阻塞直到后一个线程也执行了exchange方法，然后同步的完成数据的交换。再看一个例子：
 
-```text
+```java
 public class ExchangerExam2 {
     public static void main(String[] args) throws InterruptedException {
         Exchanger<String> exchanger = new Exchanger<>();
@@ -294,7 +294,7 @@ public class ExchangerExam2 {
 
 代码中，两个线程交换了10000组数据，用时仅41ms，这说明Exchanger的同步效率是非常高的。 再看一段代码：
 
-```text
+```java
 public class ExchangerExam3 {
     public static void main(String[] args) {
         Exchanger<String> exchanger = new Exchanger<>();
@@ -343,7 +343,7 @@ public class ExchangerExam3 {
 
 Exchanger这个类初看非常简单，其公开的接口仅有一个无参构造函数，两个重载的泛型exchange方法：
 
-```text
+```java
 public V exchange(V x) throws InterruptedException
 public V exchange(V x, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException
 ```
@@ -352,7 +352,7 @@ public V exchange(V x, long timeout, TimeUnit unit) throws InterruptedException,
 
 第一个方法用来持续阻塞的交换数据；第二个方法用来在一个时间范围内交换数据，若超时则抛出TimeoutException后返回，同时唤醒另一个阻塞线程。 Exchanger的基本原理是维持一个槽（Slot），这个Slot中存储一个Node的引用，这个Node中保存了一个用来交换的Item和一个用来获取对象的洞Hole。如果一个来“占有”的线程看见Slot为null，则调用CAS方法（CAS方法在前面的文章中已经详细介绍了https://zhuanlan.zhihu.com/p/27338395）使一个Node对象占据这个Slot，并等待另一个线程前来交换。如果第二个来“填充”的线程看见Slot不为null，则调用CAS方法将其设置为null，同时使用CAS与Hole交换Item，然后唤醒等待的线程。注意所有的CAS操作都有可能失败，因此CAS必须是循环调用的。 看看JDK1.7中Exchanger的数据结构相关源代码：
 
-```text
+```java
 // AtomicReference中存储的是Hole对象
 private static final class Node extends AtomicReference<Object> {
     /** 用来交换的对象. */
@@ -382,7 +382,7 @@ private volatile Slot[] arena = new Slot[CAPACITY];
 
 下面是进行交换操作的核心算法：
 
-```text
+```java
 private Object doExchange(Object item, boolean timed, long nanos) {
     Node me = new Node(item);               // 创建一个Node，预备在“占用”时使用
     int index = hashIndex();                   // 当前Slot的哈希值
@@ -428,7 +428,7 @@ private Object doExchange(Object item, boolean timed, long nanos) {
 
 上述代码比前面介绍的基本原理稍微复杂了一些。主要是以下几点，首先Slot是放在一个数组arena中的，这些Slot是延迟加载的；第二，参数中有延时的参数，在超时的时候有其他的处理代码；第三，在等待时首先采用自旋，超过一定次数后再进入park；第四，引入了一个max值，它代表Slot的索引index的范围，最小为0，最大为FULL，这个值的相关代码如下：
 
-```text
+```java
 private final AtomicInteger max = new AtomicInteger();
 //其中CAPACITY=32，NCPU是CPU的核心数量
 private static final int FULL = Math.max(0, Math.min(CAPACITY, NCPU / 2) - 1);
@@ -464,7 +464,7 @@ Phaser是一个灵活的可重用的同步栅栏，它的不同用法可以代�
 
 用Phaser模拟CountDownLatch非常简单，主线程创建Phaser时，将注册数设置为1，每个子线程自己注册自己，这样n个线程就有了n+1个注册数。每个子线程在阶段处调用arriveAndAwaitAdvance等待同步，等所有子线程都到达后到达的注册数就是n；然后主线程注销自己，则满足了到达条件，所有子线程继续执行。
 
-```text
+```java
 public class PhaserExam1 {
     public static void main(String[] args) {
         //初始化时parties设置为1
@@ -515,7 +515,7 @@ public class PhaserExam1 {
 
 模拟CyclicBarrier就要复杂一点，为了解释如何触发同步事件，需要继承Phaser并重写onArrive方法。
 
-```text
+```java
 public class PhaserExam2 {
     public static void main(String[] args) {
         //循环的次数
@@ -567,7 +567,7 @@ public class PhaserExam2 {
 
 如上所述，Phaser可以进入终止Termination状态，这个状态可以用isTerminated方法来检测。当进入Termination状态时，所有等待同步的线程都会立即退出，并返回一个负数。进入Termination状态有两种方法，一是onAdvance返回true；第二种则是调用forceTermination方法。一般来说，当注册的parties数量减少至0时，onAdvance就会返回true，从而进入Termination状态。下面是一段强制终止的代码。
 
-```text
+```java
 public class PhaserTermination {
     public static void main(String[] args) throws InterruptedException {
         Phaser phaser = new Phaser(1){
@@ -611,7 +611,7 @@ public class PhaserTermination {
 
 原则上来说，一个Phaser可以支持Integer.MAX_VALUE个parties，但是考虑到性能问题，目前Jdk1.7中仅支持65535个parties。一个Phaser如果有大量的parties，那么线程竞争的开销会很大，导致性能降低，因此Phaser支持分层，由一个父Phaser自动控制多个子Phaser。在一个分层的Phaser体系中，子Phaser中parties的注册与注销会自动被父Phaser管理。当一个子Phaser的parties降低到0时，它自动从父Phaser中注销，当一个子Phaser的parties上升到大于0时，它自动在Phaser中注册。 下面看一个例子，这个例子是从JDK的说明文档中修改过来的：
 
-```text
+```java
 public class PhaserTiers {
     final static int TASKS_PER_PHASER = 4;
     public static void main(String[] args) {
@@ -667,7 +667,7 @@ public class PhaserTiers {
 
 例子中，共创建了12个线程，每4个线程注册到一个子Phaser中，一共有3个子Phaser。这3个子Phaser全部注册到一个根Phaser中，最后达到了12个线程在根Phaser中同步的效果。为了看得更加清晰，我扩展了Phaser类，代码如下：
 
-```text
+```java
 public class PhaserTiers2 {
     final static int TASKS_PER_PHASER = 4;
 
@@ -750,7 +750,7 @@ Phaser提供了多种方法来监视其各项状态。getRegisteredParties返回
 
 从上面的概念和用法也可以看出来，Phaser是一个较为复杂的同步类，但它仅仅用到了TimeUnit、AtomicReference、LockSupport和Unsafe这四个辅助类而已。Phaser类的实现要点主要包括以下几点： 第一，所有的状态存储于一个volatile long state中，这个变量被分为四段使用，0~15字节表示当前阶段没有到达的线程数量unarrived；16~31字节表示parties；32~62字节表示phase；最后的一个字节表示Phaser的终止状态。Phaser中包含各种方法来线程安全的读写这些值，主要是使用Unsafe类中的CAS方法（详情见本系列的第三篇文章https://zhuanlan.zhihu.com/p/27338395）。 第二，定义了一个QNode类来表示Phaser的等待队列。这个QNode实现了ForkJoinPool.ManagedBlocker接口，因此可以直接在ForkJoinPool线程池中使用。即使不使用ForkJoinPool线程池，也可以直接使用QNode达到检查和阻塞线程的效果。ForkJoinPool.ManagedBlocker接口有两个方法，其中block方法可能会阻塞线程，若它返回true，则表示不需要阻塞线程了；isReleasable检查线程是否需要阻塞，如果它返回true，表示不需要阻塞。QNode类清晰明了，一望可知。 第三，Phaser中定义了两个等待队列，AtomicReference evenQ和AtomicReference oddQ。这是为了在同时增加和释放线程时，避免更大的冲突。evenQ用于偶数阶段，oddQ用于奇数阶段。 第四，Phaser的所有构造函数，最终调用如下的函数：
 
-```text
+```java
 public Phaser(Phaser parent, int parties) {
 //如果parties大于65535，则抛出异常
     if (parties >>> PARTIES_SHIFT != 0)
@@ -785,7 +785,7 @@ public Phaser(Phaser parent, int parties) {
 
 第五，内部的注册方法，主要是修改state的值：
 
-```text
+```java
 private int doRegister(int registrations) {
     // 拼出adjustment，这个变量包含unarrived和parties，分别是0~15和16~32字节
 long adj = ((long)registrations << PARTIES_SHIFT) | registrations;
@@ -846,7 +846,7 @@ long adj = ((long)registrations << PARTIES_SHIFT) | registrations;
 
 第六，内部的arrive方法，这个方法比较简单，主要是将unarrived数字减去1，然后检查是否当前阶段所有线程都已经到达，如果都到达则phase加1。
 
-```text
+```java
 private int doArrive(boolean deregister) {
 //arrive后是否执行注销，据此设置adj（调整量）的值
     int adj = deregister ? ONE_ARRIVAL|ONE_PARTY : ONE_ARRIVAL;
@@ -898,7 +898,7 @@ private int doArrive(boolean deregister) {
 
 第七，内部的awaitAdvance方法，用来让线程等待所有其他线程到达本阶段：
 
-```text
+```java
 private int internalAwaitAdvance(int phase, QNode node) {
 //将上一个阶段的等待线程全部释放（如果有的话）
     releaseWaiters(phase-1);          
