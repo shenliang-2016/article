@@ -4935,8 +4935,6 @@ public class Safelock {
 
 [`Executor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html) 接口提供单个方法`execute`，旨在成为常见线程创建习惯用语的替代方法。如果`r`是`Runnable`对象，并且`e`是`Executor`对象，则可以替换
 
-The [`Executor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html) interface provides a single method, `execute`, designed to be a drop-in replacement for a common thread-creation idiom. If `r` is a `Runnable` object, and `e` is an `Executor` object you can replace
-
 ```java
 (new Thread(r)).start();
 ```
