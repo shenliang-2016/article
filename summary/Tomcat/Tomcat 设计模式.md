@@ -5,6 +5,8 @@ Tomcat 系统架构与设计模式，第 2 部分
 许 令波
 2010 年 5 月 27 日发布
 
+https://www.ibm.com/developerworks/cn/java/j-lo-tomcat2/
+
 ----
 
 ## 门面设计模式
@@ -66,7 +68,15 @@ LifecycleSupport 调用观察者的方法代码如下：
 ##### 清单 1. LifecycleSupport 中的 fireLifecycleEvent 方法
 
 ```java
-`public void fireLifecycleEvent(String type, Object data) {``    ``LifecycleEvent event = new LifecycleEvent(lifecycle, type, data);``    ``LifecycleListener interested[] = null;``    ``synchronized (listeners) {``        ``interested = (LifecycleListener[]) listeners.clone();``    ``}``    ``for (int i = 0; i < interested.length; i++)``        ``interested[i].lifecycleEvent(event);``}`
+public void fireLifecycleEvent(String type, Object data) {
+    LifecycleEvent event = new LifecycleEvent(lifecycle, type, data);
+    LifecycleListener interested[] = null;
+    synchronized (listeners) {
+        interested = (LifecycleListener[]) listeners.clone();
+    }
+    for (int i = 0; i < interested.length; i++)
+        interested[i].lifecycleEvent(event);
+}
 ```
 
 主题是怎么通知观察者呢？看下面代码：
@@ -74,7 +84,18 @@ LifecycleSupport 调用观察者的方法代码如下：
 ##### 清单 2. 容器中的 start 方法
 
 ```java
-`public void start() throws LifecycleException {``    ``lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);``    ``lifecycle.fireLifecycleEvent(START_EVENT, null);``    ``started = true;``    ``synchronized (services) {``        ``for (int i = 0; i < services.length; i++) {``            ``if (services[i] instanceof Lifecycle)``                ``((Lifecycle) services[i]).start();``            ``}``        ``}``    ``lifecycle.fireLifecycleEvent(AFTER_START_EVENT, null);``}`
+public void start() throws LifecycleException {
+    lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);
+    lifecycle.fireLifecycleEvent(START_EVENT, null);
+    started = true;
+    synchronized (services) {
+        for (int i = 0; i < services.length; i++) {
+            if (services[i] instanceof Lifecycle)
+                ((Lifecycle) services[i]).start();
+            }
+        }
+    lifecycle.fireLifecycleEvent(AFTER_START_EVENT, null);
+}
 ```
 
 ## 命令设计模式

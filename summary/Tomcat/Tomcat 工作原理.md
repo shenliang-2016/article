@@ -5,6 +5,8 @@ Tomcat 系统架构与设计模式，第 1 部分
 许 令波
 2010 年 5 月 20 日发布
 
+https://www.ibm.com/developerworks/cn/java/j-lo-tomcat1/index.html
+
 ----
 
 本文以 Tomcat 5 为基础，也兼顾最新的 Tomcat 6 和 Tomcat 4。Tomcat 的基本设计思路和架构是具有一定连续性的。
@@ -44,7 +46,33 @@ Tomcat 中 Service 接口的标准实现类是 StandardService 它不仅实现�
 ##### 清单 1. StandardService. SetContainer
 
 ```java
-`public void setContainer(Container container) {``    ``Container oldContainer = this.container;``    ``if ((oldContainer != null) && (oldContainer instanceof Engine))``        ``((Engine) oldContainer).setService(null);``    ``this.container = container;``    ``if ((this.container != null) && (this.container instanceof Engine))``        ``((Engine) this.container).setService(this);``    ``if (started && (this.container != null) && (this.container instanceof Lifecycle)) {``        ``try {``            ``((Lifecycle) this.container).start();``        ``} catch (LifecycleException e) {``            ``;``        ``}``    ``}``    ``synchronized (connectors) {``        ``for (int i = 0; i < connectors.length; i++)``            ``connectors[i].setContainer(this.container);``    ``}``    ``if (started && (oldContainer != null) && (oldContainer instanceof Lifecycle)) {``        ``try {``            ``((Lifecycle) oldContainer).stop();``        ``} catch (LifecycleException e) {``            ``;``        ``}``    ``}``    ``support.firePropertyChange("container", oldContainer, this.container);``}`
+public void setContainer(Container container) {
+    Container oldContainer = this.container;
+    if ((oldContainer != null) && (oldContainer instanceof Engine))
+        ((Engine) oldContainer).setService(null);
+    this.container = container;
+    if ((this.container != null) && (this.container instanceof Engine))
+        ((Engine) this.container).setService(this);
+    if (started && (this.container != null) && (this.container instanceof Lifecycle)) {
+        try {
+            ((Lifecycle) this.container).start();
+        } catch (LifecycleException e) {
+            ;
+        }
+    }
+    synchronized (connectors) {
+        for (int i = 0; i < connectors.length; i++)
+            connectors[i].setContainer(this.container);
+    }
+    if (started && (oldContainer != null) && (oldContainer instanceof Lifecycle)) {
+        try {
+            ((Lifecycle) oldContainer).stop();
+        } catch (LifecycleException e) {
+            ;
+        }
+    }
+    support.firePropertyChange("container", oldContainer, this.container);
+}
 ```
 
 这段代码很简单，其实就是先判断当前的这个 Service 有没有已经关联了 Container，如果已经关联了，那么去掉这个关联关系—— oldContainer.setService(null)。如果这个 oldContainer 已经被启动了，结束它的生命周期。然后再替换新的关联、再初始化并开始这个新的 Container 的生命周期。最后将这个过程通知感兴趣的事件监听程序。这里值得注意的地方就是，修改 Container 时要将新的 Container 关联到每个 Connector，还好 Container 和 Connector 没有双向关联，不然这个关联关系将会很难维护。
@@ -52,7 +80,31 @@ Tomcat 中 Service 接口的标准实现类是 StandardService 它不仅实现�
 ##### 清单 2. StandardService. addConnector
 
 ```java
-`public void addConnector(Connector connector) {``    ``synchronized (connectors) {``        ``connector.setContainer(this.container);``        ``connector.setService(this);``        ``Connector results[] = new Connector[connectors.length + 1];``        ``System.arraycopy(connectors, 0, results, 0, connectors.length);``        ``results[connectors.length] = connector;``        ``connectors = results;``        ``if (initialized) {``            ``try {``                ``connector.initialize();``            ``} catch (LifecycleException e) {``                ``e.printStackTrace(System.err);``            ``}``        ``}``        ``if (started && (connector instanceof Lifecycle)) {``            ``try {``                ``((Lifecycle) connector).start();``            ``} catch (LifecycleException e) {``                ``;``            ``}``        ``}``        ``support.firePropertyChange("connector", null, connector);``    ``}``}`
+public void addConnector(Connector connector) {
+    synchronized (connectors) {
+        connector.setContainer(this.container);
+        connector.setService(this);
+        Connector results[] = new Connector[connectors.length + 1];
+        System.arraycopy(connectors, 0, results, 0, connectors.length);
+        results[connectors.length] = connector;
+        connectors = results;
+        if (initialized) {
+            try {
+                connector.initialize();
+            } catch (LifecycleException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+        if (started && (connector instanceof Lifecycle)) {
+            try {
+                ((Lifecycle) connector).start();
+            } catch (LifecycleException e) {
+                ;
+            }
+        }
+        support.firePropertyChange("connector", null, connector);
+    }
+}
 ```
 
 上面是 addConnector 方法，这个方法也很简单，首先是设置关联关系，然后是初始化工作，开始新的生命周期。这里值得一提的是，注意 Connector 用的是数组而不是 List 集合，这个从性能角度考虑可以理解，有趣的是这里用了数组但是并没有向我们平常那样，一开始就分配一个固定大小的数组，它这里的实现机制是：重新创建一个当前大小的数组对象，然后将原来的数组对象 copy 到新的数组中，这种方式实现了类似的动态数组的功能，这种实现方式，值得我们以后拿来借鉴。
@@ -76,7 +128,30 @@ Server 的类结构图如下：
 ##### 清单 3. StandardServer.addService
 
 ```java
-`public void addService(Service service) {``    ``service.setServer(this);``    ``synchronized (services) {``        ``Service results[] = new Service[services.length + 1];``        ``System.arraycopy(services, 0, results, 0, services.length);``        ``results[services.length] = service;``        ``services = results;``        ``if (initialized) {``            ``try {``                ``service.initialize();``            ``} catch (LifecycleException e) {``                ``e.printStackTrace(System.err);``            ``}``        ``}``        ``if (started && (service instanceof Lifecycle)) {``            ``try {``                ``((Lifecycle) service).start();``            ``} catch (LifecycleException e) {``                ``;``            ``}``        ``}``        ``support.firePropertyChange("service", null, service);``    ``}``}`
+public void addService(Service service) {
+    service.setServer(this);
+    synchronized (services) {
+        Service results[] = new Service[services.length + 1];
+        System.arraycopy(services, 0, results, 0, services.length);
+        results[services.length] = service;
+        services = results;
+        if (initialized) {
+            try {
+                service.initialize();
+            } catch (LifecycleException e) {
+                e.printStackTrace(System.err);
+            }
+        }
+        if (started && (service instanceof Lifecycle)) {
+            try {
+                ((Lifecycle) service).start();
+            } catch (LifecycleException e) {
+                ;
+            }
+        }
+        support.firePropertyChange("service", null, service);
+    }
+}
 ```
 
 从上面第一句就知道了 Service 和 Server 是相互关联的，Server 也是和 Service 管理 Connector 一样管理它，也是将 Service 放在一个数组中，后面部分的代码也是管理这个新加进来的 Service 的生命周期。Tomcat6 中也是没有什么变化的。
@@ -100,7 +175,22 @@ Lifecycle 接口的方法的实现都在其它组件中，就像前面中说的�
 ##### 清单 4. StandardServer.Start
 
 ```java
-`public void start() throws LifecycleException {``    ``if (started) {``        ``log.debug(sm.getString("standardServer.start.started"));``        ``return;``    ``}``    ``lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);``    ``lifecycle.fireLifecycleEvent(START_EVENT, null);``    ``started = true;``    ``synchronized (services) {``        ``for (int i = 0; i < services.length; i++) {``            ``if (services[i] instanceof Lifecycle)``                ``((Lifecycle) services[i]).start();``        ``}``    ``}``    ``lifecycle.fireLifecycleEvent(AFTER_START_EVENT, null);``}`
+public void start() throws LifecycleException {
+    if (started) {
+        log.debug(sm.getString("standardServer.start.started"));
+        return;
+    }
+    lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);
+    lifecycle.fireLifecycleEvent(START_EVENT, null);
+    started = true;
+    synchronized (services) {
+        for (int i = 0; i < services.length; i++) {
+            if (services[i] instanceof Lifecycle)
+                ((Lifecycle) services[i]).start();
+        }
+    }
+    lifecycle.fireLifecycleEvent(AFTER_START_EVENT, null);
+}
 ```
 
 监听的代码会包围 Service 组件的启动过程，就是简单的循环启动所有 Service 组件的 Start 方法，但是所有 Service 必须要实现 Lifecycle 接口，这样做会更加灵活。
@@ -110,7 +200,18 @@ Server 的 Stop 方法代码如下：
 ##### 清单 5. StandardServer.Stop
 
 ```java
-`public void stop() throws LifecycleException {``    ``if (!started)``        ``return;``    ``lifecycle.fireLifecycleEvent(BEFORE_STOP_EVENT, null);``    ``lifecycle.fireLifecycleEvent(STOP_EVENT, null);``    ``started = false;``    ``for (int i = 0; i < services.length; i++) {``        ``if (services[i] instanceof Lifecycle)``            ``((Lifecycle) services[i]).stop();``    ``}``    ``lifecycle.fireLifecycleEvent(AFTER_STOP_EVENT, null);``}`
+public void stop() throws LifecycleException {
+    if (!started)
+        return;
+    lifecycle.fireLifecycleEvent(BEFORE_STOP_EVENT, null);
+    lifecycle.fireLifecycleEvent(STOP_EVENT, null);
+    started = false;
+    for (int i = 0; i < services.length; i++) {
+        if (services[i] instanceof Lifecycle)
+            ((Lifecycle) services[i]).stop();
+    }
+    lifecycle.fireLifecycleEvent(AFTER_STOP_EVENT, null);
+}
 ```
 
 它所要做的事情也和 Start 方法差不多。
@@ -142,7 +243,21 @@ Tomcat5 中默认的 Connector 是 Coyote，这个 Connector 是可以选择替�
 ##### 清单 6. HttpConnector.Start
 
 ```java
-`public void start() throws LifecycleException {``    ``if (started)``        ``throw new LifecycleException``            ``(sm.getString("httpConnector.alreadyStarted"));``    ``threadName = "HttpConnector[" + port + "]";``    ``lifecycle.fireLifecycleEvent(START_EVENT, null);``    ``started = true;``    ``threadStart();``    ``while (curProcessors < ``minProcessors``) {``        ``if ((maxProcessors > 0) && (curProcessors >= maxProcessors))``            ``break;``        ``HttpProcessor processor = newProcessor();``        ``recycle(processor);``    ``}``}`
+public void start() throws LifecycleException {
+    if (started)
+        throw new LifecycleException
+            (sm.getString("httpConnector.alreadyStarted"));
+    threadName = "HttpConnector[" + port + "]";
+    lifecycle.fireLifecycleEvent(START_EVENT, null);
+    started = true;
+    threadStart();
+    while (curProcessors < minProcessors) {
+        if ((maxProcessors > 0) && (curProcessors >= maxProcessors))
+            break;
+        HttpProcessor processor = newProcessor();
+        recycle(processor);
+    }
+}
 ```
 
 threadStart() 执行就会进入等待请求的状态，直到一个新的请求到来才会激活它继续执行，这个激活是在 HttpProcessor 的 assign 方法中，这个方法是代码如下 `：`
@@ -150,7 +265,19 @@ threadStart() 执行就会进入等待请求的状态，直到一个新的请求
 ##### 清单 7. HttpProcessor.assign
 
 ```java
-`synchronized void assign(Socket socket) {``    ``while (available) {``        ``try {``            ``wait();``        ``} catch (InterruptedException e) {``        ``}``    ``}``    ``this.socket = socket;``    ``available = true;``    ``notifyAll();``    ``if ((debug >= 1) && (socket != null))``        ``log(" An incoming request is being assigned");``}`
+synchronized void assign(Socket socket) {
+    while (available) {
+        try {
+            wait();
+        } catch (InterruptedException e) {
+        }
+    }
+    this.socket = socket;
+    available = true;
+    notifyAll();
+    if ((debug >= 1) && (socket != null))
+        log(" An incoming request is being assigned");
+}
 ```
 
 创建 HttpProcessor 对象是会把 available 设为 false，所以当请求到来时不会进入 while 循环，将请求的 socket 赋给当期处理的 socket，并将 available 设为 true，当 available 设为 true 是 HttpProcessor 的 run 方法将被激活，接下去将会处理这次请求。
@@ -160,7 +287,22 @@ Run 方法代码如下：
 ##### 清单 8. HttpProcessor.Run
 
 ```java
-`public void run() { ``    ``while (!stopped) { ``        ``Socket socket = await(); ``        ``if (socket == null) ``            ``continue; ``        ``try { ``            ``process(socket); ``        ``} catch (Throwable t) { ``            ``log("process.invoke", t); ``        ``} ``        ``connector.recycle(this); ``    ``} ``    ``synchronized (threadSync) { ``        ``threadSync.notifyAll(); ``    ``} ``}`
+public void run() { 
+    while (!stopped) { 
+        Socket socket = await(); 
+        if (socket == null) 
+            continue; 
+        try { 
+            process(socket); 
+        } catch (Throwable t) { 
+            log("process.invoke", t); 
+        } 
+        connector.recycle(this); 
+    } 
+    synchronized (threadSync) { 
+        threadSync.notifyAll(); 
+    } 
+}
 ```
 
 解析 socket 的过程在 process 方法中，process 方法的代码片段如下：
@@ -168,7 +310,63 @@ Run 方法代码如下：
 ##### 清单 9. HttpProcessor.process
 
 ```java
-`private void process(Socket socket) {``    ``boolean ok = true;``    ``boolean finishResponse = true;``    ``SocketInputStream input = null;``    ``OutputStream output = null;``    ``try {``        ``input = new SocketInputStream(socket.getInputStream(),connector.getBufferSize());``    ``} catch (Exception e) {``        ``log("process.create", e);``        ``ok = false;``    ``}``    ``keepAlive = true;``    ``while (!stopped && ok && keepAlive) {``        ``finishResponse = true;``        ``try {``            ``request.setStream(input);``            ``request.setResponse(response);``            ``output = socket.getOutputStream();``            ``response.setStream(output);``            ``response.setRequest(request);``            ``((HttpServletResponse) response.getResponse())``                ``.setHeader("Server", SERVER_INFO);``        ``} catch (Exception e) {``            ``log("process.create", e);``            ``ok = false;``        ``}``        ``try {``            ``if (ok) {``                ``parseConnection(socket);``                ``parseRequest(input, output);``                ``if (!request.getRequest().getProtocol().startsWith("HTTP/0"))``                    ``parseHeaders(input);``                ``if (http11) {``                    ``ackRequest(output);``                    ``if (connector.isChunkingAllowed())``                        ``response.setAllowChunking(true);``                ``}``            ``}``        ``。。。。。。``        ``try {``            ``((HttpServletResponse) response).setHeader``                ``("Date", FastHttpDateFormat.getCurrentDate());``            ``if (ok) {``                ``connector.getContainer().invoke(request, response);``            ``}``            ``。。。。。。``        ``}``        ``try {``            ``shutdownInput(input);``            ``socket.close();``        ``} catch (IOException e) {``            ``;``        ``} catch (Throwable e) {``            ``log("process.invoke", e);``        ``}``    ``socket = null;``}`
+private void process(Socket socket) {
+    boolean ok = true;
+    boolean finishResponse = true;
+    SocketInputStream input = null;
+    OutputStream output = null;
+    try {
+        input = new SocketInputStream(socket.getInputStream(),connector.getBufferSize());
+    } catch (Exception e) {
+        log("process.create", e);
+        ok = false;
+    }
+    keepAlive = true;
+    while (!stopped && ok && keepAlive) {
+        finishResponse = true;
+        try {
+            request.setStream(input);
+            request.setResponse(response);
+            output = socket.getOutputStream();
+            response.setStream(output);
+            response.setRequest(request);
+            ((HttpServletResponse) response.getResponse())
+                .setHeader("Server", SERVER_INFO);
+        } catch (Exception e) {
+            log("process.create", e);
+            ok = false;
+        }
+        try {
+            if (ok) {
+                parseConnection(socket);
+                parseRequest(input, output);
+                if (!request.getRequest().getProtocol().startsWith("HTTP/0"))
+                    parseHeaders(input);
+                if (http11) {
+                    ackRequest(output);
+                    if (connector.isChunkingAllowed())
+                        response.setAllowChunking(true);
+                }
+            }
+        。。。。。。
+        try {
+            ((HttpServletResponse) response).setHeader
+                ("Date", FastHttpDateFormat.getCurrentDate());
+            if (ok) {
+                connector.getContainer().invoke(request, response);
+            }
+            。。。。。。
+        }
+        try {
+            shutdownInput(input);
+            socket.close();
+        } catch (IOException e) {
+            ;
+        } catch (Throwable e) {
+            log("process.invoke", e);
+        }
+    socket = null;
+}
 ```
 
 当 Connector 将 socket 连接封装成 request 和 response 对象后接下来的事情就交给 Container 来处理了。
@@ -180,7 +378,11 @@ Container 是容器的父接口，所有子容器都必须实现这个接口，C
 ##### 清单 10. Server.xml
 
 ```xml
-`<``Context``    ``path``=``"/library"``    ``docBase``=``"D:\projects\library\deploy\target\library.war"``    ``reloadable``=``"true"``/>`
+<Context
+    path="/library"
+    docBase="D:\projects\library\deploy\target\library.war"
+    reloadable="true"
+/>
 ```
 
 ### 容器的总体设计
@@ -208,7 +410,19 @@ Context 还可以定义在父容器 Host 中，Host 不是必须的，但是要�
 ##### 清单 11. Server.xml
 
 ```xml
-`<``Engine` `defaultHost``=``"localhost"` `name``=``"Catalina"``>` `    ``<``Valve` `className``=``"org.apache.catalina.valves.RequestDumperValve"``/>``    ``………``    ``<``Host` `appBase``=``"webapps"` `autoDeploy``=``"true"` `name``=``"localhost"` `unpackWARs``=``"true"``        ``xmlNamespaceAware``=``"false"` `xmlValidation``=``"false"``>` `        ``<``Valve` `className``=``"org.apache.catalina.valves.FastCommonAccessLogValve"``            ``directory``=``"logs"`  `prefix``=``"localhost_access_log."` `suffix``=``".txt"``            ``pattern``=``"common"` `resolveHosts``=``"false"``/>     ``    ``…………``    ``</``Host``>``</``Engine``>`
+<Engine defaultHost="localhost" name="Catalina">
+ 
+    <Valve className="org.apache.catalina.valves.RequestDumperValve"/>
+    ………
+    <Host appBase="webapps" autoDeploy="true" name="localhost" unpackWARs="true"
+        xmlNamespaceAware="false" xmlValidation="false">
+ 
+        <Valve className="org.apache.catalina.valves.FastCommonAccessLogValve"
+            directory="logs"  prefix="localhost_access_log." suffix=".txt"
+            pattern="common" resolveHosts="false"/>     
+    …………
+    </Host>
+</Engine>
 ```
 
 StandardEngineValve 和 StandardHostValve 是 Engine 和 Host 的默认的 Valve，它们是最后一个 Valve 负责将请求传给它们的子容器，以继续往下执行。
@@ -236,7 +450,17 @@ Engine 容器比较简单，它只定义了一些基本的关联关系，接口�
 ##### 清单 12. StandardEngine. addChild
 
 ```java
-`public void addChild(Container child) {``    ``if (!(child instanceof Host))``        ``throw new IllegalArgumentException``            ``(sm.getString("standardEngine.notHost"));``    ``super.addChild(child);``}` `public void setParent(Container container) {``    ``throw new IllegalArgumentException``        ``(sm.getString("standardEngine.notParent"));``}`
+public void addChild(Container child) {
+    if (!(child instanceof Host))
+        throw new IllegalArgumentException
+            (sm.getString("standardEngine.notHost"));
+    super.addChild(child);
+}
+ 
+public void setParent(Container container) {
+    throw new IllegalArgumentException
+        (sm.getString("standardEngine.notParent"));
+}
 ```
 
 它的初始化方法也就是初始化和它相关联的组件，以及一些事件的监听。
@@ -268,7 +492,68 @@ Context 准备 Servlet 的运行环境是在 Start 方法开始的，这个方�
 ##### 清单 13. StandardContext.start
 
 ```java
-`public synchronized void start() throws LifecycleException {``    ``………``    ``if( !initialized ) { ``        ``try {``            ``init();``        ``} catch( Exception ex ) {``            ``throw new LifecycleException("Error initializaing ", ex);``        ``}``    ``}``    ` `    ``………``    ``lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);``    ``setAvailable(false);``    ``setConfigured(false);``    ``boolean ok = true;``    ``File configBase = getConfigBase();``    ``if (configBase != null) {``        ``if (getConfigFile() == null) {``            ``File file = new File(configBase, getDefaultConfigFile());``            ``setConfigFile(file.getPath());``            ``try {``                ``File appBaseFile = new File(getAppBase());``                ``if (!appBaseFile.isAbsolute()) {``                    ``appBaseFile = new File(engineBase(), getAppBase());``                ``}``                ``String appBase = appBaseFile.getCanonicalPath();``                ``String basePath = ``                    ``(new File(getBasePath())).getCanonicalPath();``                ``if (!basePath.startsWith(appBase)) {``                    ``Server server = ServerFactory.getServer();``                    ``((StandardServer) server).storeContext(this);``                ``}``            ``} catch (Exception e) {``                ``log.warn("Error storing config file", e);``            ``}``        ``} else {``            ``try {``                ``String canConfigFile =  (new File(getConfigFile())).getCanonicalPath();``                ``if (!canConfigFile.startsWith (configBase.getCanonicalPath())) {``                    ``File file = new File(configBase, getDefaultConfigFile());``                    ``if (copy(new File(canConfigFile), file)) {``                        ``setConfigFile(file.getPath());``                    ``}``                ``}``            ``} catch (Exception e) {``                ``log.warn("Error setting config file", e);``            ``}``        ``}``    ``}` `    ``………``    ``Container children[] = findChildren();``    ``for (int i = 0; i < children.length; i++) {``        ``if (children[i] instanceof Lifecycle)``            ``((Lifecycle) children[i]).start();``    ``}``    ` `    ``if (pipeline instanceof Lifecycle)``        ``((Lifecycle) pipeline).start();``    ``………` `}`
+public synchronized void start() throws LifecycleException {
+    ………
+    if( !initialized ) { 
+        try {
+            init();
+        } catch( Exception ex ) {
+            throw new LifecycleException("Error initializaing ", ex);
+        }
+    }
+     
+    ………
+    lifecycle.fireLifecycleEvent(BEFORE_START_EVENT, null);
+    setAvailable(false);
+    setConfigured(false);
+    boolean ok = true;
+    File configBase = getConfigBase();
+    if (configBase != null) {
+        if (getConfigFile() == null) {
+            File file = new File(configBase, getDefaultConfigFile());
+            setConfigFile(file.getPath());
+            try {
+                File appBaseFile = new File(getAppBase());
+                if (!appBaseFile.isAbsolute()) {
+                    appBaseFile = new File(engineBase(), getAppBase());
+                }
+                String appBase = appBaseFile.getCanonicalPath();
+                String basePath = 
+                    (new File(getBasePath())).getCanonicalPath();
+                if (!basePath.startsWith(appBase)) {
+                    Server server = ServerFactory.getServer();
+                    ((StandardServer) server).storeContext(this);
+                }
+            } catch (Exception e) {
+                log.warn("Error storing config file", e);
+            }
+        } else {
+            try {
+                String canConfigFile =  (new File(getConfigFile())).getCanonicalPath();
+                if (!canConfigFile.startsWith (configBase.getCanonicalPath())) {
+                    File file = new File(configBase, getDefaultConfigFile());
+                    if (copy(new File(canConfigFile), file)) {
+                        setConfigFile(file.getPath());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error setting config file", e);
+            }
+        }
+    }
+ 
+    ………
+    Container children[] = findChildren();
+    for (int i = 0; i < children.length; i++) {
+        if (children[i] instanceof Lifecycle)
+            ((Lifecycle) children[i]).start();
+    }
+     
+    if (pipeline instanceof Lifecycle)
+        ((Lifecycle) pipeline).start();
+    ………
+ 
+}
 ```
 
 它主要是设置各种资源属性和管理组件，还有非常重要的就是启动子容器和 Pipeline。
@@ -278,7 +563,11 @@ Context 准备 Servlet 的运行环境是在 Start 方法开始的，这个方�
 ##### 清单 14. Server.xml
 
 ```xml
-`<``Context``    ``path``=``"/library"``    ``docBase``=``"D:\projects\library\deploy\target\library.war"``    ``reloadable``=``"true"``/>`
+<Context
+    path="/library"
+    docBase="D:\projects\library\deploy\target\library.war"
+    reloadable="true"
+/>
 ```
 
 当这个 reloadable 设为 true 时，war 被修改后 Tomcat 会自动的重新加载这个应用。如何做到这点的呢 ? 这个功能是在 StandardContext 的 backgroundProcess 方法中实现的，这个方法的代码如下：
@@ -286,7 +575,34 @@ Context 准备 Servlet 的运行环境是在 Start 方法开始的，这个方�
 ##### 清单 15. StandardContext. backgroundProcess
 
 ```java
-`public void backgroundProcess() {``    ``if (!started) return;``    ``count = (count + 1) % managerChecksFrequency;``    ``if ((getManager() != null) && (count == 0)) {``        ``try {``            ``getManager().backgroundProcess();``        ``} catch ( Exception x ) {``            ``log.warn("Unable to perform background process on manager",x);``        ``}``    ``}``    ``if (getLoader() != null) {``        ``if (reloadable && (getLoader().modified())) {``            ``try {``                ``Thread.currentThread().setContextClassLoader``                    ``(StandardContext.class.getClassLoader());``                ``reload();``            ``} finally {``                ``if (getLoader() != null) {``                    ``Thread.currentThread().setContextClassLoader``                        ``(getLoader().getClassLoader());``                ``}``            ``}``        ``}``        ``if (getLoader() instanceof WebappLoader) {``            ``((WebappLoader) getLoader()).closeJARs(false);``        ``}``    ``}``}`
+public void backgroundProcess() {
+    if (!started) return;
+    count = (count + 1) % managerChecksFrequency;
+    if ((getManager() != null) && (count == 0)) {
+        try {
+            getManager().backgroundProcess();
+        } catch ( Exception x ) {
+            log.warn("Unable to perform background process on manager",x);
+        }
+    }
+    if (getLoader() != null) {
+        if (reloadable && (getLoader().modified())) {
+            try {
+                Thread.currentThread().setContextClassLoader
+                    (StandardContext.class.getClassLoader());
+                reload();
+            } finally {
+                if (getLoader() != null) {
+                    Thread.currentThread().setContextClassLoader
+                        (getLoader().getClassLoader());
+                }
+            }
+        }
+        if (getLoader() instanceof WebappLoader) {
+            ((WebappLoader) getLoader()).closeJARs(false);
+        }
+    }
+}
 ```
 
 它会调用 reload 方法，而 reload 方法会先调用 stop 方法然后再调用 Start 方法，完成 Context 的一次重新加载。可以看出执行 reload 方法的条件是 reloadable 为 true 和应用被修改，那么这个 backgroundProcess 方法是怎么被调用的呢？
@@ -304,7 +620,47 @@ Wrapper 的实现类是 StandardWrapper，StandardWrapper 还实现了拥有一�
 ##### 清单 16. StandardWrapper.loadServlet
 
 ```java
-`public synchronized Servlet loadServlet() throws ServletException {``    ``………``    ``Servlet servlet;``    ``try {``        ``………``        ``ClassLoader classLoader = loader.getClassLoader();``        ``………``        ``Class classClass = null;``        ``………``        ``servlet = (Servlet) classClass.newInstance();``        ``if ((servlet instanceof ContainerServlet) &&``            ``(isContainerProvidedServlet(actualClass) ||``            ``((Context)getParent()).getPrivileged() )) {``                ``((ContainerServlet) servlet).setWrapper(this);``        ``}``        ``classLoadTime=(int) (System.currentTimeMillis() -t1);``        ``try {``            ``instanceSupport.fireInstanceEvent(InstanceEvent.BEFORE_INIT_EVENT,servlet);``            ``if( System.getSecurityManager() != null) {``                ``Class[] classType = new Class[]{ServletConfig.class};``                ``Object[] args = new Object[]{((ServletConfig)facade)};``                ``SecurityUtil.doAsPrivilege("init",servlet,classType,args);``            ``} else {``                ``servlet.init(facade);``            ``}``            ``if ((loadOnStartup >= 0) && (jspFile != null)) {``                ``………``                ``if( System.getSecurityManager() != null) {``                    ``Class[] classType = new Class[]{ServletRequest.class,``                        ``ServletResponse.class};``                    ``Object[] args = new Object[]{req, res};``                    ``SecurityUtil.doAsPrivilege("service",servlet,classType,args);``                ``} else {``                    ``servlet.service(req, res);``                ``}``            ``}``            ``instanceSupport.fireInstanceEvent(InstanceEvent.AFTER_INIT_EVENT,servlet);``            ``………``        ` `    ``return servlet;``}`
+public synchronized Servlet loadServlet() throws ServletException {
+    ………
+    Servlet servlet;
+    try {
+        ………
+        ClassLoader classLoader = loader.getClassLoader();
+        ………
+        Class classClass = null;
+        ………
+        servlet = (Servlet) classClass.newInstance();
+        if ((servlet instanceof ContainerServlet) &&
+            (isContainerProvidedServlet(actualClass) ||
+            ((Context)getParent()).getPrivileged() )) {
+                ((ContainerServlet) servlet).setWrapper(this);
+        }
+        classLoadTime=(int) (System.currentTimeMillis() -t1);
+        try {
+            instanceSupport.fireInstanceEvent(InstanceEvent.BEFORE_INIT_EVENT,servlet);
+            if( System.getSecurityManager() != null) {
+                Class[] classType = new Class[]{ServletConfig.class};
+                Object[] args = new Object[]{((ServletConfig)facade)};
+                SecurityUtil.doAsPrivilege("init",servlet,classType,args);
+            } else {
+                servlet.init(facade);
+            }
+            if ((loadOnStartup >= 0) && (jspFile != null)) {
+                ………
+                if( System.getSecurityManager() != null) {
+                    Class[] classType = new Class[]{ServletRequest.class,
+                        ServletResponse.class};
+                    Object[] args = new Object[]{req, res};
+                    SecurityUtil.doAsPrivilege("service",servlet,classType,args);
+                } else {
+                    servlet.service(req, res);
+                }
+            }
+            instanceSupport.fireInstanceEvent(InstanceEvent.AFTER_INIT_EVENT,servlet);
+            ………
+         
+    return servlet;
+}
 ```
 
 它基本上描述了对 Servlet 的操作，当装载了 Servlet 后就会调用 Servlet 的 init 方法，同时会传一个 StandardWrapperFacade 对象给 Servlet，这个对象包装了 StandardWrapper，ServletConfig 与它们的关系图如下：
