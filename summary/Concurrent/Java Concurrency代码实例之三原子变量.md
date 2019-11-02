@@ -16,12 +16,18 @@
 
 按照用途与特性，Concurrency包中包含的工具被分为六类（外加一个工具类TimeUnit），即：
 1. 执行者与线程池
+
 2. 并发队列
+
 3. 同步工具
+
 4. 并发集合
+
 5. 锁
+
 6. 原子变量
-本文介绍的是其中的原子变量，为什么调整介绍的顺序，是因为在写前两篇的时候意识到非阻塞并发的基础是CAS（CompareAndSwap，比较并替换，后面会详细介绍），而CAS的基础是Unsafe类，因此最好先找一个地方系统性的介绍一下Unsafe和CAS，这个地方就是原子变量类。
+
+  本文介绍的是其中的原子变量，为什么调整介绍的顺序，是因为在写前两篇的时候意识到非阻塞并发的基础是CAS（CompareAndSwap，比较并替换，后面会详细介绍），而CAS的基础是Unsafe类，因此最好先找一个地方系统性的介绍一下Unsafe和CAS，这个地方就是原子变量类。
 
 # 2. Java的指针Unsafe类
 
@@ -108,13 +114,17 @@ public final native boolean compareAndSwapLong(Object var1, long var2, long var4
 ```
 
 这三个方法都有四个参数，其中第一和第二个参数代表对象的实例以及地址，第三个参数代表期望值，第四个参数代表更新值。CAS的语义是，若期望值等于对象地址存储的值，则用更新值来替换对象地址存储的值，并返回true，否则不进行替换，返回false。
+
 后面我们会看到诸多的原子变量，例如AtomicInteger、AtomicLong、AtomicReference等等都提供了CAS操作，其底层都是调用了Unsafe的CAS，它们的参数往往是三个，对象值、期望值和更新值，其语义也与Unsafe中的一致。
+
 CAS是所有原子变量的原子性的基础，为什么一个看起来如此不自然的操作却如此重要呢？其原因就在于这个native操作会最终演化为一条CPU指令cmpxchg，而不是多条CPU指令。由于CAS仅仅是一条指令，因此它不会被多线程的调度所打断，所以能够保证CAS操作是一个原子操作。补充一点，当代的很多CPU种类都支持cmpxchg操作，但不是所有CPU都支持，对于不支持的CPU，会自动加锁来保证其操作不会被打断。
+
 由此可知，原子变量提供的原子性来自CAS操作，CAS来自Unsafe，然后由CPU的cmpxchg指令来保证。
 
 # 3. i++不是线程安全的
 
 所谓“线程安全的”，意思是在多线程的环境下，多次运行，其结果是不变的，或者说其结果是可预知的。若某些对变量的操作不能保持原子性，则其操作就不是线程安全的。
+
 为了说明原子性，来给出一个没有实现原子性的例子，例如i++这一条语句，它实际上会被编译为两条CPU指令，因此若一些线程在运行时被从中打断，就会造成不确定的后果，如下：
 
 ```java
@@ -169,7 +179,10 @@ public class AtomicIntegerExam {
 ```
 
 这次的结果为保持为100000了。因为AtomicInteger的incrementAndGet()操作是原子性的。观察其内部代码，它使用了Unsafe的compareAndSwapInt()方法。
-那么现在整形有AtomicInteger，长整型有AtomicLong，布尔型有AtomicBoolean，那么浮点型怎么办？JDK的说法是程序员可以利用AtomicInteger以及Float.floatToRawIntBits和Float.intBitsToFloat来自己实现一个AtomicFloat；利用AtomicLong以及Double.doubleToRawLongBits和Double.longBitsToDouble来自己实现一个AtomicDouble。在网上可以搜索到相应的实现[实现JDK没有提供的AtomicFloat - 杨尚川的个人页面](https://link.zhihu.com/?target=https%3A//my.oschina.net/apdplat/blog/418019)，这里就不再赘述了。
+
+那么现在整形有AtomicInteger，长整型有AtomicLong，布尔型有AtomicBoolean，那么浮点型怎么办？JDK的说法是程序员可以利用AtomicInteger以及Float.floatToRawIntBits和Float.intBitsToFloat来自己实现一个
+
+AtomicFloat；利用AtomicLong以及Double.doubleToRawLongBits和Double.longBitsToDouble来自己实现一个AtomicDouble。在网上可以搜索到相应的实现[实现JDK没有提供的AtomicFloat - 杨尚川的个人页面](https://link.zhihu.com/?target=https%3A//my.oschina.net/apdplat/blog/418019)，这里就不再赘述了。
 
 # 5. 原子引用AtomicReference
 
