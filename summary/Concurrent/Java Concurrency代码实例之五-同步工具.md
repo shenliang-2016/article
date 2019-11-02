@@ -335,8 +335,6 @@ public class ExchangerExam3 {
 }
 ```
 
-
-
 这段代码在运行时有很大的概率会死锁，原因就是Exchanger是用来在“成对”的线程之间交换数据的，像上面这样在四个线程之间交换数据，Exchanger很有可能将多个线程互相阻塞在其Slot中，造成死锁。
 
 ## 5.2 原理
@@ -347,8 +345,6 @@ Exchanger这个类初看非常简单，其公开的接口仅有一个无参构�
 public V exchange(V x) throws InterruptedException
 public V exchange(V x, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException
 ```
-
-
 
 第一个方法用来持续阻塞的交换数据；第二个方法用来在一个时间范围内交换数据，若超时则抛出TimeoutException后返回，同时唤醒另一个阻塞线程。 Exchanger的基本原理是维持一个槽（Slot），这个Slot中存储一个Node的引用，这个Node中保存了一个用来交换的Item和一个用来获取对象的洞Hole。如果一个来“占有”的线程看见Slot为null，则调用CAS方法（CAS方法在前面的文章中已经详细介绍了https://zhuanlan.zhihu.com/p/27338395）使一个Node对象占据这个Slot，并等待另一个线程前来交换。如果第二个来“填充”的线程看见Slot不为null，则调用CAS方法将其设置为null，同时使用CAS与Hole交换Item，然后唤醒等待的线程。注意所有的CAS操作都有可能失败，因此CAS必须是循环调用的。 看看JDK1.7中Exchanger的数据结构相关源代码：
 
@@ -377,8 +373,6 @@ long q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, qa, qb, qc, qd, qe;
 //一个Slot数组，数组中有32个Slot，只在必要时才创建
 private volatile Slot[] arena = new Slot[CAPACITY];
 ```
-
-
 
 下面是进行交换操作的核心算法：
 
@@ -433,8 +427,6 @@ private final AtomicInteger max = new AtomicInteger();
 //其中CAPACITY=32，NCPU是CPU的核心数量
 private static final int FULL = Math.max(0, Math.min(CAPACITY, NCPU / 2) - 1);
 ```
-
-
 
 由此可见，max值与CPU的核心数量相关，因此在多核CPU（例如目前主流服务器的CPU经常是32或者64核）上，所能使用的Slot数量多；而在PC上（CPU一般为4核），max最大是1，只能使用两个Slot。这样就最大限度的保证了Exchanger的性能。具体如下图所示：
 
@@ -507,8 +499,6 @@ public class PhaserExam1 {
 }
 ```
 
-
-
 当然，还有很多方法可以模拟CountDownLatch。JDK中就提供了一种，可以仔细看JDK的注释。
 
 ## 6.1.4. 模拟CyclicBarrier
@@ -559,8 +549,6 @@ public class PhaserExam2 {
 }
 ```
 
-
-
 值得注意的一点是，可以使用isTerminated检测Phaser的终止条件。当然，模拟CyclicBarrier的方法也不止这一种，JDK的注释中就有另外一种，可供仔细研究。
 
 ## 6.1.5. 终止
@@ -604,8 +592,6 @@ public class PhaserTermination {
     }
 }
 ```
-
-
 
 ## 6.1.6. 分层
 
@@ -662,8 +648,6 @@ public class PhaserTiers {
     }
 }
 ```
-
-
 
 例子中，共创建了12个线程，每4个线程注册到一个子Phaser中，一共有3个子Phaser。这3个子Phaser全部注册到一个根Phaser中，最后达到了12个线程在根Phaser中同步的效果。为了看得更加清晰，我扩展了Phaser类，代码如下：
 
@@ -738,8 +722,6 @@ public class PhaserTiers2 {
 }
 ```
 
-
-
 从以上代码的运行结果中可以清楚的看出，根Phaser管理着4个子Phaser，每个子Phaser中注册了4个线程，最终这12个线程如同注册在同一个Phaser中一样进行同步。
 
 ## 6.1.7. 监视
@@ -748,7 +730,15 @@ Phaser提供了多种方法来监视其各项状态。getRegisteredParties返回
 
 ## 6.2 原理
 
-从上面的概念和用法也可以看出来，Phaser是一个较为复杂的同步类，但它仅仅用到了TimeUnit、AtomicReference、LockSupport和Unsafe这四个辅助类而已。Phaser类的实现要点主要包括以下几点： 第一，所有的状态存储于一个volatile long state中，这个变量被分为四段使用，0~15字节表示当前阶段没有到达的线程数量unarrived；16~31字节表示parties；32~62字节表示phase；最后的一个字节表示Phaser的终止状态。Phaser中包含各种方法来线程安全的读写这些值，主要是使用Unsafe类中的CAS方法（详情见本系列的第三篇文章https://zhuanlan.zhihu.com/p/27338395）。 第二，定义了一个QNode类来表示Phaser的等待队列。这个QNode实现了ForkJoinPool.ManagedBlocker接口，因此可以直接在ForkJoinPool线程池中使用。即使不使用ForkJoinPool线程池，也可以直接使用QNode达到检查和阻塞线程的效果。ForkJoinPool.ManagedBlocker接口有两个方法，其中block方法可能会阻塞线程，若它返回true，则表示不需要阻塞线程了；isReleasable检查线程是否需要阻塞，如果它返回true，表示不需要阻塞。QNode类清晰明了，一望可知。 第三，Phaser中定义了两个等待队列，AtomicReference evenQ和AtomicReference oddQ。这是为了在同时增加和释放线程时，避免更大的冲突。evenQ用于偶数阶段，oddQ用于奇数阶段。 第四，Phaser的所有构造函数，最终调用如下的函数：
+从上面的概念和用法也可以看出来，Phaser是一个较为复杂的同步类，但它仅仅用到了TimeUnit、AtomicReference、LockSupport和Unsafe这四个辅助类而已。Phaser类的实现要点主要包括以下几点：
+
+第一，所有的状态存储于一个volatile long state中，这个变量被分为四段使用，0~15字节表示当前阶段没有到达的线程数量unarrived；16~31字节表示parties；32~62字节表示phase；最后的一个字节表示Phaser的终止状态。Phaser中包含各种方法来线程安全的读写这些值，主要是使用Unsafe类中的CAS方法（详情见本系列的第三篇文章https://zhuanlan.zhihu.com/p/27338395）。 
+
+第二，定义了一个QNode类来表示Phaser的等待队列。这个QNode实现了ForkJoinPool.ManagedBlocker接口，因此可以直接在ForkJoinPool线程池中使用。即使不使用ForkJoinPool线程池，也可以直接使用QNode达到检查和阻塞线程的效果。ForkJoinPool.ManagedBlocker接口有两个方法，其中block方法可能会阻塞线程，若它返回true，则表示不需要阻塞线程了；isReleasable检查线程是否需要阻塞，如果它返回true，表示不需要阻塞。QNode类清晰明了，一望可知。 
+
+第三，Phaser中定义了两个等待队列，AtomicReference evenQ和AtomicReference oddQ。这是为了在同时增加和释放线程时，避免更大的冲突。evenQ用于偶数阶段，oddQ用于奇数阶段。 
+
+第四，Phaser的所有构造函数，最终调用如下的函数：
 
 ```java
 public Phaser(Phaser parent, int parties) {
@@ -780,8 +770,6 @@ public Phaser(Phaser parent, int parties) {
         ((long)parties);
 }
 ```
-
-
 
 第五，内部的注册方法，主要是修改state的值：
 
@@ -842,8 +830,6 @@ long adj = ((long)registrations << PARTIES_SHIFT) | registrations;
 }
 ```
 
-
-
 第六，内部的arrive方法，这个方法比较简单，主要是将unarrived数字减去1，然后检查是否当前阶段所有线程都已经到达，如果都到达则phase加1。
 
 ```java
@@ -893,8 +879,6 @@ private int doArrive(boolean deregister) {
     }
 }
 ```
-
-
 
 第七，内部的awaitAdvance方法，用来让线程等待所有其他线程到达本阶段：
 
@@ -957,8 +941,6 @@ private int internalAwaitAdvance(int phase, QNode node) {
     return p;
 }
 ```
-
-
 
 ## 7. 小结
 
