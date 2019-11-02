@@ -17,11 +17,17 @@
 
 按照用途与特性，Concurrency包中包含的工具被分为六类（外加一个工具类TimeUnit），即：
 1. 执行者与线程池
+
 2. 并发队列
+
 3. 同步工具
+
 4. 并发集合
+
 5. 锁
+
 6. 原子变量
+
 本文介绍的是其中的锁，与synchronize关键字不同，并发包中的锁，其阻塞机制是调用Unsafe类提供的park和unpark方法，结合CAS原子语句，实现了比synchronize更加高效灵活的各种锁。
 
 # 2. Unsafe类的park和unpark
@@ -34,6 +40,7 @@ public native void unpark(Object var1);
 ```
 
 park方法用来阻塞一个线程，第一个参数用来指示后面的参数是绝对时间还是相对时间，true表示绝对时间，false表示从此刻开始后的相对时间。调用park的线程就阻塞在此处。
+
 upark用来释放某个线程的阻塞，线程用参数var1表示。例子如下：
 
 ```java
@@ -260,14 +267,19 @@ public class SimpleLock {
 ```
 
 运行结果表明，通过简单的几行代码，就实行了一个锁的所有功能。
+
 根据JUC（Java Util Concurrency）作者的建议，AQS的使用方法要遵循上面这个模式。一是使用一个内部类Sync来继承AQS，并实现AQS的相关方法，一般是tryAcquire和tryRelease（排它锁），或者tryAcquireShared和tryReleaseShared（共享锁）；二是在内部使用一个代理模式来实现锁的功能，这样做的好处是可以让暴露出的同步、互斥方法名由程序员自行决定，例如各种锁可以使用lock、unlock，Semaphore可以使用acquire和release，CountDownLatch可以使用await和countDown。
 
 ## 4.2 AQS基本原理
 
 要实现一个同步器，需要三个条件：
-\1. 一个同步状态值，并可以原子化的操作这个状态值。显然，我们可以使用上一篇讲到的CAS方法来操作状态值；
-\2. 阻塞线程和解除阻塞线程的机制，可以用LockSupport来实现；
-\3. 维持一个阻塞线程的队列，并在队列的每个节点中存储线程的状态等信息。
+
+1. 一个同步状态值，并可以原子化的操作这个状态值。显然，我们可以使用上一篇讲到的CAS方法来操作状态值；
+
+2. 阻塞线程和解除阻塞线程的机制，可以用LockSupport来实现；
+
+3. 维持一个阻塞线程的队列，并在队列的每个节点中存储线程的状态等信息。
+
 AQS同时满足了这三个条件，首先，它提供了如下的状态值，以及相应的操作方法：
 
 ```java
@@ -287,14 +299,19 @@ protected final boolean compareAndSetState(int expect, int update) {
 }
 ```
 
-state是一个volatile int类型，除了getter和setter方法外，还提供了一个CAS方法，提供原子化的比较更新操作。一般来说，AQS认为state为0时，同步器处于释放状态，多个线程此刻可以竞争获取同步器；state不等于0时，同步器处于已获取状态，后续线程需进入队列，等待同步器（可重入的同步器允许获取同步器的线程再次进入同步器，并使用state进行计数）。当然，很多情况下，程序员也可自己定义state的值的含义，特别是在实现读写锁时，需要将state一分为二的用。
+state是一个volatile int类型，除了getter和setter方法外，还提供了一个CAS方法，提供原子化的比较更新操作。
+
+一般来说，AQS认为state为0时，同步器处于释放状态，多个线程此刻可以竞争获取同步器；state不等于0时，同步器处于已获取状态，后续线程需进入队列，等待同步器（可重入的同步器允许获取同步器的线程再次进入同步器，并使用state进行计数）。当然，很多情况下，程序员也可自己定义state的值的含义，特别是在实现读写锁时，需要将state一分为二的用。
+
 其次，LockSupport提供了阻塞和解除阻塞的功能。因此，所有同步器的阻塞操作其实都是基于LockSupport的，也就是基于Unsafe的park和unpark方法的。
+
 第三，AQS内部提供了一个Node类型，它是用来形成“线程等待队列”的节点类型，以及一个由Node类型组成的队列。此队列的原理留待后续章节细说。
 
 ## 4.3 继承AQS时需要重写的方法
 
 从上面的例子中可以看出，通过继承时重写了两个方法tryAcquire和tryRelease，就可以实现一个具体的同步器。通过研究AQS的原理可以得知，它将一些复杂的操作封装在自己内部，留待继承者重写的方法仅有以下5个（除去构造函数）：
-\1. tryAcquire
+
+1. tryAcquire
 
 ```java
 protected boolean tryAcquire(int arg) {
@@ -303,7 +320,8 @@ protected boolean tryAcquire(int arg) {
 ```
 
 此方法是用来在多个线程竞争同步器时调用，作为AQS中acquire方法的第一个部分。若tryAcquire返回true，表明此线程获取了同步器；否则表明此线程没有获取同步器，而要进入队列等待同步器。在重写此方法时，仅需获取state的值，并通过CAS设置state的值，若成功则说明本线程竞争成功，否则说明线程竞争失败。
-\2. tryRelease
+
+2. tryRelease
 
 ```java
 protected boolean tryRelease(int arg) {
@@ -312,7 +330,8 @@ protected boolean tryRelease(int arg) {
 ```
 
 此方法是用来释放同步器时调用，作为AQS中release方法的第一个部分。若tryRelease返回true，则表明当前线程可以正常释放同步器；否则不做其他操作。在重写此方法时，需要获取state的值，进行状态判断，然后依据具体情况将其设置为另一个值（一般设置为0）即可。
-\3. tryAcquireShared
+
+3. tryAcquireShared
 
 ```java
 protected int tryAcquireShared(int arg) {
@@ -321,7 +340,8 @@ protected int tryAcquireShared(int arg) {
 ```
 
 此方法与tryAcquire非常类似，不同的是它被用来实现共享锁时调用。由于共享锁允许多个线程同时获取同步器，而且在释放时也可以同时释放多个线程。因此在重写tryAcquireShared时要特别注意state的定义和读写方法。
-\4. tryReleaseShared
+
+4. tryReleaseShared
 
 ```java
 protected boolean tryReleaseShared(int arg) {
@@ -330,7 +350,8 @@ protected boolean tryReleaseShared(int arg) {
 ```
 
 此方法与tryRelease类似，不同的是它也被用来实现共享锁时调用。由于共享锁的特性，重写此方法时也要注意state的定义和读写方法。
-\5. isHeldExclusively
+
+5. isHeldExclusively
 
 ```java
 protected boolean isHeldExclusively() {
@@ -354,11 +375,10 @@ AQS已经把排它锁的加锁框架全部搭建好了，程序员只需要重�
 
 同样，AQS已经把解锁的框架全部搭建好了，程序员只需重写tryRelease方法即可实现排它锁的解锁。值得注意的是，排它锁被解锁后，仅有一个被阻塞的线程能够获得锁，其他线程依然在队列中等待。
 
-
-
 ## 4.5 初试共享锁
 
 AQS不仅提供了排它锁，同时也提供了共享锁的框架。对于排它锁和共享锁，并没有明确的定义，此处根据本人自己的理解，给出一个定义。排它锁，即在一个时刻只有一个线程可以获取的锁，其他线程的加锁方法会被阻塞，直至拥有锁的线程释放该锁为止。共享锁，即在一个时刻允许多个线程同时获取的锁。根据场景的不同，可以构建多种不同类型的共享锁，有的共享锁允许定量的（n个）线程拥有锁，此外的线程在加锁时依然会被阻塞，每当一个线程释放一次锁，则后续的一个线程可以竞争获取该锁（例如Semaphore）；有的共享锁会阻塞所有的线程，但一旦执行某种释放操作，则所有被阻塞的线程会被同时唤醒（例如CountDownLatch）；有的共享锁需要与一个排它锁配合，实现对文件读写的各种同步（ReentrantReadWriteLock）。这些具体的同步器会在后续的章节或文章中介绍。
+
 根据SimpleLock，我们再试着实现一个最简单的共享锁SimpleSharedLock，代码如下：
 
 ```java
@@ -453,8 +473,6 @@ public class SimpleSharedLock {
 现在我们再来回答，为什么在SimpleSharedLock中，解锁方法没有同时唤醒所有线程？原因就在于，重写的tryAcquireShared方法没有在加锁框架中发挥应有的作用，它在被唤醒后的第一次调用中（也就是在setHeadAndPropagate之前的那一次调用中）重新将state设置为1，也就是锁被获取了。因此下一个被唤醒的线程没有能够通过tryAcquireShared的检测从而重新被阻塞。若要弄清所有细节，你必须阅读AQS的源代码。
 
 至此我们明白了，对state的查询和操作是设计一种共享锁的关键。
-
-
 
 ## 4.7 一次唤醒所有阻塞线程的共享锁
 
@@ -850,10 +868,14 @@ public class ReentrantReadWriteLockExam {
 ```
 
 总结规则如下：
-1.写锁是排它锁，一旦被获取，其他竞争写锁的线程被阻塞，其他竞争读锁的线程也被阻塞；
-2.写锁被释放后，其他的线程可以竞争写锁或者读锁；
-3.读锁是共享锁，它可以同时被多个线程获取，但是读锁和写锁是不能同时被不同的线程获取的；
-4.所有的读锁被释放后，其他的线程可以竞争写锁。
+
+1. 写锁是排它锁，一旦被获取，其他竞争写锁的线程被阻塞，其他竞争读锁的线程也被阻塞；
+
+2. 写锁被释放后，其他的线程可以竞争写锁或者读锁；
+
+3. 读锁是共享锁，它可以同时被多个线程获取，但是读锁和写锁是不能同时被不同的线程获取的；
+
+4. 所有的读锁被释放后，其他的线程可以竞争写锁。
 
 # 7. 小结
 
