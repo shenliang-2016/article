@@ -27,17 +27,17 @@ Concurrency包的程序员。本文是本系列的第七篇文章，前六篇文
 
 按照用途与特性，Concurrency包中包含的工具被分为六类（外加一个工具类TimeUnit），即：
 
-\1. 执行者与线程池
+1. 执行者与线程池
 
-\2. 并发队列
+2. 并发队列
 
-\3. 同步工具
+3. 同步工具
 
-\4. 并发集合
+4. 并发集合
 
-\5. 锁
+5. 锁
 
-\6. 原子变量
+6. 原子变量
 
 本系列的前五篇文章分别介绍这六类中的一类。自第六篇起，一次仅介绍一个具体类。本文介绍的是并发集合中最奇特的一个类ConcurrentSkipListMap。此类的奇特性在于，它与TreeMap一样，实现了对有序队列的快速查找，但同时，它还是多线程安全的。在多线程环境下，它要比加锁的TreeMap效率高。为什么ConcurrentSkipListMap没有一个对应的单线程环境下的SkipListMap呢？后面会慢慢解答。
 
@@ -63,15 +63,15 @@ JDK中提供了ConcurrentSkipListMap，但却没有提供SkipListMap，我想这
 
 说明：
 
-\1. SimpleSkipListMap提供了main方法，这个方法主要是为了测试；
+1. SimpleSkipListMap提供了main方法，这个方法主要是为了测试；
 
-\2. 去掉了ConcurrentNavigableMap接口，因此减少了很多关于排序、子集的方法，这些方法实际上与跳表关系不大；
+2. 去掉了ConcurrentNavigableMap接口，因此减少了很多关于排序、子集的方法，这些方法实际上与跳表关系不大；
 
-\3. 增加了printContent方法，用于调试，可打印出所有索引和节点信息；
+3. 增加了printContent方法，用于调试，可打印出所有索引和节点信息；
 
-4.在remove节点时，直接将value赋值为null，然后在后续操作中慢慢删除节点和其索引。这种思想是与ConcurrentSkipListMap相同的，但ConcurrentSkipListMap是将value赋值为null的同时，在这个节点后还插入一个标志节点；
+在remove节点时，直接将value赋值为null，然后在后续操作中慢慢删除节点和其索引。这种思想是与ConcurrentSkipListMap相同的，但ConcurrentSkipListMap是将value赋值为null的同时，在这个节点后还插入一个标志节点；
 
-5.在源代码之后，我会一一介绍代码中较为重要的方法。
+在源代码之后，我会一一介绍代码中较为重要的方法。
 
 ```java
 public class SimpleSkipListMap<K, V> extends AbstractMap<K, V> implements Cloneable, java.io.Serializable {
@@ -771,43 +771,43 @@ public class SimpleSkipListMap<K, V> extends AbstractMap<K, V> implements Clonea
 
 这是本类中最常用的一个方法，用来找到指定节点的前一个节点：
 
-\1. 索引头部开始查找；
+1. 索引头部开始查找；
 
-\2. 在每一层索引中从左至右比较key值的大小，注意由于跳表是有序表，所以后面元素的key值一定比前面大，而索引中也是如此；
+2. 在每一层索引中从左至右比较key值的大小，注意由于跳表是有序表，所以后面元素的key值一定比前面大，而索引中也是如此；
 
-\3. 在进行key值比较时，处理作废的索引，即节点value为null的索引，这种索引直接从本层的索引列表中删除；
+3. 在进行key值比较时，处理作废的索引，即节点value为null的索引，这种索引直接从本层的索引列表中删除；
 
-\4. 同层比较到合适的位置时，即下一个索引的key值要大于本身时，下降一级索引；
+4. 同层比较到合适的位置时，即下一个索引的key值要大于本身时，下降一级索引；
 
-\5. 如此比较直至找到，或者到达底层单向链表；
+5. 如此比较直至找到，或者到达底层单向链表；
 
-\6. 若找到，则返回前一个节点，否则返回头部标志节点HEAD。
+6. 若找到，则返回前一个节点，否则返回头部标志节点HEAD。
 
 ## 3.3 Put
 
 在插入一个节点时，调用put方法：
 
-\1. 调用findPredecessor找到前序节点；
+1. 调用findPredecessor找到前序节点；
 
-\2. 从该节点处依次向后找到匹配的节点（因为有可能该节点后续跟着一串已经作废的节点）；
+2. 从该节点处依次向后找到匹配的节点（因为有可能该节点后续跟着一串已经作废的节点）；
 
-\3. 如果找到匹配节点，直接替换value；
+3. 如果找到匹配节点，直接替换value；
 
-\4. 否则在合适的位置插入一个新节点；
+4. 否则在合适的位置插入一个新节点；
 
-\5. 为新插入的节点建立索引。
+5. 为新插入的节点建立索引。
 
 建立索引又分为好几个步骤：
 
-\1. 使用randomLevel方法计算新节点的索引层次，记得前面的内容么？每个节点都有一个固定的概率p（此时=0.5）出现在上一层的索引中，那么就有p*p的概率出现在上两层中，总之计算出节点的层次（randomLevel照抄JDK了）；
+1. 使用randomLevel方法计算新节点的索引层次，记得前面的内容么？每个节点都有一个固定的概率p（此时=0.5）出现在上一层的索引中，那么就有p*p的概率出现在上两层中，总之计算出节点的层次（randomLevel照抄JDK了）；
 
-\2. 如果索引层次大于0，则调用insertIndex方法建立索引；
+2. 如果索引层次大于0，则调用insertIndex方法建立索引；
 
-\3. 在insertIndex方法中，为这个level层的节点建立level个索引，自下而上将这一竖列的索引的down引用设置好；
+3. 在insertIndex方法中，为这个level层的节点建立level个索引，自下而上将这一竖列的索引的down引用设置好；
 
-\4. 然后调用addIndex方法为每一层中的这个索引设置right引用；
+4. 然后调用addIndex方法为每一层中的这个索引设置right引用；
 
-\5. 在addIndex方法中，用类似findPredecessor类似的方法遍历整个索引，为每层的每个索引找到合适的位置，然后插入。
+5. 在addIndex方法中，用类似findPredecessor类似的方法遍历整个索引，为每层的每个索引找到合适的位置，然后插入。
 
 至此，put方法才算完成。运行main函数时，你会发现每次建立的索引是不一样的，因为它是基于概率来给每个节点建立索引的，这也就是为什么有人称它为概率数据结构的原因。
 
@@ -815,13 +815,13 @@ public class SimpleSkipListMap<K, V> extends AbstractMap<K, V> implements Clonea
 
 Get方法用来根据key查找value：
 
-\1. 调用findNode方法来查找节点；
+1. 调用findNode方法来查找节点；
 
-\2. 在findNode中先调用了findPredecessor来查找前一个节点；
+2. 在findNode中先调用了findPredecessor来查找前一个节点；
 
-\3. 然后依次检查后续的节点是否为有效节点，有效则返回，无效则删除；
+3. 然后依次检查后续的节点是否为有效节点，有效则返回，无效则删除；
 
-\4. 最后得到该节点的value值。
+4. 最后得到该节点的value值。
 
 ## 3.5 Remove
 
@@ -829,22 +829,22 @@ Get方法用来根据key查找value：
 
 Remove方法如下：
 
-\1. 调用findPredecessor方法找到前一个节点；
+1. 调用findPredecessor方法找到前一个节点；
 
-\2. 然后依次检查后续的节点是否为有效节点，无效则删除该节点；
+2. 然后依次检查后续的节点是否为有效节点，无效则删除该节点；
 
-\3. 比较key值，找到符合且有效的节点，将其value赋值为null。
+3. 比较key值，找到符合且有效的节点，将其value赋值为null。
 
 ## 3.6 迭代子
 
 要对Map进行遍历，需要用到三个集合和三个迭代子。本类中也提供了这些集合和迭代子，并在main方法中进行了测试。观察这些集合和迭代子时要注意以下几点：
 
-\1. keySet、entrySet、values这三个变量都是延迟加载的，不真正调用相关方法时，它们不会被创建出来；
+1. keySet、entrySet、values这三个变量都是延迟加载的，不真正调用相关方法时，它们不会被创建出来；
 
-\2. KeySet<E>类、Values<E>类和EntrySet<K, V>类都是依赖其内部的一个成员变量private final
-SimpleSkipListMap<K, V> m来完成相应方法的；
+2. KeySet<E>类、Values<E>类和EntrySet<K, V>类都是依赖其内部的一个成员变量private final
+   SimpleSkipListMap<K, V> m来完成相应方法的；
 
-\3. 三种迭代子KeyIterator、ValueIterator和EntryIterator有一个共同的虚基类Iter，Iter中有两个重要方法。其中remove方法用来删除内部节点，其实是调用了SimpleSkipListMap.this.remove方法；advance方法用来使之内部节点向后移动一个，这个方法在next中被用到了。
+3. 三种迭代子KeyIterator、ValueIterator和EntryIterator有一个共同的虚基类Iter，Iter中有两个重要方法。其中remove方法用来删除内部节点，其实是调用了SimpleSkipListMap.this.remove方法；advance方法用来使之内部节点向后移动一个，这个方法在next中被用到了。
 
 ## 4. ConcurrentSkipListMap的并发技巧
 

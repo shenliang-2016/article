@@ -115,8 +115,6 @@ public class HashMapExam {
 }
 ```
 
-
-
 ## 3.4 自动扩容
 
 HashMap的hash表是一个原生数组Entry<K,V>[] table，这个原生数组的长度在HashMap创建时就被确定。程序员可以在构造函数中使用initialCapacity（初始容量，默认为16）和loadFactor（负载因子，默认为0.75）来指定HashMap的容量以及自动扩容的时机。
@@ -156,8 +154,6 @@ public class HashMapExam2 {
 
 }
 ```
-
-
 
 例子中使用反射获取了HashMap的Map.Entry<Integer,String>[] table和threshold变量。从运行结果可以看出，当Map为空时，table的长度为0；当put了一个元素时，table长度被初始化为16，而threshold为12；当put了17个元素时，table扩容为32，而threshold为24。
 
@@ -210,8 +206,6 @@ public class ConcurrentHashMapVsHashtable { private static int INPUT_NUMBER = 10
 }
 ```
 
-
-
 这段代码中，生成10个子线程，每个线程向map中插入10万个键值对，然后计算耗时。ConcurrentHashMap平均耗时324ms，Hashtable平均耗时680ms，如此看来在我的普通PC机（i7，4核，16G内存）上，ConcurrentHashMap的耗时仅占Hashtable耗时的不到一半。
 
 ## 4.2 ConcurrentHashMap并发特性概述
@@ -249,23 +243,19 @@ ConcurrentHashMap类中包含三个与Segment相关的成员变量：
  */ final Segment<K,V>[] segments;
 ```
 
-
-
 其中segments是Segment的原生数组，此数组的长度可以在ConcurrentHashMap的构造函数中使用并发度参数指定，其默认值为DEFAULT_CONCURRENCY_LEVEL=16。segmentShift是用来计算segments数组索引的位移量，而segmentMask则是用来计算索引的掩码值。例如并发度为16时（即segments数组长度为16），segmentShift为32-4=28（因为2的4次幂为16），而segmentMask则为1111（二进制），索引的计算式如下：
 
 ```java
 int j = (hash >>> segmentShift) & segmentMask;
 ```
 
-
-
 考虑到并发环境下的性能和变量读写可见性，参考[https://tech.meituan.com/java-memory-reordering.html](https://link.zhihu.com/?target=https%3A//tech.meituan.com/java-memory-reordering.html)一文，在多线程并发访问一个共享变量时，为了保证逻辑的正确，可以采用以下方法：
 
-\1. 加锁，性能最低，能保证原子性、可见性，防止指令重排；
+1. 加锁，性能最低，能保证原子性、可见性，防止指令重排；
 
-\2. 使用volatile修饰，性能中等，能保证可见性，防止指令重排；
+2. 使用volatile修饰，性能中等，能保证可见性，防止指令重排；
 
-\3. 使用getObjectVolatile，性能最好，可防止指令重排；
+3. 使用getObjectVolatile，性能最好，可防止指令重排；
 
 因此ConcurrentHashMap选择了使用Unsafe（关于Unsafe的详细解释，请参考本系统的另一篇文章[Java Concurrency代码实例之三原子变量](https://zhuanlan.zhihu.com/p/27338395)）的getObjectVolatile来读取segments中的元素，相关代码如下：
 
@@ -335,8 +325,6 @@ final V put(K key, int hash, V value, boolean onlyIfAbsent) {
     return oldValue;
 }
 ```
-
-
 
 首先调用tryLock，如果加锁失败，则进入scanAndLockForPut(key, hash, value)方法，该方法实际上是先自旋等待其他线程解锁，直至指定的次数MAX_SCAN_RETRIES。若自旋过程中，其他线程释放了锁，导致本线程直接获得了锁，就避免了本线程进入等待锁的场景，提高了效率。若自旋一定次数后，仍未获取锁，则调用lock方法进入等待锁的场景。
 
@@ -430,8 +418,6 @@ public V get(Object key) {
 }
 ```
 
-
-
 整个get方法不需要加锁，只需要计算两次hash值，然后遍历一个单向链表（此链表长度平均小于2），因此get性能很高。
 
 containsKey方法与get非常类似。
@@ -453,8 +439,6 @@ public V put(K key, V value) {
 //调用该segment的put方法 return s.put(key, hash, value, false);
 }
 ```
-
-
 
 put方法第二步，在Segment的put方法中进行操作。
 
@@ -591,8 +575,6 @@ final V remove(Object key, int hash, Object value) {
 }
 ```
 
-
-
 remove方法相对简单，其scanAndLock是scanAndLockForPut的简化版本：
 
 ```java
@@ -622,8 +604,6 @@ private void scanAndLock(Object key, int hash) {
 }
 ```
 
-
-
 扫描链表，找到匹配的节点，同时自旋等待加锁。
 
 ## 4.8 replace方法
@@ -639,8 +619,6 @@ public V replace(K key, V value) {
     return s == null ? null : s.replace(key, hash, value);
 }
 ```
-
-
 
 首先找到对应的Segment，然后调用其replace方法：
 
@@ -667,8 +645,6 @@ final V replace(K key, int hash, V value) {
     return oldValue;
 }
 ```
-
-
 
 replace方法中也用到了scanAndLock方法。
 
