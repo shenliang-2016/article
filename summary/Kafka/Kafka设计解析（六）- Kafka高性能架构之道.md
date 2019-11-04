@@ -91,6 +91,7 @@ CAP理论是指，分布式系统中，一致性、可用性和分区容忍性�
 - Google的Chubby，Zookeeper的原子广播协议（Zab），RAFT等
 
 **基于ISR的数据复制方案**
+
 如《[ Kafka High Availability（上）](http://www.jasongj.com/2015/04/24/KafkaColumn2/#ACK前需要保证有多少个备份)》一文所述，Kafka的数据复制是以Partition为单位的。而多个备份间的数据复制，通过Follower向Leader拉取数据完成。从一这点来讲，Kafka的数据复制方案接近于上文所讲的Master-Slave方案。不同的是，Kafka既不是完全的同步复制，也不是完全的异步复制，而是基于ISR的动态复制方案。
 
 ISR，也即In-sync Replica。每个Partition的Leader都会维护这样一个列表，该列表中，包含了所有与之同步的Replica（包含Leader自己）。每次数据写入时，只有ISR中的所有Replica都复制完，Leader才会将其置为Commit，它才能被Consumer所消费。
@@ -103,9 +104,10 @@ ISR，也即In-sync Replica。每个Partition的Leader都会维护这样一个�
 - 从0.9.0.0版本开始，`replica.lag.max.messages`被移除，故Leader不再考虑Follower落后的消息条数。另外，Leader不仅会判断Follower是否在`replica.lag.time.max.ms`时间内向其发送Fetch请求，同时还会考虑Follower是否在该时间内与之保持同步。
 - 0.10.* 版本的策略与0.9.*版一致
 
-对于0.8.*版本的`replica.lag.max.messages`参数，很多读者曾留言提问，既然只有ISR中的所有Replica复制完后的消息才被认为Commit，那为何会出现Follower与Leader差距过大的情况。原因在于，Leader并不需要等到前一条消息被Commit才接收后一条消息。事实上，Leader可以按顺序接收大量消息，最新的一条消息的Offset被记为LEO（Log end offset）。而只有被ISR中所有Follower都复制过去的消息才会被Commit，Consumer只能消费被Commit的消息，最新被Commit的Offset被记为High watermark。换句话说，LEO 标记的是Leader所保存的最新消息的offset，而High watermark标记的是最新的可被消费的（已同步到ISR中的Follower）消息。而Leader对数据的接收与Follower对数据的复制是异步进行的，因此会出现Hight watermark与LEO存在一定差距的情况。0.8.*版本中`replica.lag.max.messages`限定了Leader允许的该差距的最大值。
+对于0.8.\*版本的`replica.lag.max.messages`参数，很多读者曾留言提问，既然只有ISR中的所有Replica复制完后的消息才被认为Commit，那为何会出现Follower与Leader差距过大的情况。原因在于，Leader并不需要等到前一条消息被Commit才接收后一条消息。事实上，Leader可以按顺序接收大量消息，最新的一条消息的Offset被记为LEO（Log end offset）。而只有被ISR中所有Follower都复制过去的消息才会被Commit，Consumer只能消费被Commit的消息，最新被Commit的Offset被记为High watermark。换句话说，LEO 标记的是Leader所保存的最新消息的offset，而High watermark标记的是最新的可被消费的（已同步到ISR中的Follower）消息。而Leader对数据的接收与Follower对数据的复制是异步进行的，因此会出现Hight watermark与LEO存在一定差距的情况。0.8.*版本中`replica.lag.max.messages`限定了Leader允许的该差距的最大值。
 
 Kafka基于ISR的数据复制方案原理如下图所示。
+
 [![Kafka Replication](http://www.jasongj.com/img/kafka/KafkaColumn6/kafka-replication.png)](http://www.jasongj.com/img/kafka/KafkaColumn6/kafka-replication.png)
 
 如上图所示，在第一步中，Leader A总共收到3条消息，故其high watermark为3，但由于ISR中的Follower只同步了第1条消息（m1），故只有m1被Commit，也即只有m1可被Consumer消费。此时Follower B与Leader A的差距是1，而Follower C与Leader A的差距是2，均未超过默认的`replica.lag.max.messages`，故得以保留在ISR中。在第二步中，由于旧的Leader A宕机，新的Leader B在`replica.lag.time.max.ms`时间内未收到来自A的Fetch请求，故将A从ISR中移除，此时ISR={B，C}。同时，由于此时新的Leader B中只有2条消息，并未包含m3（m3从未被任何Leader所Commit），所以m3无法被Consumer消费。第四步中，Follower A恢复正常，它先将宕机前未Commit的所有消息全部删除，然后从最后Commit过的消息的下一条消息开始追赶新的Leader B，直到它“赶上”新的Leader，才被重新加入新的ISR中。
@@ -154,8 +156,6 @@ def delete() {
 }
 ```
 
-
-
 ### 充分利用Page Cache
 
 使用Page Cache的好处如下
@@ -190,8 +190,6 @@ Kafka中存在大量的网络数据持久化到磁盘（Producer到Broker）和�
 buffer = File.read
 Socket.send(buffer)
 ```
-
-
 
 这一过程实际上发生了四次数据拷贝。首先通过系统调用将文件数据读入到内核态Buffer（DMA拷贝），然后应用程序将内存态Buffer数据读入到用户态Buffer（CPU拷贝），接着用户程序通过Socket发送数据时将用户态Buffer数据拷贝到内核态Buffer（CPU拷贝），最后通过DMA拷贝将数据拷贝到NIC Buffer。同时，还伴随着四次上下文切换，如下图所示。
 

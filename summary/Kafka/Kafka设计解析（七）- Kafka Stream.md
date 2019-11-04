@@ -86,8 +86,6 @@ KStream<String, String> stream = builder.stream("words-stream");
 KTable<String, String> table = builder.table("words-table", "words-store");
 ```
 
-
-
 另外，上图中的Consumer和Producer并不需要开发者在应用中显示实例化，而是由Kafka Stream根据参数隐式实例化和管理，从而降低了使用门槛。开发者只需要专注于开发核心业务逻辑，也即上图中Task内的部分。
 
 ## Processor Topology
@@ -136,8 +134,6 @@ public class WordCountProcessor implements Processor<String, String> {
 
 }
 ```
-
-
 
 从上述代码中可见
 
@@ -224,12 +220,12 @@ Kafka Stream支持的窗口如下。
 
 1. `Hopping Time Window` 该窗口定义如下图所示。它有两个属性，一个是Window size，一个是Advance interval。Window size指定了窗口的大小，也即每次计算的数据集的大小。而Advance interval定义输出的时间间隔。一个典型的应用场景是，每隔5秒钟输出一次过去1个小时内网站的PV或者UV。
 
-   
+  
    [![Hopping Time Window](http://www.jasongj.com/img/kafka/KafkaColumn7/Hopping%20Time%20Window.gif)](http://www.jasongj.com/img/kafka/KafkaColumn7/Hopping Time Window.gif)
 
 2. `Tumbling Time Window`该窗口定义如下图所示。可以认为它是Hopping Time Window的一种特例，也即Window size和Advance interval相等。它的特点是各个Window之间完全不相交。
 
-   
+  
    [![Tumbling Time Window](http://www.jasongj.com/img/kafka/KafkaColumn7/Tumbling%20Time%20Window.gif)](http://www.jasongj.com/img/kafka/KafkaColumn7/Tumbling Time Window.gif)
 
 3. `Sliding Window`该窗口只用于2个KStream进行Join计算时。该窗口的大小定义了Join两侧KStream的数据记录被认为在同一个窗口的最大时间差。假设该窗口的大小为5秒，则参与Join的2个KStream中，记录时间差小于5的记录被认为在同一个窗口中，可以进行Join计算。
@@ -255,8 +251,6 @@ Kafka Stream由于包含KStream和Ktable两种数据集，因此提供如下Join
 ```
 KStream<K, V> through(Serde<K> keySerde, Serde<V> valSerde, StreamPartitioner<K, V> partitioner, String topic)
 ```
-
-
 
 ## 聚合与乱序处理
 
@@ -300,8 +294,6 @@ public class OrderTimestampExtractor implements TimestampExtractor {
 }
 ```
 
-
-
 接着通过将orderStream与userTable进行Join，来获取订单用户所在地。由于二者对应的Topic的Partition数相同，且Key都为用户名，再假设Producer往这两个Topic写数据时所用的Partitioner实现相同，则此时上文所述Join条件满足，可直接进行Join。
 
 ```
@@ -315,8 +307,6 @@ orderUserStream = orderStream
          SerdesFactory.serdFrom(Order.class))
     .filter((String userName, OrderUser orderUser) -> orderUser.userAddress != null)
 ```
-
-
 
 从上述代码中，可以看到，Join时需要指定如何从参与Join双方的记录生成结果记录的Value。Key不需要指定，因为结果记录的Key与Join Key相同，故无须指定。Join结果存于名为orderUserStream的KStream中。
 
@@ -334,8 +324,6 @@ orderUserStrea
         "orderuser-repartition-by-item")
     .leftJoin(itemTable, (OrderUser orderUser, Item item) -> OrderUserItem.fromOrderUser(orderUser, item), Serdes.String(), SerdesFactory.serdFrom(OrderUser.class))
 ```
-
-
 
 从上述代码可见，through时需要指定Key的序列化器，Value的序列化器，以及分区方式和结果集所在的Topic。这里要注意，该Topic（orderuser-repartition-by-item）的Partition数必须与itemTable对应Topic的Partition数相同，并且through使用的分区方法必须与iteamTable对应Topic的分区方式一样。经过这种`through`操作，orderUserStream与itemTable满足了Join条件，可直接进行Join。
 
