@@ -16,7 +16,7 @@
 
 ### [1. singleton——唯一 bean 实例](https://snailclimb.gitee.io/javaguide/#/docs/system-design/framework/spring/SpringBean?id=_1-singleton唯一-bean-实例)
 
-**当一个 bean 的作用域为 singleton，那么Spring IoC容器中只会存在一个共享的 bean 实例，并且所有对 bean 的请求，只要 id 与该 bean 定义相匹配，则只会返回bean的同一实例。** singleton 是单例类型(对应于单例模式)，就是在创建起容器时就同时自动创建了一个bean的对象，不管你是否使用，但我们可以指定Bean节点的 `lazy-init=”true”` 来延迟初始化bean，这时候，只有在第一次获取bean时才会初始化bean，即第一次请求该bean时才初始化。 每次获取到的对象都是同一个对象。注意，singleton 作用域是Spring中的缺省作用域。要在XML中将 bean 定义成 singleton ，可以这样配置：
+**当一个 bean 的作用域为 singleton，那么Spring IoC容器中只会存在一个共享的 bean 实例，并且所有对 bean 的请求，只要 id 与该 bean 定义相匹配，则只会返回bean的同一实例。** singleton 是单例类型(对应于单例模式)，就是在创建起容器时就同时自动创建了一个bean的对象，不管你是否使用。但我们可以指定Bean节点的 `lazy-init=”true”` 来延迟初始化bean，这时候，只有在第一次获取bean时才会初始化bean，即第一次请求该bean时才初始化。 每次获取到的对象都是同一个对象。注意，singleton 作用域是Spring中的缺省作用域。要在XML中将 bean 定义成 singleton ，可以这样配置：
 
 ```xml
 <bean id="ServiceImpl" class="cn.csdn.service.ServiceImpl" scope="singleton">
@@ -36,11 +36,15 @@ public class ServiceImpl{
 
 **当一个bean的作用域为 prototype，表示一个 bean 定义对应多个对象实例。** **prototype 作用域的 bean 会导致在每次对该 bean 请求**（将其注入到另一个 bean 中，或者以程序的方式调用容器的 getBean() 方法**）时都会创建一个新的 bean 实例。prototype 是原型类型，它在我们创建容器的时候并没有实例化，而是当我们获取bean的时候才会去创建一个对象，而且我们每次获取到的对象都不是同一个对象。根据经验，对有状态的 bean 应该使用 prototype 作用域，而对无状态的 bean 则应该使用 singleton 作用域。** 在 XML 中将 bean 定义成 prototype ，可以这样配置：
 
-```java
+```xml
 <bean id="account" class="com.foo.DefaultAccount" scope="prototype"/>  
- 或者
-<bean id="account" class="com.foo.DefaultAccount" singleton="false"/> 
 ```
+
+或者
+
+````xml
+<bean id="account" class="com.foo.DefaultAccount" singleton="false"/> 
+````
 
 通过 `@Scope` 注解的方式实现就不做演示了。
 
@@ -48,7 +52,7 @@ public class ServiceImpl{
 
 **request只适用于Web程序，每一次 HTTP 请求都会产生一个新的bean，同时该bean仅在当前HTTP request内有效，当请求结束后，该对象的生命周期即告结束。** 在 XML 中将 bean 定义成 request ，可以这样配置：
 
-```java
+```xml
 <bean id="loginAction" class=cn.csdn.LoginAction" scope="request"/>
 ```
 
