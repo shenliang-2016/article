@@ -10,7 +10,7 @@ https://my.oschina.net/luozhou/blog/3088908
 
 用过SpringBoot的人都知道，首先要写一个main方法来启动
 
-```
+```java
 @SpringBootApplication
 public class TomcatdebugApplication {
 
@@ -23,7 +23,7 @@ public class TomcatdebugApplication {
 
 我们直接点击run方法的源码，跟踪下来，发下最终 的`run`方法是调用`ConfigurableApplicationContext`方法，源码如下：
 
-```
+```java
 public ConfigurableApplicationContext run(String... args) {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
@@ -91,7 +91,7 @@ public ConfigurableApplicationContext run(String... args) {
 
 其实上面这段代码，如果只要分析tomcat内容的话，只需要关注两个内容即可，上下文是如何创建的，上下文是如何刷新的，分别对应的方法就是`createApplicationContext()` 和`refreshContext(context)`，接下来我们来看看这两个方法做了什么。
 
-```
+```java
 protected ConfigurableApplicationContext createApplicationContext() {
 		Class<!--?--> contextClass = this.applicationContextClass;
 		if (contextClass == null) {
@@ -123,7 +123,7 @@ protected ConfigurableApplicationContext createApplicationContext() {
 
 通过这个类图我们可以知道，这个类继承的是`ServletWebServerApplicationContext`,这就是我们真正的主角，而这个类最终是继承了`AbstractApplicationContext`，了解完创建上下文的情况后，我们再来看看刷新上下文，相关代码如下：
 
-```
+```java
 //类：SpringApplication.java
 
 private void refreshContext(ConfigurableApplicationContext context) {
@@ -148,7 +148,7 @@ protected void refresh(ApplicationContext applicationContext) {
 
 这里还是直接传递调用本类的`refresh(context)`方法，最后是强转成父类`AbstractApplicationContext`调用其`refresh()`方法,该代码如下：
 
-```
+```java
 // 类：AbstractApplicationContext	
 public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
@@ -217,7 +217,7 @@ public void refresh() throws BeansException, IllegalStateException {
 
 这里我们看到`onRefresh()`方法是调用其子类的实现，根据我们上文的分析，我们这里的子类是`ServletWebServerApplicationContext`。
 
-```
+```java
 //类：ServletWebServerApplicationContext
 protected void onRefresh() {
 		super.onRefresh();
@@ -256,7 +256,7 @@ private void createWebServer() {
 
 根据上图我们发现，工厂类是一个接口，各个具体服务的实现是由各个子类来实现的，所以我们就去看看`TomcatServletWebServerFactory.getWebServer()`的实现。
 
-```
+```java
 	@Override
 	public WebServer getWebServer(ServletContextInitializer... initializers) {
 		Tomcat tomcat = new Tomcat();
@@ -278,7 +278,7 @@ private void createWebServer() {
 
 根据上面的代码，我们发现其主要做了两件事情，第一件事就是把Connnctor(我们称之为连接器)对象添加到Tomcat中，第二件事就是`configureEngine`,这连接器我们勉强能理解（不理解后面会述说），那这个`Engine`是什么呢？我们查看`tomcat.getEngine()`的源码：
 
-```
+```java
     public Engine getEngine() {
         Service service = getServer().findServices()[0];
         if (service.getContainer() != null) {
@@ -299,7 +299,7 @@ private void createWebServer() {
 
 上图中，我们看到了4个子接口，分别是Engine,Host,Context,Wrapper。我们从继承关系上可以知道他们都是容器，那么他们到底有啥区别呢？我看看他们的注释是怎么说的。
 
-```
+```java
  /**
  If used, an Engine is always the top level Container in a Catalina
  * hierarchy. Therefore, the implementation's <code>setParent()</code> method
@@ -356,7 +356,7 @@ public interface Wrapper extends Container {
 
 上面的注释翻译过来就是，`Engine`是最高级别的容器，其子容器是`Host`,`Host`的子容器是`Context`,`Wrapper`是`Context`的子容器，所以这4个容器的关系就是父子关系，也就是`Engine`>`Host`>`Context`>`Wrapper`。 我们再看看`Tomcat`类的源码:
 
-```
+```java
 //部分源码，其余部分省略。
 public class Tomcat {
 //设置连接器
