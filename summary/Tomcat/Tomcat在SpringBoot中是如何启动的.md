@@ -4,7 +4,7 @@ https://my.oschina.net/luozhou/blog/3088908
 
 ## 前言
 
-我们知道SpringBoot给我们带来了一个全新的开发体验，我们可以直接把web程序达成jar包，直接启动，这就得益于SpringBoot内置了容器，可以直接启动，本文将以Tomcat为例，来看看SpringBoot是如何启动Tomcat的，同时也将展开学习下Tomcat的源码，了解Tomcat的设计。
+我们知道SpringBoot给我们带来了一个全新的开发体验，我们可以直接把web程序打成jar包，直接启动，这就得益于SpringBoot内置了容器，可以直接启动。本文将以Tomcat为例，来看看SpringBoot是如何启动Tomcat的，同时也将展开学习下Tomcat的源码，了解Tomcat的设计。
 
 ## 从 Main 方法说起
 
@@ -67,7 +67,7 @@ public ConfigurableApplicationContext run(String... args) {
 			//发布应用已经启动的事件
 			listeners.started(context);
 			//遍历所有注册的ApplicationRunner和CommandLineRunner，并执行其run()方法。
-        //我们可以实现自己的ApplicationRunner或者CommandLineRunner，来对SpringBoot的启动过程进行扩展。
+      //我们可以实现自己的ApplicationRunner或者CommandLineRunner，来对SpringBoot的启动过程进行扩展。
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
@@ -87,7 +87,7 @@ public ConfigurableApplicationContext run(String... args) {
 	}
 ```
 
-其实这个方法我们可以简单的总结下步骤为 > 1. 配置属性 > 2. 获取监听器，发布应用开始启动事件 > 3. 初始化输入参数 > 4. 配置环境，输出banner > 5. 创建上下文 > 6. 预处理上下文 > 7. 刷新上下文 > 8. 再刷新上下文 > 9. 发布应用已经启动事件 > 10. 发布应用启动完成事件
+其实这个方法我们可以简单的总结下步骤为 > 1. 配置属性 > 2. 获取监听器，发布应用开始启动事件 > 3. 初始化输入参数 > 4. 配置环境，输出banner > 5. 创建上下文 > 6. 预处理上下文 > 7. 刷新上下文 > 8. 再刷新上下文 > 9. 发布应用已经启动事件 > 10. 发布应用启动完成事件。
 
 其实上面这段代码，如果只要分析tomcat内容的话，只需要关注两个内容即可，上下文是如何创建的，上下文是如何刷新的，分别对应的方法就是`createApplicationContext()` 和`refreshContext(context)`，接下来我们来看看这两个方法做了什么。
 
@@ -117,11 +117,11 @@ protected ConfigurableApplicationContext createApplicationContext() {
 	}
 ```
 
-这里就是根据我们的`webApplicationType` 来判断创建哪种类型的Servlet,代码中分别对应着Web类型(SERVLET),响应式Web类型（REACTIVE),非Web类型（default),我们建立的是Web类型，所以肯定实例化 `DEFAULT_SERVLET_WEB_CONTEXT_CLASS`指定的类，也就是`AnnotationConfigServletWebServerApplicationContext`类，我们来用图来说明下这个类的关系
+这里就是根据我们的`webApplicationType` 来判断创建哪种类型的Servlet，代码中分别对应着Web类型(SERVLET)，响应式Web类型（REACTIVE)，非Web类型（default)。我们建立的是Web类型，所以肯定实例化 `DEFAULT_SERVLET_WEB_CONTEXT_CLASS`指定的类，也就是`AnnotationConfigServletWebServerApplicationContext`类。我们来用图来说明下这个类的关系
 
 ![img](https://oscimg.oschina.net/oscnet/ddfa51d6e2de3d57c7422625e51f6250314.jpg)
 
-通过这个类图我们可以知道，这个类继承的是`ServletWebServerApplicationContext`,这就是我们真正的主角，而这个类最终是继承了`AbstractApplicationContext`，了解完创建上下文的情况后，我们再来看看刷新上下文，相关代码如下：
+通过这个类图我们可以知道，这个类继承的是`ServletWebServerApplicationContext`，这就是我们真正的主角，而这个类最终是继承了`AbstractApplicationContext`。了解完创建上下文的情况后，我们再来看看刷新上下文，相关代码如下：
 
 ```java
 //类：SpringApplication.java
@@ -146,7 +146,7 @@ protected void refresh(ApplicationContext applicationContext) {
 	}
 ```
 
-这里还是直接传递调用本类的`refresh(context)`方法，最后是强转成父类`AbstractApplicationContext`调用其`refresh()`方法,该代码如下：
+这里还是直接传递调用本类的`refresh(context)`方法，最后是强转成父类`AbstractApplicationContext`调用其`refresh()`方法，该代码如下：
 
 ```java
 // 类：AbstractApplicationContext	
@@ -248,7 +248,7 @@ private void createWebServer() {
 	}
 ```
 
-到这里，其实庐山真面目已经出来了，`createWebServer()`就是启动web服务，但是还没有真正启动Tomcat，既然`webServer`是通过`ServletWebServerFactory`来获取的，我们就来看看这个工厂的真面目。
+到这里，其实庐山真面目已经出来了，`createWebServer()`就是启动web服务，但是还没有真正启动Tomcat。既然`webServer`是通过`ServletWebServerFactory`来获取的，我们就来看看这个工厂的真面目。
 
 ![img](https://oscimg.oschina.net/oscnet/32105bd09038062130bae500d6717f223f8.jpg)
 
@@ -276,7 +276,7 @@ private void createWebServer() {
 	}
 ```
 
-根据上面的代码，我们发现其主要做了两件事情，第一件事就是把Connnctor(我们称之为连接器)对象添加到Tomcat中，第二件事就是`configureEngine`,这连接器我们勉强能理解（不理解后面会述说），那这个`Engine`是什么呢？我们查看`tomcat.getEngine()`的源码：
+根据上面的代码，我们发现其主要做了两件事情，第一件事就是把Connnctor(我们称之为连接器)对象添加到Tomcat中，第二件事就是`configureEngine`，这连接器我们勉强能理解（不理解后面会述说），那这个`Engine`是什么呢？我们查看`tomcat.getEngine()`的源码：
 
 ```java
     public Engine getEngine() {
@@ -297,7 +297,7 @@ private void createWebServer() {
 
 ![img](https://oscimg.oschina.net/oscnet/d46479019a9158e06e887998d303487e90e.jpg)
 
-上图中，我们看到了4个子接口，分别是Engine,Host,Context,Wrapper。我们从继承关系上可以知道他们都是容器，那么他们到底有啥区别呢？我看看他们的注释是怎么说的。
+上图中，我们看到了4个子接口，分别是Engine，Host，Context，Wrapper。我们从继承关系上可以知道他们都是容器，那么他们到底有啥区别呢？我看看他们的注释是怎么说的。
 
 ```java
  /**
@@ -354,7 +354,7 @@ public interface Wrapper extends Container {
 }
 ```
 
-上面的注释翻译过来就是，`Engine`是最高级别的容器，其子容器是`Host`,`Host`的子容器是`Context`,`Wrapper`是`Context`的子容器，所以这4个容器的关系就是父子关系，也就是`Engine`>`Host`>`Context`>`Wrapper`。 我们再看看`Tomcat`类的源码:
+上面的注释翻译过来就是，`Engine`是最高级别的容器，其子容器是`Host`，`Host`的子容器是`Context`，`Wrapper`是`Context`的子容器，所以这4个容器的关系就是父子关系，也就是`Engine`>`Host`>`Context`>`Wrapper`。 我们再看看`Tomcat`类的源码:
 
 ```java
 //部分源码，其余部分省略。
@@ -463,7 +463,7 @@ public class Tomcat {
 
 ![img](https://oscimg.oschina.net/oscnet/f5163f6d4c2cf52cc41c757356896693782.jpg)
 
-一个`Tomcat`是一个`Server`,一个`Server`下有多个`service`，也就是我们部署的多个应用，一个应用下有多个连接器(`Connector`)和一个容器（`Container`）,容器下有多个子容器，关系用图表示如下：
+一个`Tomcat`是一个`Server`，一个`Server`下有多个`service`，也就是我们部署的多个应用，一个应用下有多个连接器(`Connector`)和一个容器（`Container`）,容器下有多个子容器，关系用图表示如下：
 
 ![img](https://oscimg.oschina.net/oscnet/a98162cf99f8098dd76d307551593266ce0.jpg)
 
@@ -471,6 +471,6 @@ public class Tomcat {
 
 ## 总结
 
-SpringBoot的启动是通过`new SpringApplication()`实例来启动的，启动过程主要做如下几件事情： > 1. 配置属性 > 2. 获取监听器，发布应用开始启动事件 > 3. 初始化输入参数 > 4. 配置环境，输出banner > 5. 创建上下文 > 6. 预处理上下文 > 7. 刷新上下文 > 8. 再刷新上下文 > 9. 发布应用已经启动事件 > 10. 发布应用启动完成事件
+SpringBoot的启动是通过`new SpringApplication()`实例来启动的，启动过程主要做如下几件事情： > 1. 配置属性 > 2. 获取监听器，发布应用开始启动事件 > 3. 初始化输入参数 > 4. 配置环境，输出banner > 5. 创建上下文 > 6. 预处理上下文 > 7. 刷新上下文 > 8. 再刷新上下文 > 9. 发布应用已经启动事件 > 10. 发布应用启动完成事件。
 
-而启动Tomcat就是在第7步中“刷新上下文”；Tomcat的启动主要是初始化2个核心组件，连接器(Connector)和容器（Container），一个Tomcat实例就是一个Server，一个Server包含多个Service，也就是多个应用程序，每个Service包含多个连接器（Connetor）和一个容器（Container),而容器下又有多个子容器，按照父子关系分别为：Engine,Host,Context,Wrapper，其中除了Engine外，其余的容器都是可以有多个。
+而启动Tomcat就是在第7步中“刷新上下文”；Tomcat的启动主要是初始化2个核心组件，连接器(Connector)和容器（Container），一个Tomcat实例就是一个Server，一个Server包含多个Service，也就是多个应用程序，每个Service包含多个连接器（Connetor）和一个容器（Container),而容器下又有多个子容器，按照父子关系分别为：Engine，Host，Context，Wrapper。其中除了Engine外，其余的容器都是可以有多个。
