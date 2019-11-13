@@ -215,3 +215,18 @@ Connection conn = DataSourceUtils.getConnection(dataSource);
 
 当然，一旦你已经使用了 Spring 的 JDBC 支持，JPA 支持，或者 Hibernate 支持，你通常不会希望使用 `DataSourceUtils` 或者其他帮助类，因为你已经发现通过 Spring 的抽闲进行事务管理要比直接使用相关 APIs 要轻松愉快的多。比如，如果你的使用 Spring `JdbcTemplate` 或者 `jdbc.object` 包来简化你的 JDBC 使用，正确的连接检索在后台进行，而你不需要编写任何特定代码。
 
+### 1.3.3 `TransactionAwareDataSourceProxy`
+
+在最低层级的是 `TransactionAwareDataSourceProxy` 类。这是一个目标 `DataSource` 的代理，包装了目标 `DataSource` 以添加 Spring 管理的事务的敏感性。从这层面看，它类似于由 Java EE 服务器提供的传统的 JNDI `DataSource` 。
+
+你可能永远不需要也不想要使用这个类，除非现存的代码必须传入一个标准的 JDBC `DataSource` 接口实现。那种情况下，这些代码可能可用，但参与了 Spring 管理的事务。您可以使用前面提到的高级抽象来编写新代码。
+
+## 1.4 声明式事务管理
+
+> 大部分 Spring 用户会选择声明式事务管理。这种方式可以最小程度地影响应用代码，因而，最符合非侵入式的轻量级容器理念。
+
+Spring 框架的声明式事务管理基于 Spring 的面向切面编程 (AOP)。不过，由于传统的切面代码都随着 Spring 框架一起发布，而且通常以固定模版的方式使用，因而有效使用这些代码并不一定需要理解 AOP 的概念。
+
+Spring 框架的声明式事务管理类似于 EJB CMT。你可以细粒度到方法级别为每个方法指定事务行为。如果有必要，你可以在事务上下文中进行 `setRollbackOnly()` 调用。这两种事务管理的区别在于：
+
+* 不同于 EJB CMT 绑定到 JTA，Spring 框架的声明式事务管理可以在任何环境下工作。它可以使用 JTA 事务，或者通过调整配置文件，通过使用 JDBC，JPA，或者 Hibernate 来使用局部事务。
