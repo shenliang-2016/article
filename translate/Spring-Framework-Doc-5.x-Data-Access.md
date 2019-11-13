@@ -230,3 +230,13 @@ Spring 框架的声明式事务管理基于 Spring 的面向切面编程 (AOP)�
 Spring 框架的声明式事务管理类似于 EJB CMT。你可以细粒度到方法级别为每个方法指定事务行为。如果有必要，你可以在事务上下文中进行 `setRollbackOnly()` 调用。这两种事务管理的区别在于：
 
 * 不同于 EJB CMT 绑定到 JTA，Spring 框架的声明式事务管理可以在任何环境下工作。它可以使用 JTA 事务，或者通过调整配置文件，通过使用 JDBC，JPA，或者 Hibernate 来使用局部事务。
+
+* 你可以将 Spring 框架的声明式事务管理应用于任何类，不仅仅是特定的类，比如 EJBs。
+* Spring 框架提供了声明式[回滚规则](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-rolling-back) ，该特性没有 EJB 等价物。Spring 同时提供了编程式和声明式的回滚规则支持。
+* Spring 框架允许你通过使用 AOP 自定义事务性行为。比如，你可以在事务回滚的情况下插入自定义行为。你还可以随着事务性增强添加任意增强。使用 EJB CMT，你不能影响容器的事务管理，除了使用 `setRollbackOnly()`。
+* Spring 框架没有支持跨远程调用的上下文中的事务传播，如顶层的应用服务器那样。如果你需要该特性，我们推荐你使用 EJB。然而，在使用该特性之前需要谨慎考虑，因为，正常情况下，我们不会希望事务跨越远程调用。
+
+回滚规则的概念非常重要。它们允许你指定何种异常 (或者 `throwable`) 应该导致自动回滚。你可以声明式指定，在配置文件中，而不是以 Java 代码的形式。因此，尽管你可以在 `TransactionStatus` 对象上调用 `setRollbackOnly()` 方法来回滚当前事务，大部分情况下你可以指定一个规则，`MyApplicationException` 必须永远导致回滚。这样做的显著优势就是业务对象不会依赖事务基础设施。比如，典型地，它们不需要引入 Spring 事务 APIs 或者其他 Spring APIs。
+
+尽管 EJB 容器的默认行为会在系统异常（通常是运行时异常）时自动回滚事务，但是 EJB CMT不会在应用程序异常（即 `java.rmi.RemoteException` 以外的已检查异常）下自动回滚事务。尽管 Spring 声明式事务管理的默认行为遵循 EJB 约定（仅针对未检查的异常会自动回滚），但自定义此行为通常很有用。
+
