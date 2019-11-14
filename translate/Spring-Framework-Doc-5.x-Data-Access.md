@@ -360,3 +360,64 @@ public class DefaultFooService implements FooService {
 
 > 你可以忽略事务性增强 `<tx:advice/>` 中的 `transaction-manager` 属性，如果你希望写入其中的 `PlatformTransactionManager` 的名字就是 `transactionManager` 。如果该 `PlatformTransactionManager` bean 是任何其他名字，你就必须像上面例子那样显式使用 `transaction-manager` 属性。
 
+`<aop:config/>` 定义可确保由 `txAdvice` bean定义的事务性增强在程序的适当位置执行。首先，定义一个切入点，该切入点与 `FooService` 接口（`fooServiceOperation`）中定义的任何操作的执行相匹配。然后，使用增强器将切入点与 `txAdvice` 关联。结果表明，在执行 `fooServiceOperation` 时，将运行由 `txAdvice` 定义的增强。
+
+ `<aop:pointcut/>` 元素中定义的表达式是一个 AspectJ 切入点表达式。参考 [the AOP section](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 获取有关 Spring 中的切入点表达式的更多信息。
+
+常见的情形是我们需要将整个的服务层都改为事务性的。最好的方式是修改该切入点表达式，匹配服务层中的所有操作。下面的例子展示了如何做：
+
+````xml
+<aop:config>
+    <aop:pointcut id="fooServiceMethods" expression="execution(* x.y.service.*.*(..))"/>
+    <aop:advisor advice-ref="txAdvice" pointcut-ref="fooServiceMethods"/>
+</aop:config>
+````
+
+> 上面的例子中，假定你所有的服务接口都定义在 `x.y.service` 包中。参考 [the AOP section](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 获取更多细节。
+
+现在，我们已经分析了配置，您可能会问自己：“所有这些配置实际上是做什么的？”
+
+前面显示的配置用于创建事务代理围绕从 `fooService` bean 定义创建的对象。代理配置有事务增强，以便在代理上调用适当的方法时，根据与该方法相关联的事务配置，事务将被启动，挂起，标记为只读等。考虑下面的程序，该程序测试驱动前面展示的配置：
+
+````java
+public final class Boot {
+
+    public static void main(final String[] args) throws Exception {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("context.xml", Boot.class);
+        FooService fooService = (FooService) ctx.getBean("fooService");
+        fooService.insertFoo (new Foo());
+    }
+}
+````
+
+运行上述程序的输出应类似于以下内容（为清晰起见，由 `DefaultFooService` 类的 `insertFoo(..)` 方法抛出的 `UnsupportedOperationException` 的 Log4J 输出和堆栈跟踪已被截断）：
+
+````shell
+<!-- the Spring container is starting up... -->
+[AspectJInvocationContextExposingAdvisorAutoProxyCreator] - Creating implicit proxy for bean 'fooService' with 0 common interceptors and 1 specific interceptors
+
+<!-- the DefaultFooService is actually proxied -->
+[JdkDynamicAopProxy] - Creating JDK dynamic proxy for [x.y.service.DefaultFooService]
+
+<!-- ... the insertFoo(..) method is now being invoked on the proxy -->
+[TransactionInterceptor] - Getting transaction for x.y.service.FooService.insertFoo
+
+<!-- the transactional advice kicks in here... -->
+[DataSourceTransactionManager] - Creating new transaction with name [x.y.service.FooService.insertFoo]
+[DataSourceTransactionManager] - Acquired Connection [org.apache.commons.dbcp.PoolableConnection@a53de4] for JDBC transaction
+
+<!-- the insertFoo(..) method from DefaultFooService throws an exception... -->
+[RuleBasedTransactionAttribute] - Applying rules to determine whether transaction should rollback on java.lang.UnsupportedOperationException
+[TransactionInterceptor] - Invoking rollback for transaction on x.y.service.FooService.insertFoo due to throwable [java.lang.UnsupportedOperationException]
+
+<!-- and the transaction is rolled back (by default, RuntimeException instances cause rollback) -->
+[DataSourceTransactionManager] - Rolling back JDBC transaction on Connection [org.apache.commons.dbcp.PoolableConnection@a53de4]
+[DataSourceTransactionManager] - Releasing JDBC Connection after transaction
+[DataSourceUtils] - Returning JDBC Connection to DataSource
+
+Exception in thread "main" java.lang.UnsupportedOperationException at x.y.service.DefaultFooService.insertFoo(DefaultFooService.java:14)
+<!-- AOP infrastructure stack trace elements removed for clarity -->
+at $Proxy0.insertFoo(Unknown Source)
+at Boot.main(Boot.java:11)
+````
+
