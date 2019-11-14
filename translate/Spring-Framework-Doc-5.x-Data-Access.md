@@ -254,3 +254,109 @@ Spring 框架的声明式事务管理类似于 EJB CMT。你可以细粒度到�
 
 ### 1.4.2 声明式事务的实现示例
 
+考虑下面的借口和它的实现。这个例子使用了 `Foo` 和 `Bar` 类作为占位符，由此你可以专注于事务使用而不必关系特定的领域模型。为了达成示例的目的，`DefaultFooService` 类在每个实现的方法体中抛出 `UnsupportedOperationException` 实例是正确的。该行为允许你看到事务被创建，然后作为对 `UnsupportedOperationException` 实例的响应而被回滚。下面的代码展示了 `FooService` 接口：
+
+````java
+// the service interface that we want to make transactional
+
+package x.y.service;
+
+public interface FooService {
+
+    Foo getFoo(String fooName);
+
+    Foo getFoo(String fooName, String barName);
+
+    void insertFoo(Foo foo);
+
+    void updateFoo(Foo foo);
+
+}
+````
+
+下面是该接口的实现示例：
+
+````java
+package x.y.service;
+
+public class DefaultFooService implements FooService {
+
+    public Foo getFoo(String fooName) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Foo getFoo(String fooName, String barName) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void insertFoo(Foo foo) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void updateFoo(Foo foo) {
+        throw new UnsupportedOperationException();
+    }
+
+}
+````
+
+假定 `FooService` 接口的前面两个方法，`getFoo(String)` 以及 `getFoo(String, String)`，必须在只读语义的事务上下文中执行，另外的方法，`insertFoo(Foo)` 和 `updateFoo(Foo)` ，必须在读写语义的事务上下文中执行。下面的配置将在后续几个段落中解释：
+
+````xml
+<!-- from the file 'context.xml' -->
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- this is the service object that we want to make transactional -->
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
+
+    <!-- the transactional advice (what 'happens'; see the <aop:advisor/> bean below) -->
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+        <!-- the transactional semantics... -->
+        <tx:attributes>
+            <!-- all methods starting with 'get' are read-only -->
+            <tx:method name="get*" read-only="true"/>
+            <!-- other methods use the default transaction settings (see below) -->
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- ensure that the above transactional advice runs for any execution
+        of an operation defined by the FooService interface -->
+    <aop:config>
+        <aop:pointcut id="fooServiceOperation" expression="execution(* x.y.service.FooService.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="fooServiceOperation"/>
+    </aop:config>
+
+    <!-- don't forget the DataSource -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@rj-t42:1521:elvis"/>
+        <property name="username" value="scott"/>
+        <property name="password" value="tiger"/>
+    </bean>
+
+    <!-- similarly, don't forget the PlatformTransactionManager -->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- other <bean/> definitions here -->
+
+</beans>
+````
+
+检查上面的配置。它假定你希望是一个服务对象，`fooService` bean，成为事务性的。将要应用的事务语义被封装在 `<tx:advice/>` 定义中。该 `<tx:advice/>` 定义看起来就像是说：方法名以 `get` 开头的所有方法，都在只读事务上下文中执行，所有其他方法都在默认事务语义上下文中执行。`<tx:advice/>` 标签的 `transaction-manager` 属性被设定为 `PlatformTransactionManager` bean 的名字，该 bean 将驱动事务(这种情况下，就是 `txManager` bean)。
+
+> 你可以忽略事务性增强 `<tx:advice/>` 中的 `transaction-manager` 属性，如果你希望写入其中的 `PlatformTransactionManager` 的名字就是 `transactionManager` 。如果该 `PlatformTransactionManager` bean 是任何其他名字，你就必须像上面例子那样显式使用 `transaction-manager` 属性。
+
