@@ -421,3 +421,22 @@ at $Proxy0.insertFoo(Unknown Source)
 at Boot.main(Boot.java:11)
 ````
 
+### 1.4.3 回滚一个声明式事务
+
+上一节概述了如何在应用程序中声明性地指定类（通常是服务层类）的事务性设置的基础。本节介绍如何以简单的声明方式控制事务的回滚。
+
+指示 Spring Framework 的事务基础设施要回滚事务的推荐方法是从事务上下文中当前正在执行的代码抛出 `Exception`。 Spring Framework 的事务基础设施代码捕获所有未处理的 `Exception`，因为它在调用堆栈中逐层上浮，并确定是否将事务标记为回滚。
+
+在默认配置下，Spring 框架的事务基础设施代码仅在运行时、未检查的异常情况下将事务标记为回滚。即，当抛出的异常是 `RuntimeException` 的实例或子类时。（默认情况下，`Error` 实例也会导致回滚）。从事务方法引发的已检查异常不会导致默认配置中的回滚。
+
+您可以准确配置哪些异常类型将事务标记为回滚，包括已检查的异常。以下 XML 片段演示了如何为已检查的，特定于应用程序的异常类型配置回滚：
+
+````xml
+<tx:advice id="txAdvice" transaction-manager="txManager">
+    <tx:attributes>
+    <tx:method name="get*" read-only="true" rollback-for="NoProductInStockException"/>
+    <tx:method name="*"/>
+    </tx:attributes>
+</tx:advice>
+````
+
