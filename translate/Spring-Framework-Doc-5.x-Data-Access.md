@@ -601,3 +601,26 @@ public void resolvePosition() {
 | `rollback-for`    | No        |            | 逗号分隔的可以触发回滚的 `Exception` 实例列表，比如  `com.foo.MyBusinessException,ServletException.` |
 | `no-rollback-for` | No        |            | 逗号分隔的不会触发回滚的 `Exception` 实例列表，比如`com.foo.MyBusinessException,ServletException.` |
 
+### 1.4.6 使用 `@Transactional`
+
+除了基于 XML 的声明式事务配置，你还可以使用基于注解的方式。在 Java 源代码中直接声明事务语义让声明更加靠近受影响的代码。不存在过多耦合的危险，因为原本打算以事务方式使用的代码几乎总是以这种方式部署。
+
+> 标准的 `javax.transaction.Tansactional` 注解被作为 Spring 自己的注解的插入式替代支持。请参考 JTA 1.2 文档获取更多细节。
+
+最好举例说明 `@Transactional` 注解带来的易用性，下面的例子说明了这一点。考虑下面的类定义：
+
+````java
+// the service class that we want to make transactional
+@Transactional
+public class DefaultFooService implements FooService {
+
+    Foo getFoo(String fooName);
+
+    Foo getFoo(String fooName, String barName);
+
+    void insertFoo(Foo foo);
+
+    void updateFoo(Foo foo);
+}
+````
+
