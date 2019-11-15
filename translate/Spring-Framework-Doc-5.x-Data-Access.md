@@ -579,3 +579,25 @@ public void resolvePosition() {
 </beans>
 ````
 
+### 1.4.5 `<tx:advice>` 设定
+
+本节概述你可以使用 `<tx:advice>` 标签指定的各种事务性设定。默认的 `<tx:advice>` 设定为：
+
+*  [propagation setting](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#tx-propagation) 是 `REQUIRED`。
+* 隔离级别是 `DEFAULT` 。
+* 事务是 读－写 式的。
+* 事务的超时时间默认为底层的事务系统的默认超市时间，如果事务系统不支持超市，则为空。
+* 任何 `RuntimeException` 触发回滚，而任何受检查的 `Exception` 不会。
+
+你可以修改这些默认设定。下表概述了 `<tx:advice>` 和 `<tx:attributes>` 标签中包含的  `<tx:method>` 标签的各种属性值。
+
+| Attribute         | Required? | Default    | Description                                                  |
+| :---------------- | :-------- | :--------- | :----------------------------------------------------------- |
+| `name`            | Yes       |            | 事务属性关联到的方法的名称。通配符 (\*) 字符可以被用来讲一个事务属性设定到多个方法 (比如， `get*`， `handle*`， `on*Event`， 等等). |
+| `propagation`     | No        | `REQUIRED` | 事务传播行为。                                               |
+| `isolation`       | No        | `DEFAULT`  | 事务隔离级别。仅仅适用于 `REQUIRED` 或者 `REQUIRES_NEW` 传播设定。 |
+| `timeout`         | No        | -1         | 事务超时时间（秒）。仅仅适用于 `REQUIRED` 或者 `REQUIRES_NEW` 传播设定。 |
+| `read-only`       | No        | false      | 读－写 与 只读 事务。仅仅适用于 `REQUIRED` 或者 `REQUIRES_NEW`. |
+| `rollback-for`    | No        |            | 逗号分隔的可以触发回滚的 `Exception` 实例列表，比如  `com.foo.MyBusinessException,ServletException.` |
+| `no-rollback-for` | No        |            | 逗号分隔的不会触发回滚的 `Exception` 实例列表，比如`com.foo.MyBusinessException,ServletException.` |
+
