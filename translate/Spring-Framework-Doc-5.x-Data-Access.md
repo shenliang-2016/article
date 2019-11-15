@@ -440,3 +440,142 @@ at Boot.main(Boot.java:11)
 </tx:advice>
 ````
 
+如果你不希望在抛出异常时事务被回滚，你也可以指定不回滚规则：下面的例子告诉 Spring 框架的事务基础设施即使有未处理的 `InstrumentNotFoundException` 也要提交当前事务：
+
+````xml
+<tx:advice id="txAdvice">
+    <tx:attributes>
+    <tx:method name="updateStock" no-rollback-for="InstrumentNotFoundException"/>
+    <tx:method name="*"/>
+    </tx:attributes>
+</tx:advice>
+````
+
+当 Spring 框架的事务基础设施捕获到一个异常，就会参照配置的回滚规则去定是否应该把事务标记为回滚，最强的匹配规则生效。因此，在下面配置的情况下，除了 `InstrumentNotFoundException` 之外的所有异常都会导致当前事务的回滚。
+
+````xml
+<tx:advice id="txAdvice">
+    <tx:attributes>
+    <tx:method name="*" rollback-for="Throwable" no-rollback-for="InstrumentNotFoundException"/>
+    </tx:attributes>
+</tx:advice>
+````
+
+你也可以通过编程方式指定必需的回滚。尽管很简单，该过程是相当侵入式的，因而会讲你的代码绑定到 Spring 框架的事务基础设施。下面的例子展示了如何编程式指定必需的回滚。
+
+````java
+public void resolvePosition() {
+    try {
+        // some business logic...
+    } catch (NoProductInStockException ex) {
+        // trigger rollback programmatically
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+    }
+}
+````
+
+强烈建议尽可能使用声明式回滚。如果确实需要，你也可以使用编程式回滚，但是在面对实现干净的基于 POJO 的体系结构时，它的用法就不那么理想了。
+
+### 1.4.4 为不同的 Beans 配置不同的事务性语义
+
+考虑这样的场景，你拥有大量的服务层对象，同时你希望为每个对象应用完全不同的事务性配置。你可以定义包含不同的 `pointcut` 和 `advice-ref` 属性值的不同的 `<aop:advisor/>` 元素来实现这一点。
+
+作为比较，首先假定所有的服务层类都定义在同一个根 `x.y.service` 包中。为了将默认事务性配置应用到所有定义在这个包以及它的子包中，并且类名以 `Service` 结尾的类对应的 beans 上，你可以像下面这样编写配置文件：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <aop:config>
+
+        <aop:pointcut id="serviceOperation"
+                expression="execution(* x.y.service..*Service.*(..))"/>
+
+        <aop:advisor pointcut-ref="serviceOperation" advice-ref="txAdvice"/>
+
+    </aop:config>
+
+    <!-- these two beans will be transactional... -->
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
+    <bean id="barService" class="x.y.service.extras.SimpleBarService"/>
+
+    <!-- ... and these two beans won't -->
+    <bean id="anotherService" class="org.xyz.SomeService"/> <!-- (not in the right package) -->
+    <bean id="barManager" class="x.y.service.SimpleBarManager"/> <!-- (doesn't end in 'Service') -->
+
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- other transaction infrastructure beans such as a PlatformTransactionManager omitted... -->
+
+</beans>
+````
+
+下面的例子展示了如何为两个不同的 beans 配置完全不同的事务性设定：
+
+````xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <aop:config>
+
+        <aop:pointcut id="defaultServiceOperation"
+                expression="execution(* x.y.service.*Service.*(..))"/>
+
+        <aop:pointcut id="noTxServiceOperation"
+                expression="execution(* x.y.service.ddl.DefaultDdlManager.*(..))"/>
+
+        <aop:advisor pointcut-ref="defaultServiceOperation" advice-ref="defaultTxAdvice"/>
+
+        <aop:advisor pointcut-ref="noTxServiceOperation" advice-ref="noTxAdvice"/>
+
+    </aop:config>
+
+    <!-- this bean will be transactional (see the 'defaultServiceOperation' pointcut) -->
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
+
+    <!-- this bean will also be transactional, but with totally different transactional settings -->
+    <bean id="anotherFooService" class="x.y.service.ddl.DefaultDdlManager"/>
+
+    <tx:advice id="defaultTxAdvice">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <tx:advice id="noTxAdvice">
+        <tx:attributes>
+            <tx:method name="*" propagation="NEVER"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- other transaction infrastructure beans such as a PlatformTransactionManager omitted... -->
+
+</beans>
+````
+
