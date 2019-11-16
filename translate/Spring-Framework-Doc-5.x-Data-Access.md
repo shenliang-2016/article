@@ -667,3 +667,18 @@ public class DefaultFooService implements FooService {
 >
 > 当你使用代理时，你应该仅仅将 `@Transactional` 注解应用于可见性为 public 的方法。如果你使用 `@Transactional` 注解了 protected、private 或者包可见方法，不会发生错误，但是被注解的方法并不会展示出配置的事务性设定。如果你需要注解非 public 方法，考虑使用 AspectJ (后面介绍)。
 
+你可以将 `@Transactional` 注解应用于接口定义、接口中的方法、类定义、或者类中的 public 方法。不过，仅仅只有 `@Transactional` 注解并不足够触发事务性行为。`@Transactional` 注解仅仅是元数据，能够被一些`@Transactional` 敏感的运行时基础设施消费，这些基础设施能够使用这些元数据配置适当 beans 的事务性行为。在前面的例子中，`<tx:annotation-driven/>` 元素开启事务性行为。
+
+> Spring 团队推荐你只将 `@Transactional` 注解应用于具体类(以及具体类的方法)，而不用于接口。你当然可以将用该注解修饰接口和接口方法，但是这样的注解就只有在你使用基于接口的代理时才会生效。Java 注解不会被从接口继承的事实意味着，如果你使用基于类对代理 (`proxy-target-class="true"`) 或者基于编织的切面 (`mode="aspect"`) ，代理或者编织基础设施就无法识别事务设定，该对象就不会被包装进入事务性代理。
+
+> 在代理模式中 (默认情况)，只有通过代理进入的外部方法调用才会被拦截。这意味着自身调用 (也就是说，目标对象内部方法之间的互相调用) 在运行时就不会导致实际的事务，即使被调用的方法被 `@Transactional` 注解修饰。同时，该代理必须被完全初始化以提供期望的行为，因此你不应该依赖你的初始化代码（`@PostConstruct`）的这个特性。
+
+如果你希望字调用同样被事务包装请考虑使用 AspectJ 模式 (参考下表中的 `mode` 属性)。这种情况下，首先是没有代理。其次，目标类被编织 (它的字节码被修改) ，`@Transactional` 行为被加入所有类型方法的运行时行为。
+
+| XML Attribute         | Annotation Attribute                                         | Default                     | Description                                                  |
+| :-------------------- | :----------------------------------------------------------- | :-------------------------- | :----------------------------------------------------------- |
+| `transaction-manager` | N/A (see [`TransactionManagementConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/transaction/annotation/TransactionManagementConfigurer.html) javadoc) | `transactionManager`        | 使用的事务管理器的名称。只有当事务管理器的名称不是 `transactionManager` 时才是必需的。 |
+| `mode`                | `mode`                                                       | `proxy`                     | 处理被注解的、将要被代理的 beans 的默认模式 (`proxy`) ，这些 beans 通过使用 Spring AOP 框架进行代理（符合前文所述的代理语义，仅仅作用于通过代理进入的方法调用）。另一种模式 (`aspectj`) 使用 Spring 的 AsprctJ 事务切面编织受影响的类，修改目标类的字节码，将事务应用于所有类型的方法调用。AspectJ 编织需要 `spring-aspects.jar` 在类路径上，同时需要启用加载时编织（或者编译期编织）。 (参考 [Spring configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw-spring) 获取关于加载时编织设置的更多细节) |
+| `proxy-target-class`  | `proxyTargetClass`                                           | `false`                     | 仅适用于 `proxy` 模式。控制为 `@Transactional` 注解修饰的类创建何种类型的事务性代理。如果 `proxy-target-class` 数据被设置为 `true`，则创建基于类的代理。如果 `proxy-target-class` 是 `false` 或者该属性被省略，则创建标准的 JDK 基于接口的代理。 (参考 [Proxying Mechanisms](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-proxying) 获取有关不同代理类型的更多信息。) |
+| `order`               | `order`                                                      | `Ordered.LOWEST_PRECEDENCE` | 定义应用于 `@Transactional` 注解修饰的 beans 的事务增强的顺序。(更多关于 AOP 增强排序规则的信息，参考 [Advice Ordering](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-ordering)) 没有特别制定顺序就意味着由 AOP 子系统决定增强的顺序。 |
+
