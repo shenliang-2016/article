@@ -1,15 +1,50 @@
-你可以将 `@Transactional` 注解应用于接口定义、接口中的方法、类定义、或者类中的 public 方法。不过，仅仅只有 `@Transactional` 注解并不足够触发事务性行为。`@Transactional` 注解仅仅是元数据，能够被一些`@Transactional` 敏感的运行时基础设施消费，这些基础设施能够使用这些元数据配置适当 beans 的事务性行为。在前面的例子中，`<tx:annotation-driven/>` 元素开启事务性行为。
+> 处理 `@Transactional` 注解的默认增强模式是 `proxy`，它只允许拦截通过代理的方法调用。同一个类中的本地调用不能通过这种方式被拦截。需要更先进的拦截模式，考虑切换到 `aspectj` 模式并结合使用编译期或者加载期编织。
 
-> Spring 团队推荐你只将 `@Transactional` 注解应用于具体类(以及具体类的方法)，而不用于接口。你当然可以将用该注解修饰接口和接口方法，但是这样的注解就只有在你使用基于接口的代理时才会生效。Java 注解不会被从接口继承的事实意味着，如果你使用基于类对代理 (`proxy-target-class="true"`) 或者基于编织的切面 (`mode="aspect"`) ，代理或者编织基础设施就无法识别事务设定，该对象就不会被包装进入事务性代理。
+> `proxy-target-class` 属性控制为 `@Transactional` 注解修饰的类创建何种类型的事务性代理。如果 `proxy-target-class` 数据被设置为 `true`，则创建基于类的代理。如果 `proxy-target-class` 是 `false` 或者该属性被省略，则创建标准的 JDK 基于接口的代理。(参考 [[aop-proxying\]](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#aop-proxying) 获取跟多不同代理类型的讨论)
 
-> 在代理模式中 (默认情况)，只有通过代理进入的外部方法调用才会被拦截。这意味着自身调用 (也就是说，目标对象内部方法之间的互相调用) 在运行时就不会导致实际的事务，即使被调用的方法被 `@Transactional` 注解修饰。同时，该代理必须被完全初始化以提供期望的行为，因此你不应该依赖你的初始化代码（`@PostConstruct`）的这个特性。
+> `@EnableTransactionManagement` 和 `<tx:annotation-driven/>` 仅仅在它们自身被定义的应用上下文中寻找 beans 上的 `@Transactional` 。这就意味着，如果你为一个 `DispatchServlet` 在 `WebApplicationContext` 中配置了注解驱动，它只会检查你的 controllers 中的 `@Transactional` beans ，而不管你的 services 类。参考 [MVC](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-servlet) 获取更多细节。
 
-如果你希望字调用同样被事务包装请考虑使用 AspectJ 模式 (参考下表中的 `mode` 属性)。这种情况下，首先是没有代理。其次，目标类被编织 (它的字节码被修改) ，`@Transactional` 行为被加入所有类型方法的运行时行为。
+在评估方法的事务设置时，最派生（最细粒度）的位置优先。在下面的示例中，`DefaultFooService` 类在类级别使用只读事务的设置进行注解，但是同一类中 `updateFoo(Foo)` 方法上的 `@Transactional` 注解优先于类上定义的事务设置。
 
-| XML Attribute         | Annotation Attribute                                         | Default                     | Description                                                  |
-| :-------------------- | :----------------------------------------------------------- | :-------------------------- | :----------------------------------------------------------- |
-| `transaction-manager` | N/A (see [`TransactionManagementConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/transaction/annotation/TransactionManagementConfigurer.html) javadoc) | `transactionManager`        | 使用的事务管理器的名称。只有当事务管理器的名称不是 `transactionManager` 时才是必需的。 |
-| `mode`                | `mode`                                                       | `proxy`                     | 处理被注解的、将要被代理的 beans 的默认模式 (`proxy`) ，这些 beans 通过使用 Spring AOP 框架进行代理（符合前文所述的代理语义，仅仅作用于通过代理进入的方法调用）。另一种模式 (`aspectj`) 使用 Spring 的 AsprctJ 事务切面编织受影响的类，修改目标类的字节码，将事务应用于所有类型的方法调用。AspectJ 编织需要 `spring-aspects.jar` 在类路径上，同时需要启用加载时编织（或者编译期编织）。 (参考 [Spring configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw-spring) 获取关于加载时编织设置的更多细节) |
-| `proxy-target-class`  | `proxyTargetClass`                                           | `false`                     | 仅适用于 `proxy` 模式。控制为 `@Transactional` 注解修饰的类创建何种类型的事务性代理。如果 `proxy-target-class` 数据被设置为 `true`，则创建基于类的代理。如果 `proxy-target-class` 是 `false` 或者该属性被省略，则创建标准的 JDK 基于接口的代理。 (参考 [Proxying Mechanisms](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-proxying) 获取有关不同代理类型的更多信息。) |
-| `order`               | `order`                                                      | `Ordered.LOWEST_PRECEDENCE` | 定义应用于 `@Transactional` 注解修饰的 beans 的事务增强的顺序。(更多关于 AOP 增强排序规则的信息，参考 [Advice Ordering](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-ordering)) 没有特别制定顺序就意味着由 AOP 子系统决定增强的顺序。 |
+````java
+@Transactional(readOnly = true)
+public class DefaultFooService implements FooService {
+
+    public Foo getFoo(String fooName) {
+        // do something
+    }
+
+    // these settings have precedence for this method
+    @Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
+    public void updateFoo(Foo foo) {
+        // do something
+    }
+}
+````
+
+##### `@Transactional` 设定
+
+`@Transactional` 注解时一个元数据，用来指定一个接口，类或者方法必须拥有事务性语义 (比如，"当方法被调用时开启一个新的只读事务，阻塞任何现有事务")。默认的 `@Transactional` 注解设定如下：
+
+* 传播设定是 `PROPAGATION_REQUIRED`。
+* 隔离级别是 `ISOLATION_DEFAULT`。
+* 事务是 读－写 的。
+* 事务的超时时间默认是底层的事务系统的默认超时时间，如果底层事务系统不支持超时，则超时时间为空。
+* 任何 `RuntimeException` 都会触发回滚，任何受检查的 `Exception` 不会。
+
+你可以改变这些默认设定。下表概括了 `@Transactional` 注解的各种属性：
+
+| Property                                                     | Type                                                         | Description                                                  |
+| :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| [value](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#tx-multiple-tx-mgrs-with-attransactional) | `String`                                                     | 可选限定词指定要使用的事务管理器。                           |
+| [propagation](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#tx-propagation) | `enum`: `Propagation`                                        | 可选的传播设定。                                             |
+| `isolation`                                                  | `enum`: `Isolation`                                          | 可选的隔离级别。仅仅应用于传播设置 `REQUIRED` 或者 `REQUIRES_NEW`。 |
+| `timeout`                                                    | `int` (in seconds of granularity)                            | 可选的事务超时时间。仅仅应用于传播设置 `REQUIRED` 或者 `REQUIRES_NEW`。 |
+| `readOnly`                                                   | `boolean`                                                    | 读－写 或者 只读 事务。仅仅适用于传播设置 `REQUIRED` 或者 `REQUIRES_NEW`。 |
+| `rollbackFor`                                                | Array of `Class` objects, which must be derived from `Throwable.` | 可选的必须导致回滚的异常类型数组。                           |
+| `rollbackForClassName`                                       | Array of class names. The classes must be derived from `Throwable.` | 可选的必须导致回滚的异常名称数组。                           |
+| `noRollbackFor`                                              | Array of `Class` objects, which must be derived from `Throwable.` | 可选的绝对不能导致回滚的异常类型数组。                       |
+| `noRollbackForClassName`                                     | Array of `String` class names, which must be derived from `Throwable.` | 可选的绝对不能导致回滚的异常名称数组。                       |
+
+目前，你不能显式控制事务的名称，也就是出现在兼容的 (比如，WebLogic 事务监视器) 事务监视器上表示事务名称的 `name` ，同时会记录在日志输出中。对声明式事务，事务名称永远都是全限定类名 ＋ `.` + 事务性增强的方法名称。比如，如果 `BusinessService` 类的 `handlePayment(..)` 方法启动一个事务，该事务的名称将是 `com.example.BusinessService.handlePayment`。
 
