@@ -624,3 +624,4 @@ public class DefaultFooService implements FooService {
 }
 ````
 
+b

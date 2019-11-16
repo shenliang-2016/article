@@ -1,18 +1,43 @@
-## 10.3 NLB 三明治
+被用在类级别时，此注解表示被声明的类（以及它的子类）的所有方法默认都是事务性的。或者，每个方法可以被分别注解。注意，一个类级别的注解不会作用到类集成体系中的祖先，这种场景下，方法需要呗局部重新声明以便成为子类级别的注解的参与者。
 
-### 问题
+当一个 POJO 类，比如上面定义为 Spring 上下文中的  bean 的类，你可以通过在 `@Configuration` 类中使用 `@EnableTransactionManagement` 注解来将该 bean 实例标记为事务性的。参考 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/transaction/annotation/EnableTransactionManagement.html) 获取更多细节。
 
-您需要自动缩放 NGINX 开源层，并在应用程序服务器之间轻松轻松地分配负载。
+在 XML 配置文件中，`<tx:annotation-driven/>` 标签提供了类似的便利性：
 
-### 解决方案
+````xml
+<!-- from the file 'context.xml' -->
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
 
-创建一个 *网络负载均衡器* (NBL)。在通过终端创建 NLB 过程中，你会被提示创建一个新的目标群组。如果你不是通过终端完成此操作，你将需要创建该资源并将其连接到 NLB 上的监听器。您可以使用启动配置创建一个 Auto Scaling 组，该启动配置预配了已安装 NGINX Open Source 的 EC2 实例。Auto Scaling 组具有可链接到目标组的配置，该目标组可将 Auto Scaling 组中的任何实例自动注册到首次启动时配置的目标组。目标组由 NLB 上的侦听器引用。将您的上游应用程序放在另一个网络负载平衡器和目标组的后面，然后将 NGINX 配置为代理到应用程序 NLB。
+    <!-- this is the service object that we want to make transactional -->
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
 
-### 讨论
+    <!-- enable the configuration of transactional behavior based on annotations -->
+    <tx:annotation-driven transaction-manager="txManager"/><!-- a PlatformTransactionManager is still required --> 
 
-这种通用模式称为 NLB 三明治（请参见图10-1），将 NGINX Open Source 放在一个 NLB 后面的 Auto Scaling 组中，将应用程序 Auto Scaling 组放在另一个 NLB 后面。每层之间都具有 NLB 的原因是因为 NLB 在 Auto Scaling 组中工作得很好。它们会自动注册新节点并删除那些终止的节点，并运行状况检查并将流量仅传递到状况良好的节点。可能有必要为 NGINX 开源层构建第二个内部 NLB，因为它允许您应用程序中的服务通过 NGINX Auto Scaling 组调出其他服务，而无需离开网络并通过公共 NLB 重新进入。这使 NGINX 处于应用程序内所有网络流量的中间，使其成为应用程序流量路由的核心。这种模式以前称为弹性负载平衡器（ELB）三明治；但是，与 NGINX 配合使用时，首选 NLB，因为 NLB 是第4层负载平衡器，而 ELB 和 ALB 是第7层负载平衡器。第7层负载平衡器通过代理协议转换请求，并使用 NGINX 进行冗余处理。只有 NGINX 开源需要此模式，因为 NGINX Plus 中提供了 NLB 提供的功能集。
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- (this dependency is defined somewhere else) -->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
 
-![NLB sandwich](https://raw.githubusercontent.com/shenliang-2016/article/master/translate/assets/nginx/QQ20191008-162454.png)
+    <!-- other <bean/> definitions here -->
 
-图10-1 此图描述了 NLB 夹心模式中的 NGINX，其中具有内部 NLB 供内部应用程序使用。用户向 App-1 发出请求，而 App-1 通过 NGINX 向 App-2 发出请求，以满足用户的请求。
+</beans>
+````
+
+> 你可以忽略 `<tx:annotation-driven/>` 标签中的 `transaction-manager` 属性，如果你希望写入其中的 `PlatformTransactionManager` 的名字就是 `transactionManager` 。如果你希望注入的 `PlatformTransactionManager` bean 是任何其他名字，你就必须像上面例子那样显式使用 `transaction-manager` 属性。
+
+> 方法可见性和 `@Transactional` 
+>
+> 当你使用代理时，你应该仅仅将 `@Transactional` 注解应用于可见性为 public 的方法。如果你使用 `@Transactional` 注解了 protected、private 或者包可见方法，不会发生错误，但是被注解的方法并不会展示出配置的事务性设定。如果你需要注解非 public 方法，考虑使用 AspectJ (后面介绍)。
 
