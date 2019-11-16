@@ -1,28 +1,160 @@
-### 1.4.7 事务传播
+#### 1.4.8. Advising Transactional Operations
 
-本节描述 Spring 中的一些事务传播语义。注意，本节并不是真正地介绍事务传播，它仅仅是一些语义细节，而不关注 Spring 中实际的事务传播。
+假定你希望执行事务性操作的同时执行一些其他的基本剖析增强。如何在 `<tx:annotation-drivene/>` 上下文中做到这一点？
 
-在 Spring 管理的事务中，注意区别逻辑事务和物理事务，以及事务传播设定应用于两者的不同。
+当你调用 `updateFoo(Foo)` 方法时，你希望看到下列行为：
 
-##### 理解 `PROPAGATION_REQUIRED`
+- 配置的剖析切面启动。
+- 事务性增强执行。
+- 被增强的对象上的方法执行。
+- 事务提交。
+- 剖析切面报告整个事务性方法调用的额外执行时间。
 
-![tx prop required](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/images/tx_prop_required.png)
+> 本章节不专门解释 AOP 的任何细节 (除了它应用于事务) 。参考 [AOP](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 了解有关 AOP 配置和使用的更多细节。
 
-`PROPAGATION_REQUIRED` 强制执行一个物理事务，如果目前不存在事务，则是当前作用域内的局部事务，要么作为一个更大的作用域下的现有的外部事务的成员。这是通常分配给同一线程的调用栈（例如，委派给几种存储库方法的服务门面，所有基础资源都必须参与服务级事务）中的优良默认设置。
+下面的代码展示了前面讨论的简单的剖析切面：
 
-> 默认地，一个成员事务加入外部作用域的特性，静默地忽略局部的隔离级别、超时时间、或者只读标记(如果存在)。考虑切换事务管理器上的 `validateExisitingTransactions` 标记为 `true` ，如果你希望当成为不同隔离级别的现存事务的成员时隔离级别声明被拒绝。这种非宽容模式还拒绝只读不匹配项（即，内部读写事务试图参与只读外部作用域）。
+```java
+package x.y;
 
-当传播设定为 `PROPAGATION_REQUIRED`，为该设定应用到的每个方法创建逻辑事务作用域。每个这种逻辑事务作用域能够独立决定只回滚状态，因为外部事务作用域和内部事务作用域是逻辑独立的。在标准 `PROPAGATION_REQUIRED` 行为的情况下，所有这些作用域都被影射到相同的物理事务。因此一个内部事务作用域的只回滚标记会影响外部事务的实际提交。
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.util.StopWatch;
+import org.springframework.core.Ordered;
 
-不过，在内部事务作用域设定只回滚标记情况下，外部事务自身并未决定回滚，因此回滚(由内部事务作用域触发的)是不希望发生的。一个相应的 `UnexpectedRollbackException` 在这个时候被抛出。这是期望的行为，因而事务的调用着在事务没有正确提交情况下永远不会被误导而假定事务被正确提交。因此，如果一个内部事务(外部调用者不敏感)静默地将事务标记为只回滚，外部调用着仍然调用提交。外部调用着需要接受一个 `UnexpectedRollbackException` 来清楚地表示实际上发生了回滚。
+public class SimpleProfiler implements Ordered {
 
-##### 理解 `PROPAGATION_REQUIRES_NEW`
+    private int order;
 
-![tx prop requires new](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/images/tx_prop_requires_new.png)
+    // allows us to control the ordering of advice
+    public int getOrder() {
+        return this.order;
+    }
 
-`PROPAGATION_REQUIRES_NEW`，相对于 `PROPAGATION_REQUIRED`，永远为每个不同的事务作用域使用独立的物理事务，永远不参与外部作用的现有事务。这种编排情况下，基础资源事务时不同的，因此，可以独立地提交或者回滚。外部事务不会被内部事务的回滚状态或者在内部事务完成时立即释放锁影响。这样的独立内部事务也可以声明它自己的隔离级别、超时时间、以及制度设定等，而不集成外部事务的特性。
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
-##### 理解 `PROPAGATION_NESTED`
+    // this method is the around advice
+    public Object profile(ProceedingJoinPoint call) throws Throwable {
+        Object returnValue;
+        StopWatch clock = new StopWatch(getClass().getName());
+        try {
+            clock.start(call.toShortString());
+            returnValue = call.proceed();
+        } finally {
+            clock.stop();
+            System.out.println(clock.prettyPrint());
+        }
+        return returnValue;
+    }
+}
+```
 
-`PROPAGATION_NESTED` 使用一个物理事务，拥有多个可以回滚到的保存点。这种部分回滚允许一个内部事务作用域为它自己的作用域触发回滚，而外部作用域可以继续执行它的物理事务，而不在乎某些操作已经回滚。这种设定典型地影射到 JDBC 保存点，因此只可以用于 JDBC 资源事务。参考 Spring 的 [`DataSourceTransactionManager`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html)。
+增强的顺序通过 `Ordered` 接口控制。有关增强顺序的完整细节，参考 [Advice ordering](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-ordering) 。
+
+下面的配置创建一个 `fooService` bean，拥有按照期望顺序应用于其上的剖析和事务性切面：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
+
+    <!-- this is the aspect -->
+    <bean id="profiler" class="x.y.SimpleProfiler">
+        <!-- execute before the transactional advice (hence the lower order number) -->
+        <property name="order" value="1"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="txManager" order="200"/>
+
+    <aop:config>
+            <!-- this advice will execute around the transactional advice -->
+            <aop:aspect id="profilingAspect" ref="profiler">
+                <aop:pointcut id="serviceMethodWithReturnValue"
+                        expression="execution(!void x.y..*Service.*(..))"/>
+                <aop:around method="profile" pointcut-ref="serviceMethodWithReturnValue"/>
+            </aop:aspect>
+    </aop:config>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+        <property name="url" value="jdbc:oracle:thin:@rj-t42:1521:elvis"/>
+        <property name="username" value="scott"/>
+        <property name="password" value="tiger"/>
+    </bean>
+
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+</beans>
+```
+
+你可以通过类似方式配置任意数量的附加切面。
+
+下面的示例创建与上面两个例子相同的设定，不过使用了纯 XML 的声明方式：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <bean id="fooService" class="x.y.service.DefaultFooService"/>
+
+    <!-- the profiling advice -->
+    <bean id="profiler" class="x.y.SimpleProfiler">
+        <!-- execute before the transactional advice (hence the lower order number) -->
+        <property name="order" value="1"/>
+    </bean>
+
+    <aop:config>
+        <aop:pointcut id="entryPointMethod" expression="execution(* x.y..*Service.*(..))"/>
+        <!-- will execute after the profiling advice (c.f. the order attribute) -->
+
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="entryPointMethod" order="2"/>
+        <!-- order value is higher than the profiling aspect -->
+
+        <aop:aspect id="profilingAspect" ref="profiler">
+            <aop:pointcut id="serviceMethodWithReturnValue"
+                    expression="execution(!void x.y..*Service.*(..))"/>
+            <aop:around method="profile" pointcut-ref="serviceMethodWithReturnValue"/>
+        </aop:aspect>
+
+    </aop:config>
+
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- other <bean/> definitions such as a DataSource and a PlatformTransactionManager here -->
+
+</beans>
+```
+
+前面配置的结果是一个 `fooService` bean，拥有按照期望顺序应用于其上的剖析和事务性切面。如果你希望该剖析切面在方法调用方向上在事务性增强之后执行，同时在方法返回方向上在事务性增强之前执行，你可以互换剖析切面 bean 的 `order` 属性，让它高于事务性增强的排序值。
+
+你可以通过类似方式配置附加切面。
 
