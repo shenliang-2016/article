@@ -1,160 +1,24 @@
-#### 1.4.8. Advising Transactional Operations
+#### 1.4.9. 通过 AspectJ 使用 `@Transactional` 
 
-假定你希望执行事务性操作的同时执行一些其他的基本剖析增强。如何在 `<tx:annotation-drivene/>` 上下文中做到这一点？
+你也可以在 Spring 容器之外通过 AspectJ 切面来使用 Spring 框架的 `@Transactional` 支持。为了做到这一点，首先用 `@Transactional` 注解修饰你的类（并选择性修饰该类的方法），然后将你的应用链接 (编织) 到定义在 `spring-aspects.jar` 文件中的 `org.springframework.transaction.aspectJ.AnnotationTransactionAspect` 。你必须同时为该切面配置事务管理器。你可以使用 Spring 框架的 IoC 容器进行切面的依赖注入。配置事务管理切面的最简单方式就是使用 `<tx:annotation-driven/>` 元素并指定 `aspectJ` 的 `mode` 属性，如 [Using `@Transactional`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-annotations) 中所述。由于我们这里关注的是在 Spring 容器之外运行的应用，我们向你展示如何通过编程方式做到这一点。
 
-当你调用 `updateFoo(Foo)` 方法时，你希望看到下列行为：
+> 继续之前，你可能希望阅读 [Using `@Transactional`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-annotations) 和 [AOP](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 。
 
-- 配置的剖析切面启动。
-- 事务性增强执行。
-- 被增强的对象上的方法执行。
-- 事务提交。
-- 剖析切面报告整个事务性方法调用的额外执行时间。
-
-> 本章节不专门解释 AOP 的任何细节 (除了它应用于事务) 。参考 [AOP](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 了解有关 AOP 配置和使用的更多细节。
-
-下面的代码展示了前面讨论的简单的剖析切面：
+下面的例子展示了如何创建事务管理器并配置 `AnnotationTransactionAspect` 来使用它：
 
 ```java
-package x.y;
+// construct an appropriate transaction manager
+DataSourceTransactionManager txManager = new DataSourceTransactionManager(getDataSource());
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.springframework.util.StopWatch;
-import org.springframework.core.Ordered;
-
-public class SimpleProfiler implements Ordered {
-
-    private int order;
-
-    // allows us to control the ordering of advice
-    public int getOrder() {
-        return this.order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    // this method is the around advice
-    public Object profile(ProceedingJoinPoint call) throws Throwable {
-        Object returnValue;
-        StopWatch clock = new StopWatch(getClass().getName());
-        try {
-            clock.start(call.toShortString());
-            returnValue = call.proceed();
-        } finally {
-            clock.stop();
-            System.out.println(clock.prettyPrint());
-        }
-        return returnValue;
-    }
-}
+// configure the AnnotationTransactionAspect to use it; this must be done before executing any transactional methods
+AnnotationTransactionAspect.aspectOf().setTransactionManager(txManager);
 ```
 
-增强的顺序通过 `Ordered` 接口控制。有关增强顺序的完整细节，参考 [Advice ordering](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-ataspectj-advice-ordering) 。
+> 当你使用该切面时，你必须用注解修饰实现类 (或者实现类的方法) ，而不是修饰该类实现的接口 (如果存在)。AspectJ 遵循 Java 语言的规则，接口上的注解是不会被继承的。
 
-下面的配置创建一个 `fooService` bean，拥有按照期望顺序应用于其上的剖析和事务性切面：
+类上的 `@Transactional` 注解指定了类中所有 public 方法执行的默认事务语义。
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-    xmlns:tx="http://www.springframework.org/schema/tx"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/tx
-        https://www.springframework.org/schema/tx/spring-tx.xsd
-        http://www.springframework.org/schema/aop
-        https://www.springframework.org/schema/aop/spring-aop.xsd">
+类中方法上的 `@Transactional` 注解覆盖了类注解（如果存在）指定的默认事务语义。你可以注解任何方法，不必关心方法可见性。
 
-    <bean id="fooService" class="x.y.service.DefaultFooService"/>
-
-    <!-- this is the aspect -->
-    <bean id="profiler" class="x.y.SimpleProfiler">
-        <!-- execute before the transactional advice (hence the lower order number) -->
-        <property name="order" value="1"/>
-    </bean>
-
-    <tx:annotation-driven transaction-manager="txManager" order="200"/>
-
-    <aop:config>
-            <!-- this advice will execute around the transactional advice -->
-            <aop:aspect id="profilingAspect" ref="profiler">
-                <aop:pointcut id="serviceMethodWithReturnValue"
-                        expression="execution(!void x.y..*Service.*(..))"/>
-                <aop:around method="profile" pointcut-ref="serviceMethodWithReturnValue"/>
-            </aop:aspect>
-    </aop:config>
-
-    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
-        <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
-        <property name="url" value="jdbc:oracle:thin:@rj-t42:1521:elvis"/>
-        <property name="username" value="scott"/>
-        <property name="password" value="tiger"/>
-    </bean>
-
-    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource"/>
-    </bean>
-
-</beans>
-```
-
-你可以通过类似方式配置任意数量的附加切面。
-
-下面的示例创建与上面两个例子相同的设定，不过使用了纯 XML 的声明方式：
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-    xmlns:tx="http://www.springframework.org/schema/tx"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/tx
-        https://www.springframework.org/schema/tx/spring-tx.xsd
-        http://www.springframework.org/schema/aop
-        https://www.springframework.org/schema/aop/spring-aop.xsd">
-
-    <bean id="fooService" class="x.y.service.DefaultFooService"/>
-
-    <!-- the profiling advice -->
-    <bean id="profiler" class="x.y.SimpleProfiler">
-        <!-- execute before the transactional advice (hence the lower order number) -->
-        <property name="order" value="1"/>
-    </bean>
-
-    <aop:config>
-        <aop:pointcut id="entryPointMethod" expression="execution(* x.y..*Service.*(..))"/>
-        <!-- will execute after the profiling advice (c.f. the order attribute) -->
-
-        <aop:advisor advice-ref="txAdvice" pointcut-ref="entryPointMethod" order="2"/>
-        <!-- order value is higher than the profiling aspect -->
-
-        <aop:aspect id="profilingAspect" ref="profiler">
-            <aop:pointcut id="serviceMethodWithReturnValue"
-                    expression="execution(!void x.y..*Service.*(..))"/>
-            <aop:around method="profile" pointcut-ref="serviceMethodWithReturnValue"/>
-        </aop:aspect>
-
-    </aop:config>
-
-    <tx:advice id="txAdvice" transaction-manager="txManager">
-        <tx:attributes>
-            <tx:method name="get*" read-only="true"/>
-            <tx:method name="*"/>
-        </tx:attributes>
-    </tx:advice>
-
-    <!-- other <bean/> definitions such as a DataSource and a PlatformTransactionManager here -->
-
-</beans>
-```
-
-前面配置的结果是一个 `fooService` bean，拥有按照期望顺序应用于其上的剖析和事务性切面。如果你希望该剖析切面在方法调用方向上在事务性增强之后执行，同时在方法返回方向上在事务性增强之前执行，你可以互换剖析切面 bean 的 `order` 属性，让它高于事务性增强的排序值。
-
-你可以通过类似方式配置附加切面。
+为了将你的应用编织到 `AnnotationTransactionAspect` ，你必须要么使用 AspectJ 创建你的应用 (参考 [AspectJ Development Guide](https://www.eclipse.org/aspectj/doc/released/devguide/index.html) )，或者使用加载时编织。参考 [Load-time weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 了解有关使用 AspectJ 的加载时编织的讨论。
 
