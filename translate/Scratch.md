@@ -1,24 +1,101 @@
-#### 1.4.9. 通过 AspectJ 使用 `@Transactional` 
+## 1.5. 编程式事务管理
 
-你也可以在 Spring 容器之外通过 AspectJ 切面来使用 Spring 框架的 `@Transactional` 支持。为了做到这一点，首先用 `@Transactional` 注解修饰你的类（并选择性修饰该类的方法），然后将你的应用链接 (编织) 到定义在 `spring-aspects.jar` 文件中的 `org.springframework.transaction.aspectJ.AnnotationTransactionAspect` 。你必须同时为该切面配置事务管理器。你可以使用 Spring 框架的 IoC 容器进行切面的依赖注入。配置事务管理切面的最简单方式就是使用 `<tx:annotation-driven/>` 元素并指定 `aspectJ` 的 `mode` 属性，如 [Using `@Transactional`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-annotations) 中所述。由于我们这里关注的是在 Spring 容器之外运行的应用，我们向你展示如何通过编程方式做到这一点。
+Spring 框架提供了两种手段进行编程式事务管理，通过使用：
 
-> 继续之前，你可能希望阅读 [Using `@Transactional`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-annotations) 和 [AOP](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 。
+* `TransactionTemplate`
+* 直接使用 `PlatformTransactionManager` 实现
 
-下面的例子展示了如何创建事务管理器并配置 `AnnotationTransactionAspect` 来使用它：
+Spring 团队通常推荐使用 `TransactionTemplate` 进行编程式事务管理。第二种方法类似于使用 JTA `UserTransaction` API，尽管异常处理有些麻烦。
+
+### 1.5.1 使用 `TransactionTemplate`
+
+`TransactionTemplate` 采用了类似于其它 Spring 模板的使用方式，比如 `JdbcTemplate`。它使用一个回调方法 (为了将应用代码从无聊的锁定和释放事务资源的工作中解脱出来) 使得代码成为意图驱动的，你的代码可以单纯地聚焦于处理业务需求。
+
+> 如下面例子所示，使用 `TransactionTemplate` 绝对会将你绑定到 Spring 的事务基础设施和 APIs。在开发中是否使用编程式事务管理取决于你的需求，完全由你自己决定。
+
+必须在事务上下文中执行的业务代码以及显式使用 `TransactionTemplate` 的代码组成了下一个例子。作为应用开发者，你可以编写 `TransactionCallback` 实现 (通常表现为匿名内部类) ，其中包含你需要在事务上下文中执行的代码。然后你可减奖你的自定义的 `TransactionCallback` 实例传入 `TransactionTemplate` 暴露出来的 `execute(..)` 方法。下面的例子展示了这个过程：
 
 ```java
-// construct an appropriate transaction manager
-DataSourceTransactionManager txManager = new DataSourceTransactionManager(getDataSource());
+public class SimpleService implements Service {
 
-// configure the AnnotationTransactionAspect to use it; this must be done before executing any transactional methods
-AnnotationTransactionAspect.aspectOf().setTransactionManager(txManager);
+    // single TransactionTemplate shared amongst all methods in this instance
+    private final TransactionTemplate transactionTemplate;
+
+    // use constructor-injection to supply the PlatformTransactionManager
+    public SimpleService(PlatformTransactionManager transactionManager) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    public Object someServiceMethod() {
+        return transactionTemplate.execute(new TransactionCallback() {
+            // the code in this method executes in a transactional context
+            public Object doInTransaction(TransactionStatus status) {
+                updateOperation1();
+                return resultOfUpdateOperation2();
+            }
+        });
+    }
+}
 ```
 
-> 当你使用该切面时，你必须用注解修饰实现类 (或者实现类的方法) ，而不是修饰该类实现的接口 (如果存在)。AspectJ 遵循 Java 语言的规则，接口上的注解是不会被继承的。
+如果不存在返回值，你可以使用便捷的 `TransactionCallbackWithoutResult` 类：
 
-类上的 `@Transactional` 注解指定了类中所有 public 方法执行的默认事务语义。
+```java
+transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+    protected void doInTransactionWithoutResult(TransactionStatus status) {
+        updateOperation1();
+        updateOperation2();
+    }
+});
+```
 
-类中方法上的 `@Transactional` 注解覆盖了类注解（如果存在）指定的默认事务语义。你可以注解任何方法，不必关心方法可见性。
+回调中的代码能够回滚事务，通过调用给定的 `TransactionStatus` 对象上的 `setRollbackOnly()` 方法，如下：
 
-为了将你的应用编织到 `AnnotationTransactionAspect` ，你必须要么使用 AspectJ 创建你的应用 (参考 [AspectJ Development Guide](https://www.eclipse.org/aspectj/doc/released/devguide/index.html) )，或者使用加载时编织。参考 [Load-time weaving with AspectJ in the Spring Framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw) 了解有关使用 AspectJ 的加载时编织的讨论。
+```java
+transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+
+    protected void doInTransactionWithoutResult(TransactionStatus status) {
+        try {
+            updateOperation1();
+            updateOperation2();
+        } catch (SomeBusinessException ex) {
+            status.setRollbackOnly();
+        }
+    }
+});
+```
+
+##### 指定事务设定
+
+你可以在 `TransactionTemplate` 上指定事务设定 (比如传播模式，隔离级别，超时时间等等) ，通过编程方式或者配置文件。默认地，`TransactionTemplate` 实例拥有 [default transactional settings](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative-txadvice-settings) 。下面的例子展示了编程方式自定义特定 `TransactionTemplate` 的事务设定：
+
+```java
+public class SimpleService implements Service {
+
+    private final TransactionTemplate transactionTemplate;
+
+    public SimpleService(PlatformTransactionManager transactionManager) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+
+        // the transaction settings can be set here explicitly if so desired
+        this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_UNCOMMITTED);
+        this.transactionTemplate.setTimeout(30); // 30 seconds
+        // and so forth...
+    }
+}
+```
+
+下面的例子展示了通过使用 Spring XML 配置文件使用一些自定义事务设定定义一个 `TransactionTemplate` ：
+
+```xml
+<bean id="sharedTransactionTemplate"
+        class="org.springframework.transaction.support.TransactionTemplate">
+    <property name="isolationLevelName" value="ISOLATION_READ_UNCOMMITTED"/>
+    <property name="timeout" value="30"/>
+</bean>"
+```
+
+然后你就可以将 `sharedTransactionTemplate` 注入到任意多个需要它的服务类中。
+
+最后，`TransactionTemplate` 类实例时线程安全的，该实例中没有维护任何会话状态。不过，`TransactionTemplate` 实例维护了配置状态。因此，当多个类可能共享一个 `TransactionTemplate` 实例时，如果一个类需要使用包含不同设定的 `TransactionTemplate` (比如，不同的隔离级别)，你需要创建两个不同的 `TransactionTemplate` 实例。
 
