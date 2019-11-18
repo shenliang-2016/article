@@ -1,63 +1,28 @@
-## 2.2 用于配置 DAO 或者 Repository 类的注解
+# 3 使用 JDBC 访问数据
 
-保证你的数据访问对象或者仓库类提供异常转化的最好方法就是使用 `@Repository` 注解。该注解同时允许组件扫描支持发现并配置你的 DAOs 和仓库类，而不需要为它们提供 XML 配置文件入口。下面的例子展示了如何使用 `@Repository` 注解：
+下表中概述的操作可能最好地显示了 Spring Framework JDBC 抽象提供的价值。该表显示了 Spring 负责哪些操作以及哪些操作是您的责任。
 
-```java
-@Repository 
-public class SomeMovieFinder implements MovieFinder {
-    // ...
-}
-```
+| 动作                           | Spring | You  |
+| :----------------------------- | :----- | :--- |
+| 定义连接参数                   |        | X    |
+| 打开连接                       | X      |      |
+| 指定 SQL 语句                  |        | X    |
+| 声明参数并提供参数值           |        | X    |
+| 准备并执行语句                 | X      |      |
+| 设置循环便利结果集（如果存在） | X      |      |
+| 处理每次迭代数据               |        | X    |
+| 处理所有异常                   | X      |      |
+| 处理事务                       | X      |      |
+| 关闭连接，语句，以及结果集     | X      |      |
 
-任何需要访问持久化资源的 DAO 或者仓库类实现都依赖于所使用的持久化技术。比如，基于 JDBC 的仓库需要访问 JDBC `DataSource`，而基于 JPA 的仓库类需要访问 `EntityManager` 。实现这一点的最简单方式就是使用 `@Autowired`, `@Inject`, `@Resource` 或者 `@PersistenceContext` 注解之一进行资源的依赖注入。下面的例子用于 JPA 仓库类：
+Spring 框架负责了所有 JDBC 中乏味的底层细节。
 
-```java
-@Repository
-public class JpaMovieFinder implements MovieFinder {
+## 3.1 选择 JDBC 数据库访问方式
 
-    @PersistenceContext
-    private EntityManager entityManager;
+你可以在几种方法中选择一种来形成你的基本 JDBC 数据库访问逻辑。除了三种常用的 `JdbcTemplate` ，一种新的 `SimpleJdbcInsert` 和 `SimpleJdbcCall` 方法优化了数据库元数据，同时，RDBMS 对象风格使用了更加面向对象的方式，类似于 JDO 查询设计。一旦你开始使用这些方法，你还可以混合来自不同方法的功能特性。所有的这些方法都需要 JDBC 2.0 兼容的驱动，某些高级特性需求 JDBC 3.0 驱动。
 
-    // ...
-
-}
-```
-
-如果你使用经典的 Hibernate APIs，你可以如下注入 `SessionFactory`：
-
-```java
-@Repository
-public class HibernateMovieFinder implements MovieFinder {
-
-    private SessionFactory sessionFactory;
-
-    @Autowired
-    public void setSessionFactory(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
-
-    // ...
-
-}
-```
-
-最后一个例子关于典型的 JDBC 支持。你已经在初始化方法中注入一个 `DataSource` ，然后你使用该 `DataSource` 创建 `JdbcTempalte` 及其他数据访问支持类(比如 `SimpleJdbcCall` )。下面的例子自动装配 `DataSource`：
-
-```java
-@Repository
-public class JdbcMovieFinder implements MovieFinder {
-
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public void init(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
-    }
-
-    // ...
-
-}
-```
-
-> 有关如何配置应用程序上下文以利用这些注解的详细信息，请参见每种持久性技术的专门介绍。
+* `JdbcTemplate` 是经典的和最流行的 Spring JDBC 方式。这是最底层的方式，其他所有方式内部都是使用 `JdbcTemplate` 。
+* `NamedParameterJdbcTemplate` 包装 `JdbcTemplate` 以提供命名参数，来替代传统的 JDBC `?` 占位符。这种方式提供更好的可读性和易用性，尤其是当你在一条 SQL 语句中使用多个参数时。
+* `SimpleJdbcInsert` 和 `SimpleJdbcCall` 优化数据库元数据以限制必要配置的数量。这种方式简化了编码，你只需要提供数据库表名称或者存储过程的名称，以及参数与数据库列名之间的映射关系。这种方式需要数据库提供充足的元数据信息。如果数据库无法提供必需的元数据，你就必须显式提供参数的配置。
+* RDBMS 对象，包含 `MappingSqlQuery`，`SqlUpdate` 和 `StoredProcedure`，需要你在初始化你的数据访问层过程中创建可重用且线程安全的对象。此方式对 JDO 查询建模，你在其中定义了你的查询字符串，声明参数，并编译查询。一旦你这么做了，可执行方法就可以携带不同的参数值被调用多次。
 
