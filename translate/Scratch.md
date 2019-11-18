@@ -1,16 +1,63 @@
-# 2 DAO 支持
+## 2.2 用于配置 DAO 或者 Repository 类的注解
 
-Spring 中的数据访问对象(DAO)支持的目标是使得可以很简单地以一致的方法使用数据访问技术，比如 JDBC，Hibernate 或者 JPA。这就允许你可以相当容易地在上述持久化技术之间进行切换，还允许你的代码无需考虑捕获特定于每种技术的异常。
+保证你的数据访问对象或者仓库类提供异常转化的最好方法就是使用 `@Repository` 注解。该注解同时允许组件扫描支持发现并配置你的 DAOs 和仓库类，而不需要为它们提供 XML 配置文件入口。下面的例子展示了如何使用 `@Repository` 注解：
 
-## 2.1 一致性异常体系
+```java
+@Repository 
+public class SomeMovieFinder implements MovieFinder {
+    // ...
+}
+```
 
-Spring 提供了一种从特定技术的异常，比如 `SQLException` 向它自己的异常类体系转化的方便方式。Spring 的标准数据访问异常体系以 `DataAccessException` 为根异常。这些异常包装原始的异常，因此你不会有丢失任何具体错误信息的风险。
+任何需要访问持久化资源的 DAO 或者仓库类实现都依赖于所使用的持久化技术。比如，基于 JDBC 的仓库需要访问 JDBC `DataSource`，而基于 JPA 的仓库类需要访问 `EntityManager` 。实现这一点的最简单方式就是使用 `@Autowired`, `@Inject`, `@Resource` 或者 `@PersistenceContext` 注解之一进行资源的依赖注入。下面的例子用于 JPA 仓库类：
 
-除了 JDBC 异常，Spring 还可以包装特定于 JPA 和 Hibernate 的异常，将它们转化到一个运行时异常集合。这就允许你在合适的层次处理大部分的不可恢复持久化异常，而不需要在你的 DAOs 中添加大量的异常声明和异常处理代码（不过，你当然可以在你需要的地方自行处理异常）。如前所属，JDBC 异常(包括特定于数据库方言的异常)都被转化到相同的异常体系，这就意味着你可以在一致性的编程模型下之行一些 JDBC 操作。
+```java
+@Repository
+public class JpaMovieFinder implements MovieFinder {
 
-上面的讨论同样适用于各种 Spring 对各种 ORM 框架提供的支持中的各种模版类。如果你使用基于拦截器的类，应用必须自行处理 `HibernateExceptions` 和 `PersistenceExceptions` ，而不是将该任务委托给 `SessionFactoryUtils` 的 `convertHibernateAccessException(..)` 或者 `convertJpaAccessException()` 方法。这些方法将初始异常转化为兼容 `org.springframework.dao` 异常体系的异常。因为 `PersistenceException` 是不受检查的，它们也可以被抛出(不过，在异常方面牺牲了通用 DAO 抽象)。
+    @PersistenceContext
+    private EntityManager entityManager;
 
-下图展示了 Spring 提供的异常体系。(请注意，图中详细描述的类层次结构仅显示整个 `DataAccessException` 层次结构的子集)
+    // ...
 
-![DataAccessException](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/images/DataAccessException.png)
+}
+```
+
+如果你使用经典的 Hibernate APIs，你可以如下注入 `SessionFactory`：
+
+```java
+@Repository
+public class HibernateMovieFinder implements MovieFinder {
+
+    private SessionFactory sessionFactory;
+
+    @Autowired
+    public void setSessionFactory(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
+    // ...
+
+}
+```
+
+最后一个例子关于典型的 JDBC 支持。你已经在初始化方法中注入一个 `DataSource` ，然后你使用该 `DataSource` 创建 `JdbcTempalte` 及其他数据访问支持类(比如 `SimpleJdbcCall` )。下面的例子自动装配 `DataSource`：
+
+```java
+@Repository
+public class JdbcMovieFinder implements MovieFinder {
+
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public void init(DataSource dataSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    }
+
+    // ...
+
+}
+```
+
+> 有关如何配置应用程序上下文以利用这些注解的详细信息，请参见每种持久性技术的专门介绍。
 
