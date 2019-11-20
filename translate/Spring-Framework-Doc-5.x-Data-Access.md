@@ -1307,3 +1307,35 @@ Spring 框架的 JDBC 抽象框架由以下四个包组成：
 - `datasource`:  `org.springframework.jdbc.datasource` 包含一系列工具类，这些类简化了 `DataSource` 访问，并提供了各种简单的 `DataSource` 实现，你可以使用这些类进行测试或者在 Java EE 容器之外运行固定的 JDBC 代码。子包 `org.springfamework.jdbc.datasource.embedded` 提供了通过使用 Java 数据库引擎（HSQL，H2，以及 Derby）创建内置数据库的支持。参考 [Controlling Database Connections](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-connections) 和 [Embedded Database Support](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-support) 。
 - `object`:  `org.springframework.jdbc.object` 包含表示 RDBMS 查询、更新、以及存储过程的线程安全的、可复用的对象。参考 [Modeling JDBC Operations as Java Objects](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-object)。这种方式由 JDO 建模，虽然查询返回的对象是与数据库断开连接的。这种 JDBC 的高级抽象依赖于 `org.springframework.jdbc.core` 包中的低级抽象。
 - `support`:  `org.springframework.jdbc.support` 提供了 `SQLException` 转化功能以及一些工具类。JDBC 处理中抛出的异常呗转化为 `org.springframework.dao` 包中定义的异常。这就意味着使用 Spring JDBC 抽象层的代码不需要实现 JDBC 或者特定于 RDBMS 的异常处理。所有被转化的异常都是不受检查的，这样你就可以捕获可恢复异常的同时让其他异常传播给调用者。参考 [Using `SQLExceptionTranslator`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-SQLExceptionTranslator) 获取更多信息。
+
+## 3.3 使用 JDBC 核心类控制基本 JDBC 处理和 Error 处理
+
+本节涵盖如何使用 JDBC 核心类控制基本 JDBC 处理，包含错误处理。包括以下主题：
+
+- [使用 `JdbcTemplate`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-JdbcTemplate)
+- [使用 `NamedParameterJdbcTemplate`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-NamedParameterJdbcTemplate)
+- [使用 `SQLExceptionTranslator`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-SQLExceptionTranslator)
+- [运行语句](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-statements-executing)
+- [运行查询](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-statements-querying)
+- [更新数据库](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-updates)
+- [检索自动生成的键](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-auto-generated-keys)
+
+### 3.3.1 使用 `JdbcTemplate`
+
+`JdbcTemplate` 是 JDBC 核心包中的核心类。它处理资源的创建和释放，帮助你避免常见错误，比如忘记关闭连接。它执行核心 JDBC 流程的基本任务 (比如语句创建和执行等) ，应用代码提供 SQL 并提取结果。`JdbcTemplate` 类：
+
+- 运行 SQL 查询
+- 更新语句和存储过程调用
+- 在 `ResultSet` 实例上执行迭代器，提取返回的参数
+- 捕获 JDBC 异常并将它们转化为范型的，携带更多信息的，定义在 `org.springframework.dao` 包中的异常。(参考 [Consistent Exception Hierarchy](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#dao-exceptions) )
+
+当你的代码使用 `JdbcTemplate` 时，你只需要实现回调接口，给予它们清楚定义的契约。由 `JdbcTemplate` 给定 `Connection` 后，`PreparedStatementCreator` 回调接口创建一个准备语句，提供 SQL 和所有必需的参数。`CallableStatementCreator` 接口完整类似的操作，它创建可调用语句。`RowCallbackHandler` 即可从 `ResultSet` 中提取值。
+
+你可以直接使用 `DataSource` 引用实例化 `JdbcTemplate` 并在 DAO 实现中使用，还可以将它配置到 Spring IoC 容器中，并将其作为 bean 引用提供给 DAOs。
+
+> `DataSource` 应该始终被配置为 Spring IoC 容器中的 bean 。在第一种情况下该 bean 被直接提供给服务。第二种情况，它被提供给准备模板。
+
+由此类发出的所有 SQL 都会被记录在 `DEBUG` 级别的日志中，位于对应于模板实例的全限定类名的类别下 (典型地，`JdbcTempalte` ，但是如果你使用了自定义的 `JdbcTemplate` 子类，则会有所不同)。
+
+后续的章节提供了一些使用 `JdbcTemplate` 的例子。这些例子并没有展示 `JdbcTemplate` 暴露出来的所有功能。参考 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html) 获取更多信息。
+
