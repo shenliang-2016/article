@@ -27,6 +27,7 @@
 3、任意节点的左右子树也分别是二叉查找树；
 
 4、没有键值相等的节点；
+
 ![这里写图片描述](https://img-blog.csdn.net/20180305205337227?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDg3MDUxOA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
 上图为一个普通的二叉查找树，按照中序遍历的方式可以从小到大的顺序排序输出：2、3、5、6、7、8。
@@ -160,5 +161,7 @@ PS：我在知乎上看到有人是这样说的,我感觉说的也挺有道理�
 参考文章：
 
 1、[http://blog.csdn.net/whoamiyang/article/details/51926985](http://blog.csdn.net/whoamiyang/article/details/51926985)
+
 2、https://www.cnblogs.com/George1994/p/7008732.html
+
 3、《MySQL技术内幕 InnoDB存储引擎 姜承尧 第2版》
