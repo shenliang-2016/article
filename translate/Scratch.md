@@ -1,12 +1,12 @@
-### 3.3.4 运行语句
+### 3.3.6 更新数据库
 
-运行一条 SQL 语句只需要很少的代码。你需要一个 `DataSource` 和一个 `JdbcTemplate` ，包括连同后者一起提供的方便方法。下面的例子展示了创建一张新表的最小需求但是功能完备的类：
+下面的例子根据某个主键更新某一字段值：
 
 ```java
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class ExecuteAStatement {
+public class ExecuteAnUpdate {
 
     private JdbcTemplate jdbcTemplate;
 
@@ -14,55 +14,32 @@ public class ExecuteAStatement {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
-    public void doExecute() {
-        this.jdbcTemplate.execute("create table mytable (id integer, name varchar(100))");
+    public void setName(int id, String name) {
+        this.jdbcTemplate.update("update mytable set name = ? where id = ?", name, id);
     }
 }
 ```
 
-### 3.3.5 运行查询
+在上面的例子中，SQL 语句中的占位符作为行参数。你可以传递变量或者对象数组作为该参数的值。因此，你应该将基本数据类型显式包装为相应的包装类，或者使用自动装箱。
 
-一些查询方法返回单独的一个值。为了从一行中检索特定值的数量，使用 `queryForObject(..)`。该方法将返回的 JDBC `Type` 转化为作为参数传入的 Java 类。如果类型转换不可用，则抛出 `InvalidDataAccessApiUsageException` 。下面的例子包含两个查询方法，一个用来查询一个 `int` ，另一个查询一个 `String` ：
+### 3.3.7 检索自增键
+
+一个 `update()` 便捷方法支持由数据库产生的主键的检索。这种支持是 JDBC 3.0 标准的一部分。参考规范文档 13.6 章节了解更多细节。该方法将 `PreparedStatementCreator` 作为它的第一个参数，这也是插入语句所需的特定方式。另外的参数是一个 `KeyHolder` ，包含从更新操作正确返回的产生的主键。创建合适的 `PreparedStatement` 没有标准的唯一方式 (解释为什么该方法签名会是这个样子) 。下面的例子在 Oracle 平台上运行，其他平台不一定可行。
 
 ```java
-import javax.sql.DataSource;
-import org.springframework.jdbc.core.JdbcTemplate;
+final String INSERT_SQL = "insert into my_test (name) values(?)";
+final String name = "Rob";
 
-public class RunAQuery {
+KeyHolder keyHolder = new GeneratedKeyHolder();
+jdbcTemplate.update(
+    new PreparedStatementCreator() {
+        public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+            PreparedStatement ps = connection.prepareStatement(INSERT_SQL, new String[] {"id"});
+            ps.setString(1, name);
+            return ps;
+        }
+    },
+    keyHolder);
 
-    private JdbcTemplate jdbcTemplate;
-
-    public void setDataSource(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
-    }
-
-    public int getCount() {
-        return this.jdbcTemplate.queryForObject("select count(*) from mytable", Integer.class);
-    }
-
-    public String getName() {
-        return this.jdbcTemplate.queryForObject("select name from mytable", String.class);
-    }
-}
+// keyHolder.getKey() now contains the generated key
 ```
-
-除了单个结果的查询方法，若干方法返回一个列表，其中每个实体都是查询返回的一行数据。最通用的方法是 `queryForList(..)` ，它返回一个 `List` ，其中每个元素都是包含每个表列的数据实体的 `Map` ，使用表列名作为键。如果你为上面例子添加一个查询所有行的列表的方法，可能如下所示：
-
-```java
-private JdbcTemplate jdbcTemplate;
-
-public void setDataSource(DataSource dataSource) {
-    this.jdbcTemplate = new JdbcTemplate(dataSource);
-}
-
-public List<Map<String, Object>> getList() {
-    return this.jdbcTemplate.queryForList("select * from mytable");
-}
-```
-
-返回的列表将被构造如下：
-
-```
-[{name=Bob, id=1}, {name=Mary, id=2}]
-```
-
