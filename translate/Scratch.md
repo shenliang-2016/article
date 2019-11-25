@@ -1,96 +1,64 @@
-### 3.5.2 对象列表的批量操作
+## 3.6 使用 `SimpleJdbc` 类简化 JDBC 操作
 
-`JdbcTemplate` 和 `NamedParameterJdbcTemplate` 都提供了不同的方法用来进行批量更新。不同于实现特定的批量接口，你在方法调用中使用一个列表提供所有的参数值。该框架遍历这些值并使用一个内部的准备语句设定器方法。不同的 API，取决于你是否使用命名参数。为了命名参数，你提供一个 `SqlParameterSource` 数组，数组中的实体就是批量处理的成员。你可以使用方便方法 `SqlParameterSourceUtils.createBatch` 创建这样的数组，将其作为 bean 形式的对象（携带对应于参数的 getter 方法），或者键为 `String` 的 `Map` 实例（包含对应的参数作为的值）的数组进行传递，或者两者混合使用。
+得益于可以通过 JDBC 检索得到的数据库元数据的优点， `SimpleJdbcInsert` 和 `SimpleJdbcCall` 类提供了简化的配置。这就意味着你需要的配置更好。不过，你当然可以关闭这种元数据处理，如果你希望在你的代码中配置所有细节。
 
-下面的例子展示了使用命名参数的批量更新：
+### 3.6.1 使用 `SimpleJdbcInsert` 插入数据
 
-```java
-public class JdbcActorDao implements ActorDao {
-
-    private NamedParameterTemplate namedParameterJdbcTemplate;
-
-    public void setDataSource(DataSource dataSource) {
-        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-    }
-
-    public int[] batchUpdate(List<Actor> actors) {
-        return this.namedParameterJdbcTemplate.batchUpdate(
-                "update t_actor set first_name = :firstName, last_name = :lastName where id = :id",
-                SqlParameterSourceUtils.createBatch(actors));
-    }
-
-    // ... additional methods
-}
-```
-
-对于使用经典的 `?` 占位符的 SQL 语句，你传入一个包含携带更新值的对象数组。该对象数组必须为 SQL 语句中每个占位符提供一个数据实体，而且它们必须遵循它们在 SQL 语句中定义的顺序。
-
-下面的例子与之前的例子相同，处理它使用了经典的 JDBC `?` 占位符：
+首先，我们查看具有最少配置选项的 `SimpleJdbcInsert` 类。你应该在数据访问层的实例化方法中实例化 `SimpleJdbcInsert` 。对本示例而言，初始化方法就是 `setDataSource` 。你不需要子类化 `SimpleJdbcInsert` 类，相反，你可以创建一个新的实例并使用 `withTableName` 方法设定表名。这个类的配置方法遵循 `fluid` 风格，返回 `SimpleJdbcInsert` 实例，它允许你串联起所有的配置方法。下面的例子只使用一个配置方法，稍后我们将展示使用多个方法的例子。
 
 ```java
 public class JdbcActorDao implements ActorDao {
 
     private JdbcTemplate jdbcTemplate;
+    private SimpleJdbcInsert insertActor;
 
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.insertActor = new SimpleJdbcInsert(dataSource).withTableName("t_actor");
     }
 
-    public int[] batchUpdate(final List<Actor> actors) {
-        List<Object[]> batch = new ArrayList<Object[]>();
-        for (Actor actor : actors) {
-            Object[] values = new Object[] {
-                    actor.getFirstName(), actor.getLastName(), actor.getId()};
-            batch.add(values);
-        }
-        return this.jdbcTemplate.batchUpdate(
-                "update t_actor set first_name = ?, last_name = ? where id = ?",
-                batch);
+    public void add(Actor actor) {
+        Map<String, Object> parameters = new HashMap<String, Object>(3);
+        parameters.put("id", actor.getId());
+        parameters.put("first_name", actor.getFirstName());
+        parameters.put("last_name", actor.getLastName());
+        insertActor.execute(parameters);
     }
 
     // ... additional methods
 }
 ```
 
-我们前面介绍的所有批处理更新方法都返回一个 `int` 数组，其中包含每个批处理条目的受影响行数。此计数由 JDBC 驱动程序报告。如果该计数不可用，则 JDBC 驱动程序将返回值 `-2`。
+这里使用的 `execute` 方法采用普通的 `java.util.Map` 作为它唯一的参数。这里需要注意的重要的事情是，使用的 `Map` 的键必须匹配定义在数据库中的表的列名。这是因为我们读取元数据来构造实际的插入语句。
 
-> 在这种情况下，通过基础 `PreparedStatement` 上的自动设定，需要从给定的 Java 类型派生每个值的对应 JDBC 类型。尽管这通常效果很好，但是存在潜在的问题（例如，`Map` 包含的 `null` 值）。在这种情况下，Spring 默认情况下会调用 `ParameterMetaData.getParameterType`，这对于您的 JDBC 驱动程序可能会相当费用高昂。如果遇到以下情况，则应使用最新的驱动程序版本，并考虑将 `spring.jdbc.getParameterType.ignore` 属性设置为 `true`（作为 JVM 系统属性或在类路径根目录中的 `spring.properties` 文件中）。性能问题-例如，关于Oracle 12c（SPR-16139）的报告。
->
-> 或者，您可以考虑通过 `BatchPreparedStatementSetter`（如前所示），通过为基于 `List<Object[]>` 的调用提供的显式类型数组，通过在服务器上的 `registerSqlType` 调用来显式指定相应的 JDBC 类型。自定义 `MapSqlParameterSource` 实例，或者通过 `BeanPropertySqlParameterSource` 实例从 Java 声明的属性类型中获取 SQL 类型，即使对于 `null` 值也是如此。
+### 3.6.2 使用 `SimpleJdbcInsert` 检索自动生成的键
 
-### 3.5.3 多个批量的批量操作
-
-前面的批处理更新示例处理的批处理过大，您想将它们分解成几个较小的批处理。您可以通过多次调用 `batchUpdate` 方法来使用前面提到的方法来执行此操作，但是现在有了一个更方便的方法。除了 SQL 语句外，此方法还包含对象的 `Collection` ，其中包含参数，每个批处理要进行的更新次数以及 `ParameterizedPreparedStatementSetter` 来设置准备语句的参数值。框架遍历提供的值，并将更新调用分成指定大小的批处理。
-
-下面的例子展示了使用批量尺寸为 100  的批量更新：
+下一个例子使用相同的插入语句，不同的是，不是传入 `id` ，它检索自动生成的主键并将它设置到新的 `Actor` 对象上。当它创建 `SimpleJdbcInsert` 时，除了指定表名，它还通过 `usingGeneratedKeyColumns` 方法指定产生主键列名。下面的例子展示了如何做：
 
 ```java
 public class JdbcActorDao implements ActorDao {
 
     private JdbcTemplate jdbcTemplate;
+    private SimpleJdbcInsert insertActor;
 
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.insertActor = new SimpleJdbcInsert(dataSource)
+                .withTableName("t_actor")
+                .usingGeneratedKeyColumns("id");
     }
 
-    public int[][] batchUpdate(final Collection<Actor> actors) {
-        int[][] updateCounts = jdbcTemplate.batchUpdate(
-                "update t_actor set first_name = ?, last_name = ? where id = ?",
-                actors,
-                100,
-                new ParameterizedPreparedStatementSetter<Actor>() {
-                    public void setValues(PreparedStatement ps, Actor argument) throws SQLException {
-                        ps.setString(1, argument.getFirstName());
-                        ps.setString(2, argument.getLastName());
-                        ps.setLong(3, argument.getId().longValue());
-                    }
-                });
-        return updateCounts;
+    public void add(Actor actor) {
+        Map<String, Object> parameters = new HashMap<String, Object>(2);
+        parameters.put("first_name", actor.getFirstName());
+        parameters.put("last_name", actor.getLastName());
+        Number newId = insertActor.executeAndReturnKey(parameters);
+        actor.setId(newId.longValue());
     }
 
     // ... additional methods
 }
 ```
 
-这里调用的批处理更新方法返回一个 `int` 数组，其中包含每个批处理的数组条目以及每次更新受影响的行数的数组。顶层数组的长度指示已执行的批处理数量，第二层数组的长度指示该批处理中的更新数量。每个批次中的更新数量应该是为所有批次提供的批次大小（最后一个可能更少），这取决于所提供的更新对象的总数。每个更新语句的更新计数是 JDBC 驱动程序报告的计数。如果该计数不可用，则 JDBC 驱动程序将返回值 `-2`。
+使用第二种方法运行插入的主要区别在于，您没有将 `id` 添加到 `Map` 中，而是调用了 `executeAndReturnKey` 方法。这将返回一个 `java.lang.Number` 对象，您可以使用该对象创建域类中使用的数字类型的实例。您不能依赖所有数据库在这里返回特定的 Java 类。`java.lang.Number` 是您可以依赖的基类。如果您有多个自动生成的列或生成的值是非数字的，则可以使用从 `executeAndReturnKeyHolder` 方法返回的 `KeyHolder`。
 
