@@ -1,109 +1,101 @@
-### 3.6.5 使用 `SimpleJdbcCall` 调用存储过程
+### 3.6.7 如何定义 `SqlParameters`
 
-`SimpleJdbcCall` 类使用数据库中的元数据来查找 `in` 和 `out` 参数的名称，因此你不需要显式声明它们。如果你喜欢，仍然可以显式声明它们，或者你的参数 (比如 `ARRAY` 或者 `STRUCT`) 无法自动影射到 Java 类。下面的第一个累字展示了一个简单的存储过程，从 MySQL 数据库返回 `VARCHAR` 和 `DATE` 格式的标量值。示例存储过程读取特定 actor 实体并以 `out` 参数的形式返回 `first_name`，`last_name`，以及 `birth_date` 列。下面的列表展示了第一个例子：
+要为 `SimpleJdbc` 类和 RDBMS 操作类（[Modeling JDBC Operations as Java Objects](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-object) 中介绍）定义参数，你可以使用 `SqlParameter` 或者它的一个子类。为了这样做，你通常在构造器中指定参数名称和 SQL 类型。使用 `java.sql.Type` 常量指定 SQL 类型。本节前文中我们看到过如下声明：
+
+```java
+new SqlParameter("in_id", Types.NUMERIC),
+new SqlOutParameter("out_first_name", Types.VARCHAR),
+```
+
+第一行使用 `SqlParameter` 声明一个 IN 参数。你可以使用 IN 参数进行存储过程调用，或者用于使用 `SqlQuery` 或和它的子类进行查询（在 [Understanding `SqlQuery`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-SqlQuery) 中介绍）：
+
+第二行使用 `SqlOutParameter` 声明一个 `out` 参数，该参数将被用于存储过程调用。同时还有一个包含 `InOut` 参数的 `SqlInOutParameter` (参数为存储过程提供一个 IN 值，同时也返回一个值)。
+
+> 只有被声明为 `SqlParameter` 和 `SqlInOutParameter` 的参数才能被用来提供输入值。这一点不同于 `StoredProcedure` 类，(出于向后兼容的原因) 它允许被提供作为参数的输入值声明为 `SqlOutParameter` 。
+
+对于 IN 参数，除了名称和 SQL 类型外，还可以为数值数据指定小数位，或者为自定义数据库类型指定类型名。对于 `out` 参数，您可以提供 `RowMapper` 来处理从 `REF` 游标返回的行的映射。另一个选择是指定一个 `SqlReturnType`，它提供了一个定义返回值的自定义处理的机会。
+
+### 3.6.8 使用 `SimpleJdbcCall` 调用存储函数
+
+可以使用与调用存储过程几乎相同的方式来调用存储函数，区别在于提供函数名而不是过程名。您可以在配置中使用 `withFunctionName` 方法，以指示您要调用函数，并且会为函数调用生成相应的字符串。专门的 `execute` 调用（`executeFunction`）用于执行函数，它以指定类型的对象的形式返回函数的返回值，这意味着您不必从结果映射中检索返回值。对于只有一个 `out` 参数的存储过程，也可以使用类似的便捷方法（名为 `executeObject` ）。以下示例（对于MySQL）基于一个名为 `get_actor_name` 的存储函数，该函数返回 actor 的全名：
 
 ```sql
-CREATE PROCEDURE read_actor (
-    IN in_id INTEGER,
-    OUT out_first_name VARCHAR(100),
-    OUT out_last_name VARCHAR(100),
-    OUT out_birth_date DATE)
+CREATE FUNCTION get_actor_name (in_id INTEGER)
+RETURNS VARCHAR(200) READS SQL DATA
 BEGIN
-    SELECT first_name, last_name, birth_date
-    INTO out_first_name, out_last_name, out_birth_date
-    FROM t_actor where id = in_id;
+    DECLARE out_name VARCHAR(200);
+    SELECT concat(first_name, ' ', last_name)
+        INTO out_name
+        FROM t_actor where id = in_id;
+    RETURN out_name;
 END;
 ```
 
-`in_id` 参数包含你寻找的 actor 的 `id` 。`out` 参数返回从表里读取的数据。
-
-你可以像声明 `SimpleJdbcInsert` 那样声明 `SimpleJdbcCall` 。你应该在你的数据访问层的实例化方法中实例化并配置该类。相比于 `StoredProcedure` 类，你不需要创建子类，也不需要声明那些可以在数据库元数据中找到的参数。下面的 `SimpleJdbcCall` 配置的例子使用了上面的存储过程(其中仅有的配置选项，除了 `DataSource` ，另外一个就是存储过程的名称)：
+为了调用该函数，我们再次在初始化方法中创建一个 `SimpleJdbcCall` ，如下面例子所示：
 
 ```java
 public class JdbcActorDao implements ActorDao {
 
     private JdbcTemplate jdbcTemplate;
-    private SimpleJdbcCall procReadActor;
+    private SimpleJdbcCall funcGetActorName;
 
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-        this.procReadActor = new SimpleJdbcCall(dataSource)
-                .withProcedureName("read_actor");
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        jdbcTemplate.setResultsMapCaseInsensitive(true);
+        this.funcGetActorName = new SimpleJdbcCall(jdbcTemplate)
+                .withFunctionName("get_actor_name");
     }
 
-    public Actor readActor(Long id) {
+    public String getActorName(Long id) {
         SqlParameterSource in = new MapSqlParameterSource()
                 .addValue("in_id", id);
-        Map out = procReadActor.execute(in);
-        Actor actor = new Actor();
-        actor.setId(id);
-        actor.setFirstName((String) out.get("out_first_name"));
-        actor.setLastName((String) out.get("out_last_name"));
-        actor.setBirthDate((Date) out.get("out_birth_date"));
-        return actor;
+        String name = funcGetActorName.executeFunction(String.class, in);
+        return name;
     }
 
     // ... additional methods
 }
 ```
 
-你用来执行该调用的代码涉及到创建一个包含 IN 参数的 `SqlParameterSource` 。你必须匹配给定的输入值的名称到在存储过程中声明的参数名称。如果你使用元数据确定数据库对象应该如何对应到存储过程，则不需要这个匹配过程。源中为存储过程指定的内容不一定是存储过程在数据库中存储的方式。某些数据库将所有名称都转换为大写，有些使用小写，还有的使用指定的本来形式。
+其中使用的 `executeFunction` 方法返回一个 `String`，包含函数调用返回的值。
 
-`execute` 方法使用 IN 参数并返回包含所有 `out` 参数的 `Map` ，其中参数名称为影射的键，如存储过程中指定的那样。这种情况下，它们是 `out_first_name`，`out_last_name`，和 `out_birth_date`。
+### 3.6.9 从 `SimpleJdbcCall` 返回 `ResultSet` 或者 REF 游标
 
-`execute` 方法的最后一部分创建一个 `Actor` 实例，使用数据检索返回的数据。再一次地，使用 `out` 参数在存储过程中声明的名称是很重要的。同样，结果映射中存储的 `out` 参数名称的大小写与数据库中`out`参数名称的大小写匹配，这在不同数据库中可能会有所不同。为了使你的代码具有更好的可移植性，你应该使用大小写敏感的查找策略，或者指示 Spring 使用 `LinkedCaseInsensitiveMap` 。为了实现后者，你可以创建自己的 `JdbcTemplate` 并设定其 `setResultsMapCaseInsensitive` 属性为 `true` 。然后你可以将这个自定义的 `JdbcTemplate` 实例传入你的 `SimpleJdbcCall` 的构造器中。下面的例子展示了该配置：
+调用返回结果集的存储过程或函数有点棘手。一些数据库在 JDBC 结果处理期间返回结果集，而另一些数据库则需要显式注册的特定类型的 `out` 参数。两种方法都需要进行额外的处理才能遍历结果集并处理返回的行。通过 `SimpleJdbcCall`，您可以使用 `returningResultSet` 方法，并声明用于特定参数的 `RowMapper` 实现。如果在结果处理过程中返回了结果集，则没有定义任何名称，因此返回的结果必须与声明 `RowMapper` 实现的顺序匹配。指定的名称仍用于将处理后的结果列表存储在从 `execute` 语句返回的结果映射中。
+
+下面的例子 (MySQL) 使用一个存储过程，该存储过程不使用 IN 参数，返回表 `t_actor` 中所有的行：
+
+```sql
+CREATE PROCEDURE read_all_actors()
+BEGIN
+ SELECT a.id, a.first_name, a.last_name, a.birth_date FROM t_actor a;
+END;
+```
+
+为了调用此存储过程，你可以声明 `RowMapper`。由于你希望映射到的类遵循 JavaBean 规范，你可以使用 `BeanPropertyRowMapper` ，这个对象通过将需要映射到的类传入 `newInstance` 方法而创建。下面的例子展示了如何做：
 
 ```java
 public class JdbcActorDao implements ActorDao {
 
-    private SimpleJdbcCall procReadActor;
+    private SimpleJdbcCall procReadAllActors;
 
     public void setDataSource(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.setResultsMapCaseInsensitive(true);
-        this.procReadActor = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("read_actor");
+        this.procReadAllActors = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("read_all_actors")
+                .returningResultSet("actors",
+                BeanPropertyRowMapper.newInstance(Actor.class));
+    }
+
+    public List getActorsList() {
+        Map m = procReadAllActors.execute(new HashMap<String, Object>(0));
+        return (List) m.get("actors");
     }
 
     // ... additional methods
 }
 ```
 
-通过执行此操作，可以避免在用于返回的 `out` 参数名称的情况下发生冲突。
-
-### 3.6.6 显式声明用于 `SimpleJdbcCall` 的参数
-
-前文中，我们描述了如何从元数据推导出参数，但是如果需要，可以显式声明它们。您可以通过使用 `declareParameters` 方法创建和配置 `SimpleJdbcCall` 来实现，该方法采用可变数量的 `SqlParameter` 对象作为输入。请参阅 [下一节](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-params) 了解有关如何定义 `SqlParameter` 。
-
-> 如果您使用的数据库不是 Spring 支持的数据库，则必须进行显式声明。当前，Spring 支持针对以下数据库的存储过程调用的元数据查找：Apache Derby，DB2，MySQL，Microsoft SQL Server，Oracle 和 Sybase。我们还支持MySQL，Microsoft SQL Server 和 Oracle 存储函数的元数据查找。
-
-您可以选择显式声明一个，一些或所有参数。在未显式声明参数的地方，仍使用参数元数据。要绕过对潜在参数的元数据查找的所有处理，并且仅使用声明的参数，可以在声明中调用方法 `withoutProcedureColumnMetaDataAccess`。假设您为数据库函数声明了两个或多个不同的调用签名。在这种情况下，您调用 `useInParameterNames` 来指定要包含在给定签名中的 IN 参数名称列表。
-
-下面的例子展示了完整的声明的存储过程调用，并使用了前面例子中的信息：
-
-```java
-public class JdbcActorDao implements ActorDao {
-
-    private SimpleJdbcCall procReadActor;
-
-    public void setDataSource(DataSource dataSource) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.setResultsMapCaseInsensitive(true);
-        this.procReadActor = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("read_actor")
-                .withoutProcedureColumnMetaDataAccess()
-                .useInParameterNames("in_id")
-                .declareParameters(
-                        new SqlParameter("in_id", Types.NUMERIC),
-                        new SqlOutParameter("out_first_name", Types.VARCHAR),
-                        new SqlOutParameter("out_last_name", Types.VARCHAR),
-                        new SqlOutParameter("out_birth_date", Types.DATE)
-                );
-    }
-
-    // ... additional methods
-}
-```
-
-两个例子执行的结果是一样的。第二个例子显式指定了所有细节，而没有依赖元数据。
-
+`execute` 调用传入一个空 `Map`，因为该调用不需要任何参数。然后 actors 列表就回从结果集中被检索出来并返回给调用者。
