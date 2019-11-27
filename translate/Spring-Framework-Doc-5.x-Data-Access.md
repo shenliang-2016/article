@@ -2510,3 +2510,200 @@ public List<Actor> searchForActors(int age, String namePattern) {
 }
 ```
 
+### 3.7.3 使用 `SqlUpdate`
+
+`SqlUpdate` 类封装了一个 SQL 更新。与查询一样，更新对象是可重用的，并且与所有 `RdbmsOperation` 类一样，更新可以具有参数并在 SQL 中定义。此类提供了许多类似于查询对象的 `execute(..)` 方法的 `update(..)` 方法。`SQLUpdate` 类是具体的。可以将其子类化-例如，添加自定义更新方法。但是，不必继承 `SqlUpdate` 类，因为可以通过设置 SQL 和声明参数来轻松地对其进行参数化。以下示例创建一个名为 `execute` 的自定义更新方法：
+
+```java
+import java.sql.Types;
+import javax.sql.DataSource;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.object.SqlUpdate;
+
+public class UpdateCreditRating extends SqlUpdate {
+
+    public UpdateCreditRating(DataSource ds) {
+        setDataSource(ds);
+        setSql("update customer set credit_rating = ? where id = ?");
+        declareParameter(new SqlParameter("creditRating", Types.NUMERIC));
+        declareParameter(new SqlParameter("id", Types.NUMERIC));
+        compile();
+    }
+
+    /**
+     * @param id for the Customer to be updated
+     * @param rating the new value for credit rating
+     * @return number of rows updated
+     */
+    public int execute(int id, int rating) {
+        return update(rating, id);
+    }
+}
+```
+
+### 3.7.4 使用 `StoredProcedure`
+
+`StoredProcedure` 类是 RDMBS 存储过程的对象抽象超类。它是一个抽象类，它的各种 `execute(..)` 方法都是 `protected` 的，只允许通过子类的调用，从而提供了更强的类型约束。
+
+继承的 `sql` 属性是 RDBMS 中的存储过程的名称。
+
+要为 `StoredProcedure` 类定义参数，你可以使用 `SqlParameter` 或者它的子类。你必须在构造方法中指定参数名和 SQL 类型。如下面例子所示：
+
+```java
+new SqlParameter("in_id", Types.NUMERIC),
+new SqlOutParameter("out_first_name", Types.VARCHAR),
+```
+
+SQL 类型使用 `java.sql.Type` 常量指定。
+
+第一行 (使用 `SqlParameter` ) 声明一个 IN 参数。你可以使用 IN 参数进行存储过程调用，或者用于使用 `SqlQuery` 或者它的子类（参考  [Understanding `SqlQuery`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-SqlQuery) ）进行的查询。
+
+第二行 (使用 `SqlOutParameter` ) 声明一个 `out` 参数，该参数会被用于存储过程调用。同时还存在一个 `SqlInOutParameter` 用于 `InOut` 参数 (为存储过程提供一个 `in` 值，同时返回一个值)。
+
+对 `in` 参数来说，除了名称和 SQL 类型，你可以指定数值数据的范围或者为自定义数据库类型指定类型名称。对 `out` 参数，你可以提供 `RowMapper` 来处理从 `REF` 游标返回的数据行的映射。另外一个选项是指定一个 `SqlReturnType` ，以允许你自定义返回值处理逻辑。
+
+下面关于简单 DAO 的例子使用 `StoredProcedure` 来调用一个函数 ( `sysdate()` )，所有 Oracle 数据库都支持该函数。为了使用存储过程的功能，你必须扩展 `StoredProcedure` 。在这个例子中，`StoredProcedure` 类是一个内部类。不过，如果你需要重用 `StoredProcedure` ，你可以将它声明为顶级类。例子没有任何输入参数，但是使用 `SqlOutParameter` 类将一个输出参数声明为 `Date` 类型。`execute()` 方法执行存储过程并从结果 `Map` 提取返回日期。结果 `Map` 中每个声明的输出参数都对应一个数据实体 (这种情况下，仅对应一个) ，通过将该参数名作为键。下面的例子展示了我们自定义的 `StoredProcedure` 类：
+
+```java
+import java.sql.Types;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.object.StoredProcedure;
+
+public class StoredProcedureDao {
+
+    private GetSysdateProcedure getSysdate;
+
+    @Autowired
+    public void init(DataSource dataSource) {
+        this.getSysdate = new GetSysdateProcedure(dataSource);
+    }
+
+    public Date getSysdate() {
+        return getSysdate.execute();
+    }
+
+    private class GetSysdateProcedure extends StoredProcedure {
+
+        private static final String SQL = "sysdate";
+
+        public GetSysdateProcedure(DataSource dataSource) {
+            setDataSource(dataSource);
+            setFunction(true);
+            setSql(SQL);
+            declareParameter(new SqlOutParameter("date", Types.DATE));
+            compile();
+        }
+
+        public Date execute() {
+            // the 'sysdate' sproc has no input parameters, so an empty Map is supplied...
+            Map<String, Object> results = execute(new HashMap<String, Object>());
+            Date sysdate = (Date) results.get("date");
+            return sysdate;
+        }
+    }
+
+}
+```
+
+下面的例子中 `StoredProcedure` 拥有两个输出参数 (Oracle REF 游标) ：
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
+import oracle.jdbc.OracleTypes;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.object.StoredProcedure;
+
+public class TitlesAndGenresStoredProcedure extends StoredProcedure {
+
+    private static final String SPROC_NAME = "AllTitlesAndGenres";
+
+    public TitlesAndGenresStoredProcedure(DataSource dataSource) {
+        super(dataSource, SPROC_NAME);
+        declareParameter(new SqlOutParameter("titles", OracleTypes.CURSOR, new TitleMapper()));
+        declareParameter(new SqlOutParameter("genres", OracleTypes.CURSOR, new GenreMapper()));
+        compile();
+    }
+
+    public Map<String, Object> execute() {
+        // again, this sproc has no input parameters, so an empty Map is supplied
+        return super.execute(new HashMap<String, Object>());
+    }
+}
+```
+
+注意，在 `TitlesAndGenresStoredProcedure` 构造方法中使用的 `declareParameter(..)` 方法的重载变体是如何被传递给 `RowMapper` 实现实例的。这是一种非常方便而且强大的复用现有功能的方法。接下来的两个例子提哦功能了两个 `RowMapper` 实现代码。
+
+`TitleMapper` 类为提供的 `ResultSet` 中的每一行将 `ResultSet` 映射为一个 `Title` 域对象。如下所示：
+
+```java
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import com.foo.domain.Title;
+import org.springframework.jdbc.core.RowMapper;
+
+public final class TitleMapper implements RowMapper<Title> {
+
+    public Title mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Title title = new Title();
+        title.setId(rs.getLong("id"));
+        title.setName(rs.getString("name"));
+        return title;
+    }
+}
+```
+
+`Genremapper` 类为提供的 `ResultSet` 中的每一行将 `ResultSet` 映射为一个 `Genre` 域对象，如下所示：
+
+```java
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import com.foo.domain.Genre;
+import org.springframework.jdbc.core.RowMapper;
+
+public final class GenreMapper implements RowMapper<Genre> {
+
+    public Genre mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new Genre(rs.getString("name"));
+    }
+}
+```
+
+为了传递参数给那些在 RDBMS 中的定义中包含若干输入参数的存储过程，你可以编写强类型的 `execute(..)` 方法，该方法将委托给在超类中的无类型的 `execute(Map)` 方法。如下面例子所示：
+
+```java
+import java.sql.Types;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
+import oracle.jdbc.OracleTypes;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.object.StoredProcedure;
+
+public class TitlesAfterDateStoredProcedure extends StoredProcedure {
+
+    private static final String SPROC_NAME = "TitlesAfterDate";
+    private static final String CUTOFF_DATE_PARAM = "cutoffDate";
+
+    public TitlesAfterDateStoredProcedure(DataSource dataSource) {
+        super(dataSource, SPROC_NAME);
+        declareParameter(new SqlParameter(CUTOFF_DATE_PARAM, Types.DATE);
+        declareParameter(new SqlOutParameter("titles", OracleTypes.CURSOR, new TitleMapper()));
+        compile();
+    }
+
+    public Map<String, Object> execute(Date cutoffDate) {
+        Map<String, Object> inputs = new HashMap<String, Object>();
+        inputs.put(CUTOFF_DATE_PARAM, cutoffDate);
+        return super.execute(inputs);
+    }
+}
+```
