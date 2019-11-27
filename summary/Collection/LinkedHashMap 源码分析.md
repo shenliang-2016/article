@@ -51,7 +51,7 @@ LinkedHashMap 在上面结构的基础上，增加了一条双向链表，使得
 
 Map 类型的集合类是通过 put(K,V) 方法插入键值对，LinkedHashMap 本身并没有覆写父类的 put 方法，而是直接使用了父类的实现。但在 HashMap 中，put 方法插入的是 HashMap 内部类 Node 类型的节点，该类型的节点并不具备与 LinkedHashMap 内部类 Entry 及其子类型节点组成链表的能力。那么，LinkedHashMap 是怎样建立链表的呢？在展开说明之前，我们先看一下 LinkedHashMap 插入操作相关的代码：
 
-```
+```java
 // HashMap 中实现
 public V put(K key, V value) {
     return putVal(hash(key), key, value, false, true);
@@ -136,7 +136,7 @@ private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
 
 以上就是 LinkedHashMap 维护插入顺序的相关分析。本节的最后，再额外补充一些东西。大家如果仔细看上面的代码的话，会发现有两个以`after`开头方法，在上文中没有被提及。在 JDK 1.8 HashMap 的源码中，相关的方法有3个：
 
-```
+```java
 // Callbacks to allow LinkedHashMap post-actions
 void afterNodeAccess(Node<K,V> p) { }
 void afterNodeInsertion(boolean evict) { }
@@ -149,7 +149,7 @@ void afterNodeRemoval(Node<K,V> p) { }
 
 与插入操作一样，LinkedHashMap 删除操作相关的代码也是直接用父类的实现。在删除节点时，父类的删除逻辑并不会修复 LinkedHashMap 所维护的双向链表，这不是它的职责。那么删除及节点后，被删除的节点该如何从双链表中移除呢？当然，办法还算是有的。上一节最后提到 HashMap 中三个回调方法运行 LinkedHashMap 对一些操作做出响应。所以，在删除及节点后，回调方法 `afterNodeRemoval` 会被调用。LinkedHashMap 覆写该方法，并在该方法中完成了移除被删除节点的操作。相关源码如下：
 
-```
+```java
 // HashMap 中实现
 public V remove(Object key) {
     Node<K,V> e;
@@ -240,9 +240,9 @@ void afterNodeRemoval(Node<K,V> e) { // unlink
 
 ###  3.3 访问顺序的维护过程
 
-前面说了插入顺序的实现，本节来讲讲访问顺序。默认情况下，LinkedHashMap 是按插入顺序维护链表。不过我们可以在初始化 LinkedHashMap，指定 accessOrder 参数为 true，即可让它按访问顺序维护链表。访问顺序的原理上并不复杂，当我们调用`get/getOrDefault/replace`等方法时，只需要将这些方法访问的节点移动到链表的尾部即可。相应的源码如下：
+前面说了插入顺序的实现，本节来讲讲访问顺序。默认情况下，LinkedHashMap 是按插入顺序维护链表。不过我们可以在初始化 LinkedHashMap，指定 accessOrder 参数为 true，即可让它按访问顺序维护链表。访问顺序的原理上并不复杂，当我们调用 `get/getOrDefault/replace` 等方法时，只需要将这些方法访问的节点移动到链表的尾部即可。相应的源码如下：
 
-```
+```java
 // LinkedHashMap 中覆写
 public V get(Object key) {
     Node<K,V> e;
