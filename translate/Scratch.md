@@ -1,77 +1,71 @@
-## 3.8 参数和数值处理的一般问题
+### 3.8.3 为 IN 子句传入值列表
 
-参数和数值处理存在的一般问题存在于由 Spring 框架的 JDBC 支持提供的各种不同方法中。本节介绍如何解决这些问题。
+SQL 标准允许基于包含变量值列表的表达式选择行。一个典型的例子是  `select * from T_ACTOR where id in (1, 2, 3)`。JDBC 标准不直接为准备好的语句支持此变量列表。您不能声明可变数量的占位符。您需要准备好所需数量的占位符的多种变体，或者一旦知道需要多少个占位符，就需要动态生成 SQL 字符串。在 `NamedParameterJdbcTemplate` 和 `JdbcTemplate` 中提供的命名参数支持采用后一种方法。您可以将值作为原始对象的 `java.util.List` 传入。此列表用于插入所需的占位符，并在语句执行期间传递值。
 
-### 3.8.1 为参数提供 SQL 类型信息
+> 传递许多值时要小心。JDBC 标准不保证您可以为 `in` 表达式列表使用100个以上的值。各种数据库都超过了这个数目，但是它们通常对允许多少个值有硬性限制。例如，Oracle 的限制为1000。
 
-通常，Spring 基于传入参数的类型来确定参数的 SQL 类型。在设定参数值时显式提供其 SQL 类型是可能的。有时候正确设定 `NULL` 值是有必要的。
+除了在值列表中放入基本数据类型值，你可以创建对象数组的 `java.util.List` 。该列表能够支持为 `in` 子句定义的多个表达式，比如 `select * from T_ACTOR where ( id, last_name ) in ((1, 'Johnson'), (2, 'Harrop'\)) ` 。当然，这也要求你的数据库支持这种语法。
 
-你可以通过以下几种方法提供 SQL 类型信息：
+### 3.8.4 为存储过程调用处理复杂类型
 
-- `JdbcTemplate` 的许多更新和查询方法携带一个 `int` 数组形式的附加参数。该数组被用来表示相应参数的 SQL 类型，使用来自 `java.sql.Types` 类的常量值。为每个参数提供一个实体。
-- 你可以使用 `SqlParameterValue` 类包装需要附加信息的参数值。为了做到这一点，为每个类创建一个新的实例并在构造方法中传入 SQL 类型和参数值。你还可以为数值提供可选的尺度参数。
-- 对于使用命名参数的方法，你可以使用 `SqlParameterSource`，`BeanPropertySqlParameterSource` 或者 `MapSqlParameterSource` 类。它们都有为所有命名参数值注册 SQL 类型的方法。
+当你调用存储过程时，你有时候可以使用特定于数据的复杂类型。为了容纳这些类型，Spring 提供了两个类， `SqlReturnType` 用来在它们被存储过程调用返回时处理它们，`SqlTypeValue` 用来当它们被作为参数传递给存储过程时处理它们。
 
-### 3.8.2 处理 BLOB 和 CLOB 对象
-
-您可以在数据库中存储图像，其他二进制数据和大块文本。这些大对象称为二进制数据的 BLOB（二进制大型对象），而字符数据称为 CLOB（字符大型对象）。在 Spring 中，您可以直接使用 `JdbcTemplate` 以及使用 RDBMS Objects 和 `SimpleJdbc` 类提供的更高抽象来处理这些大对象。所有这些方法都使用 `LobHandler` 接口的实现来实际管理 LOB（大对象）数据。`LobHandler` 通过 `getLobCreator` 方法提供对 `LobCreator` 类的访问，该方法用于创建要插入的新 LOB 对象。
-
-`LobCreator` 和 `LobHandler` 为 LOB 输入输出提供下面的支持：
-
-- BLOB
-  - `byte[]`: `getBlobAsBytes` 和 `setBlobAsBytes`
-  - `InputStream`: `getBlobAsBinaryStream` 和 `setBlobAsBinaryStream`
-- CLOB
-  - `String`: `getClobAsString` 和 `setClobAsString`
-  - `InputStream`: `getClobAsAsciiStream` 和 `setClobAsAsciiStream`
-  - `Reader`: `getClobAsCharacterStream` 和 `setClobAsCharacterStream`
-
-下个例子展示了如何创建并插入一个 BLOB。随后我们展示如何从数据库中读取它。
-
-本例子使用了 `JdbcTemplate` 和 `AbstractLobCreatingPreparedStatementCallback` 实现。它实现了 `setValues` 方法。该方法提供了一个 `LobCreator` ，我们用来设定你的 SQL 插入语句中的 LOB 列字段值。
-
-这个例子中，我们假设存在一个变量，`lobHandler` ，已经设定为一个 `DefaultLobHandler` 实例。你通常可以通过依赖注入设置该值。
-
-下面的例子展示了如何创建和插入一个 BLOB：
+`SqlReturnType` 接口只有一个方法 (名为 `getTypeValue`) 必须被实现。该接口被用作 `SqlOutParameter` 声明的一部分。下面的例子展示了返回用户声明的类型 `ITEM_TYPE` 的 Oracle `STRUCT` 对象的值：
 
 ```java
-final File blobIn = new File("spring2004.jpg");
-final InputStream blobIs = new FileInputStream(blobIn);
-final File clobIn = new File("large.txt");
-final InputStream clobIs = new FileInputStream(clobIn);
-final InputStreamReader clobReader = new InputStreamReader(clobIs);
+public class TestItemStoredProcedure extends StoredProcedure {
 
-jdbcTemplate.execute(
-    "INSERT INTO lob_table (id, a_clob, a_blob) VALUES (?, ?, ?)",
-    new AbstractLobCreatingPreparedStatementCallback(lobHandler) {  
-        protected void setValues(PreparedStatement ps, LobCreator lobCreator) throws SQLException {
-            ps.setLong(1, 1L);
-            lobCreator.setClobAsCharacterStream(ps, 2, clobReader, (int)clobIn.length());  
-            lobCreator.setBlobAsBinaryStream(ps, 3, blobIs, (int)blobIn.length());  
-        }
+    public TestItemStoredProcedure(DataSource dataSource) {
+        ...
+        declareParameter(new SqlOutParameter("item", OracleTypes.STRUCT, "ITEM_TYPE",
+            new SqlReturnType() {
+                public Object getTypeValue(CallableStatement cs, int colIndx, int sqlType, String typeName) throws SQLException {
+                    STRUCT struct = (STRUCT) cs.getObject(colIndx);
+                    Object[] attr = struct.getAttributes();
+                    TestItem item = new TestItem();
+                    item.setId(((Number) attr[0]).longValue());
+                    item.setDescription((String) attr[1]);
+                    item.setExpirationDate((java.util.Date) attr[2]);
+                    return item;
+                }
+            }));
+        ...
     }
-);
-
-blobIs.close();
-clobReader.close();
 ```
 
-> 如果您在从 `DefaultLobHandler.getLobCreator()` 返回的 `LobCreator` 上调用 `setBlobAsBinaryStream`，`setClobAsAsciiStream` 或 `setClobAsCharacterStream` 方法，则可以为 `contentLength` 参数指定一个负值。如果指定的内容长度为负数，则 `DefaultLobHandler` 将使用 set-stream 方法的 JDBC 4.0 变体，而没有 `length` 参数。否则，它将指定的长度传递给驱动程序。
->
-> 请参阅有关 JDBC 驱动程序的文档，以用于验证它是否支持流式 LOB 而无需提供内容长度。
-
-现在是时候从数据库中读取 LOB 数据了。再次，您要使用具有相同实例变量 `lobHandler` 的 `JdbcTemplate` 以及对 `DefaultLobHandler` 的引用。以下示例显示了如何执行此操作：
+你可以使用 `SqlTypeValue` 来传递 Java 对象（比如 `TestItem`）的值给存储过程。`SqlTypeValue` 接口只有一个方法 (名为 `createTypeValue` ) 必须被实现。活动连接被传入，你可以使用它来创建特定于数据库的对象，比如 `StructDescriptor` 实例或者 `ArrayDescriptor` 实例。下面的例子创建一个 `StructDescriptor` 实例：
 
 ```java
-List<Map<String, Object>> l = jdbcTemplate.query("select id, a_clob, a_blob from lob_table",
-    new RowMapper<Map<String, Object>>() {
-        public Map<String, Object> mapRow(ResultSet rs, int i) throws SQLException {
-            Map<String, Object> results = new HashMap<String, Object>();
-            String clobText = lobHandler.getClobAsString(rs, "a_clob");  
-            results.put("CLOB", clobText);
-            byte[] blobBytes = lobHandler.getBlobAsBytes(rs, "a_blob");  
-            results.put("BLOB", blobBytes);
-            return results;
-        }
-    });
+final TestItem testItem = new TestItem(123L, "A test item",
+        new SimpleDateFormat("yyyy-M-d").parse("2010-12-31"));
+
+SqlTypeValue value = new AbstractSqlTypeValue() {
+    protected Object createTypeValue(Connection conn, int sqlType, String typeName) throws SQLException {
+        StructDescriptor itemDescriptor = new StructDescriptor(typeName, conn);
+        Struct item = new STRUCT(itemDescriptor, conn,
+        new Object[] {
+            testItem.getId(),
+            testItem.getDescription(),
+            new java.sql.Date(testItem.getExpirationDate().getTime())
+        });
+        return item;
+    }
+};
 ```
+
+现在你可以添加该 `SqlTypeValue` 到包含对存储过程的 `execute` 调用的参数的 `Map` 中。
+
+`SqlTypeValue` 的另一个用法是传入一个值数组然后传递给 Oracle 存储过程。Oracle 拥有自己的内部 `Array` 类，这种情况下必须使用该类，你可以使用 `SqlTypeValue` 来创建 Oracle `Array` 实例并用来自 Java `Array` 的值填充它。如下面例子所示：
+
+```java
+final Long[] ids = new Long[] {1L, 2L};
+
+SqlTypeValue value = new AbstractSqlTypeValue() {
+    protected Object createTypeValue(Connection conn, int sqlType, String typeName) throws SQLException {
+        ArrayDescriptor arrayDescriptor = new ArrayDescriptor(typeName, conn);
+        ARRAY idArray = new ARRAY(arrayDescriptor, conn, ids);
+        return idArray;
+    }
+};
+```
+
