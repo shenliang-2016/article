@@ -1,71 +1,136 @@
-### 3.8.3 为 IN 子句传入值列表
+## 3.9 内置数据库支持
 
-SQL 标准允许基于包含变量值列表的表达式选择行。一个典型的例子是  `select * from T_ACTOR where id in (1, 2, 3)`。JDBC 标准不直接为准备好的语句支持此变量列表。您不能声明可变数量的占位符。您需要准备好所需数量的占位符的多种变体，或者一旦知道需要多少个占位符，就需要动态生成 SQL 字符串。在 `NamedParameterJdbcTemplate` 和 `JdbcTemplate` 中提供的命名参数支持采用后一种方法。您可以将值作为原始对象的 `java.util.List` 传入。此列表用于插入所需的占位符，并在语句执行期间传递值。
+`org.springframework.jdbc.datasource.embedded` 包提供了对内置 Java 数据库引擎的支持。提供了 [HSQL](http://www.hsqldb.org/), [H2](https://www.h2database.com/), 和 [Derby](https://db.apache.org/derby) 的原生支持。你也可以使用可扩展的 API 来插入新的内置数据库类型和 `DataSource` 实现。
 
-> 传递许多值时要小心。JDBC 标准不保证您可以为 `in` 表达式列表使用100个以上的值。各种数据库都超过了这个数目，但是它们通常对允许多少个值有硬性限制。例如，Oracle 的限制为1000。
+### 3.9.1 为什么使用内置数据库？
 
-除了在值列表中放入基本数据类型值，你可以创建对象数组的 `java.util.List` 。该列表能够支持为 `in` 子句定义的多个表达式，比如 `select * from T_ACTOR where ( id, last_name ) in ((1, 'Johnson'), (2, 'Harrop'\)) ` 。当然，这也要求你的数据库支持这种语法。
+由于其天然的轻量级特性，内置数据库在开发阶段是非常有用的。好处包括方便的配置，快速启动，可测试性，以及在开发期间频繁修改 SQL 的能力。
 
-### 3.8.4 为存储过程调用处理复杂类型
+### 3.9.2 使用 Spring XML 创建内置数据库
 
-当你调用存储过程时，你有时候可以使用特定于数据的复杂类型。为了容纳这些类型，Spring 提供了两个类， `SqlReturnType` 用来在它们被存储过程调用返回时处理它们，`SqlTypeValue` 用来当它们被作为参数传递给存储过程时处理它们。
+如果你想要在 Spring `ApplicationContext` 中作为 bean 暴露内置数据库实例，你可以使用 `spring-jdbc` 命名空间中的 `embedded-database` 标签：
 
-`SqlReturnType` 接口只有一个方法 (名为 `getTypeValue`) 必须被实现。该接口被用作 `SqlOutParameter` 声明的一部分。下面的例子展示了返回用户声明的类型 `ITEM_TYPE` 的 Oracle `STRUCT` 对象的值：
-
-```java
-public class TestItemStoredProcedure extends StoredProcedure {
-
-    public TestItemStoredProcedure(DataSource dataSource) {
-        ...
-        declareParameter(new SqlOutParameter("item", OracleTypes.STRUCT, "ITEM_TYPE",
-            new SqlReturnType() {
-                public Object getTypeValue(CallableStatement cs, int colIndx, int sqlType, String typeName) throws SQLException {
-                    STRUCT struct = (STRUCT) cs.getObject(colIndx);
-                    Object[] attr = struct.getAttributes();
-                    TestItem item = new TestItem();
-                    item.setId(((Number) attr[0]).longValue());
-                    item.setDescription((String) attr[1]);
-                    item.setExpirationDate((java.util.Date) attr[2]);
-                    return item;
-                }
-            }));
-        ...
-    }
+```xml
+<jdbc:embedded-database id="dataSource" generate-name="true">
+    <jdbc:script location="classpath:schema.sql"/>
+    <jdbc:script location="classpath:test-data.sql"/>
+</jdbc:embedded-database>
 ```
 
-你可以使用 `SqlTypeValue` 来传递 Java 对象（比如 `TestItem`）的值给存储过程。`SqlTypeValue` 接口只有一个方法 (名为 `createTypeValue` ) 必须被实现。活动连接被传入，你可以使用它来创建特定于数据库的对象，比如 `StructDescriptor` 实例或者 `ArrayDescriptor` 实例。下面的例子创建一个 `StructDescriptor` 实例：
+上面的配置创建一个内置 HSQL 数据库，由来自位于类路径的根目录下的 `schema.sql` 和 `test-data.sql` 资源文件中的 SQL 填充。此外，作为最佳实践，内置数据库被分配一个唯一的名称。内置数据库作为 Spring 容器中的 `javax.sql.DataSource` 类型的 bean，然后可以被按需注入数据访问对象中。
+
+### 3.9.3 编程方式创建内置数据库
+
+`EmbeddedDatabaseBuilder` 类提供一系列 API 用来以编程方式构造内置数据库。当你需要在独立的环境或者独立的集成测试环境中创建内置数据库时可以使用这些 API，如下面例子所示：
 
 ```java
-final TestItem testItem = new TestItem(123L, "A test item",
-        new SimpleDateFormat("yyyy-M-d").parse("2010-12-31"));
+EmbeddedDatabase db = new EmbeddedDatabaseBuilder()
+        .generateUniqueName(true)
+        .setType(H2)
+        .setScriptEncoding("UTF-8")
+        .ignoreFailedDrops(true)
+        .addScript("schema.sql")
+        .addScripts("user_data.sql", "country_data.sql")
+        .build();
 
-SqlTypeValue value = new AbstractSqlTypeValue() {
-    protected Object createTypeValue(Connection conn, int sqlType, String typeName) throws SQLException {
-        StructDescriptor itemDescriptor = new StructDescriptor(typeName, conn);
-        Struct item = new STRUCT(itemDescriptor, conn,
-        new Object[] {
-            testItem.getId(),
-            testItem.getDescription(),
-            new java.sql.Date(testItem.getExpirationDate().getTime())
-        });
-        return item;
-    }
-};
+// perform actions against the db (EmbeddedDatabase extends javax.sql.DataSource)
+
+db.shutdown()
 ```
 
-现在你可以添加该 `SqlTypeValue` 到包含对存储过程的 `execute` 调用的参数的 `Map` 中。
+参考 [javadoc for `EmbeddedDatabaseBuilder`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseBuilder.html) 获取所有支持的选项。
 
-`SqlTypeValue` 的另一个用法是传入一个值数组然后传递给 Oracle 存储过程。Oracle 拥有自己的内部 `Array` 类，这种情况下必须使用该类，你可以使用 `SqlTypeValue` 来创建 Oracle `Array` 实例并用来自 Java `Array` 的值填充它。如下面例子所示：
+你也可以使用 `EmbeddedDatabaseBuilder` 来创建内置数据库，使用 Java 配置。如下面例子所示：
 
 ```java
-final Long[] ids = new Long[] {1L, 2L};
+@Configuration
+public class DataSourceConfig {
 
-SqlTypeValue value = new AbstractSqlTypeValue() {
-    protected Object createTypeValue(Connection conn, int sqlType, String typeName) throws SQLException {
-        ArrayDescriptor arrayDescriptor = new ArrayDescriptor(typeName, conn);
-        ARRAY idArray = new ARRAY(arrayDescriptor, conn, ids);
-        return idArray;
+    @Bean
+    public DataSource dataSource() {
+        return new EmbeddedDatabaseBuilder()
+                .generateUniqueName(true)
+                .setType(H2)
+                .setScriptEncoding("UTF-8")
+                .ignoreFailedDrops(true)
+                .addScript("schema.sql")
+                .addScripts("user_data.sql", "country_data.sql")
+                .build();
     }
-};
+}
 ```
+
+### 3.9.4 选择内置数据库类型
+
+本节介绍如何选择 Spring 支持的三种内置数据库。包括如下主题：
+
+- [使用 HSQL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-HSQL)
+- [使用 H2](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-H2)
+- [使用 Derby](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-Derby)
+
+##### 使用 HSQL
+
+Spring 支持 HSQL 1.8.0 及更高版本。如果未明确指定类型，则 HSQL 是默认的嵌入式数据库。要显式指定 HSQL，请将 `embedded-database` 标签的 `type` 属性设置为 `HSQL` 。如果您使用构建器 API，请通过 `EmbeddedDatabaseType.HSQL` 调用 `setType(EmbeddedDatabaseType)` 方法。
+
+##### 使用 H2
+
+Spring 支持 H2 数据库。要启用 H2，请将 `embedded-database` 标签的 `type` 属性设置为 `H2`。如果您使用构建器 API，请使用 `EmbeddedDatabaseType.H2` 调用 `setType(EmbeddedDatabaseType)` 方法。
+
+##### 使用 Derby
+
+Spring 支持 Apache Derby 10.5 及更高版本。要启用 Derby，请将 `embedded-database` 标签的 `type` 属性设置为 `DERBY`。如果使用构建器 API，请通过 `EmbeddedDatabaseType.DERBY` 调用 `setType(EmbeddedDatabaseType)` 方法。
+
+### 3.9.5 使用内置数据库测试数据访问逻辑
+
+嵌入式数据库提供了一种轻量级的方法来测试数据访问代码。下一个示例是使用嵌入式数据库的数据访问集成测试模板。当嵌入式数据库不需要在测试类之间重用时，使用这种模板可以一次性使用。但是，如果您希望创建在测试套件内共享的嵌入式数据库，请考虑使用 [Spring TestContext Framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-framework) ，并按照 [Creating an Embedded Database by Using Spring XML](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-xml) 和 [Creating an Embedded Database Programmatically](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-java) 中的描述，在Spring `ApplicationContext `中将嵌入式数据库配置为 Bean。以下清单显示了测试模板：
+
+```java
+public class DataAccessIntegrationTestTemplate {
+
+    private EmbeddedDatabase db;
+
+    @Before
+    public void setUp() {
+        // creates an HSQL in-memory database populated from default scripts
+        // classpath:schema.sql and classpath:data.sql
+        db = new EmbeddedDatabaseBuilder()
+                .generateUniqueName(true)
+                .addDefaultScripts()
+                .build();
+    }
+
+    @Test
+    public void testDataAccess() {
+        JdbcTemplate template = new JdbcTemplate(db);
+        template.query( /* ... */ );
+    }
+
+    @After
+    public void tearDown() {
+        db.shutdown();
+    }
+
+}
+```
+
+### 3.9.6 为内置数据库生成唯一名称
+
+如果开发团队的测试套件无意中尝试重新创建同一数据库的其他实例，则经常会遇到错误。如果 XML 配置文件或 `@Configuration` 类负责创建嵌入式数据库，然后在同一测试套件（即，同一 JVM 进程中）的多个测试场景中重用相应的配置，则这种情况很容易发生 - 例如，针对嵌入式数据库的集成测试，该嵌入式数据库的 `ApplicationContext` 配置仅在哪些 bean 定义配置文件处于活动状态方面有所不同。
+
+此类错误的根本原因是，如果没有另外指定，Spring 的 `EmbeddedDatabaseFactory`（由 XML 命名空间元素 `<jdbc:embedded-database>` 和 Java 配置的 `EmbeddedDatabaseBuilder` 内部使用）将嵌入式数据库的名称设置为 `testdb`。对于 `<jdbc:embedded-database>`，嵌入式数据库通常被分配一个与 bean 的 `id` 相同的名称（通常是类似于 `dataSource` 的名称）。因此，随后创建嵌入式数据库的尝试不会产生新的数据库。取而代之的是，相同的 JDBC 连接 URL 被重用，并且尝试创建新的嵌入式数据库实际上指向的是从相同配置创建的现有嵌入式数据库。
+
+为了解决这类普遍问题，Spring 框架 4.2 提供了为内置数据库生成唯一名称的支持。为了启用名称生成，使用如下选项：
+
+- `EmbeddedDatabaseFactory.setGenerateUniqueDatabaseName()`
+- `EmbeddedDatabaseBuilder.generateUniqueName()`
+- `<jdbc:embedded-database generate-name="true" … >`
+
+### 3.9.7 扩展内置数据库支持
+
+你可以通过两种方式扩展 Spring JDBC 内置数据库支持：
+
+- 实现 `EmbeddedDatabaseConfigurer` 以支持新的内置数据库类型。
+- 实现 `DataSourceFactory` 来支持新的 `DataSource` 实现，比如一个连接池来管理内置数据库连接。
+
+我们鼓励您通过 [GitHub Issues](https://github.com/spring-projects/spring-framework/issues) 向 Spring 社区贡献新的扩展。
 
