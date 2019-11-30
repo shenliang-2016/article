@@ -1,73 +1,19 @@
-## 3.10 初始化 `DataSource`
+# 4 对象－关系映射（ORM）数据访问
 
-`org.springframework.jdbc.datasource.init` 包提供了初始化现有 `DataSource` 的支持。内置数据库支持提供了为应用创建并初始化 `DataSource` 的选项。不过，有时候你需要初始化一个运行在某个服务器上的实例。
+本节如何使用对象－关系映射（ORM）进行数据访问。
 
-### 3.10.1 使用 Spring XML 初始化数据库
+## 4.1 Spring 的 ORM 介绍
 
-如果你希望初始化一个数据库，同时你可以提供一个 `DataSource` bean 的引用，你可以使用 `spring-jdbc` 命名空间中的 `initialize-database` 标签：
+Spring Framework 支持与 Java Persistence API（JPA）集成，并支持用于资源管理，数据访问对象（DAO）实现和事务策略的本地 Hibernate。例如，对于 Hibernate，它具有一流的支持以及一些便捷的 IoC 功能，可解决许多典型的 Hibernate 集成问题。您可以通过依赖关系注入为 OR（对象关系）映射工具配置所有受支持的功能。它们可以参与 Spring 的资源和事务管理，并且符合 Spring 的通用事务和 DAO 异常层次结构。推荐的集成样式是针对普通的 Hibernate 或 JPA API 编写 DAO。
 
-```xml
-<jdbc:initialize-database data-source="dataSource">
-    <jdbc:script location="classpath:com/foo/sql/db-schema.sql"/>
-    <jdbc:script location="classpath:com/foo/sql/db-test-data.sql"/>
-</jdbc:initialize-database>
-```
+当您创建数据访问应用程序时，Spring 会显着增强您选择的 ORM 层。您可以根据需要利用尽可能多的集成支持，并且应该将这种集成工作与内部构建类似基础架构的成本和风险进行比较。不管使用哪种技术，您都可以像使用库一样使用许多 ORM 支持，因为所有内容都被设计为一组可重用的 JavaBean。Spring IoC 容器中的 ORM 有 助于配置和部署。因此，本节中的大多数示例都显示了 Spring 容器内部的配置。
 
-上面的例子针对数据库执行了两条特定的脚本。第一条脚本创建一个概要，第二条脚本使用测试数据集填充表。脚本的位置也可以通过常用的 Ant 风格的通配符进行模式化，该风格广泛应用于 Spring 中的资源文件 (比如，`classpath*:/com/foo/**/sql/*-data.sql`)。如果你使用模式，则脚本的执行顺序就是它们的 URL 或者文件名的文本顺序。
+使用 Spring 框架创建 ORM DAOs 的好处包括：
 
-数据库初始化器的默认行为就是无条件地执行给定的脚本。有时候这并不一定是你期望的－比如，如果你在已经存在测试数据的数据库中执行脚本。通过下面常用的先创建表然后插入数据的模式可以降低意外删除数据的风险。因为如果表已经存在，则第一步创建表就会失败。
+- **测试更简单。** Spring 的 IoC 方法使交换 Hibernate `SessionFactory` 实例，JDBC `DataSource` 实例，事务管理器和映射对象实现（如果需要）的实现和配置位置变得容易。反过来，这使得隔离每个与持久性相关的代码片段的测试变得容易得多。
+- **通用的数据访问异常。** Spring 可以包装您的 ORM 工具中的异常，将它们从专有的（可能是受检查的）异常转换为通用的运行时 `DataAccessException` 层次结构。使用此功能，您可以仅在适当的层中处理大多数不可恢复的持久性异常，而不需要烦人的到处添加捕获，抛出和异常声明。您仍然可以根据需要捕获和处理异常。请记住，JDBC 异常（包括特定于 DB 的方言）也将转换为相同的层次结构，这意味着您可以在一致的编程模型中使用 JDBC 执行某些操作。
+- **通用资源管理。** Spring 应用程序上下文可以处理 Hibernate `SessionFactory` 实例，JPA `EntityManagerFactory` 实例，JDBC `DataSource` 实例和其他相关资源的位置和配置。这使得这些值易于管理和更改。Spring 提供了对持久性资源的高效，便捷和安全的处理。例如，使用 Hibernate 的相关代码通常需要使用相同的 Hibernate `Session`，以确保效率和适当的事务处理。通过在Hibernate的 `SessionFactory` 中公开当前的 `Session`，Spring 可以使创建 `Session` 和透明地绑定到当前线程变得容易。因此，对于任何本地或 JTA 事务环境，Spring 都解决了典型的 Hibernate 使用中的许多长期问题。
+- **集成事务管理。** 您可以通过 `@Transactional` 注解或通过在 XML 配置文件中显式配置事务 AOP 增强，以声明性的，面向方面的编程（AOP）样式的方法拦截器包装 ORM 代码。这两种情况下，都会为您处理事务语义和异常处理（回滚等）。如 [Resource and Transaction Management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-resource-mngmnt) 中所述，还可以交换各种事务管理器，而不会影响您与 ORM 相关的代码。例如，您可以在两种情况下使用相同的完整服务（例如声明性事务）在本地事务和 JTA 之间进行交换。此外，与 JDBC 相关的代码可以与您用于执行 ORM 的代码完全事务性集成。这对于不适合 ORM（例如批处理和 BLOB 流）但仍需要与 ORM 操作共享常见事务的数据访问很有用。
 
-不过，为了获得对创建和删除现有数据的更多控制，XML 命名空间提供了一些附加选项。第一个选项是一个标记来打开或者关闭初始化。你可以根据环境设定该标记（比如从系统属性或者环境 bean 拉取布尔值）。下面的例子从系统属性获取一个值：
-
-```xml
-<jdbc:initialize-database data-source="dataSource"
-    enabled="#{systemProperties.INITIALIZE_DATABASE}"> 
-    <jdbc:script location="..."/>
-</jdbc:initialize-database>
-```
-
-第二个用于控制对现有数据的处理的选项对失败更加宽容。为此，你可以控制初始化器的能力来忽略它在执行来自脚本的 SQL 时发生的某些错误。如下面例子所示：
-
-```xml
-<jdbc:initialize-database data-source="dataSource" ignore-failures="DROPS">
-    <jdbc:script location="..."/>
-</jdbc:initialize-database>
-```
-
-在前面的示例中，我们说我们期望有时脚本是针对空数据库运行的，并且脚本中有一些 `DROP` 语句可能会失败。因此失败的 SQL `DROP` 语句将被忽略，但其他失败将导致异常。如果您的 SQL 方言不支持 `DROP…IF EXISTS` （或类似的东西），但是您想无条件地删除所有测试数据，然后重新创建，则此功能非常有用。在那种情况下，第一个脚本通常是一组 `DROP` 语句，然后是一组 `CREATE` 语句。
-
-`ignore-failures` 选项可以被设置为 `NONE` (默认值)，`DROPS` (忽略失败的 drops)，或者 `ALL` (忽略所有失败)。
-
-每条语句应该由 `;` 分隔，如果脚本中不存在 `;` 字符，则语句以换行分隔。你可以通过脚本控制全局或者脚本。如下面例子所示：
-
-```xml
-<jdbc:initialize-database data-source="dataSource" separator="@@"> 
-    <jdbc:script location="classpath:com/myapp/sql/db-schema.sql" separator=";"/> 
-    <jdbc:script location="classpath:com/myapp/sql/db-test-data-1.sql"/>
-    <jdbc:script location="classpath:com/myapp/sql/db-test-data-2.sql"/>
-</jdbc:initialize-database>
-```
-
-这个例子中，两个 `test-data` 脚本使用 `@@` 作为语句分隔符，只有 `db-schema.sql` 使用 `;`。该配置指定默认的分隔符是 `@@` ，同时为 `db-schema` 脚本覆盖了默认设置。
-
-如果来自 XML 命名空间的控制权不能满足你的需求，你可以直接使用 `DataSourceInitializer` 并将其定义为你的应用的组件。
-
-##### 依赖数据库的其它组件的初始化
-
-大量的应用程序（那些在 Spring 上下文启动之后才使用数据库的应用程序）可以使用数据库初始化程序，而不会带来更多麻烦。如果您的应用程序不是其中之一，则可能需要阅读本节的其余部分。
-
-数据库初始化程序依赖于一个 `DataSource` 实例并运行其初始化回调中提供的脚本（类似于 XML bean 定义中的 `init-method`，或者实现 `InitializingBean` 的组件中的 `@PostConstruct` 方法或 `afterPropertiesSet()` 方法。） 如果其他 Bean 依赖于同一数据源并在初始化回调中使用该数据源，则可能存在问题，因为尚未初始化数据。 一个常见的例子是一个高速缓存，它会在应用程序启动时尽可能早地初始化并从数据库加载数据。
-
-为了解决这个问题，你有两种可选方案：改变你的缓存初始化策略到稍后的阶段，或者确保你的数据库初始化程序首先初始化。
-
-如果应用在你的控制之下，改变缓存初始化策略可能比较容易。下面是一些建议：
-
-- 将缓存初始化推迟到第一次使用时，同时也能改善应用启动时间。
-- 使缓存或初始化缓存的单独组件实现 `Lifecycle` 或 `SmartLifecycle`。当应用程序上下文启动时，您可以通过设置其 `autoStartup` 标志来自动启动 `SmartLifecycle`，并且可以通过在封闭 (enclosing) 上下文中调用 `ConfigurableApplicationContext.start()` 来手动启动 `Lifecycle`。
-- 使用 Spring `ApplicationEvent` 或类似的自定义观察者机制来触发缓存初始化。`ContextRefreshedEvent` 在其准备好使用时（在所有 bean 都初始化之后）总是由上下文发布，因此通常是一个有用的钩子（默认情况下，这就是 `SmartLifecycle` 的工作方式）。
-
-确保首先初始化数据库初始化程序也很容易。关于如何实现这一点的一些建议包括：
-
-- 依靠 Spring `BeanFactory` 的默认行为，即按注册顺序初始化 bean。您可以通过采用 XML 配置中一组对您的应用程序模块进行排序的 `<import/>` 元素的常规做法，并确保首先列出数据库和数据库初始化，来轻松地进行排序。
-- 将 `DataSource` 和使用它的业务组件分开，并通过将它们放在单独的 `ApplicationContext` 实例中来控制启动顺序（例如，父上下文包含 `DataSource` ，子上下文包含业务组件）。这种结构在 Spring Web 应用程序中很常见，但可以更普遍地应用。
+> 要获得更全面的 ORM 支持，包括对 MongoDB 等替代数据库技术的支持，您可能需要查看 [Spring Data](https://projects.spring.io/spring-data/) 项目套件。如果您是 JPA 用户，请参阅 [https://spring.io](https://spring.io/) 中的 [使用JPA开始访问数据](https://spring.io/guides/gs/accessing-data-jpa/) 指南。
 
