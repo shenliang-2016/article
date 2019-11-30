@@ -1848,14 +1848,14 @@ Spring 通过 `DataSource` 获取数据库连接。`DataSource` 是 JDBC 规范�
 
 本节使用 Spring 的 `DriverManagerDataSource` 实现，后续介绍另外几种实现。
 
-> 你应该仅将 `DriverManagerDataSource` 类用于测试目的，因为它并未提供池化实现，因而当一个连接上到来多个请求时性能很差。
+>你应该仅将 `DriverManagerDataSource` 类用于测试目的，因为它并未提供池化实现，因而当一个连接上到来多个请求时性能很差。
 
 为了配置 `DriverManagerDataSource`：
 
-1. 从 `DriverManagerDataSource` 获取一个连接，类似于你典型地获取一个 JDBC 连接那样。
-2. 指定 JDBC 驱动的全限定类名以便于 `DriverManager` 可以加载该驱动类。
-3. 提供一个特定于不同 JDBC 驱动的 URL。（参考你使用的驱动文档获取正确的值）
-4. 提供用户名和密码以连接数据库。
+1.从 `DriverManagerDataSource` 获取一个连接，类似于你典型地获取一个 JDBC 连接那样。
+2.指定 JDBC 驱动的全限定类名以便于 `DriverManager` 可以加载该驱动类。
+3.提供一个特定于不同 JDBC 驱动的 URL。（参考你使用的驱动文档获取正确的值）
+4.提供用户名和密码以连接数据库。
 
 下面的例子展示了如何在 Java 中配置 `DriverManagerDataSource` ：
 
@@ -1938,7 +1938,7 @@ dataSource.setPassword("");
 
 `TransactionAwareDataSourceProxy` 是目标 `DataSource` 的代理。该代理包装目标 `DataSource` 以添加 Spring 管理的事务的敏感性。这个层面上，它类似于 Java EE 服务器提供的事务性的 `DataSource` 。
 
-> 很少需要使用此类，除非必须调用已经存在的代码并传入标准的 JDBC `DataSource` 接口实现。在这种情况下，您仍然可以使该代码可用，同时使该代码参与 Spring 托管的事务。通常最好使用更高级别的资源管理抽象来编写自己的新代码，例如 `JdbcTemplate` 或 `DataSourceUtils`。
+>很少需要使用此类，除非必须调用已经存在的代码并传入标准的 JDBC `DataSource` 接口实现。在这种情况下，您仍然可以使该代码可用，同时使该代码参与 Spring 托管的事务。通常最好使用更高级别的资源管理抽象来编写自己的新代码，例如 `JdbcTemplate` 或 `DataSourceUtils`。
 
 参考 [`TransactionAwareDataSourceProxy`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jdbc/datasource/TransactionAwareDataSourceProxy.html) 文档获取更多细节。
 
@@ -2046,9 +2046,9 @@ public class JdbcActorDao implements ActorDao {
 
 我们前面介绍的所有批处理更新方法都返回一个 `int` 数组，其中包含每个批处理条目的受影响行数。此计数由 JDBC 驱动程序报告。如果该计数不可用，则 JDBC 驱动程序将返回值 `-2`。
 
-> 在这种情况下，通过基础 `PreparedStatement` 上的自动设定，需要从给定的 Java 类型派生每个值的对应 JDBC 类型。尽管这通常效果很好，但是存在潜在的问题（例如，`Map` 包含的 `null` 值）。在这种情况下，Spring 默认情况下会调用 `ParameterMetaData.getParameterType`，这对于您的 JDBC 驱动程序可能会相当费用高昂。如果遇到以下情况，则应使用最新的驱动程序版本，并考虑将 `spring.jdbc.getParameterType.ignore` 属性设置为 `true`（作为 JVM 系统属性或在类路径根目录中的 `spring.properties` 文件中）。性能问题-例如，关于Oracle 12c（SPR-16139）的报告。
+>在这种情况下，通过基础 `PreparedStatement` 上的自动设定，需要从给定的 Java 类型派生每个值的对应 JDBC 类型。尽管这通常效果很好，但是存在潜在的问题（例如，`Map` 包含的 `null` 值）。在这种情况下，Spring 默认情况下会调用 `ParameterMetaData.getParameterType`，这对于您的 JDBC 驱动程序可能会相当费用高昂。如果遇到以下情况，则应使用最新的驱动程序版本，并考虑将 `spring.jdbc.getParameterType.ignore` 属性设置为 `true`（作为 JVM 系统属性或在类路径根目录中的 `spring.properties` 文件中）。性能问题-例如，关于Oracle 12c（SPR-16139）的报告。
 >
-> 或者，您可以考虑通过 `BatchPreparedStatementSetter`（如前所示），通过为基于 `List<Object[]>` 的调用提供的显式类型数组，通过在服务器上的 `registerSqlType` 调用来显式指定相应的 JDBC 类型。自定义 `MapSqlParameterSource` 实例，或者通过 `BeanPropertySqlParameterSource` 实例从 Java 声明的属性类型中获取 SQL 类型，即使对于 `null` 值也是如此。
+>或者，您可以考虑通过 `BatchPreparedStatementSetter`（如前所示），通过为基于 `List<Object[]>` 的调用提供的显式类型数组，通过在服务器上的 `registerSqlType` 调用来显式指定相应的 JDBC 类型。自定义 `MapSqlParameterSource` 实例，或者通过 `BeanPropertySqlParameterSource` 实例从 Java 声明的属性类型中获取 SQL 类型，即使对于 `null` 值也是如此。
 
 ### 3.5.3 多个批量的批量操作
 
@@ -2315,7 +2315,7 @@ public class JdbcActorDao implements ActorDao {
 
 前文中，我们描述了如何从元数据推导出参数，但是如果需要，可以显式声明它们。您可以通过使用 `declareParameters` 方法创建和配置 `SimpleJdbcCall` 来实现，该方法采用可变数量的 `SqlParameter` 对象作为输入。请参阅 [下一节](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-params) 了解有关如何定义 `SqlParameter` 。
 
-> 如果您使用的数据库不是 Spring 支持的数据库，则必须进行显式声明。当前，Spring 支持针对以下数据库的存储过程调用的元数据查找：Apache Derby，DB2，MySQL，Microsoft SQL Server，Oracle 和 Sybase。我们还支持MySQL，Microsoft SQL Server 和 Oracle 存储函数的元数据查找。
+>如果您使用的数据库不是 Spring 支持的数据库，则必须进行显式声明。当前，Spring 支持针对以下数据库的存储过程调用的元数据查找：Apache Derby，DB2，MySQL，Microsoft SQL Server，Oracle 和 Sybase。我们还支持MySQL，Microsoft SQL Server 和 Oracle 存储函数的元数据查找。
 
 您可以选择显式声明一个，一些或所有参数。在未显式声明参数的地方，仍使用参数元数据。要绕过对潜在参数的元数据查找的所有处理，并且仅使用声明的参数，可以在声明中调用方法 `withoutProcedureColumnMetaDataAccess`。假设您为数据库函数声明了两个或多个不同的调用签名。在这种情况下，您调用 `useInParameterNames` 来指定要包含在给定签名中的 IN 参数名称列表。
 
@@ -2360,7 +2360,7 @@ new SqlOutParameter("out_first_name", Types.VARCHAR),
 
 第二行使用 `SqlOutParameter` 声明一个 `out` 参数，该参数将被用于存储过程调用。同时还有一个包含 `InOut` 参数的 `SqlInOutParameter` (参数为存储过程提供一个 IN 值，同时也返回一个值)。
 
-> 只有被声明为 `SqlParameter` 和 `SqlInOutParameter` 的参数才能被用来提供输入值。这一点不同于 `StoredProcedure` 类，(出于向后兼容的原因) 它允许被提供作为参数的输入值声明为 `SqlOutParameter` 。
+>只有被声明为 `SqlParameter` 和 `SqlInOutParameter` 的参数才能被用来提供输入值。这一点不同于 `StoredProcedure` 类，(出于向后兼容的原因) 它允许被提供作为参数的输入值声明为 `SqlOutParameter` 。
 
 对于 IN 参数，除了名称和 SQL 类型外，还可以为数值数据指定小数位，或者为自定义数据库类型指定类型名。对于 `out` 参数，您可以提供 `RowMapper` 来处理从 `REF` 游标返回的行的映射。另一个选择是指定一个 `SqlReturnType`，它提供了一个定义返回值的自定义处理的机会。
 
@@ -2453,9 +2453,9 @@ public class JdbcActorDao implements ActorDao {
 
 `org.springframework.jdbc.object` 包中包含允许你以更加面向对象的方式访问数据库的类。作为一个例子，你可以执行查询并获取包含业务对象的列表形式的结果，通过将列数据映射到业务对象的属性。你也可以运行存储过程或者运行更新、删除以及插入语句。
 
-> 许多 Spring 开发者相信下面描述的各种 RDBMS 操作类 ( [`StoredProcedure`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-StoredProcedure) 类例外) 都可以被直接的 `JdbcTemplate` 调用替代。通常情况下，编写直接调用 `JdbcTemplate` 上的方法的 DAO 方法相比于将查询封装成完整的类要更加简单。
+>许多 Spring 开发者相信下面描述的各种 RDBMS 操作类 ( [`StoredProcedure`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-StoredProcedure) 类例外) 都可以被直接的 `JdbcTemplate` 调用替代。通常情况下，编写直接调用 `JdbcTemplate` 上的方法的 DAO 方法相比于将查询封装成完整的类要更加简单。
 >
-> 不过，如果你正通过 RDBMS 操作类获取可测量的值，你应该继续使用这些类。
+>不过，如果你正通过 RDBMS 操作类获取可测量的值，你应该继续使用这些类。
 
 ### 3.7.1 理解 `SqlQuery`
 
@@ -2718,9 +2718,9 @@ public class TitlesAfterDateStoredProcedure extends StoredProcedure {
 
 你可以通过以下几种方法提供 SQL 类型信息：
 
-- `JdbcTemplate` 的许多更新和查询方法携带一个 `int` 数组形式的附加参数。该数组被用来表示相应参数的 SQL 类型，使用来自 `java.sql.Types` 类的常量值。为每个参数提供一个实体。
-- 你可以使用 `SqlParameterValue` 类包装需要附加信息的参数值。为了做到这一点，为每个类创建一个新的实例并在构造方法中传入 SQL 类型和参数值。你还可以为数值提供可选的尺度参数。
-- 对于使用命名参数的方法，你可以使用 `SqlParameterSource`，`BeanPropertySqlParameterSource` 或者 `MapSqlParameterSource` 类。它们都有为所有命名参数值注册 SQL 类型的方法。
+-`JdbcTemplate` 的许多更新和查询方法携带一个 `int` 数组形式的附加参数。该数组被用来表示相应参数的 SQL 类型，使用来自 `java.sql.Types` 类的常量值。为每个参数提供一个实体。
+-你可以使用 `SqlParameterValue` 类包装需要附加信息的参数值。为了做到这一点，为每个类创建一个新的实例并在构造方法中传入 SQL 类型和参数值。你还可以为数值提供可选的尺度参数。
+-对于使用命名参数的方法，你可以使用 `SqlParameterSource`，`BeanPropertySqlParameterSource` 或者 `MapSqlParameterSource` 类。它们都有为所有命名参数值注册 SQL 类型的方法。
 
 ### 3.8.2 处理 BLOB 和 CLOB 对象
 
@@ -2728,13 +2728,13 @@ public class TitlesAfterDateStoredProcedure extends StoredProcedure {
 
 `LobCreator` 和 `LobHandler` 为 LOB 输入输出提供下面的支持：
 
-- BLOB
-  - `byte[]`: `getBlobAsBytes` 和 `setBlobAsBytes`
-  - `InputStream`: `getBlobAsBinaryStream` 和 `setBlobAsBinaryStream`
-- CLOB
-  - `String`: `getClobAsString` 和 `setClobAsString`
-  - `InputStream`: `getClobAsAsciiStream` 和 `setClobAsAsciiStream`
-  - `Reader`: `getClobAsCharacterStream` 和 `setClobAsCharacterStream`
+-BLOB
+-`byte[]`: `getBlobAsBytes` 和 `setBlobAsBytes`
+-`InputStream`: `getBlobAsBinaryStream` 和 `setBlobAsBinaryStream`
+-CLOB
+-`String`: `getClobAsString` 和 `setClobAsString`
+-`InputStream`: `getClobAsAsciiStream` 和 `setClobAsAsciiStream`
+-`Reader`: `getClobAsCharacterStream` 和 `setClobAsCharacterStream`
 
 下个例子展示了如何创建并插入一个 BLOB。随后我们展示如何从数据库中读取它。
 
@@ -2766,9 +2766,9 @@ blobIs.close();
 clobReader.close();
 ```
 
-> 如果您在从 `DefaultLobHandler.getLobCreator()` 返回的 `LobCreator` 上调用 `setBlobAsBinaryStream`，`setClobAsAsciiStream` 或 `setClobAsCharacterStream` 方法，则可以为 `contentLength` 参数指定一个负值。如果指定的内容长度为负数，则 `DefaultLobHandler` 将使用 set-stream 方法的 JDBC 4.0 变体，而没有 `length` 参数。否则，它将指定的长度传递给驱动程序。
+>如果您在从 `DefaultLobHandler.getLobCreator()` 返回的 `LobCreator` 上调用 `setBlobAsBinaryStream`，`setClobAsAsciiStream` 或 `setClobAsCharacterStream` 方法，则可以为 `contentLength` 参数指定一个负值。如果指定的内容长度为负数，则 `DefaultLobHandler` 将使用 set-stream 方法的 JDBC 4.0 变体，而没有 `length` 参数。否则，它将指定的长度传递给驱动程序。
 >
-> 请参阅有关 JDBC 驱动程序的文档，以用于验证它是否支持流式 LOB 而无需提供内容长度。
+>请参阅有关 JDBC 驱动程序的文档，以用于验证它是否支持流式 LOB 而无需提供内容长度。
 
 现在是时候从数据库中读取 LOB 数据了。再次，您要使用具有相同实例变量 `lobHandler` 的 `JdbcTemplate` 以及对 `DefaultLobHandler` 的引用。以下示例显示了如何执行此操作：
 
@@ -2790,7 +2790,7 @@ List<Map<String, Object>> l = jdbcTemplate.query("select id, a_clob, a_blob from
 
 SQL 标准允许基于包含变量值列表的表达式选择行。一个典型的例子是  `select * from T_ACTOR where id in (1, 2, 3)`。JDBC 标准不直接为准备好的语句支持此变量列表。您不能声明可变数量的占位符。您需要准备好所需数量的占位符的多种变体，或者一旦知道需要多少个占位符，就需要动态生成 SQL 字符串。在 `NamedParameterJdbcTemplate` 和 `JdbcTemplate` 中提供的命名参数支持采用后一种方法。您可以将值作为原始对象的 `java.util.List` 传入。此列表用于插入所需的占位符，并在语句执行期间传递值。
 
-> 传递许多值时要小心。JDBC 标准不保证您可以为 `in` 表达式列表使用100个以上的值。各种数据库都超过了这个数目，但是它们通常对允许多少个值有硬性限制。例如，Oracle 的限制为1000。
+>传递许多值时要小心。JDBC 标准不保证您可以为 `in` 表达式列表使用100个以上的值。各种数据库都超过了这个数目，但是它们通常对允许多少个值有硬性限制。例如，Oracle 的限制为1000。
 
 除了在值列表中放入基本数据类型值，你可以创建对象数组的 `java.util.List` 。该列表能够支持为 `in` 子句定义的多个表达式，比如 `select * from T_ACTOR where ( id, last_name ) in ((1, 'Johnson'), (2, 'Harrop'\)) ` 。当然，这也要求你的数据库支持这种语法。
 
@@ -2923,9 +2923,9 @@ public class DataSourceConfig {
 
 本节介绍如何选择 Spring 支持的三种内置数据库。包括如下主题：
 
-- [使用 HSQL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-HSQL)
-- [使用 H2](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-H2)
-- [使用 Derby](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-Derby)
+-[使用 HSQL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-HSQL)
+-[使用 H2](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-H2)
+-[使用 Derby](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-Derby)
 
 ##### 使用 HSQL
 
@@ -2980,16 +2980,16 @@ public class DataAccessIntegrationTestTemplate {
 
 为了解决这类普遍问题，Spring 框架 4.2 提供了为内置数据库生成唯一名称的支持。为了启用名称生成，使用如下选项：
 
-- `EmbeddedDatabaseFactory.setGenerateUniqueDatabaseName()`
-- `EmbeddedDatabaseBuilder.generateUniqueName()`
-- `<jdbc:embedded-database generate-name="true" … >`
+-`EmbeddedDatabaseFactory.setGenerateUniqueDatabaseName()`
+-`EmbeddedDatabaseBuilder.generateUniqueName()`
+-`<jdbc:embedded-database generate-name="true" … >`
 
 ### 3.9.7 扩展内置数据库支持
 
 你可以通过两种方式扩展 Spring JDBC 内置数据库支持：
 
-- 实现 `EmbeddedDatabaseConfigurer` 以支持新的内置数据库类型。
-- 实现 `DataSourceFactory` 来支持新的 `DataSource` 实现，比如一个连接池来管理内置数据库连接。
+-实现 `EmbeddedDatabaseConfigurer` 以支持新的内置数据库类型。
+-实现 `DataSourceFactory` 来支持新的 `DataSource` 实现，比如一个连接池来管理内置数据库连接。
 
 我们鼓励您通过 [GitHub Issues](https://github.com/spring-projects/spring-framework/issues) 向 Spring 社区贡献新的扩展。
 
@@ -3057,14 +3057,14 @@ public class DataAccessIntegrationTestTemplate {
 
 如果应用在你的控制之下，改变缓存初始化策略可能比较容易。下面是一些建议：
 
-- 将缓存初始化推迟到第一次使用时，同时也能改善应用启动时间。
-- 使缓存或初始化缓存的单独组件实现 `Lifecycle` 或 `SmartLifecycle`。当应用程序上下文启动时，您可以通过设置其 `autoStartup` 标志来自动启动 `SmartLifecycle`，并且可以通过在封闭 (enclosing) 上下文中调用 `ConfigurableApplicationContext.start()` 来手动启动 `Lifecycle`。
-- 使用 Spring `ApplicationEvent` 或类似的自定义观察者机制来触发缓存初始化。`ContextRefreshedEvent` 在其准备好使用时（在所有 bean 都初始化之后）总是由上下文发布，因此通常是一个有用的钩子（默认情况下，这就是 `SmartLifecycle` 的工作方式）。
+-将缓存初始化推迟到第一次使用时，同时也能改善应用启动时间。
+-使缓存或初始化缓存的单独组件实现 `Lifecycle` 或 `SmartLifecycle`。当应用程序上下文启动时，您可以通过设置其 `autoStartup` 标志来自动启动 `SmartLifecycle`，并且可以通过在封闭 (enclosing) 上下文中调用 `ConfigurableApplicationContext.start()` 来手动启动 `Lifecycle`。
+-使用 Spring `ApplicationEvent` 或类似的自定义观察者机制来触发缓存初始化。`ContextRefreshedEvent` 在其准备好使用时（在所有 bean 都初始化之后）总是由上下文发布，因此通常是一个有用的钩子（默认情况下，这就是 `SmartLifecycle` 的工作方式）。
 
 确保首先初始化数据库初始化程序也很容易。关于如何实现这一点的一些建议包括：
 
-- 依靠 Spring `BeanFactory` 的默认行为，即按注册顺序初始化 bean。您可以通过采用 XML 配置中一组对您的应用程序模块进行排序的 `<import/>` 元素的常规做法，并确保首先列出数据库和数据库初始化，来轻松地进行排序。
-- 将 `DataSource` 和使用它的业务组件分开，并通过将它们放在单独的 `ApplicationContext` 实例中来控制启动顺序（例如，父上下文包含 `DataSource` ，子上下文包含业务组件）。这种结构在 Spring Web 应用程序中很常见，但可以更普遍地应用。
+-依靠 Spring `BeanFactory` 的默认行为，即按注册顺序初始化 bean。您可以通过采用 XML 配置中一组对您的应用程序模块进行排序的 `<import/>` 元素的常规做法，并确保首先列出数据库和数据库初始化，来轻松地进行排序。
+-将 `DataSource` 和使用它的业务组件分开，并通过将它们放在单独的 `ApplicationContext` 实例中来控制启动顺序（例如，父上下文包含 `DataSource` ，子上下文包含业务组件）。这种结构在 Spring Web 应用程序中很常见，但可以更普遍地应用。
 
 # 4 对象－关系映射（ORM）数据访问
 
@@ -3078,12 +3078,12 @@ Spring Framework 支持与 Java Persistence API（JPA）集成，并支持用于
 
 使用 Spring 框架创建 ORM DAOs 的好处包括：
 
-- **测试更简单。** Spring 的 IoC 方法使交换 Hibernate `SessionFactory` 实例，JDBC `DataSource` 实例，事务管理器和映射对象实现（如果需要）的实现和配置位置变得容易。反过来，这使得隔离每个与持久性相关的代码片段的测试变得容易得多。
-- **通用的数据访问异常。** Spring 可以包装您的 ORM 工具中的异常，将它们从专有的（可能是受检查的）异常转换为通用的运行时 `DataAccessException` 层次结构。使用此功能，您可以仅在适当的层中处理大多数不可恢复的持久性异常，而不需要烦人的到处添加捕获，抛出和异常声明。您仍然可以根据需要捕获和处理异常。请记住，JDBC 异常（包括特定于 DB 的方言）也将转换为相同的层次结构，这意味着您可以在一致的编程模型中使用 JDBC 执行某些操作。
-- **通用资源管理。** Spring 应用程序上下文可以处理 Hibernate `SessionFactory` 实例，JPA `EntityManagerFactory` 实例，JDBC `DataSource` 实例和其他相关资源的位置和配置。这使得这些值易于管理和更改。Spring 提供了对持久性资源的高效，便捷和安全的处理。例如，使用 Hibernate 的相关代码通常需要使用相同的 Hibernate `Session`，以确保效率和适当的事务处理。通过在Hibernate的 `SessionFactory` 中公开当前的 `Session`，Spring 可以使创建 `Session` 和透明地绑定到当前线程变得容易。因此，对于任何本地或 JTA 事务环境，Spring 都解决了典型的 Hibernate 使用中的许多长期问题。
-- **集成事务管理。** 您可以通过 `@Transactional` 注解或通过在 XML 配置文件中显式配置事务 AOP 增强，以声明性的，面向方面的编程（AOP）样式的方法拦截器包装 ORM 代码。这两种情况下，都会为您处理事务语义和异常处理（回滚等）。如 [Resource and Transaction Management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-resource-mngmnt) 中所述，还可以交换各种事务管理器，而不会影响您与 ORM 相关的代码。例如，您可以在两种情况下使用相同的完整服务（例如声明性事务）在本地事务和 JTA 之间进行交换。此外，与 JDBC 相关的代码可以与您用于执行 ORM 的代码完全事务性集成。这对于不适合 ORM（例如批处理和 BLOB 流）但仍需要与 ORM 操作共享常见事务的数据访问很有用。
+-**测试更简单。** Spring 的 IoC 方法使交换 Hibernate `SessionFactory` 实例，JDBC `DataSource` 实例，事务管理器和映射对象实现（如果需要）的实现和配置位置变得容易。反过来，这使得隔离每个与持久性相关的代码片段的测试变得容易得多。
+-**通用的数据访问异常。** Spring 可以包装您的 ORM 工具中的异常，将它们从专有的（可能是受检查的）异常转换为通用的运行时 `DataAccessException` 层次结构。使用此功能，您可以仅在适当的层中处理大多数不可恢复的持久性异常，而不需要烦人的到处添加捕获，抛出和异常声明。您仍然可以根据需要捕获和处理异常。请记住，JDBC 异常（包括特定于 DB 的方言）也将转换为相同的层次结构，这意味着您可以在一致的编程模型中使用 JDBC 执行某些操作。
+-**通用资源管理。** Spring 应用程序上下文可以处理 Hibernate `SessionFactory` 实例，JPA `EntityManagerFactory` 实例，JDBC `DataSource` 实例和其他相关资源的位置和配置。这使得这些值易于管理和更改。Spring 提供了对持久性资源的高效，便捷和安全的处理。例如，使用 Hibernate 的相关代码通常需要使用相同的 Hibernate `Session`，以确保效率和适当的事务处理。通过在Hibernate的 `SessionFactory` 中公开当前的 `Session`，Spring 可以使创建 `Session` 和透明地绑定到当前线程变得容易。因此，对于任何本地或 JTA 事务环境，Spring 都解决了典型的 Hibernate 使用中的许多长期问题。
+-**集成事务管理。** 您可以通过 `@Transactional` 注解或通过在 XML 配置文件中显式配置事务 AOP 增强，以声明性的，面向方面的编程（AOP）样式的方法拦截器包装 ORM 代码。这两种情况下，都会为您处理事务语义和异常处理（回滚等）。如 [Resource and Transaction Management](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-resource-mngmnt) 中所述，还可以交换各种事务管理器，而不会影响您与 ORM 相关的代码。例如，您可以在两种情况下使用相同的完整服务（例如声明性事务）在本地事务和 JTA 之间进行交换。此外，与 JDBC 相关的代码可以与您用于执行 ORM 的代码完全事务性集成。这对于不适合 ORM（例如批处理和 BLOB 流）但仍需要与 ORM 操作共享常见事务的数据访问很有用。
 
-> 要获得更全面的 ORM 支持，包括对 MongoDB 等替代数据库技术的支持，您可能需要查看 [Spring Data](https://projects.spring.io/spring-data/) 项目套件。如果您是 JPA 用户，请参阅 [https://spring.io](https://spring.io/) 中的 [使用JPA开始访问数据](https://spring.io/guides/gs/accessing-data-jpa/) 指南。
+>要获得更全面的 ORM 支持，包括对 MongoDB 等替代数据库技术的支持，您可能需要查看 [Spring Data](https://projects.spring.io/spring-data/) 项目套件。如果您是 JPA 用户，请参阅 [https://spring.io](https://spring.io/) 中的 [使用JPA开始访问数据](https://spring.io/guides/gs/accessing-data-jpa/) 指南。
 
 ## 4.2 通用的 ORM 集成考量
 
@@ -3098,4 +3098,29 @@ Spring 的 ORM 集成的主要目标是清晰的应用程序分层（具有任�
 基础设施提供适当的资源处理，并将特定的 API 异常适当地转换为未经检查的基础设施异常层次结构。Spring 引入了 DAO 异常层次结构，适用于任何数据访问策略。对于直接 JDBC，[上一节](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-JdbcTemplate) 中提到的 `JdbcTemplate` 类 提供连接处理并将 `SQLException` 正确转换为 `DataAccessException` 层次结构，包括将特定于数据库的 SQL 错误代码转换为有意义的异常类。有关 ORM 技术，请参见 [下一节](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-exception-translation) 了解如何获得相同的异常转化的好处。
 
 在事务管理方面，`JdbcTemplate` 类通过相应的 Spring 事务管理器挂接到 Spring 事务支持并支持 JTA 和 JDBC 事务。对于受支持的 ORM 技术，Spring 通过 Hibernate 和 JPA 事务管理器提供了 Hibernate 和 JPA 支持以及 JTA 支持。有关事务支持的详细信息，请参见 [事务管理](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction) 一章。
+
+### 4.2.2 异常转换
+
+在 DAO 中使用 Hibernate 或 JPA 时，必须决定如何处理持久性技术的原生异常类。根据技术的不同，DAO 会抛出 `HibernateException` 或 `PersistenceException` 的子类。这些异常都是运行时异常，不必声明或捕获。您可能还必须处理 `IllegalArgumentException` 和 `IllegalStateException`。这意味着调用者只能将一般的异常都视为致命的，除非他们想依赖于持久性技术自己的异常结构。如果不将调用者与实现策略联系在一起，则无法捕获特定原因（例如乐观锁定失败）。这种权衡可能对于基于 ORM 的应用程序或不需要任何特殊异常处理（或两者）都可以接受。但是，Spring 允许通过 `@Repository` 注解透明地进行异常转换。以下示例（一个用于 Java 配置，一个用于 XML 配置）显示了如何执行此操作：
+
+```java
+@Repository
+public class ProductDaoImpl implements ProductDao {
+
+    // class body here...
+
+}
+<beans>
+
+    <!-- Exception translation bean post processor -->
+    <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+
+    <bean id="myProductDao" class="product.ProductDaoImpl"/>
+
+</beans>
+```
+
+后处理器自动查找所有异常翻译器（`PersistenceExceptionTranslator` 接口的实现），并增强所有标有 `@Repository` 注解的 bean，以便发现的翻译器可以拦截并对抛出的异常应用适当的转换。
+
+总之，您可以基于纯持久性技术的 API 和注解来实现 DAO，同时仍然可以从 Spring 管理的事务，依赖注入和透明异常转换（如果需要）到 Spring 的自定义异常层次结构中受益。
 
