@@ -1,136 +1,72 @@
-## 3.9 内置数据库支持
+## 3.10 初始化 `DataSource`
 
-`org.springframework.jdbc.datasource.embedded` 包提供了对内置 Java 数据库引擎的支持。提供了 [HSQL](http://www.hsqldb.org/), [H2](https://www.h2database.com/), 和 [Derby](https://db.apache.org/derby) 的原生支持。你也可以使用可扩展的 API 来插入新的内置数据库类型和 `DataSource` 实现。
+`org.springframework.jdbc.datasource.init` 包提供了初始化现有 `DataSource` 的支持。内置数据库支持提供了为应用创建并初始化 `DataSource` 的选项。不过，有时候你需要初始化一个运行在某个服务器上的实例。
 
-### 3.9.1 为什么使用内置数据库？
+### 3.10.1 使用 Spring XML 初始化数据库
 
-由于其天然的轻量级特性，内置数据库在开发阶段是非常有用的。好处包括方便的配置，快速启动，可测试性，以及在开发期间频繁修改 SQL 的能力。
-
-### 3.9.2 使用 Spring XML 创建内置数据库
-
-如果你想要在 Spring `ApplicationContext` 中作为 bean 暴露内置数据库实例，你可以使用 `spring-jdbc` 命名空间中的 `embedded-database` 标签：
+如果你希望初始化一个数据库，同时你可以提供一个 `DataSource` bean 的引用，你可以使用 `spring-jdbc` 命名空间中的 `initialize-database` 标签：
 
 ```xml
-<jdbc:embedded-database id="dataSource" generate-name="true">
-    <jdbc:script location="classpath:schema.sql"/>
-    <jdbc:script location="classpath:test-data.sql"/>
-</jdbc:embedded-database>
+<jdbc:initialize-database data-source="dataSource">
+    <jdbc:script location="classpath:com/foo/sql/db-schema.sql"/>
+    <jdbc:script location="classpath:com/foo/sql/db-test-data.sql"/>
+</jdbc:initialize-database>
 ```
 
-上面的配置创建一个内置 HSQL 数据库，由来自位于类路径的根目录下的 `schema.sql` 和 `test-data.sql` 资源文件中的 SQL 填充。此外，作为最佳实践，内置数据库被分配一个唯一的名称。内置数据库作为 Spring 容器中的 `javax.sql.DataSource` 类型的 bean，然后可以被按需注入数据访问对象中。
+上面的例子针对数据库执行了两条特定的脚本。第一条脚本创建一个概要，第二条脚本使用测试数据集填充表。脚本的位置也可以通过常用的 Ant 风格的通配符进行模式化，该风格广泛应用于 Spring 中的资源文件 (比如，`classpath*:/com/foo/**/sql/*-data.sql`)。如果你使用模式，则脚本的执行顺序就是它们的 URL 或者文件名的文本顺序。
 
-### 3.9.3 编程方式创建内置数据库
+数据库初始化器的默认行为就是无条件地执行给定的脚本。有时候这并不一定是你期望的－比如，如果你在已经存在测试数据的数据库中执行脚本。通过下面常用的先创建表然后插入数据的模式可以降低意外删除数据的风险。因为如果表已经存在，则第一步创建表就会失败。
 
-`EmbeddedDatabaseBuilder` 类提供一系列 API 用来以编程方式构造内置数据库。当你需要在独立的环境或者独立的集成测试环境中创建内置数据库时可以使用这些 API，如下面例子所示：
+不过，为了获得对创建和删除现有数据的更多控制，XML 命名空间提供了一些附加选项。第一个选项是一个标记来打开或者关闭初始化。你可以根据环境设定该标记（比如从系统属性或者环境 bean 拉取布尔值）。下面的例子从系统属性获取一个值：
 
-```java
-EmbeddedDatabase db = new EmbeddedDatabaseBuilder()
-        .generateUniqueName(true)
-        .setType(H2)
-        .setScriptEncoding("UTF-8")
-        .ignoreFailedDrops(true)
-        .addScript("schema.sql")
-        .addScripts("user_data.sql", "country_data.sql")
-        .build();
-
-// perform actions against the db (EmbeddedDatabase extends javax.sql.DataSource)
-
-db.shutdown()
+```xml
+<jdbc:initialize-database data-source="dataSource"
+    enabled="#{systemProperties.INITIALIZE_DATABASE}"> 
+    <jdbc:script location="..."/>
+</jdbc:initialize-database>
 ```
 
-参考 [javadoc for `EmbeddedDatabaseBuilder`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseBuilder.html) 获取所有支持的选项。
+The second option to control what happens with existing data is to be more tolerant of failures. To this end, you can control the ability of the initializer to ignore certain errors in the SQL it executes from the scripts, as the following example shows:
 
-你也可以使用 `EmbeddedDatabaseBuilder` 来创建内置数据库，使用 Java 配置。如下面例子所示：
-
-```java
-@Configuration
-public class DataSourceConfig {
-
-    @Bean
-    public DataSource dataSource() {
-        return new EmbeddedDatabaseBuilder()
-                .generateUniqueName(true)
-                .setType(H2)
-                .setScriptEncoding("UTF-8")
-                .ignoreFailedDrops(true)
-                .addScript("schema.sql")
-                .addScripts("user_data.sql", "country_data.sql")
-                .build();
-    }
-}
+```
+<jdbc:initialize-database data-source="dataSource" ignore-failures="DROPS">
+    <jdbc:script location="..."/>
+</jdbc:initialize-database>
 ```
 
-### 3.9.4 选择内置数据库类型
+In the preceding example, we are saying that we expect that, sometimes, the scripts are run against an empty database, and there are some `DROP` statements in the scripts that would, therefore, fail. So failed SQL `DROP` statements will be ignored, but other failures will cause an exception. This is useful if your SQL dialect doesn’t support `DROP … IF EXISTS` (or similar) but you want to unconditionally remove all test data before re-creating it. In that case the first script is usually a set of `DROP` statements, followed by a set of `CREATE` statements.
 
-本节介绍如何选择 Spring 支持的三种内置数据库。包括如下主题：
+The `ignore-failures` option can be set to `NONE` (the default), `DROPS` (ignore failed drops), or `ALL` (ignore all failures).
 
-- [使用 HSQL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-HSQL)
-- [使用 H2](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-H2)
-- [使用 Derby](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-using-Derby)
+Each statement should be separated by `;` or a new line if the `;` character is not present at all in the script. You can control that globally or script by script, as the following example shows:
 
-##### 使用 HSQL
-
-Spring 支持 HSQL 1.8.0 及更高版本。如果未明确指定类型，则 HSQL 是默认的嵌入式数据库。要显式指定 HSQL，请将 `embedded-database` 标签的 `type` 属性设置为 `HSQL` 。如果您使用构建器 API，请通过 `EmbeddedDatabaseType.HSQL` 调用 `setType(EmbeddedDatabaseType)` 方法。
-
-##### 使用 H2
-
-Spring 支持 H2 数据库。要启用 H2，请将 `embedded-database` 标签的 `type` 属性设置为 `H2`。如果您使用构建器 API，请使用 `EmbeddedDatabaseType.H2` 调用 `setType(EmbeddedDatabaseType)` 方法。
-
-##### 使用 Derby
-
-Spring 支持 Apache Derby 10.5 及更高版本。要启用 Derby，请将 `embedded-database` 标签的 `type` 属性设置为 `DERBY`。如果使用构建器 API，请通过 `EmbeddedDatabaseType.DERBY` 调用 `setType(EmbeddedDatabaseType)` 方法。
-
-### 3.9.5 使用内置数据库测试数据访问逻辑
-
-嵌入式数据库提供了一种轻量级的方法来测试数据访问代码。下一个示例是使用嵌入式数据库的数据访问集成测试模板。当嵌入式数据库不需要在测试类之间重用时，使用这种模板可以一次性使用。但是，如果您希望创建在测试套件内共享的嵌入式数据库，请考虑使用 [Spring TestContext Framework](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/testing.html#testcontext-framework) ，并按照 [Creating an Embedded Database by Using Spring XML](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-xml) 和 [Creating an Embedded Database Programmatically](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#jdbc-embedded-database-java) 中的描述，在Spring `ApplicationContext `中将嵌入式数据库配置为 Bean。以下清单显示了测试模板：
-
-```java
-public class DataAccessIntegrationTestTemplate {
-
-    private EmbeddedDatabase db;
-
-    @Before
-    public void setUp() {
-        // creates an HSQL in-memory database populated from default scripts
-        // classpath:schema.sql and classpath:data.sql
-        db = new EmbeddedDatabaseBuilder()
-                .generateUniqueName(true)
-                .addDefaultScripts()
-                .build();
-    }
-
-    @Test
-    public void testDataAccess() {
-        JdbcTemplate template = new JdbcTemplate(db);
-        template.query( /* ... */ );
-    }
-
-    @After
-    public void tearDown() {
-        db.shutdown();
-    }
-
-}
+```
+<jdbc:initialize-database data-source="dataSource" separator="@@"> 
+    <jdbc:script location="classpath:com/myapp/sql/db-schema.sql" separator=";"/> 
+    <jdbc:script location="classpath:com/myapp/sql/db-test-data-1.sql"/>
+    <jdbc:script location="classpath:com/myapp/sql/db-test-data-2.sql"/>
+</jdbc:initialize-database>
 ```
 
-### 3.9.6 为内置数据库生成唯一名称
+In this example, the two `test-data` scripts use `@@` as statement separator and only the `db-schema.sql` uses `;`. This configuration specifies that the default separator is `@@` and overrides that default for the `db-schema` script.
 
-如果开发团队的测试套件无意中尝试重新创建同一数据库的其他实例，则经常会遇到错误。如果 XML 配置文件或 `@Configuration` 类负责创建嵌入式数据库，然后在同一测试套件（即，同一 JVM 进程中）的多个测试场景中重用相应的配置，则这种情况很容易发生 - 例如，针对嵌入式数据库的集成测试，该嵌入式数据库的 `ApplicationContext` 配置仅在哪些 bean 定义配置文件处于活动状态方面有所不同。
+If you need more control than you get from the XML namespace, you can use the `DataSourceInitializer` directly and define it as a component in your application.
 
-此类错误的根本原因是，如果没有另外指定，Spring 的 `EmbeddedDatabaseFactory`（由 XML 命名空间元素 `<jdbc:embedded-database>` 和 Java 配置的 `EmbeddedDatabaseBuilder` 内部使用）将嵌入式数据库的名称设置为 `testdb`。对于 `<jdbc:embedded-database>`，嵌入式数据库通常被分配一个与 bean 的 `id` 相同的名称（通常是类似于 `dataSource` 的名称）。因此，随后创建嵌入式数据库的尝试不会产生新的数据库。取而代之的是，相同的 JDBC 连接 URL 被重用，并且尝试创建新的嵌入式数据库实际上指向的是从相同配置创建的现有嵌入式数据库。
+##### Initialization of Other Components that Depend on the Database
 
-为了解决这类普遍问题，Spring 框架 4.2 提供了为内置数据库生成唯一名称的支持。为了启用名称生成，使用如下选项：
+A large class of applications (those that do not use the database until after the Spring context has started) can use the database initializer with no further complications. If your application is not one of those, you might need to read the rest of this section.
 
-- `EmbeddedDatabaseFactory.setGenerateUniqueDatabaseName()`
-- `EmbeddedDatabaseBuilder.generateUniqueName()`
-- `<jdbc:embedded-database generate-name="true" … >`
+The database initializer depends on a `DataSource` instance and runs the scripts provided in its initialization callback (analogous to an `init-method` in an XML bean definition, a `@PostConstruct` method in a component, or the `afterPropertiesSet()` method in a component that implements `InitializingBean`). If other beans depend on the same data source and use the data source in an initialization callback, there might be a problem because the data has not yet been initialized. A common example of this is a cache that initializes eagerly and loads data from the database on application startup.
 
-### 3.9.7 扩展内置数据库支持
+To get around this issue, you have two options: change your cache initialization strategy to a later phase or ensure that the database initializer is initialized first.
 
-你可以通过两种方式扩展 Spring JDBC 内置数据库支持：
+Changing your cache initialization strategy might be easy if the application is in your control and not otherwise. Some suggestions for how to implement this include:
 
-- 实现 `EmbeddedDatabaseConfigurer` 以支持新的内置数据库类型。
-- 实现 `DataSourceFactory` 来支持新的 `DataSource` 实现，比如一个连接池来管理内置数据库连接。
+- Make the cache initialize lazily on first usage, which improves application startup time.
+- Have your cache or a separate component that initializes the cache implement `Lifecycle` or `SmartLifecycle`. When the application context starts, you can automatically start a `SmartLifecycle` by setting its `autoStartup` flag, and you can manually start a `Lifecycle` by calling `ConfigurableApplicationContext.start()` on the enclosing context.
+- Use a Spring `ApplicationEvent` or similar custom observer mechanism to trigger the cache initialization. `ContextRefreshedEvent` is always published by the context when it is ready for use (after all beans have been initialized), so that is often a useful hook (this is how the `SmartLifecycle` works by default).
 
-我们鼓励您通过 [GitHub Issues](https://github.com/spring-projects/spring-framework/issues) 向 Spring 社区贡献新的扩展。
+Ensuring that the database initializer is initialized first can also be easy. Some suggestions on how to implement this include:
 
+- Rely on the default behavior of the Spring `BeanFactory`, which is that beans are initialized in registration order. You can easily arrange that by adopting the common practice of a set of `<import/>` elements in XML configuration that order your application modules and ensuring that the database and database initialization are listed first.
+- Separate the `DataSource` and the business components that use it and control their startup order by putting them in separate `ApplicationContext` instances (for example, the parent context contains the `DataSource`, and the child context contains the business components). This structure is common in Spring web applications but can be more generally applied.
