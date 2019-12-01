@@ -1,25 +1,55 @@
-### 4.2.2 异常转换
+## 4.3 Hibernate
 
-在 DAO 中使用 Hibernate 或 JPA 时，必须决定如何处理持久性技术的原生异常类。根据技术的不同，DAO 会抛出 `HibernateException` 或 `PersistenceException` 的子类。这些异常都是运行时异常，不必声明或捕获。您可能还必须处理 `IllegalArgumentException` 和 `IllegalStateException`。这意味着调用者只能将一般的异常都视为致命的，除非他们想依赖于持久性技术自己的异常结构。如果不将调用者与实现策略联系在一起，则无法捕获特定原因（例如乐观锁定失败）。这种权衡可能对于基于 ORM 的应用程序或不需要任何特殊异常处理（或两者）都可以接受。但是，Spring 允许通过 `@Repository` 注解透明地进行异常转换。以下示例（一个用于 Java 配置，一个用于 XML 配置）显示了如何执行此操作：
+我们从在 Spring 环境中介绍 [Hibernate 5](https://hibernate.org/) 开始，使用它来演示 Spring 集成 OR 映射器所采用的方法。本节详细讨论了许多问题，并展示了 DAO 实现和事务划分的不同变体。这些模式中的大多数都可以直接转换为所有其他受支持的 ORM 工具。然后，本章后面的部分将介绍其他 ORM 技术，并展示一些简短的示例。
 
-```java
-@Repository
-public class ProductDaoImpl implements ProductDao {
+> 从 Spring Framework 5.0 开始，Spring 需要 Hibernate ORM 4.3 或更高版本才能提供 JPA 支持，甚至需要 Hibernate ORM 5.0+ 才能针对本机 Hibernate Session API 进行编程。请注意，Hibernate 团队不再维护 5.1 之前的任何版本，并且可能很快会专注于 5.3+。
 
-    // class body here...
+### 4.3.1 Spring 容器中的 `SessionFactory` 配置
 
-}
+为了避免将应用程序对象与硬编码的资源查找逻辑绑定在一起，可以在 Spring 容器中将资源（例如 JDBC `DataSource` 或 Hibernate `SessionFactory`）定义为 bean。需要访问资源的应用程序对象通过 bean 引用接收对此类预定义实例的引用，如 [下一节](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-hibernate-straight) 所述。
+
+以下 XML 应用程序上下文定义片段展示了如何在其之上设置 JDBC `DataSource` 和 Hibernate `SessionFactory`：
+
+```xml
 <beans>
 
-    <!-- Exception translation bean post processor -->
-    <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+    <bean id="myDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="org.hsqldb.jdbcDriver"/>
+        <property name="url" value="jdbc:hsqldb:hsql://localhost:9001"/>
+        <property name="username" value="sa"/>
+        <property name="password" value=""/>
+    </bean>
 
-    <bean id="myProductDao" class="product.ProductDaoImpl"/>
+    <bean id="mySessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="myDataSource"/>
+        <property name="mappingResources">
+            <list>
+                <value>product.hbm.xml</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <value>
+                hibernate.dialect=org.hibernate.dialect.HSQLDialect
+            </value>
+        </property>
+    </bean>
 
 </beans>
 ```
 
-后处理器自动查找所有异常翻译器（`PersistenceExceptionTranslator` 接口的实现），并增强所有标有 `@Repository` 注解的 bean，以便发现的翻译器可以拦截并对抛出的异常应用适当的转换。
+从本地 Jakarta Commons DBCP `BasicDataSource` 切换到 JNDI 的 `DataSource`（通常由应用服务器管理）仅是配置问题，如以下示例所示：
 
-总之，您可以基于纯持久性技术的 API 和注解来实现 DAO，同时仍然可以从 Spring 管理的事务，依赖注入和透明异常转换（如果需要）到 Spring 的自定义异常层次结构中受益。
+```xml
+<beans>
+    <jee:jndi-lookup id="myDataSource" jndi-name="java:comp/env/jdbc/myds"/>
+</beans>
+```
+
+您还可以使用 Spring 的 `JndiObjectFactoryBean` / `<jee:jndi-lookup>` 获取和暴露它，访问 JNDI 的 SessionFactory。但是，这通常在 EJB 上下文之外并不常见。
+
+> Spring 还提供了 `LocalSessionFactoryBuilder` 变体，与 `@Bean` 风格配置和编程设置无缝集成（不涉及 `FactoryBean`）。
+>
+> `LocalSessionFactoryBean` 和 `LocalSessionFactoryBuilder` 都支持后台引导，并且 Hibernate 初始化与给定的引导执行器（例如 `SimpleAsyncTaskExecutor`）上的应用程序引导线程并行运行。在 `LocalSessionFactoryBean` 上，可以通过 `bootstrapExecutor` 属性获得。在程序化的 `LocalSessionFactoryBuilder` 上，有一个重载的 `buildSessionFactory` 方法，该方法带有引导执行程序参数。
+>
+> 从 Spring Framework 5.1 开始，这样的本地 Hibernate 设置还可以在本地 Hibernate 访问之外公开用于标准 JPA 交互的 JPA `EntityManagerFactory`。有关详细信息，请参见 [JPA 的本地 Hibernate 设置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-jpa-hibernate) 。
 
