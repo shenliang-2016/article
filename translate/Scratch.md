@@ -1,44 +1,109 @@
-### 4.3.2 Implementing DAOs Based on the Plain Hibernate API
+### 4.3.3 声明式事务划分
 
-Hibernate 具有一种称为上下文会话的功能，其中 Hibernate 本身在每个事务中管理一个当前的 `Session` 。这大致相当于 Spring 在每个事务中同步一个 Hibernate `Session`。基于简单的 Hibernate API，相应的 DAO 实现类似于以下示例：
+我们推荐你使用 Spring 的声明式事务支持，它允许你使用 AOP 事务拦截器替换 Java 代码中的显式的事务划分 API 调用。你可以在 Spring 容器中使用 Java 注解或者 XML 配置这种事务拦截器。这种声明式事务能力允许你保持业务服务独立于重复性的事务划分代码，从而集中精力处理业务逻辑，那才是你的应用的真正价值所在。
+
+> 在你继续之前，我们强烈建议你阅读 [声明式事务管理](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative) 。
+
+你可以使用 `@Transactional` 注解修饰你的服务层，指示 Spring 容器发现这些注解并为这些注解修饰的方法提哦功能事务性语义。下面的例子展示了具体做法：
 
 ```java
-public class ProductDaoImpl implements ProductDao {
+public class ProductServiceImpl implements ProductService {
 
-    private SessionFactory sessionFactory;
+    private ProductDao productDao;
 
-    public void setSessionFactory(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
     }
 
-    public Collection loadProductsByCategory(String category) {
-        return this.sessionFactory.getCurrentSession()
-                .createQuery("from test.Product product where product.category=?")
-                .setParameter(0, category)
-                .list();
+    @Transactional
+    public void increasePriceOfAllProductsInCategory(final String category) {
+        List productsToChange = this.productDao.loadProductsByCategory(category);
+        // ...
     }
+
+    @Transactional(readOnly = true)
+    public List<Product> findAllProducts() {
+        return this.productDao.findAllProducts();
+    }
+
 }
 ```
 
-这种样式类似于 Hibernate 参考文档和示例，除了在实例变量中保留 `SessionFactory` 之外。我们强烈建议您在 Hibernate 的 `CaveatEmptor` 示例应用程序中的老式 `static` `HibernateUtil` 类上使用基于实例的设置。（通常，除非绝对必要，否则不要在 `static` 变量中保留任何资源。）
-
-前面的 DAO 示例遵循依赖项注入模式。它可以很好地适合 Spring IoC 容器，就像针对 Spring 的 `HibernateTemplate` 进行编码一样。您还可以在纯 Java 中设置这种 DAO（例如，在单元测试中）。为此，将其实例化并使用所需的工厂引用调用 `setSessionFactory(..)`。作为 Spring bean 的定义，DAO 类似于以下内容：
+在容器内，你需要配置 `PlatformTransactionManager` 实现（作为一个 bean ）以及一个 `<tx:annnotation-driven/>` 实体， 并在运行时选择 `@Transactional` 处理。下面的例子展示了具体做法：
 
 ```xml
-<beans>
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        https://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
 
-    <bean id="myProductDao" class="product.ProductDaoImpl">
-        <property name="sessionFactory" ref="mySessionFactory"/>
+    <!-- SessionFactory, DataSource, etc. omitted -->
+
+    <bean id="transactionManager"
+            class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <tx:annotation-driven/>
+
+    <bean id="myProductService" class="product.SimpleProductService">
+        <property name="productDao" ref="myProductDao"/>
     </bean>
 
 </beans>
 ```
 
-这种 DAO 样式的主要优点是它仅依赖于 Hibernate API。不需要导入任何 Spring 类。从非侵入性的角度来看，这很有吸引力，并且对于 Hibernate 开发人员而言可能更自然。
+### 4.3.4 编程式事务划分
 
-但是，DAO 会抛出普通的 `HibernateException`（未经检查，因此不必声明或捕获），这意味着调用方只能将异常视为一般致命的消息 - 除非他们希望依赖于 Hibernate 自己的异常层次结构。如果不将调用者与实现策略联系在一起，则无法捕获特定原因（例如乐观锁定失败）的异常。这种权衡对于强依赖 Hibernate 的，或者不需要任何特殊异常处理，或两个特性兼有应用程序都可以接受。
+您可以在应用程序的更高级别中划分事务，在跨越任意数量的操作的较低级别数据访问服务之上。对周围业务服务的实施也没有限制。它只需要一个 Spring `PlatformTransactionManager`。同样，后者可以来自任何地方，但最好通过 `setTransactionManager(..)` 方法作为 bean 的引用。同样，应该通过 `setProductDao(..)` 方法设置 `productDAO`。以下几对代码片段展示了 Spring 应用程序上下文中的事务管理器和业务服务定义，以及业务方法实现的示例：
 
-幸运的是，Spring 的 `LocalSessionFactoryBean` 为任何 Spring 事务策略支持 Hibernate 的 `SessionFactory.getCurrentSession()` 方法，甚至可以使用 `HibernateTransactionManager` 返回当前的 Spring 管理的事务性 `Session`。该方法的标准行为仍然是返回与正在进行的 JTA 事务相关联的当前 `Session`（如果有）。无论您使用 Spring 的 `JtaTransactionManager`，EJB 容器管理的事务（CMT）还是 JTA，此行为均适用。
+```xml
+<beans>
 
-总之，您可以基于普通的 Hibernate API 实现 DAO，同时仍然能够参与 Spring 管理的事务。
+    <bean id="myTxManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="mySessionFactory"/>
+    </bean>
+
+    <bean id="myProductService" class="product.ProductServiceImpl">
+        <property name="transactionManager" ref="myTxManager"/>
+        <property name="productDao" ref="myProductDao"/>
+    </bean>
+
+</beans>
+```
+
+````java
+public class ProductServiceImpl implements ProductService {
+
+    private TransactionTemplate transactionTemplate;
+    private ProductDao productDao;
+
+    public void setTransactionManager(PlatformTransactionManager transactionManager) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    public void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
+    }
+
+    public void increasePriceOfAllProductsInCategory(final String category) {
+        this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+            public void doInTransactionWithoutResult(TransactionStatus status) {
+                List productsToChange = this.productDao.loadProductsByCategory(category);
+                // do the price increase...
+            }
+        });
+    }
+}
+````
+
+Spring 的 `TransactionInterceptor` 允许将任何已检查的应用程序异常从回调代码中抛出，而 `TransactionTemplate` 则限于回调中的未检查异常。如果未检查的应用程序异常或应用程序将事务标记为仅回滚（通过设置 `TransactionStatus`），则 `TransactionTemplate` 会触发回滚。默认情况下， `TransactionInterceptor` 的行为方式相同，但允许每种方法的可配置的回滚策略。
 
