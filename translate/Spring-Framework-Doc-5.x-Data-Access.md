@@ -3387,3 +3387,30 @@ further JDBC access is allowed within this transaction.
 
 - Hibernate 已同步到 JTA 事务，因此 JTA 事务管理器通过 `afterCompletion` 回调来回调该事务，并且可以正确清除其缓存。
 
+## 4.4 JPA
+
+Spring JPA，位于 `org.springframework.orm.jpa` 包下，对 [Java Persistence API](https://www.oracle.com/technetwork/articles/javaee/jpa-137156.html) 提供了完善的支持，其方式类似于与 Hibernate 集成的同时感知底层的实现以便提供额外的特性。
+
+### 4.4.1 Spring 环境中配置 JPA 的三种选择
+
+Spring JPA 支持提供了三种方法用来配置 JPA `EntityManagerFactory` ，应用通过它来获取实体管理器。
+
+- [使用 `LocalEntityManagerFactoryBean`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-jpa-setup-lemfb)
+- [从 JNDI 获取 EntityManagerFactory](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-jpa-setup-jndi)
+- [使用 `LocalContainerEntityManagerFactoryBean`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-jpa-setup-lcemfb)
+
+##### 使用 `LocalEntityManagerFactoryBean`
+
+你只能在诸如独立应用或者集成测试等简单部署环境中使用这种方式。
+
+`LocalEntityManagerFactoryBean` 创建的 `EntityManagerFactory` 适合简单的部署环境，这种环境下应用只使用 JPA 进行数据访问。工厂 bean 使用 JPA `PersistenceProvider` 自动探测机制 (根据 JPA 的 Java SE 引导) ，同时，大部分情况下，只需要你指定持久化单元的名称。下面的 XML 例子配置了这样的 bean ：
+
+```xml
+<beans>
+    <bean id="myEmf" class="org.springframework.orm.jpa.LocalEntityManagerFactoryBean">
+        <property name="persistenceUnitName" value="myPersistenceUnit"/>
+    </bean>
+</beans>
+```
+
+这种形式的 JPA 部署是最简单的，同时也是局限性最大的。你不能使用已有的 JDBC `DataSource` bean 定义，同时也没有全局事务支持。此外，持久类的织入 (字节码变形) 也是特定于提供者的，通常需要特定的 JVM agent 在启动时指定。这种方式仅仅适用于独立应用和测试环境，这两种环境是 JPA 规范的目标环境。
