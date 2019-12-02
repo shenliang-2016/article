@@ -3414,3 +3414,22 @@ Spring JPA 支持提供了三种方法用来配置 JPA `EntityManagerFactory` �
 ```
 
 这种形式的 JPA 部署是最简单的，同时也是局限性最大的。你不能使用已有的 JDBC `DataSource` bean 定义，同时也没有全局事务支持。此外，持久类的织入 (字节码变形) 也是特定于提供者的，通常需要特定的 JVM agent 在启动时指定。这种方式仅仅适用于独立应用和测试环境，这两种环境是 JPA 规范的目标环境。
+
+##### 从 JNDI 获取 EntityManagerFactory
+
+当应用部署到 Java EE 服务器上时，你可以使用这种方法。参考你的服务器文档了解如何部署自定义 JPA 提供者到你的服务器，也就是部署服务器默认的提供者之外的 JPA 提供者。
+
+从 JNDI 获取 `EntityManagerFactory` (比如在 Java EE 环境中) ，涉及到修改 XML 配置。如下面例子所示：
+
+```xml
+<beans>
+    <jee:jndi-lookup id="myEmf" jndi-name="persistence/myPersistenceUnit"/>
+</beans>
+```
+
+此操作假定标准 Java EE 引导。Java EE 服务器自动检测持久化单元（实际上是应用程序 jar 中的 `META-INF/persistence.xml` 文件）和 Java EE 部署描述符中的 `persistence-unit-ref` 条目（例如，`web.xml`） ），并为这些持久化单元定义环境命名上下文位置。
+
+在这种情况下，整个持久化单元部署，包括持久化类的编织（字节码转换），都取决于 Java EE 服务器。JDBC `DataSource` 是通过 `MEA-INF/persistence.xml` 文件中的 JNDI 位置定义的。 `EntityManager` 事务与服务器的 JTA 子系统集成在一起。Spring 仅使用获得的 `EntityManagerFactory`，通过依赖注入将其传递给应用程序对象，并管理持久化单元的事务（通常通过 `JtaTransactionManager`）。
+
+如果在同一应用程序中使用多个持久化单元，则此类 JNDI 检索的持久化单元的 Bean 名称应与应用程序用来引用它们的持久化单元（例如，在 `@PersistenceUnit` 和 `@PersistenceContext` 注解中 ）名称相匹配。
+
