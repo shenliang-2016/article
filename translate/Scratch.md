@@ -1,18 +1,36 @@
-##### 从 JNDI 获取 EntityManagerFactory
+##### 使用 `LocalContainerEntityManagerFactoryBean`
 
-当应用部署到 Java EE 服务器上时，你可以使用这种方法。参考你的服务器文档了解如何部署自定义 JPA 提供者到你的服务器，也就是部署服务器默认的提供者之外的 JPA 提供者。
+您可以在基于 Spring 的应用程序环境中将此选项用于完整的 JPA 功能。这包括 Web 容器（例如 Tomcat），独立应用程序以及具有复杂持久化要求的集成测试。
 
-从 JNDI 获取 `EntityManagerFactory` (比如在 Java EE 环境中) ，涉及到修改 XML 配置。如下面例子所示：
+> 如果您要专门配置 Hibernate 设置，则直接选择使用 Hibernate 5.2 或 5.3 并设置本机 Hibernate `LocalSessionFactoryBean`，而不是普通的 JPA `LocalContainerEntityManagerFactoryBean`，使其与 JPA 访问代码以及本机 Hibernate 访问代码交互。有关详细信息，请参见 [用于JPA交互的本地 Hibernate 设置](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#orm-jpa-hibernate) 。
+
+`LocalContainerEntityManagerFactoryBean` 可以完全控制 `EntityManagerFactory` 的配置，适用于需要细粒度自定义的环境。`LocalContainerEntityManagerFactoryBean` 基于 `persistence.xml` 文件，提供的 `dataSourceLookup` 策略和指定的 `loadTimeWeaver` 创建一个 `PersistenceUnitInfo` 实例。因此，可以在 JNDI 之外使用自定义数据源并控制编织过程。以下示例显示了 `LocalContainerEntityManagerFactoryBean` 的典型 bean 定义：
 
 ```xml
 <beans>
-    <jee:jndi-lookup id="myEmf" jndi-name="persistence/myPersistenceUnit"/>
+    <bean id="myEmf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="someDataSource"/>
+        <property name="loadTimeWeaver">
+            <bean class="org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver"/>
+        </property>
+    </bean>
 </beans>
 ```
 
-此操作假定标准 Java EE 引导。Java EE 服务器自动检测持久化单元（实际上是应用程序 jar 中的 `META-INF/persistence.xml` 文件）和 Java EE 部署描述符中的 `persistence-unit-ref` 条目（例如，`web.xml`） ），并为这些持久化单元定义环境命名上下文位置。
+下面的例子展示了一个典型的 `persistence.xml` 文件：
 
-在这种情况下，整个持久化单元部署，包括持久化类的编织（字节码转换），都取决于 Java EE 服务器。JDBC `DataSource` 是通过 `MEA-INF/persistence.xml` 文件中的 JNDI 位置定义的。 `EntityManager` 事务与服务器的 JTA 子系统集成在一起。Spring 仅使用获得的 `EntityManagerFactory`，通过依赖注入将其传递给应用程序对象，并管理持久化单元的事务（通常通过 `JtaTransactionManager`）。
+```xml
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" version="1.0">
+    <persistence-unit name="myUnit" transaction-type="RESOURCE_LOCAL">
+        <mapping-file>META-INF/orm.xml</mapping-file>
+        <exclude-unlisted-classes/>
+    </persistence-unit>
+</persistence>
+```
 
-如果在同一应用程序中使用多个持久化单元，则此类 JNDI 检索的持久化单元的 Bean 名称应与应用程序用来引用它们的持久化单元（例如，在 `@PersistenceUnit` 和 `@PersistenceContext` 注解中 ）名称相匹配。
+> `<exclude-unlisted-classes/>` 快捷方式表示不应对带注解的实体类进行扫描。显式的 `true` 值（`<exclude-unlist-classes>true</exclude-unlisted-classes/>`）也表示不进行扫描。`<exclude-unlisted-classes>false</exclude-unlisted-classes/>` 确实会触发扫描。但是，如果您希望进行实体类扫描，建议您省略 `exclude-unlisted-classes`元素。
+
+使用 `LocalContainerEntityManagerFactoryBean` 是最强大的 JPA 设置选项，允许在应用程序中进行灵活的本地配置。它支持到现有 JDBC `DataSource` 的链接，同时支持本地和全局事务，等等。但是，这也对运行时环境提出了要求。例如，如果持久化提供程序要求字节码转换，则需要具有可编织特性的类加载器。
+
+此选项可能与 Java EE 服务器的内置 JPA 功能冲突。在完整的 Java EE 环境中，请考虑从 JNDI 获取您的 `EntityManagerFactory`。或者，在您的 `LocalContainerEntityManagerFactoryBean` 定义上指定一个自定义的 `persistenceXmlLocation` （例如，`META-INF/my-persistence.xml`），并在应用程序 jar 文件中仅包含具有该名称的描述符。由于 Java EE 服务器仅查找默认的 `META-INF/persistence.xml` 文件，因此它会忽略此类自定义持久化单元，因此避免了与 Spring 预先驱动的 JPA 设置发生冲突。（例如，这适用于 Resin 3.1。）
 
