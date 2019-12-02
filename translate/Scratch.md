@@ -1,109 +1,52 @@
-### 4.3.3 声明式事务划分
+### 4.3.5 事务管理策略
 
-我们推荐你使用 Spring 的声明式事务支持，它允许你使用 AOP 事务拦截器替换 Java 代码中的显式的事务划分 API 调用。你可以在 Spring 容器中使用 Java 注解或者 XML 配置这种事务拦截器。这种声明式事务能力允许你保持业务服务独立于重复性的事务划分代码，从而集中精力处理业务逻辑，那才是你的应用的真正价值所在。
+`TransactionTemplate` 和 `TransactionInterceptor` 都将实际的事务处理委托给 `PlatformTransactionManager` 实例（可以是 `HibernateTransactionManager`（对于单个 Hibernate  `SessionFactory`）通过使用隐含的 `ThreadLocal` `Session` ），或者 Hibernate 应用程序的 `JtaTransactionManager`（代理到容器的 JTA 子系统）。您甚至可以使用自定义的 `PlatformTransactionManager` 实现。从本机 Hibernate 事务管理切换到 JTA（例如，面对应用程序的某些部署的分布式事务要求时）仅是配置问题。您可以将 Hibernate 事务管理器替换为 Spring 的 JTA 事务实现。事务划分和数据访问代码都无需更改即可工作，因为它们使用通用的事务管理 API。
 
-> 在你继续之前，我们强烈建议你阅读 [声明式事务管理](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction-declarative) 。
+对于跨多个 Hibernate 会话工厂的分布式事务，可以将 `JtaTransactionManager` 作为事务策略与多个 `LocalSessionFactoryBean` 定义结合使用。然后，每个 DAO 都会获得一个特定的 `SessionFactory` 引用，该引用传递到其相应的 bean 属性中。如果所有底层 JDBC 数据源都是事务性容器数据源，那么只要使用 `JtaTransactionManager` 作为策略，业务服务就可以在任何数量的 DAO 和任意数量的会话工厂之间划分事务。
 
-你可以使用 `@Transactional` 注解修饰你的服务层，指示 Spring 容器发现这些注解并为这些注解修饰的方法提哦功能事务性语义。下面的例子展示了具体做法：
 
-```java
-public class ProductServiceImpl implements ProductService {
 
-    private ProductDao productDao;
+Both `HibernateTransactionManager` and `JtaTransactionManager` allow for proper JVM-level cache handling with Hibernate, without container-specific transaction manager lookup or a JCA connector (if you do not use EJB to initiate transactions).
 
-    public void setProductDao(ProductDao productDao) {
-        this.productDao = productDao;
-    }
+`HibernateTransactionManager` can export the Hibernate JDBC `Connection` to plain JDBC access code for a specific `DataSource`. This ability allows for high-level transaction demarcation with mixed Hibernate and JDBC data access completely without JTA, provided you access only one database. `HibernateTransactionManager` automatically exposes the Hibernate transaction as a JDBC transaction if you have set up the passed-in `SessionFactory` with a `DataSource` through the `dataSource` property of the `LocalSessionFactoryBean` class. Alternatively, you can specify explicitly the `DataSource` for which the transactions are supposed to be exposed through the `dataSource` property of the `HibernateTransactionManager` class.
 
-    @Transactional
-    public void increasePriceOfAllProductsInCategory(final String category) {
-        List productsToChange = this.productDao.loadProductsByCategory(category);
-        // ...
-    }
+### 4.3.6 比较容器管理的和本地定义的资源
 
-    @Transactional(readOnly = true)
-    public List<Product> findAllProducts() {
-        return this.productDao.findAllProducts();
-    }
+You can switch between a container-managed JNDI `SessionFactory` and a locally defined one without having to change a single line of application code. Whether to keep resource definitions in the container or locally within the application is mainly a matter of the transaction strategy that you use. Compared to a Spring-defined local `SessionFactory`, a manually registered JNDI `SessionFactory` does not provide any benefits. Deploying a `SessionFactory` through Hibernate’s JCA connector provides the added value of participating in the Java EE server’s management infrastructure, but does not add actual value beyond that.
 
-}
+Spring’s transaction support is not bound to a container. When configured with any strategy other than JTA, transaction support also works in a stand-alone or test environment. Especially in the typical case of single-database transactions, Spring’s single-resource local transaction support is a lightweight and powerful alternative to JTA. When you use local EJB stateless session beans to drive transactions, you depend both on an EJB container and on JTA, even if you access only a single database and use only stateless session beans to provide declarative transactions through container-managed transactions. Direct use of JTA programmatically also requires a Java EE environment. JTA does not involve only container dependencies in terms of JTA itself and of JNDI `DataSource` instances. For non-Spring, JTA-driven Hibernate transactions, you have to use the Hibernate JCA connector or extra Hibernate transaction code with the `TransactionManagerLookup` configured for proper JVM-level caching.
+
+Spring-driven transactions can work as well with a locally defined Hibernate `SessionFactory` as they do with a local JDBC `DataSource`, provided they access a single database. Thus, you need only use Spring’s JTA transaction strategy when you have distributed transaction requirements. A JCA connector requires container-specific deployment steps, and (obviously) JCA support in the first place. This configuration requires more work than deploying a simple web application with local resource definitions and Spring-driven transactions. Also, you often need the Enterprise Edition of your container if you use, for example, WebLogic Express, which does not provide JCA. A Spring application with local resources and transactions that span one single database works in any Java EE web container (without JTA, JCA, or EJB), such as Tomcat, Resin, or even plain Jetty. Additionally, you can easily reuse such a middle tier in desktop applications or test suites.
+
+All things considered, if you do not use EJBs, stick with local `SessionFactory` setup and Spring’s `HibernateTransactionManager` or `JtaTransactionManager`. You get all of the benefits, including proper transactional JVM-level caching and distributed transactions, without the inconvenience of container deployment. JNDI registration of a Hibernate `SessionFactory` through the JCA connector adds value only when used in conjunction with EJBs.
+
+### 4.3.7 Hibernate 虚假的应用程序服务器警告
+
+In some JTA environments with very strict `XADataSource` implementations (currently only some WebLogic Server and WebSphere versions), when Hibernate is configured without regard to the JTA `PlatformTransactionManager` object for that environment, spurious warning or exceptions can show up in the application server log. These warnings or exceptions indicate that the connection being accessed is no longer valid or JDBC access is no longer valid, possibly because the transaction is no longer active. As an example, here is an actual exception from WebLogic:
+
+```shell
+java.sql.SQLException: The transaction is no longer active - status: 'Committed'. No
+further JDBC access is allowed within this transaction.
 ```
 
-在容器内，你需要配置 `PlatformTransactionManager` 实现（作为一个 bean ）以及一个 `<tx:annnotation-driven/>` 实体， 并在运行时选择 `@Transactional` 处理。下面的例子展示了具体做法：
+You can resolve this warning by making Hibernate aware of the JTA `PlatformTransactionManager` instance, to which it synchronizes (along with Spring). You have two options for doing this:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-    xmlns:tx="http://www.springframework.org/schema/tx"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/tx
-        https://www.springframework.org/schema/tx/spring-tx.xsd
-        http://www.springframework.org/schema/aop
-        https://www.springframework.org/schema/aop/spring-aop.xsd">
+- If, in your application context, you already directly obtain the JTA `PlatformTransactionManager` object (presumably from JNDI through `JndiObjectFactoryBean` or `<jee:jndi-lookup>`) and feed it, for example, to Spring’s `JtaTransactionManager`, the easiest way is to specify a reference to the bean that defines this JTA `PlatformTransactionManager` instance as the value of the `jtaTransactionManager` property for `LocalSessionFactoryBean.` Spring then makes the object available to Hibernate.
+- More likely, you do not already have the JTA `PlatformTransactionManager` instance, because Spring’s `JtaTransactionManager` can find it itself. Thus, you need to configure Hibernate to look up JTA `PlatformTransactionManager` directly. You do this by configuring an application server-specific `TransactionManagerLookup` class in the Hibernate configuration, as described in the Hibernate manual.
 
-    <!-- SessionFactory, DataSource, etc. omitted -->
+The remainder of this section describes the sequence of events that occur with and without Hibernate’s awareness of the JTA `PlatformTransactionManager`.
 
-    <bean id="transactionManager"
-            class="org.springframework.orm.hibernate5.HibernateTransactionManager">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
+When Hibernate is not configured with any awareness of the JTA `PlatformTransactionManager`, the following events occur when a JTA transaction commits:
 
-    <tx:annotation-driven/>
+- The JTA transaction commits.
+- Spring’s `JtaTransactionManager` is synchronized to the JTA transaction, so it is called back through an `afterCompletion` callback by the JTA transaction manager.
+- Among other activities, this synchronization can trigger a callback by Spring to Hibernate, through Hibernate’s `afterTransactionCompletion` callback (used to clear the Hibernate cache), followed by an explicit `close()` call on the Hibernate session, which causes Hibernate to attempt to `close()` the JDBC Connection.
+- In some environments, this `Connection.close()` call then triggers the warning or error, as the application server no longer considers the `Connection` to be usable, because the transaction has already been committed.
 
-    <bean id="myProductService" class="product.SimpleProductService">
-        <property name="productDao" ref="myProductDao"/>
-    </bean>
+When Hibernate is configured with awareness of the JTA `PlatformTransactionManager`, the following events occur when a JTA transaction commits:
 
-</beans>
-```
-
-### 4.3.4 编程式事务划分
-
-您可以在应用程序的更高级别中划分事务，在跨越任意数量的操作的较低级别数据访问服务之上。对周围业务服务的实施也没有限制。它只需要一个 Spring `PlatformTransactionManager`。同样，后者可以来自任何地方，但最好通过 `setTransactionManager(..)` 方法作为 bean 的引用。同样，应该通过 `setProductDao(..)` 方法设置 `productDAO`。以下几对代码片段展示了 Spring 应用程序上下文中的事务管理器和业务服务定义，以及业务方法实现的示例：
-
-```xml
-<beans>
-
-    <bean id="myTxManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
-        <property name="sessionFactory" ref="mySessionFactory"/>
-    </bean>
-
-    <bean id="myProductService" class="product.ProductServiceImpl">
-        <property name="transactionManager" ref="myTxManager"/>
-        <property name="productDao" ref="myProductDao"/>
-    </bean>
-
-</beans>
-```
-
-````java
-public class ProductServiceImpl implements ProductService {
-
-    private TransactionTemplate transactionTemplate;
-    private ProductDao productDao;
-
-    public void setTransactionManager(PlatformTransactionManager transactionManager) {
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-    }
-
-    public void setProductDao(ProductDao productDao) {
-        this.productDao = productDao;
-    }
-
-    public void increasePriceOfAllProductsInCategory(final String category) {
-        this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-            public void doInTransactionWithoutResult(TransactionStatus status) {
-                List productsToChange = this.productDao.loadProductsByCategory(category);
-                // do the price increase...
-            }
-        });
-    }
-}
-````
-
-Spring 的 `TransactionInterceptor` 允许将任何已检查的应用程序异常从回调代码中抛出，而 `TransactionTemplate` 则限于回调中的未检查异常。如果未检查的应用程序异常或应用程序将事务标记为仅回滚（通过设置 `TransactionStatus`），则 `TransactionTemplate` 会触发回滚。默认情况下， `TransactionInterceptor` 的行为方式相同，但允许每种方法的可配置的回滚策略。
-
+- The JTA transaction is ready to commit.
+- Spring’s `JtaTransactionManager` is synchronized to the JTA transaction, so the transaction is called back through a `beforeCompletion` callback by the JTA transaction manager.
+- Spring is aware that Hibernate itself is synchronized to the JTA transaction and behaves differently than in the previous scenario. Assuming the Hibernate `Session` needs to be closed at all, Spring closes it now.
+- The JTA transaction commits.
+- Hibernate is synchronized to the JTA transaction, so the transaction is called back through an `afterCompletion` callback by the JTA transaction manager and can properly clear its cache.
