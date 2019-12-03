@@ -1,76 +1,84 @@
-> 什么时候需要加载时织入？
+### 4.4.2 基于 JPA: `EntityManagerFactory` 和 `EntityManager` 实现 DAOs
+
+> 尽管 `EntityManagerFactory` 实例是线程安全的，`EntityManager` 实例却不是。注入的 JPA `EntityManager` 的行为类似于从应用服务器的 JNDI 环境获取的 `EntityManager` 实例，如 JPA 规范中所定义。它将所有调用委托给当前事务性的 `EntityManager` ，如果存在。否则，它降级为每个操作创建一个新的 `EntityManager` 实例，实际上使它的使用成为线程安全的。
+
+直接面向原生 JPA 编写代码而不是用任何 Spring 依赖是可能的，通过使用注入的 `EntityManagerFactory` 或者 `EntityManager` 。Spring 可以理解字段上和方法上的 `@PersistenceUnit` 和 `@PersistenceContext` 注解，如果启用了 `PersistenceAnnotationBeanPostProcessor` 。下面的例子展示了一个原生 JPA DAO 实现，使用了 `@PersistenceUnit` 注解：
+
+```java
+public class ProductDaoImpl implements ProductDao {
+
+    private EntityManagerFactory emf;
+
+    @PersistenceUnit
+    public void setEntityManagerFactory(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
+
+    public Collection loadProductsByCategory(String category) {
+        try (EntityManager em = this.emf.createEntityManager()) {
+            Query query = em.createQuery("from Product as p where p.category = ?1");
+            query.setParameter(1, category);
+            return query.getResultList();
+        }
+    }
+}
+```
+
+前面的 DAO 不依赖于 Spring，并且仍然非常适合 Spring 应用程序上下文。此外，DAO 利用注解的优势，要求注入默认的 `EntityManagerFactory`，如以下示例 Bean 定义所示：
+
+```xml
+<beans>
+
+    <!-- bean post-processor for JPA annotations -->
+    <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor"/>
+
+    <bean id="myProductDao" class="product.ProductDaoImpl"/>
+
+</beans>
+```
+
+作为显式定义 `PersistenceAnnotationBeanPostProcessor` 的替代方法，请考虑在应用程序上下文配置中使用 Spring `context:annotation-config` XML 元素。这样做会自动注册所有 Spring 标准后处理器以进行基于注释的配置，包括 `CommonAnnotationBeanPostProcessor` 等。
+
+考虑下面的例子：
+
+```xml
+<beans>
+
+    <!-- post-processors for all standard config annotations -->
+    <context:annotation-config/>
+
+    <bean id="myProductDao" class="product.ProductDaoImpl"/>
+
+</beans>
+```
+
+这种 DAO 的主要问题在于，它总是在工厂中始终创建一个新的 `EntityManager`。您可以通过请求注入事务型 `EntityManager`（也称为“共享的EntityManager”，因为它是实际事务型 `EntityManager` 的共享的线程安全代理）来代替工厂注入，从而避免了这种情况。以下示例显示了如何执行此操作：
+
+```java
+public class ProductDaoImpl implements ProductDao {
+
+    @PersistenceContext
+    private EntityManager em;
+
+    public Collection loadProductsByCategory(String category) {
+        Query query = em.createQuery("from Product as p where p.category = :category");
+        query.setParameter("category", category);
+        return query.getResultList();
+    }
+}
+```
+
+`@PersistenceContext` 注解具有一个称为 `type` 的可选属性，默认为 `PersistenceContextType.TRANSACTION`。您可以使用此默认值来接收共享的 `EntityManager` 代理。替代方法 `PersistenceContextType.EXTENDED` 是完全不同的事情。这导致了所谓的扩展的 `EntityManager`，它不是线程安全的，因此不能在并发访问的组件（例如 Spring 管理的单例 bean）中使用。扩展的 `EntityManager` 实例仅应用于有状态的组件中，例如，驻留在会话中的状态组件，其 `EntityManager` 的生命周期不依赖于当前事务，而是完全取决于应用程序。
+
+> 方法层面和字段层面的注入
 >
-> 并不是所有的 JPA 提供者程序都需要 JVM agent，Hibernate 就是一个例子。如果你的 JPA 提供者不需要 agent ，或者你有其他选择，比如通过自定义的编译器或者 Ant 任务进行构建期增强，你就不应该使用加载时织入。
+> 您可以在类中的字段或方法上应用指示依赖项注入的注解（例如，`@PersistenceUnit` 和 `@PersistenceContext`），也就是所谓的“方法级注入”和“字段级注入”。字段级注解简洁明了，易于使用，而方法级注解则允许对注入的依赖项进行进一步处理。在这两种情况下，成员的可见性（public，protected 或 private）都无关紧要。
+>
+> 类层面的注解呢？
+>
+> 在 Java EE 平台上，它们只是用于依赖声明，并不用于资源注入。
 
-`LoadTimeWeaver` 接口是 Spring 提供的类，用来以特定方式插入 JPA `ClassTransformer` 实例，具体方式取决于环境是 web 容器还是应用服务器。通过 [agent](https://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html) 关联 `ClassTransformers` 是常用做法，不过效率不高。其中 agents 为整个虚拟机工作，检查它所加载的所有类，我们通常不希望这发生在生产环境服务器上。
+注入的 `EntityManager` 是 Spring 管理的（感知到正在进行的事务）。即使新的 DAO 实现使用方法级别的 `EntityManager` 而非 `EntityManagerFactory` 注入，由于注解的使用，应用程序上下文 XML 也不需要更改。
 
-Spring 为各种环境提供了若干 `LoadTimeWeaver` 实现，允许 `ClassTransformer` 只被应用于单个类加载器，而不是虚拟机。
-
-参考 AOP 章节中的 [Spring configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw-spring) 了解更多有关 `LoadTimeWeaver` 实现以及设置的细节，包括通用的和特定于各种平台的（比如 Tomcat，JBoss 以及 WebSphere）。
-
-如  [Spring configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop-aj-ltw-spring) 中所述，你可以通过使用 `context:load-time-weaver` XML 元素的 `@EnableLoadTimerWeaving` 注解配置一个上下文范围的 `LoadTimeWeaver` 。这样的全局编织器会由所有 JPA `LocalContainerEntityManagerFactoryBean` 实例自动选择。以下示例显示了设置加载时编织器，提供对平台的自动检测（例如 Tomcat 的具有编织功能的类加载器或 Spring 的 JVM agent）以及将编织器自动传播到所有可感知编织器的 bean 的首选方法：
-
-```xml
-<context:load-time-weaver/>
-<bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
-    ...
-</bean>
-```
-
-不过，如果需要，你也可以通过 `loadTimerWeaver` 属性手动指定专用编织器。如下面例子所示：
-
-```xml
-<bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
-    <property name="loadTimeWeaver">
-        <bean class="org.springframework.instrument.classloading.ReflectiveLoadTimeWeaver"/>
-    </property>
-</bean>
-```
-
-无论 LTW 的配置方式如何，通过使用此技术，依赖于检测的 JPA 应用程序都可以在目标平台（例如 Tomcat）中运行，而无需代理。当托管应用程序依赖于不同的 JPA 实现时，这尤其重要，因为 JPA 转换器仅在类加载器级别应用，因此彼此隔离。
-
-##### 处理多个持久化单元
-
-对于依赖多个持久化单元位置（例如，存储在类路径中的各种 JARS 中）的应用程序，Spring 提供了 `PersistenceUnitManager` 作为中央存储库并避免了持久化单元发现过程，这可能是代价高昂的。默认实现允许指定多个位置。解析这些位置，然后通过持久化单元名称进行检索。（默认情况下，在类路径中搜索 `META-INF/persistence.xml` 文件。）以下示例配置多个位置：
-
-```xml
-<bean id="pum" class="org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager">
-    <property name="persistenceXmlLocations">
-        <list>
-            <value>org/springframework/orm/jpa/domain/persistence-multi.xml</value>
-            <value>classpath:/my/package/**/custom-persistence.xml</value>
-            <value>classpath*:META-INF/persistence.xml</value>
-        </list>
-    </property>
-    <property name="dataSources">
-        <map>
-            <entry key="localDataSource" value-ref="local-db"/>
-            <entry key="remoteDataSource" value-ref="remote-db"/>
-        </map>
-    </property>
-    <!-- if no datasource is specified, use this one -->
-    <property name="defaultDataSource" ref="remoteDataSource"/>
-</bean>
-
-<bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
-    <property name="persistenceUnitManager" ref="pum"/>
-    <property name="persistenceUnitName" value="myCustomUnit"/>
-</bean>
-```
-
-默认实现允许以声明方式（通过其影响所有托管单元的属性）或以编程方式（通过允许持久化单元选择的 `PersistenceUnitPostProcessor`）自定义 `PersistenceUnitInfo` 实例（在将其馈送到 JPA 提供程序之前）。如果没有指定 `PersistenceUnitManager`，`LocalContainerEntityManagerFactoryBean` 将在内部创建和使用。
-
-##### 后台引导
-
-`LocalContainerEntityManagerFactoryBean` 支持通过 `bootstrapExecutor` 属性进行后台引导，如下面例子所示：
-
-```xml
-<bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
-    <property name="bootstrapExecutor">
-        <bean class="org.springframework.core.task.SimpleAsyncTaskExecutor"/>
-    </property>
-</bean>
-```
-
-实际的 JPA 提供程序引导将移交给指定的执行程序，然后并行运行到应用程序引导线程。暴露的 `EntityManagerFactory` 代理可以注入到其他应用程序组件中，甚至可以响应 `EntityManagerFactoryInfo` 配置检查。但是，一旦实际的 JPA 提供程序被其他组件访问（例如，调用 `createEntityManager`），这些调用就会阻塞，直到后台引导完成为止。特别是，当您使用 Spring Data JPA 时，请确保还为其存储库设置了延迟引导。
+这种 DAO 样式的主要优点是它仅取决于 Java Persistence API。不需要导入任何 Spring 类。此外，由于可以理解 JPA 注解，因此 Spring 容器会自动应用注入。从非侵入性的角度来看，这是有吸引力的，并且对于 JPA 开发人员而言，感觉会更自然。
 
