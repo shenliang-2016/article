@@ -1161,7 +1161,7 @@ public class MyComponent {
 
 如果没有事务在运行，监听器就完全不会被调用，因为我们不能遵循必需的语义。但是，你仍然可以通过将注解的 `fallbackExecution` 属性设定为 `true` 来覆盖该行为。
 
-## 1.8 Application server-specific integration
+## 1.8 特定应用服务器集成
 
 Spring 的事务抽象基本上是与应用服务器无关的。此外，Spring 的 `JtaTransactionManager` 类 (可以有选择地执行 JNDI lookup 为了 JTA `UserTransaction` 和 `JtaTransactionManager` 对象) 自动探测后续类的位置，该位置不同应用服务器不尽相同。可以访问 JTA `TransactionManager` 允许增强事务语义－特别地，支持事务挂起。参考 [`JtaTransactionManager`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/transaction/jta/JtaTransactionManager.html) 文档获取更多细节。
 
