@@ -124,3 +124,67 @@ public class SimpleObject {
 
 这就是我们要在客户端上支持远程帐户服务所需要做的一切。Spring 透明地创建一个调用程序，并通过 `RmiServiceExporter` 远程启用并暴露帐户服务。在客户端，我们使用 `RmiProxyFactoryBean` 连接到该服务。
 
+### 1.2 使用 Hessian 通过 HTTP 进行远程服务调用
+
+Hessian 提供了一种基于 HTTP 的二进制远程协议。由 Caucho 开发，你可以在 https://www.caucho.com/ 找到更多有关 Hessian 的信息。
+
+#### 1.2.1 为 Hessian 连接 `DispatcherServlet`
+
+Hessian 通过 HTTP 进行通信，并不使用开发者自定义的 servlet。通过使用 Spring 的 `DispatcherServlet` 原理（参考 [mvc-servlet](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/webmvc.html#mvc-servlet) ），我们可以连接这样一个 servlet 来暴露你的服务。首先，我们需要在我们的应用中创建一个新的 servlet，如下面示例 `web.xml` 片段所示：
+
+```xml
+<servlet>
+    <servlet-name>remoting</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>remoting</servlet-name>
+    <url-pattern>/remoting/*</url-pattern>
+</servlet-mapping>
+```
+
+如果你熟悉 Spring 的 `DispatcherServlet` 原理，你可能会知道现在你需要创建一个 Spring 容器配置资源文件，名为 `remoting-servlet.xml` （在你的 servlet 名称之后）在 `WEB-INF` 目录下。该应用上下文在下一节中使用。
+
+另外，考虑使用更简单的 Spring `HttpRequestHandlerServlet` 。这样做允许你讲远程服务暴露器定义内置到你的应用根上下文中（默认位置 `WEB-INF/applicationContext.xml`），每个单独的 servlet 指向特定的服务暴露器 bean。这种情况下，每个 servlet 名称需要与它所对应的目标服务暴露器名称相互匹配。
+
+#### 1.2.2 使用 `HessianServiceExporter` 暴露你的 Beans 
+
+在新创建的名为 `remoting-servlet.xml` 的应用上下文中，我们创建一个 `HessianServiceExporter` 来暴露你的服务，如下面例子所示：
+
+```xml
+<bean id="accountService" class="example.AccountServiceImpl">
+    <!-- any additional properties, maybe a DAO? -->
+</bean>
+
+<bean name="/AccountService" class="org.springframework.remoting.caucho.HessianServiceExporter">
+    <property name="service" ref="accountService"/>
+    <property name="serviceInterface" value="example.AccountService"/>
+</bean>
+```
+
+现在我们已经准备在客户端连接到服务。由于没有显式指定处理器映射（将请求 URLs 映射到服务），因此我们使用 `BeanNameUrlHandlerMapping` 。因此，服务被暴露在 URL 上，该 URL 通过将服务的 bean 名称包含在 `DispatcherServlet` 实例映射（如前面定义所示）中来表示：`http://HOST:8080/remoting/AccountService`。
+
+另外，你可以在你的根应用上下文中创建一个`HessianServiceExporter` （比如，在 `WEB-INF/applicationContext.xml`），如下面例子所示：
+
+```xml
+<bean name="accountExporter" class="org.springframework.remoting.caucho.HessianServiceExporter">
+    <property name="service" ref="accountService"/>
+    <property name="serviceInterface" value="example.AccountService"/>
+</bean>
+```
+
+在后一种情况下，您应该在 `web.xml` 中为此导出程序定义一个相应的 servlet，并得到相同的最终结果：导出程序映射到 `/remoting/AccountService` 的请求路径。注意，servlet 名称需要与目标导出器的 bean 名称匹配。以下示例显示了如何执行此操作：
+
+```xml
+<servlet>
+    <servlet-name>accountExporter</servlet-name>
+    <servlet-class>org.springframework.web.context.support.HttpRequestHandlerServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>accountExporter</servlet-name>
+    <url-pattern>/remoting/AccountService</url-pattern>
+</servlet-mapping>
+```
