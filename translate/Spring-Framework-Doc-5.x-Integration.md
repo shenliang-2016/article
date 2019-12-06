@@ -188,3 +188,38 @@ Hessian 通过 HTTP 进行通信，并不使用开发者自定义的 servlet。�
     <url-pattern>/remoting/AccountService</url-pattern>
 </servlet-mapping>
 ```
+
+#### 1.2.3 从客户端连接到服务
+
+通过使用 `HessianProxyFactoryBean` ，我们可以从客户端连接到服务。相同的原理也应用在 RMI 示例中。我们创建一个独立的 bean 工厂或应用上下文，提到了下面 `SimpleObject` 所在的 beans ，通过使用 `AccountService` 管理账户。如下面例子所示：
+
+``` xml
+<bean class="example.SimpleObject">
+    <property name="accountService" ref="accountService"/>
+</bean>
+
+<bean id="accountService" class="org.springframework.remoting.caucho.HessianProxyFactoryBean">
+    <property name="serviceUrl" value="http://remotehost:8080/remoting/AccountService"/>
+    <property name="serviceInterface" value="example.AccountService"/>
+</bean>
+```
+
+#### 1.2.4 应用 HTTP 基本身份认证到通过 Hessian 暴露的服务上
+
+Hessian 的一个优点就是我们可以很容易地应用 HTTP 基本身份认证，因为两者都是基于 HTTP 的。通常的 HTTP 服务器安全机制可以通过使用诸如 `web.xml` 安全特性等方式来应用。通常，这里你不需要使用针对每个用户的安全凭证。你可以使用定义在 `HessianProxyFactoryBean` 层级上的共享凭证（类似于 JDBC `DataSource` ），如下面例子所示：
+
+```xml
+<bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping">
+    <property name="interceptors" ref="authorizationInterceptor"/>
+</bean>
+
+<bean id="authorizationInterceptor"
+        class="org.springframework.web.servlet.handler.UserRoleAuthorizationInterceptor">
+    <property name="authorizedRoles" value="administrator,operator"/>
+</bean>
+```
+
+在前面的例子中，我们显式提到 `BeanNameUrlHandlerMapping` 并设置一个拦截器，仅仅允许管理员和管理者调用应用上下文中提到的 beans 。
+
+> 前面的示例并未展示灵活的安全基础设施。有关安全性的更多选项，请参阅 https://projects.spring.io/spring-security/ 上的 Spring Security 项目。
+
