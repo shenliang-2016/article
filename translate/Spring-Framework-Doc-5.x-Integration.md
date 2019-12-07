@@ -436,3 +436,157 @@ public class AccountClientImpl {
 
 > 上面的内容略有简化，因为 JAX-WS 要求端点接口和实现类使用 `@WebService`，`@SOAPBinding` 等注解进行注释。这意味着您不能（轻松地）将纯 Java 接口和实现类用作 JAX-WS 端点工件。您需要先对其进行相应注解。查看 JAX-WS 文档以获取有关这些需求的详细信息。
 
+### 1.5 通过 JMS 暴露服务
+
+您还可以通过使用 JMS 作为基础通信协议来透明地公开服务。Spring 框架中的 JMS 远程支持非常基本。它在 `same thread` 和同一非事务性 `Session` 中发送和接收。吞吐量取决于实现。请注意，这些单线程和非事务性约束仅适用于 Spring 的 JMS 远程支持。请参阅 [JMS（Java消息服务）](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms) ，以获取有关 Spring 对基于 JMS 消息的丰富支持的信息。
+
+下面的接口可以用在服务端和客户端：
+
+```java
+package com.foo;
+
+public interface CheckingAccountService {
+
+    public void cancelAccount(Long accountId);
+}
+```
+
+上面接口的下面的简单实现可以用于服务端：
+
+```java
+package com.foo;
+
+public class SimpleCheckingAccountService implements CheckingAccountService {
+
+    public void cancelAccount(Long accountId) {
+        System.out.println("Cancelling account [" + accountId + "]");
+    }
+}
+```
+
+以下配置文件包含在客户机和服务器上共享的 JMS 基础设施 Bean：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="tcp://ep-t43:61616"/>
+    </bean>
+
+    <bean id="queue" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="mmm"/>
+    </bean>
+
+</beans>
+```
+
+#### 1.5.1 服务端配置
+
+在服务器上，您需要公开使用 `JmsInvokerServiceExporter` 的服务对象，如以下示例所示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="checkingAccountService"
+            class="org.springframework.jms.remoting.JmsInvokerServiceExporter">
+        <property name="serviceInterface" value="com.foo.CheckingAccountService"/>
+        <property name="service">
+            <bean class="com.foo.SimpleCheckingAccountService"/>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.jms.listener.SimpleMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="queue"/>
+        <property name="concurrentConsumers" value="3"/>
+        <property name="messageListener" ref="checkingAccountService"/>
+    </bean>
+
+</beans>
+```
+
+````java
+package com.foo;
+
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class Server {
+
+    public static void main(String[] args) throws Exception {
+        new ClassPathXmlApplicationContext("com/foo/server.xml", "com/foo/jms.xml");
+    }
+}
+````
+
+#### 1.5.2 客户端配置
+
+客户端只需要创建一个客户端代理即可实现协议接口（`CheckingAccountService`）。
+
+以下示例定义了可以注入到其他客户端对象中的 Bean（代理负责通过 JMS 将调用转发到服务器端对象）：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="checkingAccountService"
+            class="org.springframework.jms.remoting.JmsInvokerProxyFactoryBean">
+        <property name="serviceInterface" value="com.foo.CheckingAccountService"/>
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="queue" ref="queue"/>
+    </bean>
+
+</beans>
+```
+
+````java
+package com.foo;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class Client {
+
+    public static void main(String[] args) throws Exception {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("com/foo/client.xml", "com/foo/jms.xml");
+        CheckingAccountService service = (CheckingAccountService) ctx.getBean("checkingAccountService");
+        service.cancelAccount(new Long(10));
+    }
+}
+````
+
+### 1.6 AMQP
+
+See the [Spring AMQP Reference Guide’s 'Spring Remoting with AMQP' section](https://docs.spring.io/spring-amqp/docs/current/reference/html/_reference.html#remoting) for more information.
+
+>Auto-detection is not implemented for remote interfaces
+>
+>The main reason why auto-detection of implemented interfaces does not occur for remote interfaces is to avoid opening too many doors to remote callers. The target object might implement internal callback interfaces, such as `InitializingBean` or `DisposableBean` which one would not want to expose to callers.
+>
+>Offering a proxy with all interfaces implemented by the target usually does not matter in the local case. However, when you export a remote service, you should expose a specific service interface, with specific operations intended for remote usage. Besides internal callback interfaces, the target might implement multiple business interfaces, with only one of them intended for remote exposure. For these reasons, we require such a service interface to be specified.
+>
+>This is a trade-off between configuration convenience and the risk of accidental exposure of internal methods. Always specifying a service interface is not too much effort and puts you on the safe side regarding controlled exposure of specific methods.
+
+### 1.7. Considerations when Choosing a Technology
+
+Each and every technology presented here has its drawbacks. When choosing a technology, you should carefully consider your needs, the services you expose, and the objects you send over the wire.
+
+When using RMI, you cannot access the objects through the HTTP protocol, unless you tunnel the RMI traffic. RMI is a fairly heavy-weight protocol, in that it supports full-object serialization, which is important when you use a complex data model that needs serialization over the wire. However, RMI-JRMP is tied to Java clients. It is a Java-to-Java remoting solution.
+
+Spring’s HTTP invoker is a good choice if you need HTTP-based remoting but also rely on Java serialization. It shares the basic infrastructure with RMI invokers but uses HTTP as transport. Note that HTTP invokers are not limited only to Java-to-Java remoting but also to Spring on both the client and the server side. (The latter also applies to Spring’s RMI invoker for non-RMI interfaces.)
+
+Hessian might provide significant value when operating in a heterogeneous environment, because they explicitly allow for non-Java clients. However, non-Java support is still limited. Known issues include the serialization of Hibernate objects in combination with lazily-initialized collections. If you have such a data model, consider using RMI or HTTP invokers instead of Hessian.
+
+JMS can be useful for providing clusters of services and letting the JMS broker take care of load balancing, discovery, and auto-failover. By default, Java serialization is used for JMS remoting, but the JMS provider could use a different mechanism for the wire formatting, such as XStream to let servers be implemented in other technologies.
+
+Last but not least, EJB has an advantage over RMI, in that it supports standard role-based authentication and authorization and remote transaction propagation. It is possible to get RMI invokers or HTTP invokers to support security context propagation as well, although this is not provided by core Spring. Spring offers only appropriate hooks for plugging in third-party or custom solutions.
