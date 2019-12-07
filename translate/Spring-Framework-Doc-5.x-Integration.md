@@ -290,3 +290,94 @@ Hessian 的一个优点就是我们可以很容易地应用 HTTP 基本身份认
 </property>
 ```
 
+### 1.4 Web Services
+
+Spring 提供了对标准 Java web services APIs 的完整支持：
+
+- 使用 JAX-WS 暴露 web services
+- 使用 JAX-WS 访问 web services 
+
+除了在 Spring Core 中对 JAX-WS 的完整支持之外，Spring 产品组合还具有 [Spring Web Services](http://www.springframework.org/spring-ws) ，这是一种契约优先，文档驱动的 web services 解决方案—强烈建议用来构建现代的，面向未来的 Web 服务。
+
+#### 1.4.1 使用 JAX-WS 暴露基于 Servlet 的 Web Services
+
+Spring 为 JAX-WS servlet 端点实现提供了一个方便的基类：`SpringBeanAutowiringSupport`。为了公开我们的 `AccountService`，我们扩展 Spring 的 `SpringBeanAutowiringSupport` 类并在此处实现我们的业务逻辑，通常将调用委托给业务层。我们使用 Spring 的 `@Autowired` 注解来表达对 Spring 管理的 bean 的依赖。以下示例显示了扩展 `SpringBeanAutowiringSupport` 的类：
+
+```java
+/**
+ * JAX-WS compliant AccountService implementation that simply delegates
+ * to the AccountService implementation in the root web application context.
+ *
+ * This wrapper class is necessary because JAX-WS requires working with dedicated
+ * endpoint classes. If an existing service needs to be exported, a wrapper that
+ * extends SpringBeanAutowiringSupport for simple Spring bean autowiring (through
+ * the @Autowired annotation) is the simplest JAX-WS compliant way.
+ *
+ * This is the class registered with the server-side JAX-WS implementation.
+ * In the case of a Java EE server, this would simply be defined as a servlet
+ * in web.xml, with the server detecting that this is a JAX-WS endpoint and reacting
+ * accordingly. The servlet name usually needs to match the specified WS service name.
+ *
+ * The web service engine manages the lifecycle of instances of this class.
+ * Spring bean references will just be wired in here.
+ */
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
+
+@WebService(serviceName="AccountService")
+public class AccountServiceEndpoint extends SpringBeanAutowiringSupport {
+
+    @Autowired
+    private AccountService biz;
+
+    @WebMethod
+    public void insertAccount(Account acc) {
+        biz.insertAccount(acc);
+    }
+
+    @WebMethod
+    public Account[] getAccounts(String name) {
+        return biz.getAccounts(name);
+    }
+}
+```
+
+我们的 `AccountServiceEndpoint` 需要在与 Spring 上下文相同的 Web 应用程序中运行，以允许访问 Spring 的基础设施。在 Java EE 环境中，默认情况下是这种情况，使用标准契约进行 JAX-WS Servlet 端点部署。有关详细信息，请参见各种 Java EE Web 服务教程。
+
+#### 1.4.2. 使用 JAX-WS 暴露独立 Web Services
+
+Oracle JDK 随附的内置 JAX-WS 提供程序通过使用 JDK 中也包含的内置 HTTP 服务器来支持 Web 服务公开。Spring 的 `SimpleJaxWsServiceExporter` 会在 Spring 应用程序上下文中检测到所有带有 `@WebService` 注解的 bean，并通过默认的 JAX-WS 服务器（JDK HTTP 服务器）将其导出。
+
+在这种情况下，端点实例被定义和管理为 Spring bean 本身。它们是使用 JAX-WS 引擎注册的，但是它们的生命周期取决于 Spring 应用程序上下文。这意味着您可以将 Spring 功能（例如显式依赖项注入）应用于端点实例。通过 `@Autowired` 进行注解驱动的注入也有效。以下示例显示了如何定义这些 bean：
+
+```xml
+<bean class="org.springframework.remoting.jaxws.SimpleJaxWsServiceExporter">
+    <property name="baseAddress" value="http://localhost:8080/"/>
+</bean>
+
+<bean id="accountServiceEndpoint" class="example.AccountServiceEndpoint">
+    ...
+</bean>
+
+...
+```
+
+`AccountServiceEndpoint` 可以但不必从 Spring 的 `SpringBeanAutowiringSupport` 派生，因为此示例中的端点是完全由 Spring 管理的 bean。这意味着端点实现可以如下所示（不声明任何超类-仍然使用 Spring 的 `@Autowired` 配置注解）：
+
+```java
+@WebService(serviceName="AccountService")
+public class AccountServiceEndpoint {
+
+    @Autowired
+    private AccountService biz;
+
+    @WebMethod
+    public void insertAccount(Account acc) {
+        biz.insertAccount(acc);
+    }
+
+    @WebMethod
+    public List<Account> getAccounts(String name) {
+        return biz.getAccounts(name);
+    }
+}
+```
