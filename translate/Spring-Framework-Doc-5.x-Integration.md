@@ -343,7 +343,7 @@ public class AccountServiceEndpoint extends SpringBeanAutowiringSupport {
 
 我们的 `AccountServiceEndpoint` 需要在与 Spring 上下文相同的 Web 应用程序中运行，以允许访问 Spring 的基础设施。在 Java EE 环境中，默认情况下是这种情况，使用标准契约进行 JAX-WS Servlet 端点部署。有关详细信息，请参见各种 Java EE Web 服务教程。
 
-#### 1.4.2. 使用 JAX-WS 暴露独立 Web Services
+#### 1.4.2 使用 JAX-WS 暴露独立 Web Services
 
 Oracle JDK 随附的内置 JAX-WS 提供程序通过使用 JDK 中也包含的内置 HTTP 服务器来支持 Web 服务公开。Spring 的 `SimpleJaxWsServiceExporter` 会在 Spring 应用程序上下文中检测到所有带有 `@WebService` 注解的 bean，并通过默认的 JAX-WS 服务器（JDK HTTP 服务器）将其导出。
 
@@ -381,3 +381,58 @@ public class AccountServiceEndpoint {
     }
 }
 ```
+
+#### 1.4.3 使用 JAX-WS RI 的 Spring 支持导出 Web Services
+
+Oracle 的 JAX-WS RI，作为 GlassFish 项目的一部分，将 Spring 支持作为它的 JAX-WS 通用项目的一部分。这就允许将  JAX-WS 端点定义为 Spring 管理的 beans ，类似于上一节中讨论的独立模式，不过这一次是在 Servlet 环境下。
+
+> 这不可移植到 Java EE 环境中。它主要适用于将 JAX-WS RI 嵌入为 Web 应用程序一部分的非 EE 环境，例如 Tomcat 。
+
+与导出基于 servlet 的端点的标准样式的不同之处在于，端点实例本身的生命周期由 Spring 管理，并且在 `web.xml` 中仅定义了一个 JAX-WS servlet 。使用标准的 Java EE 样式（如前所述），每个服务端点都有一个 servlet 定义，每个端点通常都委派给 Spring Bean（如前所述，通过使用 `@Autowired`）。
+
+参考 https://jax-ws-commons.java.net/spring/ 获取更多有关配置和使用方式的细节。
+
+#### 1.4.4 使用 JAX-WS 访问 Web Services
+
+Spring 提供了两个工厂 bean 来创建 JAX-WS Web 服务代理，分别是 `LocalJaxWsServiceFactoryBean` 和 `JaxWsPortProxyFactoryBean`。前者只能返回一个 JAX-WS 服务类供我们使用。后者是完整版本，可以返回实现我们的业务服务接口的代理。在下面的示例中，我们使用 `JaxWsPortProxyFactoryBean` 为 `AccountService` 端点创建代理（同样）：
+
+```xml
+<bean id="accountWebService" class="org.springframework.remoting.jaxws.JaxWsPortProxyFactoryBean">
+    <property name="serviceInterface" value="example.AccountService"/> 
+    <property name="wsdlDocumentUrl" value="http://localhost:8888/AccountServiceEndpoint?WSDL"/>
+    <property name="namespaceUri" value="http://example/"/>
+    <property name="serviceName" value="AccountService"/>
+    <property name="portName" value="AccountServiceEndpointPort"/>
+</bean>
+```
+
+`wsdlDocumentUrl` 是 WSDL 文件的 URL 。Spring 在启动时需要使用它来创建 JAX-WS 服务。`namespaceUri` 对应于 `.wsdl` 文件中的 `targetNamespace`。`serviceName` 对应于 `.wsdl` 文件中的服务名称。`portName` 对应于 `.wsdl` 文件中的端口名称。
+
+访问 Web 服务很容易，因为我们有一个供其使用的 bean 工厂，该工厂将其公开为名为 `AccountService` 的接口。以下示例显示了如何在 Spring 中进行连接：
+
+```xml
+<bean id="client" class="example.AccountClientImpl">
+    ...
+    <property name="service" ref="accountWebService"/>
+</bean>
+```
+
+在客户端代码中，可以像访问普通类一样访问 web service ，如下面例子所示：
+
+```java
+public class AccountClientImpl {
+
+    private AccountService service;
+
+    public void setService(AccountService service) {
+        this.service = service;
+    }
+
+    public void foo() {
+        service.insertAccount(...);
+    }
+}
+```
+
+> 上面的内容略有简化，因为 JAX-WS 要求端点接口和实现类使用 `@WebService`，`@SOAPBinding` 等注解进行注释。这意味着您不能（轻松地）将纯 Java 接口和实现类用作 JAX-WS 端点工件。您需要先对其进行相应注解。查看 JAX-WS 文档以获取有关这些需求的详细信息。
+
