@@ -591,3 +591,188 @@ JMS 可用于提供服务集群，并使 JMS 代理负责负载平衡，发现�
 
 最后但并非最不重要的一点是，EJB 具有优于 RMI 的优势，因为它支持基于标准角色的身份验证和授权以及远程事务传播。尽管核心 Spring 并没有提供 RMI 调用程序或 HTTP 调用程序来支持安全上下文传播，但也有可能。Spring 仅提供适当的挂钩来插入第三方或自定义解决方案。
 
+### 1.8 REST Endpoints
+
+Spring Framework 提供了两种选择来发起对 REST endpoints 的调用：
+
+- [使用 `RestTemplate`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#rest-resttemplate): 原生的 Spring REST 客户端，使用同步的，模版方法 API 。
+- [WebClient](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web-reactive.html#webflux-client): 非阻塞式，响应式方法，支持同步和异步及流式处理场景。
+
+> 从 5.0 开始，非阻塞的反应式 WebClient 提供了对 RestTemplate 的现代替代方案，并有效地支持同步和异步以及流方案。`RestTemplate` 将在以后的版本中弃用，并且以后不会添加任何主要的新功能。
+
+#### 1.8.1 使用 `RestTemplate`
+
+`RestTemplate` 通过 HTTP 客户端库提供了更高级别的 API。它使在一行中轻松调用 REST 端点变得容易。它公开了以下几组重载方法：
+
+| Method group      | Description                                                  |
+| :---------------- | :----------------------------------------------------------- |
+| `getForObject`    | Retrieves a representation via GET.                          |
+| `getForEntity`    | Retrieves a `ResponseEntity` (that is, status, headers, and body) by using GET. |
+| `headForHeaders`  | Retrieves all headers for a resource by using HEAD.          |
+| `postForLocation` | Creates a new resource by using POST and returns the `Location` header from the response. |
+| `postForObject`   | Creates a new resource by using POST and returns the representation from the response. |
+| `postForEntity`   | Creates a new resource by using POST and returns the representation from the response. |
+| `put`             | Creates or updates a resource by using PUT.                  |
+| `patchForObject`  | Updates a resource by using PATCH and returns the representation from the response. Note that the JDK `HttpURLConnection` does not support the `PATCH`, but Apache HttpComponents and others do. |
+| `delete`          | Deletes the resources at the specified URI by using DELETE.  |
+| `optionsForAllow` | Retrieves allowed HTTP methods for a resource by using ALLOW. |
+| `exchange`        | More generalized (and less opinionated) version of the preceding methods that provides extra flexibility when needed. It accepts a `RequestEntity` (including HTTP method, URL, headers, and body as input) and returns a `ResponseEntity`.These methods allow the use of `ParameterizedTypeReference` instead of `Class` to specify a response type with generics. |
+| `execute`         | The most generalized way to perform a request, with full control over request preparation and response extraction through callback interfaces. |
+
+##### Initialization
+
+The default constructor uses `java.net.HttpURLConnection` to perform requests. You can switch to a different HTTP library with an implementation of `ClientHttpRequestFactory`. There is built-in support for the following:
+
+- Apache HttpComponents
+- Netty
+- OkHttp
+
+For example, to switch to Apache HttpComponents, you can use the following:
+
+```
+RestTemplate template = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+```
+
+Each `ClientHttpRequestFactory` exposes configuration options specific to the underlying HTTP client library — for example, for credentials, connection pooling, and other details.
+
+> Note that the `java.net` implementation for HTTP requests can raise an exception when accessing the status of a response that represents an error (such as 401). If this is an issue, switch to another HTTP client library.
+
+##### URIs
+
+Many of the `RestTemplate` methods accept a URI template and URI template variables, either as a `String` variable argument, or as `Map<String,String>`.
+
+The following example uses a `String` variable argument:
+
+```
+String result = restTemplate.getForObject(
+        "https://example.com/hotels/{hotel}/bookings/{booking}", String.class, "42", "21");
+```
+
+The following example uses a `Map<String, String>`:
+
+```
+Map<String, String> vars = Collections.singletonMap("hotel", "42");
+
+String result = restTemplate.getForObject(
+        "https://example.com/hotels/{hotel}/rooms/{hotel}", String.class, vars);
+```
+
+Keep in mind URI templates are automatically encoded, as the following example shows:
+
+```
+restTemplate.getForObject("https://example.com/hotel list", String.class);
+
+// Results in request to "https://example.com/hotel%20list"
+```
+
+You can use the `uriTemplateHandler` property of `RestTemplate` to customize how URIs are encoded. Alternatively, you can prepare a `java.net.URI` and pass it into one of the `RestTemplate` methods that accepts a `URI`.
+
+For more details on working with and encoding URIs, see [URI Links](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-uri-building).
+
+##### Headers
+
+You can use the `exchange()` methods to specify request headers, as the following example shows:
+
+```
+String uriTemplate = "https://example.com/hotels/{hotel}";
+URI uri = UriComponentsBuilder.fromUriString(uriTemplate).build(42);
+
+RequestEntity<Void> requestEntity = RequestEntity.get(uri)
+        .header(("MyRequestHeader", "MyValue")
+        .build();
+
+ResponseEntity<String> response = template.exchange(requestEntity, String.class);
+
+String responseHeader = response.getHeaders().getFirst("MyResponseHeader");
+String body = response.getBody();
+```
+
+You can obtain response headers through many `RestTemplate` method variants that return `ResponseEntity`.
+
+##### Body
+
+Objects passed into and returned from `RestTemplate` methods are converted to and from raw content with the help of an `HttpMessageConverter`.
+
+On a POST, an input object is serialized to the request body, as the following example shows:
+
+```
+URI location = template.postForLocation("https://example.com/people", person);
+```
+
+You need not explicitly set the Content-Type header of the request. In most cases, you can find a compatible message converter based on the source `Object` type, and the chosen message converter sets the content type accordingly. If necessary, you can use the `exchange` methods to explicitly provide the `Content-Type` request header, and that, in turn, influences what message converter is selected.
+
+On a GET, the body of the response is deserialized to an output `Object`, as the following example shows:
+
+```
+Person person = restTemplate.getForObject("https://example.com/people/{id}", Person.class, 42);
+```
+
+The `Accept` header of the request does not need to be explicitly set. In most cases, a compatible message converter can be found based on the expected response type, which then helps to populate the `Accept` header. If necessary, you can use the `exchange` methods to provide the `Accept` header explicitly.
+
+By default, `RestTemplate` registers all built-in [message converters](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#rest-message-conversion), depending on classpath checks that help to determine what optional conversion libraries are present. You can also set the message converters to use explicitly.
+
+##### Message Conversion
+
+[Same as in Spring WebFlux](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web-reactive.html#webflux-codecs)
+
+The `spring-web` module contains the `HttpMessageConverter` contract for reading and writing the body of HTTP requests and responses through `InputStream` and `OutputStream`. `HttpMessageConverter` instances are used on the client side (for example, in the `RestTemplate`) and on the server side (for example, in Spring MVC REST controllers).
+
+Concrete implementations for the main media (MIME) types are provided in the framework and are, by default, registered with the `RestTemplate` on the client side and with `RequestMethodHandlerAdapter` on the server side (see [Configuring Message Converters](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-config-message-converters)).
+
+The implementations of `HttpMessageConverter` are described in the following sections. For all converters, a default media type is used, but you can override it by setting the `supportedMediaTypes` bean property. The following table describes each implementation:
+
+| MessageConverter                         | Description                                                  |
+| :--------------------------------------- | :----------------------------------------------------------- |
+| `StringHttpMessageConverter`             | An `HttpMessageConverter` implementation that can read and write `String` instances from the HTTP request and response. By default, this converter supports all text media types (`text/*`) and writes with a `Content-Type` of `text/plain`. |
+| `FormHttpMessageConverter`               | An `HttpMessageConverter` implementation that can read and write form data from the HTTP request and response. By default, this converter reads and writes the `application/x-www-form-urlencoded` media type. Form data is read from and written into a `MultiValueMap<String, String>`. |
+| `ByteArrayHttpMessageConverter`          | An `HttpMessageConverter` implementation that can read and write byte arrays from the HTTP request and response. By default, this converter supports all media types (`*/*`) and writes with a `Content-Type` of `application/octet-stream`. You can override this by setting the `supportedMediaTypes` property and overriding `getContentType(byte[])`. |
+| `MarshallingHttpMessageConverter`        | An `HttpMessageConverter` implementation that can read and write XML by using Spring’s `Marshaller` and `Unmarshaller` abstractions from the `org.springframework.oxm` package. This converter requires a `Marshaller` and `Unmarshaller` before it can be used. You can inject these through constructor or bean properties. By default, this converter supports `text/xml` and `application/xml`. |
+| `MappingJackson2HttpMessageConverter`    | An `HttpMessageConverter` implementation that can read and write JSON by using Jackson’s `ObjectMapper`. You can customize JSON mapping as needed through the use of Jackson’s provided annotations. When you need further control (for cases where custom JSON serializers/deserializers need to be provided for specific types), you can inject a custom `ObjectMapper` through the `ObjectMapper` property. By default, this converter supports `application/json`. |
+| `MappingJackson2XmlHttpMessageConverter` | An `HttpMessageConverter` implementation that can read and write XML by using [Jackson XML](https://github.com/FasterXML/jackson-dataformat-xml) extension’s `XmlMapper`. You can customize XML mapping as needed through the use of JAXB or Jackson’s provided annotations. When you need further control (for cases where custom XML serializers/deserializers need to be provided for specific types), you can inject a custom `XmlMapper` through the `ObjectMapper` property. By default, this converter supports `application/xml`. |
+| `SourceHttpMessageConverter`             | An `HttpMessageConverter` implementation that can read and write `javax.xml.transform.Source` from the HTTP request and response. Only `DOMSource`, `SAXSource`, and `StreamSource` are supported. By default, this converter supports `text/xml` and `application/xml`. |
+| `BufferedImageHttpMessageConverter`      | An `HttpMessageConverter` implementation that can read and write `java.awt.image.BufferedImage` from the HTTP request and response. This converter reads and writes the media type supported by the Java I/O API. |
+
+##### Jackson JSON Views
+
+You can specify a [Jackson JSON View](https://www.baeldung.com/jackson-json-view-annotation) to serialize only a subset of the object properties, as the following example shows:
+
+```
+MappingJacksonValue value = new MappingJacksonValue(new User("eric", "7!jd#h23"));
+value.setSerializationView(User.WithoutPasswordView.class);
+
+RequestEntity<MappingJacksonValue> requestEntity =
+    RequestEntity.post(new URI("https://example.com/user")).body(value);
+
+ResponseEntity<String> response = template.exchange(requestEntity, String.class);
+```
+
+##### Multipart
+
+To send multipart data, you need to provide a `MultiValueMap<String, Object>` whose values may be an `Object` for part content, a `Resource` for a file part, or an `HttpEntity` for part content with headers. For example:
+
+```
+    MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+
+    parts.add("fieldPart", "fieldValue");
+    parts.add("filePart", new FileSystemResource("...logo.png"));
+    parts.add("jsonPart", new Person("Jason"));
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_XML);
+    parts.add("xmlPart", new HttpEntity<>(myBean, headers));
+```
+
+In most cases, you do not have to specify the `Content-Type` for each part. The content type is determined automatically based on the `HttpMessageConverter` chosen to serialize it or, in the case of a `Resource` based on the file extension. If necessary, you can explicitly provide the `MediaType` with an `HttpEntity` wrapper.
+
+Once the `MultiValueMap` is ready, you can pass it to the `RestTemplate`, as show below:
+
+```
+    MultiValueMap<String, Object> parts = ...;
+    template.postForObject("https://example.com/upload", parts, Void.class);
+```
+
+If the `MultiValueMap` contains at least one non-`String` value, the `Content-Type` is set to `multipart/form-data` by the `FormHttpMessageConverter`. If the `MultiValueMap` has `String` values the `Content-Type` is defaulted to `application/x-www-form-urlencoded`. If necessary the `Content-Type` may also be set explicitly.
+
+#### 1.8.2. Using `AsyncRestTemplate` (Deprecated)
+
+The `AsyncRestTemplate` is deprecated. For all use cases where you might consider using `AsyncRestTemplate`, use the [WebClient](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web-reactive.html#webflux-client) instead.
