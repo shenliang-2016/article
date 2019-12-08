@@ -606,74 +606,74 @@ Spring Framework 提供了两种选择来发起对 REST endpoints 的调用：
 
 | Method group      | Description                                                  |
 | :---------------- | :----------------------------------------------------------- |
-| `getForObject`    | Retrieves a representation via GET.                          |
-| `getForEntity`    | Retrieves a `ResponseEntity` (that is, status, headers, and body) by using GET. |
-| `headForHeaders`  | Retrieves all headers for a resource by using HEAD.          |
-| `postForLocation` | Creates a new resource by using POST and returns the `Location` header from the response. |
-| `postForObject`   | Creates a new resource by using POST and returns the representation from the response. |
-| `postForEntity`   | Creates a new resource by using POST and returns the representation from the response. |
-| `put`             | Creates or updates a resource by using PUT.                  |
-| `patchForObject`  | Updates a resource by using PATCH and returns the representation from the response. Note that the JDK `HttpURLConnection` does not support the `PATCH`, but Apache HttpComponents and others do. |
-| `delete`          | Deletes the resources at the specified URI by using DELETE.  |
-| `optionsForAllow` | Retrieves allowed HTTP methods for a resource by using ALLOW. |
-| `exchange`        | More generalized (and less opinionated) version of the preceding methods that provides extra flexibility when needed. It accepts a `RequestEntity` (including HTTP method, URL, headers, and body as input) and returns a `ResponseEntity`.These methods allow the use of `ParameterizedTypeReference` instead of `Class` to specify a response type with generics. |
-| `execute`         | The most generalized way to perform a request, with full control over request preparation and response extraction through callback interfaces. |
+| `getForObject`    | 通过 GET 检索一种表示形式。                                  |
+| `getForEntity`    | 通过 GET 检索一个 `ResponseEntity` (也就是，status，headers，以及 body) 。 |
+| `headForHeaders`  | 使用 HEAD 检索资源的所有首部。                               |
+| `postForLocation` | 使用 POST 创建一个新资源，并通过响应返回 `Location` 首部。   |
+| `postForObject`   | 使用 POST 创建一个新资源，并通过响应返回对应的表示。         |
+| `postForEntity`   | 使用 POST 创建一个新资源，并通过响应返回对应的表示。         |
+| `put`             | 使用 PUT 创建或者更新一个资源。                              |
+| `patchForObject`  | 通过使用 PATCH 更新一个资源，并通过响应返回对应的表示。注意，JDK `HttpURLConnection` 不支持 `PATCH` ，但是 Apache `HttpComponents` 及其他方案都支持。 |
+| `delete`          | 使用 DELETE 删除特定 URI 上的资源。                          |
+| `optionsForAllow` | 使用 ALLOW 检索资源允许的 HTTP 方法。                        |
+| `exchange`        | 前述方法的通用性强（且不那么固执）版本，可在需要时提供额外的灵活性。它接受一个 `RequestEntity`（包括 HTTP 方法，URL， headers 和 body 作为输入）并返回一个 `ResponseEntity` 。这些方法允许使用 `ParametersizedTypeReference` 而不是 `Class` 来指定具有泛型的响应类型。 |
+| `execute`         | 执行请求的最通用方法，完全控制通过回调接口进行的请求准备和响应提取。 |
 
-##### Initialization
+##### 初始化
 
-The default constructor uses `java.net.HttpURLConnection` to perform requests. You can switch to a different HTTP library with an implementation of `ClientHttpRequestFactory`. There is built-in support for the following:
+默认的构造器使用 `java.net.HttpURLConnection` 来执行请求。你可以切换到实现了 `ClientHttpRequestFactory` 的其他 HTTP 类库。内建下列支持：
 
 - Apache HttpComponents
 - Netty
 - OkHttp
 
-For example, to switch to Apache HttpComponents, you can use the following:
+比如，要切换到 Apache HttpComponents，你可以这样做：
 
-```
+```java
 RestTemplate template = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 ```
 
-Each `ClientHttpRequestFactory` exposes configuration options specific to the underlying HTTP client library — for example, for credentials, connection pooling, and other details.
+每个 `ClientHttpRequestFactory` 暴露配置选项特定于内部的 HTTP 客户端类库－比如，证书，连接池，或者其他细节。
 
-> Note that the `java.net` implementation for HTTP requests can raise an exception when accessing the status of a response that represents an error (such as 401). If this is an issue, switch to another HTTP client library.
+> 请注意，当访问代表错误的响应状态（例如401）时，HTTP请求的 `java.net` 实现会引发异常。如果这是一个问题，请切换到另一个 HTTP 客户端库。
 
 ##### URIs
 
-Many of the `RestTemplate` methods accept a URI template and URI template variables, either as a `String` variable argument, or as `Map<String,String>`.
+许多 `RestTmeplate` 方法接受一个 URI 模板和 URI 模板变量，一个 `String` 类型变量，或者是 `Map<String, String>` 。
 
-The following example uses a `String` variable argument:
+下面的例子使用一个 `String` 变量参数：
 
-```
+```java
 String result = restTemplate.getForObject(
         "https://example.com/hotels/{hotel}/bookings/{booking}", String.class, "42", "21");
 ```
 
-The following example uses a `Map<String, String>`:
+下面的例子使用 `Map<String, String>`：
 
-```
+```java
 Map<String, String> vars = Collections.singletonMap("hotel", "42");
 
 String result = restTemplate.getForObject(
         "https://example.com/hotels/{hotel}/rooms/{hotel}", String.class, vars);
 ```
 
-Keep in mind URI templates are automatically encoded, as the following example shows:
+始终注意 URI 模板时自动编码的，如下面例子所示：
 
-```
+```java
 restTemplate.getForObject("https://example.com/hotel list", String.class);
 
 // Results in request to "https://example.com/hotel%20list"
 ```
 
-You can use the `uriTemplateHandler` property of `RestTemplate` to customize how URIs are encoded. Alternatively, you can prepare a `java.net.URI` and pass it into one of the `RestTemplate` methods that accepts a `URI`.
+您可以使用 `RestTemplate` 的 `uriTemplateHandler` 属性来自定义 URI 的编码方式。另外，您可以准备一个 `java.net.URI` 并将其传递到接受 `URI` 的 `RestTemplate` 方法之一。
 
-For more details on working with and encoding URIs, see [URI Links](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-uri-building).
+有关 URI 使用和编码的更多细节，参考 [URI Links](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web.html#mvc-uri-building) 。
 
 ##### Headers
 
-You can use the `exchange()` methods to specify request headers, as the following example shows:
+你可以使用 `exchange()` 方法指定请求首部，如下面例子所示：
 
-```
+```java
 String uriTemplate = "https://example.com/hotels/{hotel}";
 URI uri = UriComponentsBuilder.fromUriString(uriTemplate).build(42);
 
@@ -687,31 +687,31 @@ String responseHeader = response.getHeaders().getFirst("MyResponseHeader");
 String body = response.getBody();
 ```
 
-You can obtain response headers through many `RestTemplate` method variants that return `ResponseEntity`.
+你可以通过许多返回 `ResponseEntity` 的 `RestTemplate` 方法变体获取响应首部。
 
 ##### Body
 
-Objects passed into and returned from `RestTemplate` methods are converted to and from raw content with the help of an `HttpMessageConverter`.
+被传入 `RestTemplate` 方法和从 `RestTemplate` 方法返回的对象都在 `HttpMessageConverter` 的帮助下与原始内容相互转化。
 
-On a POST, an input object is serialized to the request body, as the following example shows:
+对于 POST，输入对象被序列化为请求体，如下面例子所示：
 
-```
+```java
 URI location = template.postForLocation("https://example.com/people", person);
 ```
 
-You need not explicitly set the Content-Type header of the request. In most cases, you can find a compatible message converter based on the source `Object` type, and the chosen message converter sets the content type accordingly. If necessary, you can use the `exchange` methods to explicitly provide the `Content-Type` request header, and that, in turn, influences what message converter is selected.
+您无需显式设置请求的 `Content-Type` 首部。在大多数情况下，您可以找到基于源 `Object` 类型的兼容消息转换器，并且所选消息转换器会相应地设置内容类型。如有必要，可以使用 `exchange` 方法显式提供 `Content-Type` 请求首部，进而影响选择哪种消息转换器。
 
-On a GET, the body of the response is deserialized to an output `Object`, as the following example shows:
+对于 GET，响应的主体被序列化为输出 `Object` ，如下面例子所示：
 
-```
+```java
 Person person = restTemplate.getForObject("https://example.com/people/{id}", Person.class, 42);
 ```
 
-The `Accept` header of the request does not need to be explicitly set. In most cases, a compatible message converter can be found based on the expected response type, which then helps to populate the `Accept` header. If necessary, you can use the `exchange` methods to provide the `Accept` header explicitly.
+请求的 `Accept` 首部不需要显式设定。大多数情况下，一个兼容的消息转换器能够基于期望的响应类型被找到，然后帮助填充 `Accept` 首部。如果必要，你可以使用 `exchange` 方法显式提供 `Accept` 首部。
 
-By default, `RestTemplate` registers all built-in [message converters](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#rest-message-conversion), depending on classpath checks that help to determine what optional conversion libraries are present. You can also set the message converters to use explicitly.
+默认地，`RestTemplate` 会注册所有的内建 [message converters](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#rest-message-conversion) ，依赖类路径检查以帮助确定存在何种可选的转换类库。你也可以显式设定要使用的消息转换器。
 
-##### Message Conversion
+##### 
 
 [Same as in Spring WebFlux](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web-reactive.html#webflux-codecs)
 
@@ -750,7 +750,7 @@ ResponseEntity<String> response = template.exchange(requestEntity, String.class)
 
 To send multipart data, you need to provide a `MultiValueMap<String, Object>` whose values may be an `Object` for part content, a `Resource` for a file part, or an `HttpEntity` for part content with headers. For example:
 
-```
+```java
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
 
     parts.add("fieldPart", "fieldValue");
@@ -766,7 +766,7 @@ In most cases, you do not have to specify the `Content-Type` for each part. The 
 
 Once the `MultiValueMap` is ready, you can pass it to the `RestTemplate`, as show below:
 
-```
+```java
     MultiValueMap<String, Object> parts = ...;
     template.postForObject("https://example.com/upload", parts, Void.class);
 ```
