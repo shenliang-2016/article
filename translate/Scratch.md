@@ -1,45 +1,45 @@
-### 3.2 发送消息
+#### 3.2.1 使用消息转换器
 
-`JmsTemplate` 包含许多方便方法来发送消息。`send` 方法通过 `javax.jms.Destination` 对象指定目的地。其他方法在 JNDI 查找中使用 `String` 来指定目的地。不是用目的地参数的 `send` 方法使用默认目的地。
+为了方便域模型对象的发送，`JmsTemplate` 具有各种发送方法，这些方法将 Java 对象作为消息数据内容的参数。`JmsTemplate` 中的重载方法 `convertAndSend()` 和 `receiveAndConvert()` 方法将转换过程委托给 `MessageConverter` 接口的一个实例。该接口定义了一个简单的协定，可以在 Java 对象和 JMS 消息之间进行转换。默认实现（ `SimpleMessageConverter` ）支持在 `String` 和 `TextMessage` ，`byte[]` 和 `BytesMesssage` 之间以及 `java.util.Map` 和 `MapMessage` 之间进行转换。通过使用转换器，您和您的应用程序代码可以专注于通过 JMS 发送或接收的业务对象，而不必担心如何将其表示为 JMS 消息。
 
-下面的例子使用 `MessageCreator` 回调来从给定的 `Session` 对象创建一条文本消息：
+沙箱当前包含一个 `MapMessageConverter` ，它使用反射在 JavaBean 和 `MapMessage` 之间进行转换。您可能会自己实现的其他流行实现，可以选择是使用现有 XML 编组程序包（例如 JAXB，Castor 或 XStream）创建代表该对象的 `TextMessage` 的转换器。
+
+为了容纳消息属性，标头和正文的设置，而这些属性通常不能封装在转换器类中，`MessagePostProcessor` 接口可让您在消息转换后、但在发送之前访问消息。以下示例显示了在将 `java.util.Map` 转换为消息后如何修改消息头和属性：
 
 ```java
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Queue;
-import javax.jms.Session;
+public void sendWithConversion() {
+    Map map = new HashMap();
+    map.put("Name", "Mark");
+    map.put("Age", new Integer(47));
+    jmsTemplate.convertAndSend("testQueue", map, new MessagePostProcessor() {
+        public Message postProcessMessage(Message message) throws JMSException {
+            message.setIntProperty("AccountID", 1234);
+            message.setJMSCorrelationID("123-00001");
+            return message;
+        }
+    });
+}
+```
 
-import org.springframework.jms.core.MessageCreator;
-import org.springframework.jms.core.JmsTemplate;
+这将产生以下形式的消息：
 
-public class JmsQueueSender {
-
-    private JmsTemplate jmsTemplate;
-    private Queue queue;
-
-    public void setConnectionFactory(ConnectionFactory cf) {
-        this.jmsTemplate = new JmsTemplate(cf);
+```javascript
+MapMessage={
+    Header={
+        ... standard headers ...
+        CorrelationID={123-00001}
     }
-
-    public void setQueue(Queue queue) {
-        this.queue = queue;
+    Properties={
+        AccountID={Integer:1234}
     }
-
-    public void simpleSend() {
-        this.jmsTemplate.send(this.queue, new MessageCreator() {
-            public Message createMessage(Session session) throws JMSException {
-                return session.createTextMessage("hello queue world");
-            }
-        });
+    Fields={
+        Name={String:Mark}
+        Age={Integer:47}
     }
 }
 ```
 
-上面的例子中，`JmsTemplate` 通过传递一个引用给 `ConnectionFactory` 来构造。作为备用方案，一个无参构造器和 `connectionFactory` 可以被用来构造 JavaBean 风格（使用 `BeanFactory` 或者普通 Java 代码）的实例。另外，请考虑从 Spring 的 `JmsGatewaySupport` 便利性基类派生，该类为 JMS 配置提供了预先构建的 bean 属性。
+#### 3.2.2 使用 `SessionCallback` 和 `ProducerCallback`
 
-`send(String destinationName, MessageCreator creator)` 方法允许你通过使用目的地的名称字符串发送消息。如果目的地名称被注册在 JNDI 中，你应该设置 `JndiDestinationResolver` 实例模板的 `destinationResolver` 属性。
-
-如果你创建 `JmsTemplate` 并指定默认目的地，则 `send(MessageCreator c)` 向目的地发送消息。
+尽管发送操作涵盖了许多常见的使用场景，但是您有时可能希望对 JMS `Session` 或 `MessageProducer` 执行多个操作。`SessionCallback` 和 `ProducerCallback` 分别公开了 JMS `Session` 和 `Session` / `MessageProducer` 对。`JmsTemplate` 上的 `execute()` 方法执行这些回调方法。
 
