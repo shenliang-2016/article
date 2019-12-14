@@ -1,56 +1,202 @@
-### 3.4. Support for JCA Message Endpoints
+### 3.5 注解驱动的监听器端点
 
-从 2.5 版本开始，Spring 还提供了对基于 JCA 的 `MessageListener` 容器的支持。 `JmsMessageEndpointManager` 会尝试从提供者的 `ResourceAdapter` 类名称中自动确定 `ActivationSpec` 类名称。因此，通常可以提供 Spring 的通用 `JmsActivationSpecConfig`，如以下示例所示：
+同步接收消息的最简单方法就是使用注解修饰的监听器端点基础设施。简而言之，它允许你暴露容器托管的 bean 的方法作为 JMS 监听器端点。下面的例子展示了如何使用：
+
+```java
+@Component
+public class MyService {
+
+    @JmsListener(destination = "myDestination")
+    public void processOrder(String data) { ... }
+}
+```
+
+上面例子的想法是，无论何时，只要 `javax.jms.Destinations.myDestination` 上有一条可用消息，则对应的 `processOrder` 方法就会被调用（这种情况下，使用 JMS 消息的内容，类似于 [`MessageListenerAdapter`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms-receiving-async-message-listener-adapter) 所提供的）。
+
+通过使用 `JmsListenerContainerFactory` ，注解修饰的端点基础设施在幕后为每个注解修饰的方法创建一个消息监听器容器。这样的容器并不注册在应用上下文中，但是可以通过使用 `JmsListenerEndpointRegistry` bean 出于管理目的很容易地定位。
+
+> `@JmsListener` 在 Java 8 中是一个可重复注解，因此你可以通过将额外的`@JmsListener` 注解添加到同一个方法上来声明该方法关联到多个 JMS 目的地。
+
+#### 3.5.1 启用监听器端点注解
+
+为了启用 `@JmsListener` 注解支持，你可以将 `@EnableJms` 添加到你的其中一个 `@Configuration` 类中，如下面例子所示：
+
+```java
+@Configuration
+@EnableJms
+public class AppConfig {
+
+    @Bean
+    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory() {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory());
+        factory.setDestinationResolver(destinationResolver());
+        factory.setSessionTransacted(true);
+        factory.setConcurrency("3-10");
+        return factory;
+    }
+}
+```
+
+默认情况下，基础设施会寻找名为 `jmsListenerContainerFactory` 的 bean 作为用来创建消息监听器容器的工厂的源。这种情况下（同时忽略了 JMS 基础设施配置），你可以使用 3 个核心线程、最多 10 个线程的线程池调用 `processOrder` 方法。
+
+您可以自定义用于每个注解的监听器容器工厂，也可以通过实现 `JmsListenerConfigurer` 接口来显式配置默认值。仅当至少一个端点在没有特定容器工厂的情况下注册时，才需要使用默认值。请参阅实现 [`JmsListenerConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/annotation/JmsListenerConfigurer.html ) 的类的 Javadoc 以获取详细信息和示例。
+
+如果你更喜欢 [XML configuration](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms-namespace)，你可以使用 `<jms:annotation-driven>` 元素，如下面例子所示：
 
 ```xml
-<bean class="org.springframework.jms.listener.endpoint.JmsMessageEndpointManager">
-    <property name="resourceAdapter" ref="resourceAdapter"/>
-    <property name="activationSpecConfig">
-        <bean class="org.springframework.jms.listener.endpoint.JmsActivationSpecConfig">
-            <property name="destinationName" value="myQueue"/>
-        </bean>
-    </property>
-    <property name="messageListener" ref="myMessageListener"/>
+<jms:annotation-driven/>
+
+<bean id="jmsListenerContainerFactory"
+        class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
+    <property name="connectionFactory" ref="connectionFactory"/>
+    <property name="destinationResolver" ref="destinationResolver"/>
+    <property name="sessionTransacted" value="true"/>
+    <property name="concurrency" value="3-10"/>
 </bean>
 ```
 
-或者，您可以使用给定的 `ActivationSpec` 对象设置 `JmsMessageEndpointManager`。`ActivationSpec` 对象也可以来自 JNDI 查找（使用 `<jee:jndi-lookup>`）。以下示例显示了如何执行此操作：
+#### 3.5.2 编程式端点注册
 
-```xml
-<bean class="org.springframework.jms.listener.endpoint.JmsMessageEndpointManager">
-    <property name="resourceAdapter" ref="resourceAdapter"/>
-    <property name="activationSpec">
-        <bean class="org.apache.activemq.ra.ActiveMQActivationSpec">
-            <property name="destination" value="myQueue"/>
-            <property name="destinationType" value="javax.jms.Queue"/>
-        </bean>
-    </property>
-    <property name="messageListener" ref="myMessageListener"/>
-</bean>
+`JmsListenerEndpoint` 提供了 JMS 端点的模型，并负责配置该模型的容器。基础设施除了通过 `JmsListener`  注解探测端点，还允许你编程式配置端点。下面的例子展示了如何做：
+
+```java
+@Configuration
+@EnableJms
+public class AppConfig implements JmsListenerConfigurer {
+
+    @Override
+    public void configureJmsListeners(JmsListenerEndpointRegistrar registrar) {
+        SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
+        endpoint.setId("myJmsEndpoint");
+        endpoint.setDestination("anotherQueue");
+        endpoint.setMessageListener(message -> {
+            // processing
+        });
+        registrar.registerEndpoint(endpoint);
+    }
+}
 ```
 
-使用 Spring 的 `ResourceAdapterFactoryBean`，你可以在本地配置目标 `ResourceAdapter` ，如下面例子所示：
+上面的例子中，我们使用 `SimpleJmsListenerEndpoint` ，它提供实际的 `MessageListener` 用于调用。不过，你也可以创建你自己的端点变体来描述自定义的调用机制。
 
-```xml
-<bean id="resourceAdapter" class="org.springframework.jca.support.ResourceAdapterFactoryBean">
-    <property name="resourceAdapter">
-        <bean class="org.apache.activemq.ra.ActiveMQResourceAdapter">
-            <property name="serverUrl" value="tcp://localhost:61616"/>
-        </bean>
-    </property>
-    <property name="workManager">
-        <bean class="org.springframework.jca.work.SimpleTaskWorkManager"/>
-    </property>
-</bean>
+注意，您可以完全不使用 `@JmsListener` ，而可以仅通过 `JmsListenerConfigurer` 以编程方式注册端点。
+
+#### 3.5.3 Annotated Endpoint Method Signature
+
+So far, we have been injecting a simple `String` in our endpoint, but it can actually have a very flexible method signature. In the following example, we rewrite it to inject the `Order` with a custom header:
+
+```
+@Component
+public class MyService {
+
+    @JmsListener(destination = "myDestination")
+    public void processOrder(Order order, @Header("order_type") String orderType) {
+        ...
+    }
+}
 ```
 
-指定的 `WorkManager` 还可以指向特定于环境的线程池-通常通过 `SimpleTaskWorkManager` 实例的 `asyncTaskExecutor` 属性来指向。如果您碰巧使用多个适配器，请考虑为所有 `ResourceAdapter` 实例定义一个共享线程池。
+The main elements you can inject in JMS listener endpoints are as follows:
 
-在某些环境（例如 WebLogic 9 或更高版本）中，您可以改为从 JNDI 获取整个 `ResourceAdapter` 对象（使用 `<jee:jndi-lookup>`）。然后，基于 Spring 的消息侦听器就可以与服务器托管的 `ResourceAdapter` 进行交互，后者也使用服务器的内置 `WorkManager`。
+- The raw `javax.jms.Message` or any of its subclasses (provided that it matches the incoming message type).
+- The `javax.jms.Session` for optional access to the native JMS API (for example, for sending a custom reply).
+- The `org.springframework.messaging.Message` that represents the incoming JMS message. Note that this message holds both the custom and the standard headers (as defined by `JmsHeaders`).
+- `@Header`-annotated method arguments to extract a specific header value, including standard JMS headers.
+- A `@Headers`-annotated argument that must also be assignable to `java.util.Map` for getting access to all headers.
+- A non-annotated element that is not one of the supported types (`Message` or `Session`) is considered to be the payload. You can make that explicit by annotating the parameter with `@Payload`. You can also turn on validation by adding an extra `@Valid`.
 
-参考 [`JmsMessageEndpointManager`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/JmsMessageEndpointManager.html)， [`JmsActivationSpecConfig`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/JmsActivationSpecConfig.html)，以及 [`ResourceAdapterFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jca/support/ResourceAdapterFactoryBean.html) 文档获取更多细节。
+The ability to inject Spring’s `Message` abstraction is particularly useful to benefit from all the information stored in the transport-specific message without relying on transport-specific API. The following example shows how to do so:
 
-Spring 还提供了与 JMS 无关的通用 JCA 消息端点管理器： `org.springframework.jca.endpoint.GenericMessageEndpointManager`。该组件允许使用任何消息侦听器类型（例如 CCI `MessageListener`）和任何提供程序特定的 `ActivationSpec` 对象。请参阅 JCA 提供者的文档以了解连接器的实际功能，并查看 [`GenericMessageEndpointManager`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jca/endpoint/GenericMessageEndpointManager.html) javadoc，以了解特定于 Spring 的配置详细信息。
+```
+@JmsListener(destination = "myDestination")
+public void processOrder(Message<Order> order) { ... }
+```
 
-> 基于 JCA 的消息端点管理与 EJB 2.1 消息驱动 Bean 非常相似。它使用相同的基础资源提供者契约。与 EJB 2.1 MDB 一样，您也可以在 Spring 上下文中使用 JCA 提供程序支持的任何消息侦听器接口。但是，由于 JMS 是与 JCA 端点管理协定一起使用的最常见的端点 API，因此 Spring 为 JMS 提供了显式的“便利”支持。
+Handling of method arguments is provided by `DefaultMessageHandlerMethodFactory`, which you can further customize to support additional method arguments. You can customize the conversion and validation support there as well.
 
+For instance, if we want to make sure our `Order` is valid before processing it, we can annotate the payload with `@Valid` and configure the necessary validator, as the following example shows:
+
+```
+@Configuration
+@EnableJms
+public class AppConfig implements JmsListenerConfigurer {
+
+    @Override
+    public void configureJmsListeners(JmsListenerEndpointRegistrar registrar) {
+        registrar.setMessageHandlerMethodFactory(myJmsHandlerMethodFactory());
+    }
+
+    @Bean
+    public DefaultMessageHandlerMethodFactory myHandlerMethodFactory() {
+        DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
+        factory.setValidator(myValidator());
+        return factory;
+    }
+}
+```
+
+#### 3.5.4. Response Management
+
+The existing support in [`MessageListenerAdapter`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms-receiving-async-message-listener-adapter) already lets your method have a non-`void` return type. When that is the case, the result of the invocation is encapsulated in a `javax.jms.Message`, sent either in the destination specified in the `JMSReplyTo` header of the original message or in the default destination configured on the listener. You can now set that default destination by using the `@SendTo` annotation of the messaging abstraction.
+
+Assuming that our `processOrder` method should now return an `OrderStatus`, we can write it to automatically send a response, as the following example shows:
+
+```
+@JmsListener(destination = "myDestination")
+@SendTo("status")
+public OrderStatus processOrder(Order order) {
+    // order processing
+    return status;
+}
+```
+
+> If you have several `@JmsListener`-annotated methods, you can also place the `@SendTo` annotation at the class level to share a default reply destination.
+
+If you need to set additional headers in a transport-independent manner, you can return a `Message` instead, with a method similar to the following:
+
+```
+@JmsListener(destination = "myDestination")
+@SendTo("status")
+public Message<OrderStatus> processOrder(Order order) {
+    // order processing
+    return MessageBuilder
+            .withPayload(status)
+            .setHeader("code", 1234)
+            .build();
+}
+```
+
+If you need to compute the response destination at runtime, you can encapsulate your response in a `JmsResponse` instance that also provides the destination to use at runtime. We can rewrite the previous example as follows:
+
+```
+@JmsListener(destination = "myDestination")
+public JmsResponse<Message<OrderStatus>> processOrder(Order order) {
+    // order processing
+    Message<OrderStatus> response = MessageBuilder
+            .withPayload(status)
+            .setHeader("code", 1234)
+            .build();
+    return JmsResponse.forQueue(response, "status");
+}
+```
+
+Finally, if you need to specify some QoS values for the response such as the priority or the time to live, you can configure the `JmsListenerContainerFactory` accordingly, as the following example shows:
+
+```
+@Configuration
+@EnableJms
+public class AppConfig {
+
+    @Bean
+    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory() {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory());
+        QosSettings replyQosSettings = new QosSettings();
+        replyQosSettings.setPriority(2);
+        replyQosSettings.setTimeToLive(10000);
+        factory.setReplyQosSettings(replyQosSettings);
+        return factory;
+    }
+}
+```
