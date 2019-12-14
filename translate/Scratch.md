@@ -136,13 +136,13 @@ public class AppConfig implements JmsListenerConfigurer {
 }
 ```
 
-#### 3.5.4. Response Management
+#### 3.5.4 响应管理
 
-The existing support in [`MessageListenerAdapter`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms-receiving-async-message-listener-adapter) already lets your method have a non-`void` return type. When that is the case, the result of the invocation is encapsulated in a `javax.jms.Message`, sent either in the destination specified in the `JMSReplyTo` header of the original message or in the default destination configured on the listener. You can now set that default destination by using the `@SendTo` annotation of the messaging abstraction.
+[`MessageListenerAdapter`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#jms-receiving-async-message-listener-adapter)  中的支持已使您的方法具有非 `void` 返回类型。在这种情况下，调用的结果将封装在一个 `javax.jms.Message` 中，该 XML 既可以向在原始消息的 `JMSReplyTo` 标头中指定的目标发送，也可以向在侦听器上配置的默认目标发送。现在，您可以使用消息传递抽象的 `@SendTo` 注解来设置默认目标。
 
-Assuming that our `processOrder` method should now return an `OrderStatus`, we can write it to automatically send a response, as the following example shows:
+假设我们的 `processOrder` 方法现在应该返回一个 `OrderStatus`，我们可以将其编写为自动发送响应，如以下示例所示：
 
-```
+```java
 @JmsListener(destination = "myDestination")
 @SendTo("status")
 public OrderStatus processOrder(Order order) {
@@ -151,11 +151,11 @@ public OrderStatus processOrder(Order order) {
 }
 ```
 
-> If you have several `@JmsListener`-annotated methods, you can also place the `@SendTo` annotation at the class level to share a default reply destination.
+> 如果你有几个 `@JmsListener` 注解的方法，你也可以将 `@SendTo` 注解放在类级别以在这些方法之间共享默认回应目标。
 
-If you need to set additional headers in a transport-independent manner, you can return a `Message` instead, with a method similar to the following:
+如果需要以与传输无关的方式设置其他标头，则可以使用类似于以下内容的方法来返回 `Message`：
 
-```
+```java
 @JmsListener(destination = "myDestination")
 @SendTo("status")
 public Message<OrderStatus> processOrder(Order order) {
@@ -167,9 +167,9 @@ public Message<OrderStatus> processOrder(Order order) {
 }
 ```
 
-If you need to compute the response destination at runtime, you can encapsulate your response in a `JmsResponse` instance that also provides the destination to use at runtime. We can rewrite the previous example as follows:
+如果需要在运行时计算响应目标，则可以将响应封装在 `JmsResponse` 实例中，该实例还提供要在运行时使用的目标。我们可以如下重写前一个示例：
 
-```
+```java
 @JmsListener(destination = "myDestination")
 public JmsResponse<Message<OrderStatus>> processOrder(Order order) {
     // order processing
@@ -181,9 +181,9 @@ public JmsResponse<Message<OrderStatus>> processOrder(Order order) {
 }
 ```
 
-Finally, if you need to specify some QoS values for the response such as the priority or the time to live, you can configure the `JmsListenerContainerFactory` accordingly, as the following example shows:
+最后，如果您需要为响应指定一些 QoS 值，例如优先级或生存时间，则可以相应地配置 `JmsListenerContainerFactory`，如以下示例所示：
 
-```
+```java
 @Configuration
 @EnableJms
 public class AppConfig {
@@ -200,3 +200,4 @@ public class AppConfig {
     }
 }
 ```
+
