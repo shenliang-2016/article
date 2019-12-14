@@ -82,11 +82,11 @@ public class AppConfig implements JmsListenerConfigurer {
 
 注意，您可以完全不使用 `@JmsListener` ，而可以仅通过 `JmsListenerConfigurer` 以编程方式注册端点。
 
-#### 3.5.3 Annotated Endpoint Method Signature
+#### 3.5.3 注解的端点方法签名
 
-So far, we have been injecting a simple `String` in our endpoint, but it can actually have a very flexible method signature. In the following example, we rewrite it to inject the `Order` with a custom header:
+目前为止，我们已经将简单的 `String` 注入你的端点，不过实际上它也可以是非常复杂的方法签名。下面的例子中，我们注入携带自定义首部字段的 `Order` ：
 
-```
+```java
 @Component
 public class MyService {
 
@@ -97,27 +97,27 @@ public class MyService {
 }
 ```
 
-The main elements you can inject in JMS listener endpoints are as follows:
+可以注入 JMS 监听器端点的主要元素如下：
 
-- The raw `javax.jms.Message` or any of its subclasses (provided that it matches the incoming message type).
-- The `javax.jms.Session` for optional access to the native JMS API (for example, for sending a custom reply).
-- The `org.springframework.messaging.Message` that represents the incoming JMS message. Note that this message holds both the custom and the standard headers (as defined by `JmsHeaders`).
-- `@Header`-annotated method arguments to extract a specific header value, including standard JMS headers.
-- A `@Headers`-annotated argument that must also be assignable to `java.util.Map` for getting access to all headers.
-- A non-annotated element that is not one of the supported types (`Message` or `Session`) is considered to be the payload. You can make that explicit by annotating the parameter with `@Payload`. You can also turn on validation by adding an extra `@Valid`.
+- 原始的 `javax.jms.Message` 或者任何它的子类（前提是它与进入的消息类型匹配）。
+- `javax.jms.Session` 用于对本地 JMS API 的可选访问（比如，为了发送自定义响应）。
+- `org.springframework.messaging.Message` 表达进入的 JMS 消息。注意该消息同时包含自定义和标准首部字段（如由 `JmsHeaders` 定义的）。
+- `@Header`-注解的方法参数以提取特定首部字段值，包括标准 JMS 首部字段。
+- `@Headers`-注解的参数，必须还可以被分配给 `java.util.Map` 以访问所有首部字段。
+- 不是支持的类型之一（`Message` 或 `Session`）的非注解元素被视为有效负载。您可以通过在 `@Payload` 中注解参数来使其明确。您还可以通过添加额外的 `@Valid` 来启用验证。
 
-The ability to inject Spring’s `Message` abstraction is particularly useful to benefit from all the information stored in the transport-specific message without relying on transport-specific API. The following example shows how to do so:
+注入 Spring 的 `Message` 抽象的能力特别有用，它可以受益于存储在特定于传输的消息中的所有信息，而无需依赖于特定于传输的 API。以下示例显示了如何执行此操作：
 
-```
+```java
 @JmsListener(destination = "myDestination")
 public void processOrder(Message<Order> order) { ... }
 ```
 
-Handling of method arguments is provided by `DefaultMessageHandlerMethodFactory`, which you can further customize to support additional method arguments. You can customize the conversion and validation support there as well.
+方法参数的处理由 `DefaultMessageHandlerMethodFactory` 提供，您可以进一步对其进行自定义以支持其他方法参数。您也可以自定义转换和验证支持。
 
-For instance, if we want to make sure our `Order` is valid before processing it, we can annotate the payload with `@Valid` and configure the necessary validator, as the following example shows:
+例如，如果我们想在处理 `Order` 之前确保其有效，则可以使用 `@Valid` 注解有效负载并配置必要的验证器，如以下示例所示：
 
-```
+```java
 @Configuration
 @EnableJms
 public class AppConfig implements JmsListenerConfigurer {
