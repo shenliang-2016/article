@@ -1,18 +1,81 @@
-## 6. Email
+### 6.1 使用
 
-本章节描述如何使用 Spring 框架发送电子邮件。
+假定我们已经有一个业务接口名为 `OrderManager`，如下面例子所示：
 
-> 库依赖
->
-> 下面的 JAR 需要放在你的应用的类路径下以便使用 Spring 框架的电子邮件类库：
->
-> -  [JavaMail](https://javaee.github.io/javamail/) 类库
->
-> 此类库在网络上可以自由使用 — 比如，在 Maven 中央仓库中的 `com.sun.mail:javax.mail`。
+```java
+public interface OrderManager {
 
-Spring 框架提供了一个很好用的工具类库来发送邮件，将你从特定于底层邮件系统的技术细节中解脱出来，该类库同时还接管了客户端的底层资源处理。
+    void placeOrder(Order order);
 
-`org.springframework.mail` 包是 Spring 框架电子邮件支持的根级别包。发送邮件的中央接口是 `MailSender` 接口。一个简单的值对象封装了简单邮件的属性，比如 `from` 和 `to` (当然还有很多别的属性)，就是 `SimpleMailMessage` 类。该包还包含受检查异常层级结构提供了低层级邮件系统异常的高层抽象，其根异常是 `MailException` 。参考 [javadoc](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/mail/MailException.html) 了解更多有关邮件异常层级结构的信息。
+}
+```
 
-`org.springframework.mail.javamail.JavaMailSender` 接口添加了特定的 JavaMail 特性，比如将 MIME 消息支持添加到 `MailSender` 接口（继承该接口）。`JavaMailSender` 也提供了一个名为 `org.springframework.mail.javamail.MimeMessagePreparator` 的回调接口来准备 `MimeMessage`。
+进一步假设我们有一个要求，需要生成带有订单号的电子邮件并将其发送给下订单的客户。
+
+#### 6.1.1 基本的 `MailSender` 和 `SimpleMailMessage` 使用
+
+下面的例子展示了如何使用 `MailSender` 和 `SimpleMailMessage` 当有人下订单时来发送邮件：
+
+```java
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+
+public class SimpleOrderManager implements OrderManager {
+
+    private MailSender mailSender;
+    private SimpleMailMessage templateMessage;
+
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
+    public void setTemplateMessage(SimpleMailMessage templateMessage) {
+        this.templateMessage = templateMessage;
+    }
+
+    public void placeOrder(Order order) {
+
+        // Do the business calculations...
+
+        // Call the collaborators to persist the order...
+
+        // Create a thread safe "copy" of the template message and customize it
+        SimpleMailMessage msg = new SimpleMailMessage(this.templateMessage);
+        msg.setTo(order.getCustomer().getEmailAddress());
+        msg.setText(
+            "Dear " + order.getCustomer().getFirstName()
+                + order.getCustomer().getLastName()
+                + ", thank you for placing order. Your order number is "
+                + order.getOrderNumber());
+        try{
+            this.mailSender.send(msg);
+        }
+        catch (MailException ex) {
+            // simply log it and go on...
+            System.err.println(ex.getMessage());
+        }
+    }
+
+}
+```
+
+下面的例子展示了上面代码对应的 bean 定义：
+
+```xml
+<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+    <property name="host" value="mail.mycompany.com"/>
+</bean>
+
+<!-- this is a template message that we can pre-load with default state -->
+<bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
+    <property name="from" value="customerservice@mycompany.com"/>
+    <property name="subject" value="Your order"/>
+</bean>
+
+<bean id="orderManager" class="com.mycompany.businessapp.support.SimpleOrderManager">
+    <property name="mailSender" ref="mailSender"/>
+    <property name="templateMessage" ref="templateMessage"/>
+</bean>
+```
 
