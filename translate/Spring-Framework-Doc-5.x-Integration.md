@@ -6,7 +6,7 @@ Version 5.1.9.RELEASE
 
 本参考文档涵盖 Spring 框架与大量 Java EE 以及相关技术的集成技术。
 
-## 1 Spring 的 Remoting 和 Web Services
+## 1. Spring 的 Remoting 和 Web Services
 
 Spring 使用各种不同的技术实现远程支持集成类。由你自己普通的 POJOs 实现，远程支持简化了远程服务开发。目前，Spring 支持下列远程技术：
 
@@ -777,11 +777,11 @@ ResponseEntity<String> response = template.exchange(requestEntity, String.class)
 
 `AsyncRestTemplate` 已弃用。对于所有您可能考虑使用 `AsyncRestTemplate` 的场景，请使用 [WebClient](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/web-reactive.html#webflux-client) 代替。
 
-## 2 Enterprise JavaBeans (EJB) 集成
+## 2. Enterprise JavaBeans (EJB) 集成
 
 EJB 好像已经被业界抛弃……
 
-## 3 JMS (Java Message Service)
+## 3. JMS (Java Message Service)
 
 Spring 提供了一个 JMS 集成框架用来简化 JMS API 的使用，非常类似于 Spring 的 JDBC 集成对 JDBC API 使用的简化。
 
@@ -1802,4 +1802,16 @@ sender.send(message);
 ```
 
 > 通过使用指定的 `Content-ID` 将内联资源添加到 `MimeMessage` 中（在上例中为 `identifier1234`）。添加文本和资源的顺序非常重要。确保首先添加文本，然后添加资源。如果您正相反进行操作，则此操作无效。
+
+#### 6.2.2 使用模板库创建邮件内容
+
+上一节例子中的代码通过使用诸如 `message.setText(..)` 等方法调用显式创建邮件消息内容。对简单场景来说这样没问题，在前面例子中的场景下也可以，那里是为了向你展示最基本的 API 的用法。
+
+在典型的企业级应用中，开发者通常不会使用前面展示的方法创建邮件内容，基于以下几个原因：
+
+- 在 Java 代码中创建基于 HTML 的邮件内容是枯燥而且容易出错的。
+- 在显式逻辑和业务逻辑之间没有清晰的区隔。
+- 修改邮件内容的显式结构需要修改 Java 代码，重新编译，以及重新部署。
+
+通常，解决这些问题的方法就是使用模板类库（比如 FreeMarker）来定义邮件内容的显式结构。这样你的 Java 代码的唯一任务就是创建用于填充邮件模板的数据以及发送邮件。当你的邮件内容比较复杂时，这种方法绝对是最佳实践。同时，使用 Spring 框架的 FreeMarker 支持类，这样做也非常简单。
 
