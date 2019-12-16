@@ -1,14 +1,11 @@
-## 7. 任务执行和调度
+#### 7.1.1. `TaskExecutor` 类型
 
-Spring 框架分别通过 `TaskExecutor` 和 `TaskScheduler` 接口为任务的异步执行和调度提供了抽象。Spring 还提供了那些接口的实现，这些接口在应用程序服务器环境中支持线程池或委托给 `CommonJ`。最终，在公共接口后面使用这些实现可以抽象化 Java SE 5，Java SE 6 和 Java EE 环境之间的差异。
+Spring 包含若干预置的 `TaskExecutor` 实现。大多数情况下，你应该不需要自己来实现。Spring 提供如下变体：
 
-Spring还具有集成类，以支持使用 `Timer`（自 1.3 开始成为 JDK 的一部分）和 Quartz Scheduler（https://www.quartz-scheduler.org/）进行调度。您可以通过使用带有分别对 `Timer` 或 `Trigger` 实例的可选引用的 `FactoryBean` 来设置这两个调度程序。此外，还提供了 Quartz Scheduler 和 `Timer` 的便捷类，可用于调用现有目标对象的方法（类似于常规的 `MethodInvokingFactoryBean` 操作）。
-
-### 7.1. Spring `TaskExecutor` 抽象
-
-Executors 是线程池概念的JDK名称。 Executors 的命名是由于无法保证基础实现实际上是一个池。执行程序可能是单线程的，甚至是同步的。Spring 的抽象隐藏了 Java SE 和 Java EE 环境之间的实现细节。
-
-Spring 的 `TaskExecutor` 接口与 `java.util.concurrent.Executor` 接口相同。实际上，最初，其存在的主要原因是在使用线程池时抽象出对 Java 5 的需求。该接口具有单个方法（ `execute(Runnable task)`），该方法根据线程池的语义和配置接受要执行的任务。
-
-最初创建 `TaskExecutor` 的目的是为其他 Spring 组件提供所需的线程池抽象。诸如 `ApplicationEventMulticaster`，JMS 的 `AbstractMessageListenerContainer` 和 Quartz 集成之类的组件均使用 `TaskExecutor` 抽象来池化线程。但是，如果您的 bean 需要线程池行为，则也可以根据自己的需要使用此抽象。
+- `SyncTaskExecutor`: 此实现不回异步执行调用。每个调用都发生在调用线程中。主要用在不需要多线程的场景，比如简单的测试用例。
+- `SimpleAsyncTaskExecutor`: 此实现不会复用任何线程。它为每次调用启动一个新的线程。不过，它支持有限制的并发，超过并发度限制的调用将被阻塞直到运行中的线程结束以空出并发额度。如果你需要真正的线程池，参考此列表后面的 `ThreadPoolTaskExecutor` 。
+- `ConcurrentTaskExecutor`: 此实现是 `java.util.concurrent.Executor` 实例的适配器。还有一个替代（`ThreadPoolTaskExecutor`），将 `Executor` 配置参数作为 bean 属性公开。很少需要直接使用 `ConcurrentTaskExecutor`。但是，如果 `ThreadPoolTaskExecutor` 不够灵活，无法满足您的需求，则可以选择 `ConcurrentTaskExecutor` 。
+- `ThreadPoolTaskExecutor`: 此实现是最常用的。它公开了用于配置 `java.util.concurrent.ThreadPoolExecutor` 的 bean 属性，并将其包装在 `TaskExecutor` 中。如果您需要适配其他类型的 `java.util.concurrent.Executor`，我们建议您改用 `ConcurrentTaskExecutor`。
+- `WorkManagerTaskExecutor`: 此实现使用 CommonJ `WorkManager` 作为其支持服务提供者，并且是在 Spring 应用程序上下文中在 WebLogic 或 WebSphere 上设置基于 CommonJ 的线程池集成的中心便利类。
+- `DefaultManagedTaskExecutor`: 此实现在兼容 JSR-236 的运行时环境（例如 Java EE 7+ 应用程序服务器）中使用 JNDI 获得的 `ManagedExecutorService`，为此替换了 CommonJ `WorkManager`。
 
