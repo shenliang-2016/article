@@ -1,76 +1,61 @@
-### 7.3. 对调度和异步执行的注解支持
+#### 7.3.3.  `@Async` 注解
 
-Spring 同时提供了对调度和异步方法执行的注解支持。
-
-#### 7.3.1. 启用调度注解
-
-为了开启对 `@Scheduled` 和 `@Async` 注解的支持，你可以添加 `@EnableScheduling` 和 `@EnableAsync` 到你的任何一个 `@Configuration` 类中，如下面例子所示：
+您可以在方法上提供 `@Async` 注解，以便异步调用该方法。换句话说，调用者在调用时立即返回，而方法的实际执行发生在已提交给 Spring `TaskExecutor` 的任务中。在最简单的情况下，可以将注解应用于返回 `void` 的方法，如以下示例所示：
 
 ```java
-@Configuration
-@EnableAsync
-@EnableScheduling
-public class AppConfig {
+@Async
+void doSomething() {
+    // this will be executed asynchronously
 }
 ```
 
-你可以为你的应用挑选相关注解。比如，如果你只需要 `@Scheduled` 支持，你就可以省略 `@EnableAsync` 注解。为了进行更加精细的控制，你可以额外实现 `SchedulingConfigurer` 接口，或者 `AsyncConfigurer` 接口，或者同时实现两者。参考 [`SchedulingConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/scheduling/annotation/SchedulingConfigurer.html) 和 [`AsyncConfigurer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/scheduling/annotation/AsyncConfigurer.html) 文档获取更多细节。
-
-如果你更喜欢 XML 配置，你可以使用 `<task:annotation-driven>` 元素，如下面例子所示：
-
-```xml
-<task:annotation-driven executor="myExecutor" scheduler="myScheduler"/>
-<task:executor id="myExecutor" pool-size="5"/>
-<task:scheduler id="myScheduler" pool-size="10"/>
-```
-
-注意，在上面的 XML 中，给定一个执行器引用来处理其中对应于 `@Async` 注解修饰的方法的任务，而给定的调度器引用管理 `@Scheduled` 注解修饰的方法 。
-
-> 处理 `@Async` 注解的默认增强模式是 `proxy`（代理），它仅允许通过代理来拦截调用。同一类内的本地调用无法以这种方式被拦截。对于更高级的拦截模式，请考虑结合编译时或加载时编织切换到 `aspectj` 模式。
-
-#### 7.3.2.  `@Scheduled` 注解
-
-您可以将 `@Scheduled` 注解以及触发器元数据添加到方法上。例如，以下方法每隔五秒钟以固定的延迟被调用一次，这意味着该时间段是从每个先前调用的完成时间开始计算的：
+与用 `@Scheduled` 注解注释的方法不同，这些方法可以使用参数，因为它们在运行时由调用者以“常规”方式调用，而不是从容器管理的计划任务中调用。例如，以下代码是 `@Async` 注解的合法应用程序：
 
 ```java
-@Scheduled(fixedDelay=5000)
-public void doSomething() {
-    // something that should execute periodically
+@Async
+void doSomething(String s) {
+    // this will be executed asynchronously
 }
 ```
 
-如果需要固定速率执行，则可以更改注解中指定的属性名称。每五秒钟调用一次以下方法（在每次调用的连续开始时间之间测量时间间隔）：
+即使有返回值的方法也可以异步调用。但是，要求此类方法具有 `Future` 类型的返回值。这仍然提供了异步执行的好处，以便调用者可以在对该 `Future` 调用 `get()` 之前执行其他任务。以下示例说明如何在有返回值的方法上使用 `@Async`：
 
 ```java
-@Scheduled(fixedRate=5000)
-public void doSomething() {
-    // something that should execute periodically
+@Async
+Future<String> returnSomething(int i) {
+    // this will be executed asynchronously
 }
 ```
 
-对于固定延迟和固定速率的任务，可以通过指示在第一次执行该方法之前要等待的毫秒数来指定初始延迟，如下面的 `fixedRate` 示例所示：
+> `@Async` 方法不仅可以声明常规的 `java.util.concurrent.Future` 返回类型，还可以声明 Spring 的 `org.springframework.util.concurrent.ListenableFuture`，或者从 Spring 4.2 起声明 JDK 8 的 `java.util.parallel.CompletableFuture`，用于与异步任务进行更丰富的交互，并与进一步的处理步骤立即进行合成。
+
+您不能将 `@Async` 与生命周期回调（如 `@PostConstruct` ）结合使用。要异步初始化 Spring Bean，当前必须使用单独的初始化 Spring Bean，然后在目标上调用带有 `@Async` 注解的方法，如以下示例所示：
 
 ```java
-@Scheduled(initialDelay=1000, fixedRate=5000)
-public void doSomething() {
-    // something that should execute periodically
+public class SampleBeanImpl implements SampleBean {
+
+    @Async
+    void doSomething() {
+        // ...
+    }
+
+}
+
+public class SampleBeanInitializer {
+
+    private final SampleBean bean;
+
+    public SampleBeanInitializer(SampleBean bean) {
+        this.bean = bean;
+    }
+
+    @PostConstruct
+    public void initialize() {
+        bean.doSomething();
+    }
+
 }
 ```
 
-如果简单的周期性调度不足以满足需求，则可以提供 cron 表达式。例如，以下仅在工作日执行：
-
-```java
-@Scheduled(cron="*/5 * * * * MON-FRI")
-public void doSomething() {
-    // something that should execute on weekdays only
-}
-```
-
-> 你还可以使用 `zone` 属性来指定 cron 表达式应该在哪个时区被解析。
-
-请注意，要调度的方法必须具有空返回值，并且不能期望任何参数。如果该方法需要与应用程序上下文中的其他对象进行交互，则通常将通过依赖项注入来提供这些对象。
-
-> 从 Spring Framework 4.3 开始，任何作用域范围的 bean 都支持 `@Scheduled` 方法。
->
-> 确保不要在运行时初始化同一个 `@Scheduled` 注解类的多个实例，除非您确实希望为每个此类实例安排回调。与此相关的是，请确保不要在以 `@Scheduled` 注解并已在容器中注册为常规 Spring bean 的 bean 类上使用 `@ Configurable`。否则，您将获得双重初始化（一次通过容器，一次通过 `@Configurable` 切面），结果每个 `@Scheduled` 方法被调用两次。
+> `@Async` 没有直接的 XML 等效项，因为此类方法应首先设计用于异步执行，而不是在外部重新声明为异步。不过，您可以结合使用自定义切入点，通过 Spring AOP 手动设置 Spring 的 `AsyncExecutionInterceptor`。
 
