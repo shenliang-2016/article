@@ -1,61 +1,29 @@
-#### 7.3.3.  `@Async` 注解
+#### 7.3.4. 使用 `@Async` 的执行器资格
 
-您可以在方法上提供 `@Async` 注解，以便异步调用该方法。换句话说，调用者在调用时立即返回，而方法的实际执行发生在已提交给 Spring `TaskExecutor` 的任务中。在最简单的情况下，可以将注解应用于返回 `void` 的方法，如以下示例所示：
-
-```java
-@Async
-void doSomething() {
-    // this will be executed asynchronously
-}
-```
-
-与用 `@Scheduled` 注解注释的方法不同，这些方法可以使用参数，因为它们在运行时由调用者以“常规”方式调用，而不是从容器管理的计划任务中调用。例如，以下代码是 `@Async` 注解的合法应用程序：
+默认情况下，当在方法上指定 `@Async` 注解时，使用的执行器就必须是 [启用异步支持时被配置的](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#scheduling-enable-annotation-support)，比如，如果你使用 XML，执行器就应该是 `annotation-driven` 元素，或者其本身是 `AsyncConfigurer` 实现，如果存在。不过，当你需指示执行给定方法，应使用默认值以外的执行器时，你可以使用 `@Async` 注解的 `value` 属性。下面的例子展示了具体做法：
 
 ```java
-@Async
+@Async("otherExecutor")
 void doSomething(String s) {
-    // this will be executed asynchronously
+    // this will be executed asynchronously by "otherExecutor"
 }
 ```
 
-即使有返回值的方法也可以异步调用。但是，要求此类方法具有 `Future` 类型的返回值。这仍然提供了异步执行的好处，以便调用者可以在对该 `Future` 调用 `get()` 之前执行其他任务。以下示例说明如何在有返回值的方法上使用 `@Async`：
+在这种情况下，`otherExecutor` 可以是 Spring 容器中任何 `Executor` bean的名称，也可以是与任何 `Executor` 相关联的限定词的名称（例如，由 `<qualifier>` 元素或 Spring 的 `@Qualifier` 注解指定的）。
+
+#### 7.3.5. 使用 `@Async` 时的异常管理
+
+当 `@Async` 方法的返回值类型为 `Future` 时，很容易管理在方法执行过程中引发的异常，因为在对 `Future` 结果调用 `get` 时会引发该异常。但是，对于 `void` 返回类型，该异常是未捕获的，无法传输。您可以提供一个 `AsyncUncaughtExceptionHandler` 来处理此类异常。以下示例显示了如何执行此操作：
 
 ```java
-@Async
-Future<String> returnSomething(int i) {
-    // this will be executed asynchronously
+public class MyAsyncUncaughtExceptionHandler implements AsyncUncaughtExceptionHandler {
+
+    @Override
+    public void handleUncaughtException(Throwable ex, Method method, Object... params) {
+        // handle exception
+    }
 }
 ```
 
-> `@Async` 方法不仅可以声明常规的 `java.util.concurrent.Future` 返回类型，还可以声明 Spring 的 `org.springframework.util.concurrent.ListenableFuture`，或者从 Spring 4.2 起声明 JDK 8 的 `java.util.parallel.CompletableFuture`，用于与异步任务进行更丰富的交互，并与进一步的处理步骤立即进行合成。
-
-您不能将 `@Async` 与生命周期回调（如 `@PostConstruct` ）结合使用。要异步初始化 Spring Bean，当前必须使用单独的初始化 Spring Bean，然后在目标上调用带有 `@Async` 注解的方法，如以下示例所示：
-
-```java
-public class SampleBeanImpl implements SampleBean {
-
-    @Async
-    void doSomething() {
-        // ...
-    }
-
-}
-
-public class SampleBeanInitializer {
-
-    private final SampleBean bean;
-
-    public SampleBeanInitializer(SampleBean bean) {
-        this.bean = bean;
-    }
-
-    @PostConstruct
-    public void initialize() {
-        bean.doSomething();
-    }
-
-}
-```
-
-> `@Async` 没有直接的 XML 等效项，因为此类方法应首先设计用于异步执行，而不是在外部重新声明为异步。不过，您可以结合使用自定义切入点，通过 Spring AOP 手动设置 Spring 的 `AsyncExecutionInterceptor`。
+默认情况下，仅记录异常。您可以使用 `AsyncConfigurer` 或 `<task:annotation-driven/>` XML 元素来定义自定义的 `AsyncUncaughtExceptionHandler`。
 
