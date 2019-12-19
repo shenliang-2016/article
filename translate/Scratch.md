@@ -1,129 +1,37 @@
-### 7.5. 使用 Quartz 调度器
+## 8. 缓存抽象
 
-Quartz 使用 `Trigger`，`Job` 以及 `JobDetail` 对象来实现各种任务的调度。要了解 Quartz 背后的基本概念，请参考 https://www.quartz-scheduler.org/ 。方便起见，Spring 提供了两个类来简化在基于 Spring 的引用中的 Quartz 使用。
+从 3.1 版开始，Spring 框架提供了对将缓存透明添加到现有 Spring 应用程序的支持。与 [transaction](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction) 支持类似，缓存抽象允许各种对现有代码影响最小的缓存解决方案的一致使用。
 
-#### 7.5.1. 使用 `JobDetailFactoryBean`
+从 Spring 4.1 开始，通过 [JSR-107 注解](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-jsr-107) 的支持，缓存抽象得到了显着扩展。同时添加了更多自定义选项。
 
-Quart `JobDetail` 对象包含运行一项任务所需的所有信息。Spring 提供了 `JobDetailFactoryBean` ，它为 XML 形式的配置提供了 bean 风格的属性。考虑下面的例子：
+### 8.1. 理解缓存抽象
 
-```xml
-<bean name="exampleJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
-    <property name="jobClass" value="example.ExampleJob"/>
-    <property name="jobDataAsMap">
-        <map>
-            <entry key="timeout" value="5"/>
-        </map>
-    </property>
-</bean>
-```
+> 缓存 vs 缓冲
+>
+> 术语“缓冲”和“缓存”倾向于互换使用。但是请注意，它们代表不同的事物。传统上，缓冲区用作快速实体和慢速实体之间的数据的中间临时存储。由于一方必须等待另一方（这会影响性能），因此缓冲区允许一次移动整个数据块而不是小块数据来缓解这种情况。数据只能从缓冲区写入和读取一次。此外，缓冲区对于至少一个知道缓冲区的一方是可见的。
+>
+> 另一方面，根据定义，缓存是隐藏的，任何一方都不知道发生了缓存。它可以提高性能，但是也可以通过快速读取多次相同数据来实现。
+>
+> 您可以在 [此处](https://en.wikipedia.org/wiki/Cache_(computing)#The_difference_between_buffer_and_cache) 中找到有关缓冲区和缓存之间差异的进一步说明。
 
-任务细节配置包含运行任务（`ExampleJob`）所需的所有信息。超时在任务数据映射中指定。任务数据映射在 `JobExectionContext` （在任务执行期间会传递给你）中可用，但是 `JobDetail` 同样也从用于配置任务实例的任务数据映射中获取它的属性。因此，下面的例子中，`ExampleJob` 包含名为 `timeout` 的 bean 属性，`JobDetail` 自动应用该属性值：
+缓存抽象的核心是将缓存应用于 Java 方法，从而根据缓存中可用的信息减少执行次数。也就是说，每次调用目标方法时，抽象都会应用缓存行为，该行为检查给定参数是否已经执行了该方法。如果已执行，则返回缓存的结果，而不必执行实际的方法。如果尚未执行该方法，则将执行该方法，并将结果缓存并返回给用户，以便下次调用该方法时，将返回缓存的结果。这样，对于给定的一组参数，成本高昂的方法（无论是受 CPU 限制还是与 IO 绑定）只能执行一次，结果可以重复使用，而不必再次实际执行该方法。缓存逻辑是对应用透明的，不会对调用方造成任何干扰。
 
-```java
-package example;
+> 该方法仅适用于保证无论给定输入（或参数）执行多少次都返回相同输出（结果）的方法。
 
-public class ExampleJob extends QuartzJobBean {
+缓存抽象提供了其他与缓存相关的操作，例如更新缓存内容或删除一个或所有条目的能力。如果高速缓存处理在应用程序过程中可能更改的数据，则这些功能很有用。
 
-    private int timeout;
+与 Spring 框架中的其他服务一样，缓存服务是一种抽象（不是缓存实现），并且需要使用实际的存储来存储缓存数据。也就是说，抽象使您不必编写缓存逻辑，但是没有提供实际的数据存储。这种抽象是通过 `org.springframework.cache.Cache和org.springframework.cache.CacheManager` 接口实现的。
 
-    /**
-     * Setter called after the ExampleJob is instantiated
-     * with the value from the JobDetailFactoryBean (5)
-     */
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
+Spring提供了该抽象的 [一些实现](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-store-configuration) ：基于 JDK ` java.util.concurrent.ConcurrentMap` 的缓存，[Ehcache 2.x](https://www.ehcache.org/)，Gemfire 缓存，[Caffeine](https://github.com/ben-manes/caffeine/wiki) 和符合 JSR-107 的缓存（例如 Ehcache 3.x）。有关更多信息，请参见 [插入不同的后端缓存](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-plug) 插入其他缓存存储区和提供程序。
 
-    protected void executeInternal(JobExecutionContext ctx) throws JobExecutionException {
-        // do the actual work
-    }
+> 对于多线程和多进程环境，缓存抽象没有特殊处理，因为此类功能由缓存实现处理。
 
-}
-```
+如果您具有多进程环境（即，一个应用程序部署在多个节点上），则需要相应地配置缓存提供程序。根据您的应用场景，在几个节点上复制相同数据就足够了。但是，如果在应用程序过程中更改数据，则可能需要启用其他传播机制。
 
-从任务数据映射中获取的额外属性对你来说同样可用。
+高速缓存特定数据项等同于通过程序化高速缓存交互找到该数据项的典型的“如果找不到，然后继续处理并放入”代码块。没有应用锁，几个线程可能会尝试同时加载同一数据项。缓存淘汰同样如此。如果多个线程试图同时更新或逐出数据，则可以使用陈旧数据。某些缓存提供程序在该区域提供高级功能。有关更多详细信息，请参见缓存提供程序的文档。
 
-> 通过使用 `name` 和 `group` 属性，你可以相应修改任务的名称和组。默认情况下，任务名称对应于 `JobDetailFactoryBean` bean 名称（上面例子中的 `exampleJob`）。
+为了使用缓存抽象，你需要注意两个方面：
 
-#### 7.5.2. 使用 `MethodInvokingJobDetailFactoryBean`
-
-通常你很少需要调用特定对象上的方法。通过使用 `MethodInvokingJobDetailFactoryBean` ，你可以做到这一点，如下面例子所示：
-
-```xml
-<bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-    <property name="targetObject" ref="exampleBusinessObject"/>
-    <property name="targetMethod" value="doIt"/>
-</bean>
-```
-
-前面的示例导致在 `exampleBusinessObject` 方法上调用 `doIt` 方法，如以下示例所示：
-
-```java
-public class ExampleBusinessObject {
-
-    // properties and collaborators
-
-    public void doIt() {
-        // do the actual work
-    }
-}
-```
-
-````xml
-<bean id="exampleBusinessObject" class="examples.ExampleBusinessObject"/>
-````
-
-通过使用 `MethodInvokingJobDetailFactoryBean`，您无需创建仅调用方法的单行作业。您只需要创建实际的业务对象并连接具体对象即可。
-
-默认情况下，Quartz Jobs 是无状态的，从而导致作业相互干扰的可能性。如果为相同的 `JobDetail` 指定两个触发器，则有可能在第一个作业完成之前启动第二个作业。如果 `JobDetail` 类实现了 `Stateful` 接口，则不会发生这种情况。在第一个作业完成之前，第二个作业不会开始。要使由 `MethodInvokingJobDetailFactoryBean` 产生的作业是非并行的，请将 `concurrent` 标记设置为 `false`，如以下示例所示：
-
-```xml
-<bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-    <property name="targetObject" ref="exampleBusinessObject"/>
-    <property name="targetMethod" value="doIt"/>
-    <property name="concurrent" value="false"/>
-</bean>
-```
-
-> 默认情况下，作业将以并发方式运行。
-
-#### 7.5.3. 通过使用触发器和 `SchedulerFactoryBean` 连接作业
-
-我们已经创建了工作详细信息和工作。我们还回顾了便捷 bean，该 bean 使您可以在特定对象上调用方法。当然，我们仍然需要自己调度工作。这是通过使用触发器和一个 `SchedulerFactoryBean` 来完成的。Quartz 中提供了几种触发器，Spring 提供了两个具有方便的默认值的 Quartz `FactoryBean` 实现：`CronTriggerFactoryBean` 和 `SimpleTriggerFactoryBean`。
-
-触发器需要调度。Spring提供了一个 `SchedulerFactoryBean`，它公开了要设置为属性的触发器。  `SchedulerFactoryBean` 通过这些触发器调度实际的作业。
-
-以下清单同时使用了 `SimpleTriggerFactoryBean` 和 `CronTriggerFactoryBean`：
-
-```xml
-<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
-    <!-- see the example of method invoking job above -->
-    <property name="jobDetail" ref="jobDetail"/>
-    <!-- 10 seconds -->
-    <property name="startDelay" value="10000"/>
-    <!-- repeat every 50 seconds -->
-    <property name="repeatInterval" value="50000"/>
-</bean>
-
-<bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
-    <property name="jobDetail" ref="exampleJob"/>
-    <!-- run every morning at 6 AM -->
-    <property name="cronExpression" value="0 0 6 * * ?"/>
-</bean>
-```
-
-前面的示例设置了两个触发器，一个触发器每隔 50 秒运行一次，启动延迟为 10 秒，另一个触发器每天清晨 6 点运行。要完成所有工作，我们需要设置 `SchedulerFactoryBean`，如以下示例所示：
-
-```xml
-<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
-    <property name="triggers">
-        <list>
-            <ref bean="cronTrigger"/>
-            <ref bean="simpleTrigger"/>
-        </list>
-    </property>
-</bean>
-```
-
-更多的属性可用于 `SchedulerFactoryBean`，例如工作明细所使用的日历，用于自定义 Quartz 的属性等。请参阅 [`SchedulerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/scheduling/quartz/SchedulerFactoryBean.html) Javadoc了解更多信息 。
+- 缓存声明：确定需要缓存的方法及其策略。
+- 缓存配置：数据存储和读取的后备缓存。
 

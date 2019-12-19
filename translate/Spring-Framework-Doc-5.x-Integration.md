@@ -1519,28 +1519,28 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 下表描述了所有可用的属性。参考 [`AbstractMessageListenerContainer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/AbstractMessageListenerContainer.html) 类以及它的子类的文档，获取更多有关属性的细节。文档中还提供了有关事务选择以及消息重发场景的讨论。
 
-| 属性 | 描述 |
-| : | : |
-| `container-type` | 监听器容器的类型。可用的选择有 `default`, `simple`, `default102`, 或者 `simple102` (默认值是 `default`)。 |
-| `container-class` | 由全限定类名指定的自定义监听器容器实现类。默认是 Spring 的标准 `DefaultMessageListenerContainer` 或者 `SimpleMessageListenerContainer`， 根据 `container-type` 属性确定。 |
-| `factory-id` | 指定 `id` 暴露由作为 `JmsListenerContainerFactory` 的元素定义的设定以便它们可以被其它端点复用。 |
-| `connection-factory` | 指向 JMS `ConnectionFactory` bean 的引用（默认 bean 名称是 `connectionFactory`）。 |
-| `task-executor` | 对 JMS 侦听器调用程序的 Spring `TaskExecutor` 的引用。 |
-| `destination-resolver` | 对用于解析 JMS `Destination` 实例的 `DestinationResolver` 策略的引用。 |
-| `message-converter` | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter` 。 |
-| `error-handler` | 对用于处理在 `MessageListener` 执行期间可能发生的任何未捕获异常的 `ErrorHandler` 策略的引用。 |
-| `destination-type` | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
+| 属性                        | 描述                                                         |
+| :-------------------------- | :----------------------------------------------------------- |
+| `container-type`            | 监听器容器的类型。可用的选择有 `default`, `simple`, `default102`, 或者 `simple102` (默认值是 `default`)。 |
+| `container-class`           | 由全限定类名指定的自定义监听器容器实现类。默认是 Spring 的标准 `DefaultMessageListenerContainer` 或者 `SimpleMessageListenerContainer`， 根据 `container-type` 属性确定。 |
+| `factory-id`                | 指定 `id` 暴露由作为 `JmsListenerContainerFactory` 的元素定义的设定以便它们可以被其它端点复用。 |
+| `connection-factory`        | 指向 JMS `ConnectionFactory` bean 的引用（默认 bean 名称是 `connectionFactory`）。 |
+| `task-executor`             | 对 JMS 侦听器调用程序的 Spring `TaskExecutor` 的引用。       |
+| `destination-resolver`      | 对用于解析 JMS `Destination` 实例的 `DestinationResolver` 策略的引用。 |
+| `message-converter`         | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter` 。 |
+| `error-handler`             | 对用于处理在 `MessageListener` 执行期间可能发生的任何未捕获异常的 `ErrorHandler` 策略的引用。 |
+| `destination-type`          | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
 | `response-destination-type` | 响应的 JMS 目标类型： `queue` 或者 `topic`。默认是 `destination-type` 属性的值。 |
-| `client-id` | 此监听器容器的 JMS 客户端 ID。使用持久化订阅时你必须指定它。 |
-| `cache` | JMS 资源的缓存级别：`none`， `connection`， `session`， `consumer`， 或者 `auto`。默认情况下（`auto`），缓存级别实际上是 `consumer`，除非已指定外部事务管理器。在这种情况下，有效的默认值为 `none`（假设 Java EE 风格的事务管理，`ConnectionFactory` 是一个 XA-感知池）。 |
-| `acknowledge` | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定 `transaction-manager` 属性，稍后在表中进行描述。默认为 `auto`。 |
-| `transaction-manager` | 对外部 `PlatformTransactionManager`（通常是基于 XA 的事务协调器，例如 Spring 的 `JtaTransactionManager`）的引用。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
-| `concurrency` | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大值的简单数字（例如，`5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，在运行时可能会被忽略。 默认值为 `1`。如果是主题侦听器或队列顺序很重要，则应将并发限制为 `1`。考虑将其提升为一般队列。 |
-| `prefetch` | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
-| `receive-timeout` | 用于接受调用的超时时间（以毫秒为单位）。默认值为 `1000`（一秒）。`-1` 表示没有超时。 |
-| `back-off` | 指定 `BackOff` 实例，用于计算两次恢复尝试之间的间隔。如果 `BackOffExecution` 实现返回 `BackOffExecution#STOP`，则侦听器容器不会进一步尝试恢复。设置此属性后，将忽略 `recovery-interval` 值。默认值为 `FixedBackOff`，间隔为 `5000` 毫秒（即 5秒）。 |
-| `recovery-interval` | 指定两次恢复尝试之间的时间间隔（以毫秒为单位）。它提供了一种方便的方法来创建具有指定间隔的 `FixedBackOff`。对于更多恢复选项，请考虑指定一个 `BackOff` 实例。缺省值为 5000 毫秒（即 5 秒）。 |
-| `phase` | 此容器应在其中启动和停止的生命周期阶段。值越低，此容器启动越早，而其停止越晚。默认值为 `Integer.MAX_VALUE`，这意味着容器将尽可能晚地启动，并尽快停止。 |
+| `client-id`                 | 此监听器容器的 JMS 客户端 ID。使用持久化订阅时你必须指定它。 |
+| `cache`                     | JMS 资源的缓存级别：`none`， `connection`， `session`， `consumer`， 或者 `auto`。默认情况下（`auto`），缓存级别实际上是 `consumer`，除非已指定外部事务管理器。在这种情况下，有效的默认值为 `none`（假设 Java EE 风格的事务管理，`ConnectionFactory` 是一个 XA-感知池）。 |
+| `acknowledge`               | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定 `transaction-manager` 属性，稍后在表中进行描述。默认为 `auto`。 |
+| `transaction-manager`       | 对外部 `PlatformTransactionManager`（通常是基于 XA 的事务协调器，例如 Spring 的 `JtaTransactionManager`）的引用。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
+| `concurrency`               | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大值的简单数字（例如，`5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，在运行时可能会被忽略。 默认值为 `1`。如果是主题侦听器或队列顺序很重要，则应将并发限制为 `1`。考虑将其提升为一般队列。 |
+| `prefetch`                  | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
+| `receive-timeout`           | 用于接受调用的超时时间（以毫秒为单位）。默认值为 `1000`（一秒）。`-1` 表示没有超时。 |
+| `back-off`                  | 指定 `BackOff` 实例，用于计算两次恢复尝试之间的间隔。如果 `BackOffExecution` 实现返回 `BackOffExecution#STOP`，则侦听器容器不会进一步尝试恢复。设置此属性后，将忽略 `recovery-interval` 值。默认值为 `FixedBackOff`，间隔为 `5000` 毫秒（即 5秒）。 |
+| `recovery-interval`         | 指定两次恢复尝试之间的时间间隔（以毫秒为单位）。它提供了一种方便的方法来创建具有指定间隔的 `FixedBackOff`。对于更多恢复选项，请考虑指定一个 `BackOff` 实例。缺省值为 5000 毫秒（即 5 秒）。 |
+| `phase`                     | 此容器应在其中启动和停止的生命周期阶段。值越低，此容器启动越早，而其停止越晚。默认值为 `Integer.MAX_VALUE`，这意味着容器将尽可能晚地启动，并尽快停止。 |
 
 使用 `jms` 模式支持配置基于 JCA 的侦听器容器非常相似，如以下示例所示：
 
@@ -1557,20 +1557,20 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 下表描述了 JCA 变体的可用配置选项：
 
-| 属性 | 描述 |
-| : | : |
-| `factory-id` | 将此元素定义的设置公开为具有指定 ID 的 `JmsListenerContainerFactory`，以便其他端点重复使用。 |
-| `resource-adapter` | 对 JCA `ResourceAdapter` bean的引用（默认 bean 名称为 `resourceAdapter`）。 |
-| `activation-spec-factory` | `JmsActivationSpecFactory` 的引用。默认设置是自动检测 JMS 提供程序及其 `ActivationSpec` 类（参考 [`DefaultJmsActivationSpecFactory`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/DefaultJmsActivationSpecFactory.html)）。 |
-| `destination-resolver` | 对用于解析 JMS 目标的 `DestinationResolver` 策略的引用。 |
-| `message-converter` | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter`。 |
-| `destination-type` | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
+| 属性                        | 描述                                                         |
+| :-------------------------- | :----------------------------------------------------------- |
+| `factory-id`                | 将此元素定义的设置公开为具有指定 ID 的 `JmsListenerContainerFactory`，以便其他端点重复使用。 |
+| `resource-adapter`          | 对 JCA `ResourceAdapter` bean的引用（默认 bean 名称为 `resourceAdapter`）。 |
+| `activation-spec-factory`   | `JmsActivationSpecFactory` 的引用。默认设置是自动检测 JMS 提供程序及其 `ActivationSpec` 类（参考 [`DefaultJmsActivationSpecFactory`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/DefaultJmsActivationSpecFactory.html)）。 |
+| `destination-resolver`      | 对用于解析 JMS 目标的 `DestinationResolver` 策略的引用。     |
+| `message-converter`         | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter`。 |
+| `destination-type`          | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
 | `response-destination-type` | 响应的 JMS 目标类型：`queue` 或 `topic`。默认值为 `destination-type` 属性的值。 |
-| `client-id` | 此侦听器容器的JMS客户端ID。使用持久订阅时需要指定它。 |
-| `acknowledge` | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定稍后描述的 `transaction-manager` 属性。默认为 `auto`。 |
-| `transaction-manager` | 对 Spring  `JtaTransactionManager` 或 `javax.transaction.TransactionManager` 的引用，用于为每个传入消息启动 XA 事务。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
-| `concurrency` | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大数的简单数字（例如， `5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，通常在运行时使用 JCA 侦听器容器时将被忽略。 预设值为 `1`。 |
-| `prefetch` | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
+| `client-id`                 | 此侦听器容器的JMS客户端ID。使用持久订阅时需要指定它。        |
+| `acknowledge`               | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定稍后描述的 `transaction-manager` 属性。默认为 `auto`。 |
+| `transaction-manager`       | 对 Spring  `JtaTransactionManager` 或 `javax.transaction.TransactionManager` 的引用，用于为每个传入消息启动 XA 事务。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
+| `concurrency`               | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大数的简单数字（例如， `5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，通常在运行时使用 JCA 侦听器容器时将被忽略。 预设值为 `1`。 |
+| `prefetch`                  | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
 
 ## 4. JMX
 
@@ -1584,13 +1584,13 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 本章节描述如何使用 Spring 框架发送电子邮件。
 
->库依赖
+> 库依赖
 >
->下面的 JAR 需要放在你的应用的类路径下以便使用 Spring 框架的电子邮件类库：
+> 下面的 JAR 需要放在你的应用的类路径下以便使用 Spring 框架的电子邮件类库：
 >
->- [JavaMail](https://javaee.github.io/javamail/) 类库
+> -  [JavaMail](https://javaee.github.io/javamail/) 类库
 >
->此类库在网络上可以自由使用 — 比如，在 Maven 中央仓库中的 `com.sun.mail:javax.mail`。
+> 此类库在网络上可以自由使用 — 比如，在 Maven 中央仓库中的 `com.sun.mail:javax.mail`。
 
 Spring 框架提供了一个很好用的工具类库来发送邮件，将你从特定于底层邮件系统的技术细节中解脱出来，该类库同时还接管了客户端的底层资源处理。
 
@@ -1729,7 +1729,7 @@ public class SimpleOrderManager implements OrderManager {
 }
 ```
 
->邮件代码是一个横切关注点，很可能是能够重构进入 [custom Spring AOP aspect](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 的候选者，随后可以在 `OrderManager` 目标上合适的连接点被执行。
+> 邮件代码是一个横切关注点，很可能是能够重构进入 [custom Spring AOP aspect](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 的候选者，随后可以在 `OrderManager` 目标上合适的连接点被执行。
 
 Spring 框架的邮件支持包含标准 JavaMail 实现。参考相关文档获取更多信息。
 
@@ -1801,7 +1801,7 @@ helper.addInline("identifier1234", res);
 sender.send(message);
 ```
 
->通过使用指定的 `Content-ID` 将内联资源添加到 `MimeMessage` 中（在上例中为 `identifier1234`）。添加文本和资源的顺序非常重要。确保首先添加文本，然后添加资源。如果您正相反进行操作，则此操作无效。
+> 通过使用指定的 `Content-ID` 将内联资源添加到 `MimeMessage` 中（在上例中为 `identifier1234`）。添加文本和资源的顺序非常重要。确保首先添加文本，然后添加资源。如果您正相反进行操作，则此操作无效。
 
 #### 6.2.2 使用模板库创建邮件内容
 
@@ -1809,9 +1809,9 @@ sender.send(message);
 
 在典型的企业级应用中，开发者通常不会使用前面展示的方法创建邮件内容，基于以下几个原因：
 
--在 Java 代码中创建基于 HTML 的邮件内容是枯燥而且容易出错的。
--在显式逻辑和业务逻辑之间没有清晰的区隔。
--修改邮件内容的显式结构需要修改 Java 代码，重新编译，以及重新部署。
+- 在 Java 代码中创建基于 HTML 的邮件内容是枯燥而且容易出错的。
+- 在显式逻辑和业务逻辑之间没有清晰的区隔。
+- 修改邮件内容的显式结构需要修改 Java 代码，重新编译，以及重新部署。
 
 通常，解决这些问题的方法就是使用模板类库（比如 FreeMarker）来定义邮件内容的显式结构。这样你的 Java 代码的唯一任务就是创建用于填充邮件模板的数据以及发送邮件。当你的邮件内容比较复杂时，这种方法绝对是最佳实践。同时，使用 Spring 框架的 FreeMarker 支持类，这样做也非常简单。
 
@@ -1833,12 +1833,12 @@ Spring 的 `TaskExecutor` 接口与 `java.util.concurrent.Executor` 接口相同
 
 Spring 包含若干预置的 `TaskExecutor` 实现。大多数情况下，你应该不需要自己来实现。Spring 提供如下变体：
 
--`SyncTaskExecutor`: 此实现不回异步执行调用。每个调用都发生在调用线程中。主要用在不需要多线程的场景，比如简单的测试用例。
--`SimpleAsyncTaskExecutor`: 此实现不会复用任何线程。它为每次调用启动一个新的线程。不过，它支持有限制的并发，超过并发度限制的调用将被阻塞直到运行中的线程结束以空出并发额度。如果你需要真正的线程池，参考此列表后面的 `ThreadPoolTaskExecutor` 。
--`ConcurrentTaskExecutor`: 此实现是 `java.util.concurrent.Executor` 实例的适配器。还有一个替代（`ThreadPoolTaskExecutor`），将 `Executor` 配置参数作为 bean 属性公开。很少需要直接使用 `ConcurrentTaskExecutor`。但是，如果 `ThreadPoolTaskExecutor` 不够灵活，无法满足您的需求，则可以选择 `ConcurrentTaskExecutor` 。
--`ThreadPoolTaskExecutor`: 此实现是最常用的。它公开了用于配置 `java.util.concurrent.ThreadPoolExecutor` 的 bean 属性，并将其包装在 `TaskExecutor` 中。如果您需要适配其他类型的 `java.util.concurrent.Executor`，我们建议您改用 `ConcurrentTaskExecutor`。
--`WorkManagerTaskExecutor`: 此实现使用 CommonJ `WorkManager` 作为其支持服务提供者，并且是在 Spring 应用程序上下文中在 WebLogic 或 WebSphere 上设置基于 CommonJ 的线程池集成的中心便利类。
--`DefaultManagedTaskExecutor`: 此实现在兼容 JSR-236 的运行时环境（例如 Java EE 7+ 应用程序服务器）中使用 JNDI 获得的 `ManagedExecutorService`，为此替换了 CommonJ `WorkManager`。
+- `SyncTaskExecutor`: 此实现不回异步执行调用。每个调用都发生在调用线程中。主要用在不需要多线程的场景，比如简单的测试用例。
+- `SimpleAsyncTaskExecutor`: 此实现不会复用任何线程。它为每次调用启动一个新的线程。不过，它支持有限制的并发，超过并发度限制的调用将被阻塞直到运行中的线程结束以空出并发额度。如果你需要真正的线程池，参考此列表后面的 `ThreadPoolTaskExecutor` 。
+- `ConcurrentTaskExecutor`: 此实现是 `java.util.concurrent.Executor` 实例的适配器。还有一个替代（`ThreadPoolTaskExecutor`），将 `Executor` 配置参数作为 bean 属性公开。很少需要直接使用 `ConcurrentTaskExecutor`。但是，如果 `ThreadPoolTaskExecutor` 不够灵活，无法满足您的需求，则可以选择 `ConcurrentTaskExecutor` 。
+- `ThreadPoolTaskExecutor`: 此实现是最常用的。它公开了用于配置 `java.util.concurrent.ThreadPoolExecutor` 的 bean 属性，并将其包装在 `TaskExecutor` 中。如果您需要适配其他类型的 `java.util.concurrent.Executor`，我们建议您改用 `ConcurrentTaskExecutor`。
+- `WorkManagerTaskExecutor`: 此实现使用 CommonJ `WorkManager` 作为其支持服务提供者，并且是在 Spring 应用程序上下文中在 WebLogic 或 WebSphere 上设置基于 CommonJ 的线程池集成的中心便利类。
+- `DefaultManagedTaskExecutor`: 此实现在兼容 JSR-236 的运行时环境（例如 Java EE 7+ 应用程序服务器）中使用 JNDI 获得的 `ManagedExecutorService`，为此替换了 CommonJ `WorkManager`。
 
 #### 7.1.2. 使用 `TaskExecutor`
 
@@ -1993,7 +1993,7 @@ public class AppConfig {
 
 注意，在上面的 XML 中，给定一个执行器引用来处理其中对应于 `@Async` 注解修饰的方法的任务，而给定的调度器引用管理 `@Scheduled` 注解修饰的方法 。
 
->处理 `@Async` 注解的默认增强模式是 `proxy`（代理），它仅允许通过代理来拦截调用。同一类内的本地调用无法以这种方式被拦截。对于更高级的拦截模式，请考虑结合编译时或加载时编织切换到 `aspectj` 模式。
+> 处理 `@Async` 注解的默认增强模式是 `proxy`（代理），它仅允许通过代理来拦截调用。同一类内的本地调用无法以这种方式被拦截。对于更高级的拦截模式，请考虑结合编译时或加载时编织切换到 `aspectj` 模式。
 
 #### 7.3.2.  `@Scheduled` 注解
 
@@ -2339,4 +2339,41 @@ public class ExampleBusinessObject {
 ```
 
 更多的属性可用于 `SchedulerFactoryBean`，例如工作明细所使用的日历，用于自定义 Quartz 的属性等。请参阅 [`SchedulerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/scheduling/quartz/SchedulerFactoryBean.html) Javadoc了解更多信息 。
+
+## 8. 缓存抽象
+
+从 3.1 版开始，Spring 框架提供了对将缓存透明添加到现有 Spring 应用程序的支持。与 [transaction](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/data-access.html#transaction) 支持类似，缓存抽象允许各种对现有代码影响最小的缓存解决方案的一致使用。
+
+从 Spring 4.1 开始，通过 [JSR-107 注解](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-jsr-107) 的支持，缓存抽象得到了显着扩展。同时添加了更多自定义选项。
+
+### 8.1. 理解缓存抽象
+
+> 缓存 vs 缓冲
+>
+> 术语“缓冲”和“缓存”倾向于互换使用。但是请注意，它们代表不同的事物。传统上，缓冲区用作快速实体和慢速实体之间的数据的中间临时存储。由于一方必须等待另一方（这会影响性能），因此缓冲区允许一次移动整个数据块而不是小块数据来缓解这种情况。数据只能从缓冲区写入和读取一次。此外，缓冲区对于至少一个知道缓冲区的一方是可见的。
+>
+> 另一方面，根据定义，缓存是隐藏的，任何一方都不知道发生了缓存。它可以提高性能，但是也可以通过快速读取多次相同数据来实现。
+>
+> 您可以在 [此处](https://en.wikipedia.org/wiki/Cache_(computing)#The_difference_between_buffer_and_cache) 中找到有关缓冲区和缓存之间差异的进一步说明。
+
+缓存抽象的核心是将缓存应用于 Java 方法，从而根据缓存中可用的信息减少执行次数。也就是说，每次调用目标方法时，抽象都会应用缓存行为，该行为检查给定参数是否已经执行了该方法。如果已执行，则返回缓存的结果，而不必执行实际的方法。如果尚未执行该方法，则将执行该方法，并将结果缓存并返回给用户，以便下次调用该方法时，将返回缓存的结果。这样，对于给定的一组参数，成本高昂的方法（无论是受 CPU 限制还是与 IO 绑定）只能执行一次，结果可以重复使用，而不必再次实际执行该方法。缓存逻辑是对应用透明的，不会对调用方造成任何干扰。
+
+> 该方法仅适用于保证无论给定输入（或参数）执行多少次都返回相同输出（结果）的方法。
+
+缓存抽象提供了其他与缓存相关的操作，例如更新缓存内容或删除一个或所有条目的能力。如果高速缓存处理在应用程序过程中可能更改的数据，则这些功能很有用。
+
+与 Spring 框架中的其他服务一样，缓存服务是一种抽象（不是缓存实现），并且需要使用实际的存储来存储缓存数据。也就是说，抽象使您不必编写缓存逻辑，但是没有提供实际的数据存储。这种抽象是通过 `org.springframework.cache.Cache和org.springframework.cache.CacheManager` 接口实现的。
+
+Spring提供了该抽象的 [一些实现](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-store-configuration) ：基于 JDK ` java.util.concurrent.ConcurrentMap` 的缓存，[Ehcache 2.x](https://www.ehcache.org/)，Gemfire 缓存，[Caffeine](https://github.com/ben-manes/caffeine/wiki) 和符合 JSR-107 的缓存（例如 Ehcache 3.x）。有关更多信息，请参见 [插入不同的后端缓存](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-plug) 插入其他缓存存储区和提供程序。
+
+> 对于多线程和多进程环境，缓存抽象没有特殊处理，因为此类功能由缓存实现处理。
+
+如果您具有多进程环境（即，一个应用程序部署在多个节点上），则需要相应地配置缓存提供程序。根据您的应用场景，在几个节点上复制相同数据就足够了。但是，如果在应用程序过程中更改数据，则可能需要启用其他传播机制。
+
+高速缓存特定数据项等同于通过程序化高速缓存交互找到该数据项的典型的“如果找不到，然后继续处理并放入”代码块。没有应用锁，几个线程可能会尝试同时加载同一数据项。缓存淘汰同样如此。如果多个线程试图同时更新或逐出数据，则可以使用陈旧数据。某些缓存提供程序在该区域提供高级功能。有关更多详细信息，请参见缓存提供程序的文档。
+
+为了使用缓存抽象，你需要注意两个方面：
+
+- 缓存声明：确定需要缓存的方法及其策略。
+- 缓存配置：数据存储和读取的后备缓存。
 
