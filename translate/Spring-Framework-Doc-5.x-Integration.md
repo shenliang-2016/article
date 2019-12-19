@@ -1519,28 +1519,28 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 下表描述了所有可用的属性。参考 [`AbstractMessageListenerContainer`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/AbstractMessageListenerContainer.html) 类以及它的子类的文档，获取更多有关属性的细节。文档中还提供了有关事务选择以及消息重发场景的讨论。
 
-| 属性                        | 描述                                                         |
-| :-------------------------- | :----------------------------------------------------------- |
-| `container-type`            | 监听器容器的类型。可用的选择有 `default`, `simple`, `default102`, 或者 `simple102` (默认值是 `default`)。 |
-| `container-class`           | 由全限定类名指定的自定义监听器容器实现类。默认是 Spring 的标准 `DefaultMessageListenerContainer` 或者 `SimpleMessageListenerContainer`， 根据 `container-type` 属性确定。 |
-| `factory-id`                | 指定 `id` 暴露由作为 `JmsListenerContainerFactory` 的元素定义的设定以便它们可以被其它端点复用。 |
-| `connection-factory`        | 指向 JMS `ConnectionFactory` bean 的引用（默认 bean 名称是 `connectionFactory`）。 |
-| `task-executor`             | 对 JMS 侦听器调用程序的 Spring `TaskExecutor` 的引用。       |
-| `destination-resolver`      | 对用于解析 JMS `Destination` 实例的 `DestinationResolver` 策略的引用。 |
-| `message-converter`         | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter` 。 |
-| `error-handler`             | 对用于处理在 `MessageListener` 执行期间可能发生的任何未捕获异常的 `ErrorHandler` 策略的引用。 |
-| `destination-type`          | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
+| 属性 | 描述 |
+| : | : |
+| `container-type` | 监听器容器的类型。可用的选择有 `default`, `simple`, `default102`, 或者 `simple102` (默认值是 `default`)。 |
+| `container-class` | 由全限定类名指定的自定义监听器容器实现类。默认是 Spring 的标准 `DefaultMessageListenerContainer` 或者 `SimpleMessageListenerContainer`， 根据 `container-type` 属性确定。 |
+| `factory-id` | 指定 `id` 暴露由作为 `JmsListenerContainerFactory` 的元素定义的设定以便它们可以被其它端点复用。 |
+| `connection-factory` | 指向 JMS `ConnectionFactory` bean 的引用（默认 bean 名称是 `connectionFactory`）。 |
+| `task-executor` | 对 JMS 侦听器调用程序的 Spring `TaskExecutor` 的引用。 |
+| `destination-resolver` | 对用于解析 JMS `Destination` 实例的 `DestinationResolver` 策略的引用。 |
+| `message-converter` | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter` 。 |
+| `error-handler` | 对用于处理在 `MessageListener` 执行期间可能发生的任何未捕获异常的 `ErrorHandler` 策略的引用。 |
+| `destination-type` | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
 | `response-destination-type` | 响应的 JMS 目标类型： `queue` 或者 `topic`。默认是 `destination-type` 属性的值。 |
-| `client-id`                 | 此监听器容器的 JMS 客户端 ID。使用持久化订阅时你必须指定它。 |
-| `cache`                     | JMS 资源的缓存级别：`none`， `connection`， `session`， `consumer`， 或者 `auto`。默认情况下（`auto`），缓存级别实际上是 `consumer`，除非已指定外部事务管理器。在这种情况下，有效的默认值为 `none`（假设 Java EE 风格的事务管理，`ConnectionFactory` 是一个 XA-感知池）。 |
-| `acknowledge`               | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定 `transaction-manager` 属性，稍后在表中进行描述。默认为 `auto`。 |
-| `transaction-manager`       | 对外部 `PlatformTransactionManager`（通常是基于 XA 的事务协调器，例如 Spring 的 `JtaTransactionManager`）的引用。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
-| `concurrency`               | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大值的简单数字（例如，`5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，在运行时可能会被忽略。 默认值为 `1`。如果是主题侦听器或队列顺序很重要，则应将并发限制为 `1`。考虑将其提升为一般队列。 |
-| `prefetch`                  | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
-| `receive-timeout`           | 用于接受调用的超时时间（以毫秒为单位）。默认值为 `1000`（一秒）。`-1` 表示没有超时。 |
-| `back-off`                  | 指定 `BackOff` 实例，用于计算两次恢复尝试之间的间隔。如果 `BackOffExecution` 实现返回 `BackOffExecution#STOP`，则侦听器容器不会进一步尝试恢复。设置此属性后，将忽略 `recovery-interval` 值。默认值为 `FixedBackOff`，间隔为 `5000` 毫秒（即 5秒）。 |
-| `recovery-interval`         | 指定两次恢复尝试之间的时间间隔（以毫秒为单位）。它提供了一种方便的方法来创建具有指定间隔的 `FixedBackOff`。对于更多恢复选项，请考虑指定一个 `BackOff` 实例。缺省值为 5000 毫秒（即 5 秒）。 |
-| `phase`                     | 此容器应在其中启动和停止的生命周期阶段。值越低，此容器启动越早，而其停止越晚。默认值为 `Integer.MAX_VALUE`，这意味着容器将尽可能晚地启动，并尽快停止。 |
+| `client-id` | 此监听器容器的 JMS 客户端 ID。使用持久化订阅时你必须指定它。 |
+| `cache` | JMS 资源的缓存级别：`none`， `connection`， `session`， `consumer`， 或者 `auto`。默认情况下（`auto`），缓存级别实际上是 `consumer`，除非已指定外部事务管理器。在这种情况下，有效的默认值为 `none`（假设 Java EE 风格的事务管理，`ConnectionFactory` 是一个 XA-感知池）。 |
+| `acknowledge` | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定 `transaction-manager` 属性，稍后在表中进行描述。默认为 `auto`。 |
+| `transaction-manager` | 对外部 `PlatformTransactionManager`（通常是基于 XA 的事务协调器，例如 Spring 的 `JtaTransactionManager`）的引用。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
+| `concurrency` | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大值的简单数字（例如，`5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，在运行时可能会被忽略。 默认值为 `1`。如果是主题侦听器或队列顺序很重要，则应将并发限制为 `1`。考虑将其提升为一般队列。 |
+| `prefetch` | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
+| `receive-timeout` | 用于接受调用的超时时间（以毫秒为单位）。默认值为 `1000`（一秒）。`-1` 表示没有超时。 |
+| `back-off` | 指定 `BackOff` 实例，用于计算两次恢复尝试之间的间隔。如果 `BackOffExecution` 实现返回 `BackOffExecution#STOP`，则侦听器容器不会进一步尝试恢复。设置此属性后，将忽略 `recovery-interval` 值。默认值为 `FixedBackOff`，间隔为 `5000` 毫秒（即 5秒）。 |
+| `recovery-interval` | 指定两次恢复尝试之间的时间间隔（以毫秒为单位）。它提供了一种方便的方法来创建具有指定间隔的 `FixedBackOff`。对于更多恢复选项，请考虑指定一个 `BackOff` 实例。缺省值为 5000 毫秒（即 5 秒）。 |
+| `phase` | 此容器应在其中启动和停止的生命周期阶段。值越低，此容器启动越早，而其停止越晚。默认值为 `Integer.MAX_VALUE`，这意味着容器将尽可能晚地启动，并尽快停止。 |
 
 使用 `jms` 模式支持配置基于 JCA 的侦听器容器非常相似，如以下示例所示：
 
@@ -1557,20 +1557,20 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 下表描述了 JCA 变体的可用配置选项：
 
-| 属性                        | 描述                                                         |
-| :-------------------------- | :----------------------------------------------------------- |
-| `factory-id`                | 将此元素定义的设置公开为具有指定 ID 的 `JmsListenerContainerFactory`，以便其他端点重复使用。 |
-| `resource-adapter`          | 对 JCA `ResourceAdapter` bean的引用（默认 bean 名称为 `resourceAdapter`）。 |
-| `activation-spec-factory`   | `JmsActivationSpecFactory` 的引用。默认设置是自动检测 JMS 提供程序及其 `ActivationSpec` 类（参考 [`DefaultJmsActivationSpecFactory`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/DefaultJmsActivationSpecFactory.html)）。 |
-| `destination-resolver`      | 对用于解析 JMS 目标的 `DestinationResolver` 策略的引用。     |
-| `message-converter`         | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter`。 |
-| `destination-type`          | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
+| 属性 | 描述 |
+| : | : |
+| `factory-id` | 将此元素定义的设置公开为具有指定 ID 的 `JmsListenerContainerFactory`，以便其他端点重复使用。 |
+| `resource-adapter` | 对 JCA `ResourceAdapter` bean的引用（默认 bean 名称为 `resourceAdapter`）。 |
+| `activation-spec-factory` | `JmsActivationSpecFactory` 的引用。默认设置是自动检测 JMS 提供程序及其 `ActivationSpec` 类（参考 [`DefaultJmsActivationSpecFactory`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/jms/listener/endpoint/DefaultJmsActivationSpecFactory.html)）。 |
+| `destination-resolver` | 对用于解析 JMS 目标的 `DestinationResolver` 策略的引用。 |
+| `message-converter` | 对将 JMS 消息转换为侦听器方法参数的 `MessageConverter` 策略的引用。默认值为 `SimpleMessageConverter`。 |
+| `destination-type` | 此侦听器的 JMS 目标类型：`queue`， `topic`， `durableTopic`， `sharedTopic`，或者 `sharedDurableTopic`。这可能会启用容器的 `pubSubDomain`，`subscriptionDurable` 和 `subsubscribeShared` 属性。默认值为 `queue`（禁用这三个属性）。 |
 | `response-destination-type` | 响应的 JMS 目标类型：`queue` 或 `topic`。默认值为 `destination-type` 属性的值。 |
-| `client-id`                 | 此侦听器容器的JMS客户端ID。使用持久订阅时需要指定它。        |
-| `acknowledge`               | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定稍后描述的 `transaction-manager` 属性。默认为 `auto`。 |
-| `transaction-manager`       | 对 Spring  `JtaTransactionManager` 或 `javax.transaction.TransactionManager` 的引用，用于为每个传入消息启动 XA 事务。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
-| `concurrency`               | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大数的简单数字（例如， `5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，通常在运行时使用 JCA 侦听器容器时将被忽略。 预设值为 `1`。 |
-| `prefetch`                  | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
+| `client-id` | 此侦听器容器的JMS客户端ID。使用持久订阅时需要指定它。 |
+| `acknowledge` | 本地 JMS 确认模式：`auto`， `client`， `dups-ok`， 或者 `transacted`。值 `transacted` 激活了本地交易的 `Session` 。或者，您可以指定稍后描述的 `transaction-manager` 属性。默认为 `auto`。 |
+| `transaction-manager` | 对 Spring  `JtaTransactionManager` 或 `javax.transaction.TransactionManager` 的引用，用于为每个传入消息启动 XA 事务。如果未指定，则使用本机确认（请参阅 `acknowledge` 属性）。 |
+| `concurrency` | 每个侦听器启动的并发会话或使用者的数量。它可以是表示最大数的简单数字（例如， `5`），也可以是表示上下限的范围（例如，`3-5`）。请注意，指定的最小值只是一个提示，通常在运行时使用 JCA 侦听器容器时将被忽略。 预设值为 `1`。 |
+| `prefetch` | 加载到单个会话中的最大消息数。请注意，增加此数字可能会导致并发消费者饥饿。 |
 
 ## 4. JMX
 
@@ -1584,13 +1584,13 @@ Spring 提供了 XML 命名空间支持以简化 JMS 配置。为了使用 JMS �
 
 本章节描述如何使用 Spring 框架发送电子邮件。
 
-> 库依赖
+>库依赖
 >
-> 下面的 JAR 需要放在你的应用的类路径下以便使用 Spring 框架的电子邮件类库：
+>下面的 JAR 需要放在你的应用的类路径下以便使用 Spring 框架的电子邮件类库：
 >
-> -  [JavaMail](https://javaee.github.io/javamail/) 类库
+>- [JavaMail](https://javaee.github.io/javamail/) 类库
 >
-> 此类库在网络上可以自由使用 — 比如，在 Maven 中央仓库中的 `com.sun.mail:javax.mail`。
+>此类库在网络上可以自由使用 — 比如，在 Maven 中央仓库中的 `com.sun.mail:javax.mail`。
 
 Spring 框架提供了一个很好用的工具类库来发送邮件，将你从特定于底层邮件系统的技术细节中解脱出来，该类库同时还接管了客户端的底层资源处理。
 
@@ -1729,7 +1729,7 @@ public class SimpleOrderManager implements OrderManager {
 }
 ```
 
-> 邮件代码是一个横切关注点，很可能是能够重构进入 [custom Spring AOP aspect](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 的候选者，随后可以在 `OrderManager` 目标上合适的连接点被执行。
+>邮件代码是一个横切关注点，很可能是能够重构进入 [custom Spring AOP aspect](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#aop) 的候选者，随后可以在 `OrderManager` 目标上合适的连接点被执行。
 
 Spring 框架的邮件支持包含标准 JavaMail 实现。参考相关文档获取更多信息。
 
@@ -1801,7 +1801,7 @@ helper.addInline("identifier1234", res);
 sender.send(message);
 ```
 
-> 通过使用指定的 `Content-ID` 将内联资源添加到 `MimeMessage` 中（在上例中为 `identifier1234`）。添加文本和资源的顺序非常重要。确保首先添加文本，然后添加资源。如果您正相反进行操作，则此操作无效。
+>通过使用指定的 `Content-ID` 将内联资源添加到 `MimeMessage` 中（在上例中为 `identifier1234`）。添加文本和资源的顺序非常重要。确保首先添加文本，然后添加资源。如果您正相反进行操作，则此操作无效。
 
 #### 6.2.2 使用模板库创建邮件内容
 
@@ -1809,9 +1809,9 @@ sender.send(message);
 
 在典型的企业级应用中，开发者通常不会使用前面展示的方法创建邮件内容，基于以下几个原因：
 
-- 在 Java 代码中创建基于 HTML 的邮件内容是枯燥而且容易出错的。
-- 在显式逻辑和业务逻辑之间没有清晰的区隔。
-- 修改邮件内容的显式结构需要修改 Java 代码，重新编译，以及重新部署。
+-在 Java 代码中创建基于 HTML 的邮件内容是枯燥而且容易出错的。
+-在显式逻辑和业务逻辑之间没有清晰的区隔。
+-修改邮件内容的显式结构需要修改 Java 代码，重新编译，以及重新部署。
 
 通常，解决这些问题的方法就是使用模板类库（比如 FreeMarker）来定义邮件内容的显式结构。这样你的 Java 代码的唯一任务就是创建用于填充邮件模板的数据以及发送邮件。当你的邮件内容比较复杂时，这种方法绝对是最佳实践。同时，使用 Spring 框架的 FreeMarker 支持类，这样做也非常简单。
 
@@ -1833,12 +1833,12 @@ Spring 的 `TaskExecutor` 接口与 `java.util.concurrent.Executor` 接口相同
 
 Spring 包含若干预置的 `TaskExecutor` 实现。大多数情况下，你应该不需要自己来实现。Spring 提供如下变体：
 
-- `SyncTaskExecutor`: 此实现不回异步执行调用。每个调用都发生在调用线程中。主要用在不需要多线程的场景，比如简单的测试用例。
-- `SimpleAsyncTaskExecutor`: 此实现不会复用任何线程。它为每次调用启动一个新的线程。不过，它支持有限制的并发，超过并发度限制的调用将被阻塞直到运行中的线程结束以空出并发额度。如果你需要真正的线程池，参考此列表后面的 `ThreadPoolTaskExecutor` 。
-- `ConcurrentTaskExecutor`: 此实现是 `java.util.concurrent.Executor` 实例的适配器。还有一个替代（`ThreadPoolTaskExecutor`），将 `Executor` 配置参数作为 bean 属性公开。很少需要直接使用 `ConcurrentTaskExecutor`。但是，如果 `ThreadPoolTaskExecutor` 不够灵活，无法满足您的需求，则可以选择 `ConcurrentTaskExecutor` 。
-- `ThreadPoolTaskExecutor`: 此实现是最常用的。它公开了用于配置 `java.util.concurrent.ThreadPoolExecutor` 的 bean 属性，并将其包装在 `TaskExecutor` 中。如果您需要适配其他类型的 `java.util.concurrent.Executor`，我们建议您改用 `ConcurrentTaskExecutor`。
-- `WorkManagerTaskExecutor`: 此实现使用 CommonJ `WorkManager` 作为其支持服务提供者，并且是在 Spring 应用程序上下文中在 WebLogic 或 WebSphere 上设置基于 CommonJ 的线程池集成的中心便利类。
-- `DefaultManagedTaskExecutor`: 此实现在兼容 JSR-236 的运行时环境（例如 Java EE 7+ 应用程序服务器）中使用 JNDI 获得的 `ManagedExecutorService`，为此替换了 CommonJ `WorkManager`。
+-`SyncTaskExecutor`: 此实现不回异步执行调用。每个调用都发生在调用线程中。主要用在不需要多线程的场景，比如简单的测试用例。
+-`SimpleAsyncTaskExecutor`: 此实现不会复用任何线程。它为每次调用启动一个新的线程。不过，它支持有限制的并发，超过并发度限制的调用将被阻塞直到运行中的线程结束以空出并发额度。如果你需要真正的线程池，参考此列表后面的 `ThreadPoolTaskExecutor` 。
+-`ConcurrentTaskExecutor`: 此实现是 `java.util.concurrent.Executor` 实例的适配器。还有一个替代（`ThreadPoolTaskExecutor`），将 `Executor` 配置参数作为 bean 属性公开。很少需要直接使用 `ConcurrentTaskExecutor`。但是，如果 `ThreadPoolTaskExecutor` 不够灵活，无法满足您的需求，则可以选择 `ConcurrentTaskExecutor` 。
+-`ThreadPoolTaskExecutor`: 此实现是最常用的。它公开了用于配置 `java.util.concurrent.ThreadPoolExecutor` 的 bean 属性，并将其包装在 `TaskExecutor` 中。如果您需要适配其他类型的 `java.util.concurrent.Executor`，我们建议您改用 `ConcurrentTaskExecutor`。
+-`WorkManagerTaskExecutor`: 此实现使用 CommonJ `WorkManager` 作为其支持服务提供者，并且是在 Spring 应用程序上下文中在 WebLogic 或 WebSphere 上设置基于 CommonJ 的线程池集成的中心便利类。
+-`DefaultManagedTaskExecutor`: 此实现在兼容 JSR-236 的运行时环境（例如 Java EE 7+ 应用程序服务器）中使用 JNDI 获得的 `ManagedExecutorService`，为此替换了 CommonJ `WorkManager`。
 
 #### 7.1.2. 使用 `TaskExecutor`
 
@@ -1993,7 +1993,7 @@ public class AppConfig {
 
 注意，在上面的 XML 中，给定一个执行器引用来处理其中对应于 `@Async` 注解修饰的方法的任务，而给定的调度器引用管理 `@Scheduled` 注解修饰的方法 。
 
-> 处理 `@Async` 注解的默认增强模式是 `proxy`（代理），它仅允许通过代理来拦截调用。同一类内的本地调用无法以这种方式被拦截。对于更高级的拦截模式，请考虑结合编译时或加载时编织切换到 `aspectj` 模式。
+>处理 `@Async` 注解的默认增强模式是 `proxy`（代理），它仅允许通过代理来拦截调用。同一类内的本地调用无法以这种方式被拦截。对于更高级的拦截模式，请考虑结合编译时或加载时编织切换到 `aspectj` 模式。
 
 #### 7.3.2.  `@Scheduled` 注解
 
@@ -2210,4 +2210,133 @@ Spring task 命名空间最强大的功能是支持配置要在 Spring Applicati
 
 <task:scheduler id="myScheduler" pool-size="10"/>
 ```
+
+### 7.5. 使用 Quartz 调度器
+
+Quartz 使用 `Trigger`，`Job` 以及 `JobDetail` 对象来实现各种任务的调度。要了解 Quartz 背后的基本概念，请参考 https://www.quartz-scheduler.org/ 。方便起见，Spring 提供了两个类来简化在基于 Spring 的引用中的 Quartz 使用。
+
+#### 7.5.1. 使用 `JobDetailFactoryBean`
+
+Quart `JobDetail` 对象包含运行一项任务所需的所有信息。Spring 提供了 `JobDetailFactoryBean` ，它为 XML 形式的配置提供了 bean 风格的属性。考虑下面的例子：
+
+```xml
+<bean name="exampleJob" class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+    <property name="jobClass" value="example.ExampleJob"/>
+    <property name="jobDataAsMap">
+        <map>
+            <entry key="timeout" value="5"/>
+        </map>
+    </property>
+</bean>
+```
+
+任务细节配置包含运行任务（`ExampleJob`）所需的所有信息。超时在任务数据映射中指定。任务数据映射在 `JobExectionContext` （在任务执行期间会传递给你）中可用，但是 `JobDetail` 同样也从用于配置任务实例的任务数据映射中获取它的属性。因此，下面的例子中，`ExampleJob` 包含名为 `timeout` 的 bean 属性，`JobDetail` 自动应用该属性值：
+
+```java
+package example;
+
+public class ExampleJob extends QuartzJobBean {
+
+    private int timeout;
+
+    /**
+     * Setter called after the ExampleJob is instantiated
+     * with the value from the JobDetailFactoryBean (5)
+     */
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    protected void executeInternal(JobExecutionContext ctx) throws JobExecutionException {
+        // do the actual work
+    }
+
+}
+```
+
+从任务数据映射中获取的额外属性对你来说同样可用。
+
+> 通过使用 `name` 和 `group` 属性，你可以相应修改任务的名称和组。默认情况下，任务名称对应于 `JobDetailFactoryBean` bean 名称（上面例子中的 `exampleJob`）。
+
+#### 7.5.2. 使用 `MethodInvokingJobDetailFactoryBean`
+
+通常你很少需要调用特定对象上的方法。通过使用 `MethodInvokingJobDetailFactoryBean` ，你可以做到这一点，如下面例子所示：
+
+```xml
+<bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="exampleBusinessObject"/>
+    <property name="targetMethod" value="doIt"/>
+</bean>
+```
+
+前面的示例导致在 `exampleBusinessObject` 方法上调用 `doIt` 方法，如以下示例所示：
+
+```java
+public class ExampleBusinessObject {
+
+    // properties and collaborators
+
+    public void doIt() {
+        // do the actual work
+    }
+}
+```
+
+```xml
+<bean id="exampleBusinessObject" class="examples.ExampleBusinessObject"/>
+```
+
+通过使用 `MethodInvokingJobDetailFactoryBean`，您无需创建仅调用方法的单行作业。您只需要创建实际的业务对象并连接具体对象即可。
+
+默认情况下，Quartz Jobs 是无状态的，从而导致作业相互干扰的可能性。如果为相同的 `JobDetail` 指定两个触发器，则有可能在第一个作业完成之前启动第二个作业。如果 `JobDetail` 类实现了 `Stateful` 接口，则不会发生这种情况。在第一个作业完成之前，第二个作业不会开始。要使由 `MethodInvokingJobDetailFactoryBean` 产生的作业是非并行的，请将 `concurrent` 标记设置为 `false`，如以下示例所示：
+
+```xml
+<bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="exampleBusinessObject"/>
+    <property name="targetMethod" value="doIt"/>
+    <property name="concurrent" value="false"/>
+</bean>
+```
+
+> 默认情况下，作业将以并发方式运行。
+
+#### 7.5.3. 通过使用触发器和 `SchedulerFactoryBean` 连接作业
+
+我们已经创建了工作详细信息和工作。我们还回顾了便捷 bean，该 bean 使您可以在特定对象上调用方法。当然，我们仍然需要自己调度工作。这是通过使用触发器和一个 `SchedulerFactoryBean` 来完成的。Quartz 中提供了几种触发器，Spring 提供了两个具有方便的默认值的 Quartz `FactoryBean` 实现：`CronTriggerFactoryBean` 和 `SimpleTriggerFactoryBean`。
+
+触发器需要调度。Spring提供了一个 `SchedulerFactoryBean`，它公开了要设置为属性的触发器。  `SchedulerFactoryBean` 通过这些触发器调度实际的作业。
+
+以下清单同时使用了 `SimpleTriggerFactoryBean` 和 `CronTriggerFactoryBean`：
+
+```xml
+<bean id="simpleTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+    <!-- see the example of method invoking job above -->
+    <property name="jobDetail" ref="jobDetail"/>
+    <!-- 10 seconds -->
+    <property name="startDelay" value="10000"/>
+    <!-- repeat every 50 seconds -->
+    <property name="repeatInterval" value="50000"/>
+</bean>
+
+<bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+    <property name="jobDetail" ref="exampleJob"/>
+    <!-- run every morning at 6 AM -->
+    <property name="cronExpression" value="0 0 6 * * ?"/>
+</bean>
+```
+
+前面的示例设置了两个触发器，一个触发器每隔 50 秒运行一次，启动延迟为 10 秒，另一个触发器每天清晨 6 点运行。要完成所有工作，我们需要设置 `SchedulerFactoryBean`，如以下示例所示：
+
+```xml
+<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+    <property name="triggers">
+        <list>
+            <ref bean="cronTrigger"/>
+            <ref bean="simpleTrigger"/>
+        </list>
+    </property>
+</bean>
+```
+
+更多的属性可用于 `SchedulerFactoryBean`，例如工作明细所使用的日历，用于自定义 Quartz 的属性等。请参阅 [`SchedulerFactoryBean`](https://docs.spring.io/spring-framework/docs/5.1.9.RELEASE/javadoc-api/org/springframework/scheduling/quartz/SchedulerFactoryBean.html) Javadoc了解更多信息 。
 
