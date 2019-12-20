@@ -1,48 +1,65 @@
-### 8.2. 基于注解的声明式缓存
+##### 自定义 Key 生成声明
 
-对于缓存声明，Spring 缓存抽象提供了一系列 Java 注解：
-
-- `@Cacheable`: 触发缓存填充。
-- `@CacheEvict`: 触发缓存淘汰。
-- `@CachePut`: 不影响方法调度情况下更新缓存。
-- `@Caching`: 对应用于一个方法的多个缓存操作重新编组。
-- `@CacheConfig`: 在类层面共享某些公用缓存相关的设置。
-
-#### 8.2.1.  `@Cacheable` 注解
-
-如名称所暗示的，你可以使用 `@Cacheable` 注解来标定可以被缓存的方法－也就是说，方法的结果可以被存储在缓存中，因此后续相同参数的方法调用就可以直接返回缓存中的结果，而不需要实际执行方法。最简单的形式中，注解声明之需要讲缓存名称与被注解的方法关联起来，如下面例子所示：
+由于缓存是通用的，因此目标方法很可能具有各种签名，这些签名无法轻易映射到缓存结构顶部。当目标方法具有多个参数时，只有其中一些参数适合缓存（而其余参数仅由方法逻辑使用），这往往会变得很明显。考虑以下示例：
 
 ```java
 @Cacheable("books")
-public Book findBook(ISBN isbn) {...}
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
 ```
 
-在前面的代码段中，`findBook` 方法与名为 `books` 的缓存相关联。每次调用该方法时，都会检查缓存以查看调用是否已经执行并且不必重复执行。尽管在大多数情况下，仅声明一个缓存，但注解可指定多个名称，以便使用多个缓存。在这种情况下，在执行方法之前检查每个缓存-如果命中了至少一个缓存，则返回关联的值。
+乍一看，虽然两个 `boolean` 参数会影响书的查找方式，但它们对缓存没有用处。此外，如果两者中只有一个重要而另一个不重要怎么办？
 
-> 即使未实际执行缓存的方法，所有其他不包含该值的缓存也会被更新。
+对于这种情况，可以通过`@Cacheable` 注解指定如何通过其 `key` 属性生成密钥。 您可以使用 [SpEL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions) 选择感兴趣的参数（或其嵌套属性） ），执行操作甚至调用任意方法，而无需编写任何代码或实现任何接口。相对于 [默认生成器](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-default-key) ，更推荐这种方式。因为随着代码库的增长，方法的签名趋向于完全不同。虽然默认策略可能适用于某些方法，但很少适用于所有方法。
 
-下面的例子在 `findBook` 方法上使用 `@Cacheable` 注解：
+下面的例子展示了各种 SpEL 声明（如果你还不熟悉 SpEL ，参考 [Spring Expression Language](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions)）：
 
 ```java
-@Cacheable({"books", "isbns"})
+@Cacheable(cacheNames="books", key="#isbn")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+
+@Cacheable(cacheNames="books", key="#isbn.rawNumber")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+
+@Cacheable(cacheNames="books", key="T(someType).hash(#isbn)")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+```
+
+前面的代码片段显示了选择某个参数，其属性之一甚至是任意（静态）方法是多么简单。
+
+如果负责生成键的算法过于具体或需要共享，则可以在操作上定义一个自定义的 `keyGenerator`。为此，请指定要使用的 `KeyGenerator` bean实现的名称，如以下示例所示：
+
+```java
+@Cacheable(cacheNames="books", keyGenerator="myKeyGenerator")
+public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+```
+
+> `key` 和 `keyGenerator` 参数是互斥的，同时指定这两个参数的操作将导致异常。
+
+##### 默认缓存解析
+
+缓存抽象使用一个简单的 `CacheResolver`，通过使用配置的 `CacheManager` 来检索在操作级别定义的缓存。
+
+要提供其他默认的缓存解析器，您需要实现 `org.springframework.cache.interceptor.CacheResolver` 接口。
+
+##### 自定义缓存解析
+
+默认的缓存解析非常适合与单个 `CacheManager` 一起使用且对复杂的缓存解析没有要求的应用程序。
+
+对于使用多个缓存管理器的应用程序，可以将 `cacheManager` 设置为用于每个操作，如以下示例所示：
+
+```java
+@Cacheable(cacheNames="books", cacheManager="anotherCacheManager") 
 public Book findBook(ISBN isbn) {...}
 ```
 
-##### 默认 Key 生成
+您还可以完全按照替换 [密钥生成](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-key) 的方式完全替换 `CacheResolver`。每个缓存操作都需要解析，让实现实际上可以根据运行时参数来解析要使用的缓存。以下示例显示了如何指定 `CacheResolver`：
 
-由于缓存本质上是键值存储，因此每次调用缓存方法都需要转换为适合缓存访问的键。缓存抽象使用基于以下算法的简单 `KeyGenerator`：
+```java
+@Cacheable(cacheResolver="runtimeCacheResolver") 
+public Book findBook(ISBN isbn) {...}
+```
 
-- 如果未提供任何参数，则返回 `SimpleKey.EMPTY`。
-
-- 如果仅给出一个参数，则返回该实例。
-
-- 如果给出了一个以上的参数，则返回包含所有参数的 `SimpleKey`。
-
-只要参数具有自然键并实现有效的 `hashCode()` 和 `equals()` 方法，该方法就适用于大多数场景。如果不是这种情况，则需要更改策略。
-
-为了提供不同的默认键生成器，你需要实现 `org.springframework.cache.interceptor.KeyGenerator` 接口。
-
-> 随着 Spring 4.0 的发布，默认的键生成策略发生了变化。Spring 的早期版本使用了键生成策略，该策略对于多个关键参数仅考虑参数的 `hashCode()` 而不考虑 `equals()`。这可能会导致意外的键冲突（有关背景，请参见 [SPR-10237](https://jira.spring.io/browse/SPR-10237)）。新的 `SimpleKeyGenerator` 在这种情况下使用复合键。
+> 从Spring 4.1开始，缓存注解的 `value` 属性不再是必需的，因为 `CacheResolver` 可以提供该特定信息，而与注解的内容无关。
 >
-> 如果您想继续使用以前的键生成策略，则可以配置已弃用的 `org.springframework.cache.interceptor.DefaultKeyGenerator` 类或创建基于哈希的自定义 `KeyGenerator` 实现。
+> 与 `key` 和 `keyGenerator` 类似，`cacheManager` 和 `cacheResolver` 参数是互斥的，并且同时指定这两个参数的操作将导致异常。因为自定义 `CacheManager` 被 `CacheResolver` 实现忽略。这可能不是您所期望的。
 
