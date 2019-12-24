@@ -1,65 +1,53 @@
-##### 自定义 Key 生成声明
+##### 同步缓存
 
-由于缓存是通用的，因此目标方法很可能具有各种签名，这些签名无法轻易映射到缓存结构顶部。当目标方法具有多个参数时，只有其中一些参数适合缓存（而其余参数仅由方法逻辑使用），这往往会变得很明显。考虑以下示例：
+在多线程环境中，某些操作可能被使用相同的参数并发调用（典型地在启动阶段）。默认地，缓存抽象不会锁定任何东西，同一个值可能被计算很多次，这就与缓存的目标背道而驰。
 
-```java
-@Cacheable("books")
-public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
-```
-
-乍一看，虽然两个 `boolean` 参数会影响书的查找方式，但它们对缓存没有用处。此外，如果两者中只有一个重要而另一个不重要怎么办？
-
-对于这种情况，可以通过`@Cacheable` 注解指定如何通过其 `key` 属性生成密钥。 您可以使用 [SpEL](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions) 选择感兴趣的参数（或其嵌套属性） ），执行操作甚至调用任意方法，而无需编写任何代码或实现任何接口。相对于 [默认生成器](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-default-key) ，更推荐这种方式。因为随着代码库的增长，方法的签名趋向于完全不同。虽然默认策略可能适用于某些方法，但很少适用于所有方法。
-
-下面的例子展示了各种 SpEL 声明（如果你还不熟悉 SpEL ，参考 [Spring Expression Language](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions)）：
+对这些特殊场景，你可以使用 `sync` 属性来构建底层缓存提供者来锁定缓存数据实体，当同一个值被重复计算时。作为结果，只有一个线程忙于计算需要缓存的值，同时其他线程都会阻塞到缓存中的该数据实体被更新。下面的例子展示了如何使用 `sync` 属性：
 
 ```java
-@Cacheable(cacheNames="books", key="#isbn")
-public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
-
-@Cacheable(cacheNames="books", key="#isbn.rawNumber")
-public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
-
-@Cacheable(cacheNames="books", key="T(someType).hash(#isbn)")
-public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+@Cacheable(cacheNames="foos", sync=true) 
+public Foo executeExpensiveOperation(String id) {...}
 ```
 
-前面的代码片段显示了选择某个参数，其属性之一甚至是任意（静态）方法是多么简单。
+> 这是一个可选特性，你喜欢的缓存类库可能不支持。核心框架提供的所有的 `CacheManager` 实现都支持该特性。参考你的缓存提供者文档获取更多细节。
 
-如果负责生成键的算法过于具体或需要共享，则可以在操作上定义一个自定义的 `keyGenerator`。为此，请指定要使用的 `KeyGenerator` bean实现的名称，如以下示例所示：
+##### 条件缓存
+
+有时候，一个方法并不是始终都适合被缓存（比如，可能依赖于给定的参数）。缓存注解通过 `condition` 参数支持该功能，携带一个 `SpEL` 表达式，该表达式可以被解析为 `true` 或者 `false` 。如果是 `true` ，该方法将被缓存。否者，该方法的行为就会如同没有被缓存一样（也就是说，该方法每次都会执行，无论结果是否被缓存或者使用何种参数）。例如，下面的方法只有当 `name` 参数长度小于 32 时才会被缓存：
 
 ```java
-@Cacheable(cacheNames="books", keyGenerator="myKeyGenerator")
-public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
+@Cacheable(cacheNames="book", condition="#name.length() < 32") 
+public Book findBook(String name)
 ```
 
-> `key` 和 `keyGenerator` 参数是互斥的，同时指定这两个参数的操作将导致异常。
-
-##### 默认缓存解析
-
-缓存抽象使用一个简单的 `CacheResolver`，通过使用配置的 `CacheManager` 来检索在操作级别定义的缓存。
-
-要提供其他默认的缓存解析器，您需要实现 `org.springframework.cache.interceptor.CacheResolver` 接口。
-
-##### 自定义缓存解析
-
-默认的缓存解析非常适合与单个 `CacheManager` 一起使用且对复杂的缓存解析没有要求的应用程序。
-
-对于使用多个缓存管理器的应用程序，可以将 `cacheManager` 设置为用于每个操作，如以下示例所示：
+除了 `condition` 参数，你还可以使用 `unless` 参数来阻止值被添加到缓存中。与 `condition` 不同，`unless` 表达式在方法被调用之后才会被解析。扩展上面的例子，可能我们只想要缓存平装书，如下面例子所示：
 
 ```java
-@Cacheable(cacheNames="books", cacheManager="anotherCacheManager") 
-public Book findBook(ISBN isbn) {...}
+@Cacheable(cacheNames="book", condition="#name.length() < 32", unless="#result.hardback") 
+public Book findBook(String name)
 ```
 
-您还可以完全按照替换 [密钥生成](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-key) 的方式完全替换 `CacheResolver`。每个缓存操作都需要解析，让实现实际上可以根据运行时参数来解析要使用的缓存。以下示例显示了如何指定 `CacheResolver`：
+缓存抽象支持 `java.util.Optional` ，如果它的内容存在，就会作为被缓存的值。`#result` 始终指向业务实体，而不是任何支持的包装器，因此，上面的例子可以写成：
 
 ```java
-@Cacheable(cacheResolver="runtimeCacheResolver") 
-public Book findBook(ISBN isbn) {...}
+@Cacheable(cacheNames="book", condition="#name.length() < 32", unless="#result?.hardback")
+public Optional<Book> findBook(String name)
 ```
 
-> 从Spring 4.1开始，缓存注解的 `value` 属性不再是必需的，因为 `CacheResolver` 可以提供该特定信息，而与注解的内容无关。
->
-> 与 `key` 和 `keyGenerator` 类似，`cacheManager` 和 `cacheResolver` 参数是互斥的，并且同时指定这两个参数的操作将导致异常。因为自定义 `CacheManager` 被 `CacheResolver` 实现忽略。这可能不是您所期望的。
+注意，`result` 仍然指向 `Book` 而不是 `Optional` 。因为它可能是 `null` ，我们应该使用安全的导航操作。
+
+##### 可用的缓存 SpEL 解析上下文
+
+每个 `SpEL` 表达式都是针对专门的 [`上下文`](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/core.html#expressions-language-ref) 解析。除了内建参数，框架提供了专门的缓存相关的元数据，比如参数名称。下面的表格描述了可用于上下文的元素，你可以使用它们进行关键或者条件计算：
+
+| Name          | Location           | Description                                                  | Example                                                      |
+| :------------ | :----------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `methodName`  | Root object        | 被调用方法的名称                                             | `#root.methodName`                                           |
+| `method`      | Root object        | 被调用的方法                                                 | `#root.method.name`                                          |
+| `target`      | Root object        | 被调用的目标对象                                             | `#root.target`                                               |
+| `targetClass` | Root object        | 被调用的目标的类型                                           | `#root.targetClass`                                          |
+| `args`        | Root object        | 用于调用目标的参数（作为数组）                               | `#root.args[0]`                                              |
+| `caches`      | Root object        | 执行当前方法的缓存的集合                                     | `#root.caches[0].name`                                       |
+| Argument name | Evaluation context | 任何方法参数的名称。如果名称不可用（可能是由于没有调试信息），则参数名称也可以在 `#a <#arg>` 下使用，其中 `#arg` 代表参数索引（从 `0` 开始）。 | `#iban` or `#a0` (you can also use `#p0` or `#p<#arg>` notation as an alias). |
+| `result`      | Evaluation context | 方法调用的结果（要缓存的值）。仅在 `unless` 表达式，`cache put` 表达式（用于计算 `key`）或`cache evict`表达式（`beforeInvocation` 为 `false` 时）中可用。对于支持的包装器（例如 `Optional`），`#result` 是指实际对象，而不是包装器。 | `#result`                                                    |
 
