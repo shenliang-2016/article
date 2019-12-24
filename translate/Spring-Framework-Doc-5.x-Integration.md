@@ -2479,7 +2479,7 @@ public Book findBook(ISBN isbn, boolean checkWarehouse, boolean includeUsed)
 public Book findBook(ISBN isbn) {...}
 ```
 
-您还可以完全按照替换 [密钥生成](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-key) 的方式完全替换 `CacheResolver`。每个缓存操作都需要解析，让实现实际上可以根据运行时参数来解析要使用的缓存。以下示例显示了如何指定 `CacheResolver`：
+您还可以完全按照替换 [缓存 key 生成](https://docs.spring.io/spring/docs/5.1.9.RELEASE/spring-framework-reference/integration.html#cache-annotations-cacheable-key) 的方式完全替换 `CacheResolver`。每个缓存操作都需要解析，让实现实际上可以根据运行时参数来解析要使用的缓存。以下示例显示了如何指定 `CacheResolver`：
 
 ```java
 @Cacheable(cacheResolver="runtimeCacheResolver") 
