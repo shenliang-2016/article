@@ -4,13 +4,13 @@ Spring 更喜欢基于 Java 的配置。尽管通过 XML 源文件使用 `Spring
 
 > 许多已经发布到网上的 Spring 配置示例都使用了 XML 配置。如果可能，请始终使用等效的基于 Java 的配置。搜索 `Enable*` 注解将是一个很好的切入点。
 
-#### 3.3.1. Importing Additional Configuration Classes
+#### 3.3.1. 引入额外的配置类
 
-You need not put all your `@Configuration` into a single class. The `@Import` annotation can be used to import additional configuration classes. Alternatively, you can use `@ComponentScan` to automatically pick up all Spring components, including `@Configuration` classes.
+你不需要将所有的 `@Configuration` 都放在同一个类里。`@Import` 注解可以被用来引入另外的配置类。此外，你可以使用 `@ComponentScen` 自动获取所有的 Spring 组件，包括 `@Configuration` 类。
 
-#### 3.3.2. Importing XML Configuration
+#### 3.3.2. 引入 XML 配置
 
-If you absolutely must use XML based configuration, we recommend that you still start with a `@Configuration` class. You can then use an `@ImportResource` annotation to load XML configuration files.
+如果你必须使用基于 XML 的配置，我们推荐你仍然从 `@Configuration` 类开始。你可以在其中使用 `@ImportResource` 注解加载 XML 配置文件。
 
 ### 3.4. Auto-configuration
 
