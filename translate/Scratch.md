@@ -4,7 +4,7 @@
 
 如果按照上面的建议构造代码（将应用程序类放在根包中），则可以添加不带任何参数的 `@ComponentScan`。您的所有应用程序组件（`@Component`，`@Service`，`@Repository`，`@Controller` 等）都将自动注册为 Spring Bean。
 
-The following example shows a `@Service` Bean that uses constructor injection to obtain a required `RiskAssessor` bean:
+下面的例子展示了一个 `@Service` bean ，它使用了构造器注入来获取所需的 `RiskAssessor` bean：
 
 ```java
 package com.example.service;
@@ -27,7 +27,7 @@ public class DatabaseAccountService implements AccountService {
 }
 ```
 
-If a bean has one constructor, you can omit the `@Autowired`, as shown in the following example:
+如果 bean 拥有构造器，你就可以忽略 `@Autowired` ，如下面例子所示：
 
 ```java
 @Service
@@ -44,15 +44,15 @@ public class DatabaseAccountService implements AccountService {
 }
 ```
 
-> Notice how using constructor injection lets the `riskAssessor` field be marked as `final`, indicating that it cannot be subsequently changed.
+> 请注意，使用构造函数注入如何将 `riskAssessor` 字段标记为 `final`，指示其随后无法更改。
 
-### 3.6. Using the @SpringBootApplication Annotation
+### 3.6. 使用 @SpringBootApplication 注解
 
-Many Spring Boot developers like their apps to use auto-configuration, component scan and be able to define extra configuration on their "application class". A single `@SpringBootApplication` annotation can be used to enable those three features, that is:
+许多 Spring Boot 开发者喜欢他们的应用使用自动配置，组件扫描，并能够在他们的"应用类”中定义额外的配置。单独一个 `@SpringBootApplication` 就可以同时开启这三个特性。也就是：
 
-- `@EnableAutoConfiguration`: enable [Spring Boot’s auto-configuration mechanism](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-auto-configuration)
-- `@ComponentScan`: enable `@Component` scan on the package where the application is located (see [the best practices](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-structuring-your-code))
-- `@Configuration`: allow to register extra beans in the context or import additional configuration classes
+- `@EnableAutoConfiguration`: 开启 [Spring Boot’s auto-configuration mechanism](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-auto-configuration) 。
+- `@ComponentScan`: 在应用所在的包上开启 `@Component` 扫描 (参考 [the best practices](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-structuring-your-code))。
+- `@Configuration`: 允许在上下文中注册额外 bean 或者引入额外的配置类。
 
 ```java
 package com.example.myapplication;
@@ -70,11 +70,11 @@ public class Application {
 }
 ```
 
-> `@SpringBootApplication` also provides aliases to customize the attributes of `@EnableAutoConfiguration` and `@ComponentScan`.
+> `@SpringBootApplication` 还提供了别名来自定义 `@EnableAutoConfiguration` 和 `@ComponentScan` 属性。
 
-> None of these features are mandatory and you may choose to replace this single annotation by any of the features that it enables. For instance, you may not want to use component scan or configuration properties scan in your application:
+> 这些功能都不是强制性的，您可以选择替换任何单个注解来开关用它启用的任何功能。例如，您可能不想在应用程序中使用组件扫描或配置属性扫描：
 >
-> ````
+> ````java
 > package com.example.myapplication;
 > 
 > import org.springframework.boot.SpringApplication;
@@ -94,4 +94,5 @@ public class Application {
 > }
 > ````
 >
-> In this example, `Application` is just like any other Spring Boot application except that `@Component`-annotated classes and `@ConfigurationProperties`-annotated classes are not detected automatically and the user-defined beans are imported explicitly (see `@Import`).
+> 在此示例中，除了没有自动检测到带有 `@Component` 注解的类和带有 `@ConfigurationProperties` 注解的类并且显式导入了用户定义的 Bean 之外，`Application` 就像其他任何 Spring Boot 应用程序一样（参考 `@Import`）。
+
