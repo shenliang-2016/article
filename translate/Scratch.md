@@ -111,12 +111,13 @@ spring.devtools.restart.quiet-period=1s
 
 现在每 2 秒轮询一次受监视的 `classpath` 文件夹以进行更改，并保持 1 秒钟的静默时间以确保没有其他类更改。
 
-### 3.9. Packaging Your Application for Production
+### 3.9. 将你的应用打包为生产包
 
-Executable jars can be used for production deployment. As they are self-contained, they are also ideally suited for cloud-based deployment.
+可执行 jar 可以用于生产部署。由于它们是独立的，因此它们也非常适合基于云的部署。
 
-For additional “production ready” features, such as health, auditing, and metric REST or JMX end-points, consider adding `spring-boot-actuator`. See *Spring Boot Actuator: Production-ready Features* for details.
+对于其他“生产准备就绪”功能，例如运行状况，审核和度量 REST 或 JMX 端点，请考虑添加 `spring-boot-actuator`。有关详细信息，请参见 *Spring Boot Actuator: Production-ready Features* 。
 
-### 3.10. What to Read Next
+### 3.10. 后续阅读
 
-You should now understand how you can use Spring Boot and some best practices that you should follow. You can now go on to learn about specific *Spring Boot features* in depth, or you could skip ahead and read about the “[production ready](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready)” aspects of Spring Boot.
+现在，您应该了解如何使用 Spring Boot 以及应遵循的一些最佳实践。现在，您可以继续深入了解特定的 *Spring Boot功能*，或者可以跳过并阅读 “[production ready](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready)” 部分。
+
