@@ -26,11 +26,11 @@ spring.devtools.restart.trigger-file=.reloadtrigger
 
 > 在上述文件中激活的配置文件不会影响 [特定于配置文件的配置文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties) 的加载。
 
-#### 3.8.5. Remote Applications
+#### 3.8.5. 远程应用
 
-The Spring Boot developer tools are not limited to local development. You can also use several features when running applications remotely. Remote support is opt-in as enabling it can be a security risk. It should only be enabled when running on a trusted network or when secured with SSL. If neither of these options is available to you, you should not use DevTools' remote support. You should never enable support on a production deployment.
+Spring Boot 开发人员工具不仅限于本地开发。远程运行应用程序时，您还可以使用多种功能。启用远程支持是可选的，因为启用它可能会带来安全风险。仅当在受信任的网络上运行或使用 SSL 保护时，才应启用它。如果这两个选项都不可用，则不应使用 DevTools 的远程支持。永远不要在生产部署上启用支持。
 
-To enable it, you need to make sure that `devtools` is included in the repackaged archive, as shown in the following listing:
+要启用它，您需要确保重新打包的档案中包含 `devtools`，如以下清单所示：
 
 ```xml
 <build>
@@ -46,23 +46,27 @@ To enable it, you need to make sure that `devtools` is included in the repackage
 </build>
 ```
 
-Then you need to set the `spring.devtools.remote.secret` property. Like any important password or secret, the value should be unique and strong such that it cannot be guessed or brute-forced.
+然后您需要设置 `spring.devtools.remote.secret` 属性。像任何重要的密码或机密一样，该值应唯一且强壮，以免被猜测或强行使用。
 
-Remote devtools support is provided in two parts: a server-side endpoint that accepts connections and a client application that you run in your IDE. The server component is automatically enabled when the `spring.devtools.remote.secret` property is set. The client component must be launched manually.
+远程 devtools 支持分为两部分：接受连接的服务器端端点和在 IDE 中运行的客户端应用程序。设置 `spring.devtools.remote.secret` 属性后，服务器组件自动启用。客户端组件必须手动启动。
 
-##### Running the Remote Client Application
+##### 运行远程客户端应用
 
-The remote client application is designed to be run from within your IDE. You need to run `org.springframework.boot.devtools.RemoteSpringApplication` with the same classpath as the remote project that you connect to. The application’s single required argument is the remote URL to which it connects.
+远程客户端应用程序旨在在您的 IDE 中运行。您需要使用与您连接到的远程项目相同的类路径来运行 `org.springframework.boot.devtools.RemoteSpringApplication`。该应用程序的唯一必需参数是它连接到的远程 URL。
 
-For example, if you are using Eclipse or STS and you have a project named `my-app` that you have deployed to Cloud Foundry, you would do the following:
+例如，如果您使用的是 Eclipse 或 STS，并且有一个名为 `my-app` 的项目已部署到 Cloud Foundry，则可以执行以下操作：
 
-- Select `Run Configurations…` from the `Run` menu.
-- Create a new `Java Application` “launch configuration”.
-- Browse for the `my-app` project.
-- Use `org.springframework.boot.devtools.RemoteSpringApplication` as the main class.
-- Add `https://myapp.cfapps.io` to the `Program arguments` (or whatever your remote URL is).
+- 从“运行”菜单中选择“运行配置...”。
 
-A running remote client might resemble the following listing:
+- 创建一个新的 Java 应用程序“启动配置”。
+
+- 选择 `my-app` 项目。
+
+- 使用 `org.springframework.boot.devtools.RemoteSpringApplication` 作为主类。
+
+- 将 `https://myapp.cfapps.io` （或任何远程URL）添加到“程序参数”。
+
+正在运行的远程客户端可能类似于以下清单：
 
 ```
   .   ____          _                                              __ _ _
