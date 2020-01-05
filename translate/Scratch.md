@@ -1,156 +1,83 @@
-#### 4.2.5. 属性中的占位符
+#### 4.2.8. Type-safe Configuration Properties
 
-使用时，`application.properties` 中的值将通过现有的 `Environment` 进行过滤，因此您可以引用以前定义的值（例如，在 System 属性中定义的）。
+Using the `@Value("${property}")` annotation to inject configuration properties can sometimes be cumbersome, especially if you are working with multiple properties or your data is hierarchical in nature. Spring Boot provides an alternative method of working with properties that lets strongly typed beans govern and validate the configuration of your application.
 
-```properties
-app.name=MyApp
-app.description=${app.name} is a Spring Boot application
-```
+> See also the [differences between `@Value` and type-safe configuration properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-vs-value).
 
-> 你还可以使用此技术创建现有 Spring Boot 属性的"短"变体。参考*如何使用'短'命令行参数*了解更对细节。
+##### JavaBean properties binding
 
-#### 4.2.6. 属性加密
-
-Spring Boot 没有提供任何属性值加密的内建支持，不过，它提供了修改 Spring `Evironment` 中包含的属性值所必需的钩子。`EnvironmentPostProcessor` 接口允许你在应用启动之前修改 `Evironment` 。参考 [Customize the Environment or ApplicationContext Before It Starts](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-customize-the-environment-or-application-context) 了解更多细节。
-
-如果你正在寻找保存账号和密码的安全方式， [Spring Cloud Vault](https://cloud.spring.io/spring-cloud-vault/) 项目提供了将外部好化配置存储到 [HashiCorp Vault](https://www.vaultproject.io/) 中的支持。
-
-#### 4.2.7. 使用 YAML 替代属性文件
-
-[YAML](https://yaml.org/) 是 JSON 的超集，因而，是一种描述层级配置数据的方便格式。`SpringApplication` 类自动支持 YAML 作为属性文件的替代，只要你的类路径上存在 [SnakeYAML](https://bitbucket.org/asomov/snakeyaml) 类库。
-
-> 如果你使用启动器，SnakeYAML 则由 `spring-boot-starter` 自动提供。
-
-##### 加载 YAML
-
-Spring 框架提供两种方便的类用于加载 YAML 文件。`YamlPropertiesFactoryBean` 加载 YAML 为 `Properties` ，`YamlMapFactoryBean` 加载 YAML 为 `Map` 。
-
-比如，考虑下面的 YAML 文件：
-
-```yaml
-environments:
-    dev:
-        url: https://dev.example.com
-        name: Developer Setup
-    prod:
-        url: https://another.example.com
-        name: My Cool App
-```
-
-上面的例子可以被转化为下面的配置：
-
-```properties
-environments.dev.url=https://dev.example.com
-environments.dev.name=Developer Setup
-environments.prod.url=https://another.example.com
-environments.prod.name=My Cool App
-```
-
-YAML 列表表示为带有 [`index`] 解引用器的属性键。例如，考虑以下 YAML：
-
-```yaml
-my:
-   servers:
-       - dev.example.com
-       - another.example.com
-```
-
-上面的例子将被转化为下面的属性：
-
-```properties
-my.servers[0]=dev.example.com
-my.servers[1]=another.example.com
-```
-
-要通过使用 Spring Boot 的 `Binder` 实用程序（这是 `@ConfigurationProperties`的作用）进行类似的属性绑定，您需要在目标 bean 中有一个属性，类型为 `java.util.List`（或 `Set`）。同时需要提供一个 setter 或使用一个可变值对其进行初始化。例如，以下示例绑定到前面显示的属性：
+It is possible to bind a bean declaring standard JavaBean properties as shown in the following example:
 
 ```java
-@ConfigurationProperties(prefix="my")
-public class Config {
+package com.example;
 
-    private List<String> servers = new ArrayList<String>();
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    public List<String> getServers() {
-        return this.servers;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties("acme")
+public class AcmeProperties {
+
+    private boolean enabled;
+
+    private InetAddress remoteAddress;
+
+    private final Security security = new Security();
+
+    public boolean isEnabled() { ... }
+
+    public void setEnabled(boolean enabled) { ... }
+
+    public InetAddress getRemoteAddress() { ... }
+
+    public void setRemoteAddress(InetAddress remoteAddress) { ... }
+
+    public Security getSecurity() { ... }
+
+    public static class Security {
+
+        private String username;
+
+        private String password;
+
+        private List<String> roles = new ArrayList<>(Collections.singleton("USER"));
+
+        public String getUsername() { ... }
+
+        public void setUsername(String username) { ... }
+
+        public String getPassword() { ... }
+
+        public void setPassword(String password) { ... }
+
+        public List<String> getRoles() { ... }
+
+        public void setRoles(List<String> roles) { ... }
+
     }
 }
 ```
 
-##### 在 Spring 环境中暴露 YAML 为属性
+The preceding POJO defines the following properties:
 
-`YamlPropertySourceLoader` 类可用于在 Spring 环境中将 YAML 作为 `PropertySource` 公开。这样做可以让您使用带有占位符语法的 `@Value` 注解来访问 YAML 属性。
+- `acme.enabled`, with a value of `false` by default.
+- `acme.remote-address`, with a type that can be coerced from `String`.
+- `acme.security.username`, with a nested "security" object whose name is determined by the name of the property. In particular, the return type is not used at all there and could have been `SecurityProperties`.
+- `acme.security.password`.
+- `acme.security.roles`, with a collection of `String` that defaults to `USER`.
 
-##### 多配置文件的 YAML 文档
+> Spring Boot auto-configuration heavily makes use of `@ConfigurationProperties` for easily configuring auto-configured beans. Similar to auto-configuration classes, `@ConfigurationProperties` classes available in Spring Boot are for internal use only. The properties that map to the class, which are configured via properties files, YAML files, environment variables etc., are public API but the content of the class itself is not meant to be used directly.
 
-您可以使用 `spring.profiles` 键在一个文件中指定多个特定于配置文件的 YAML 文档，以指示何时应用该文档，如以下示例所示：
-
-```yaml
-server:
-    address: 192.168.1.100
----
-spring:
-    profiles: development
-server:
-    address: 127.0.0.1
----
-spring:
-    profiles: production & eu-central
-server:
-    address: 192.168.1.120
-```
-
-在前面的示例中，如果 `development` 配置文件处于活动状态，则 `server.address` 属性为 `127.0.0.1`。类似地，如果 `production` **和** `eu-central` 配置文件处于活动状态，则 `server.address` 属性为 `192.168.1.120`。如果未启用 `development` ， `production` 和 `eu-central` 配置文件，则该属性的值为 `192.168.1.100`。
-
-> 因此 `spring.profiles` 可以包含一个简单的配置文件名称（例如 `production`）或一个配置文件表达式。配置文件表达式允许表达更复杂的配置文件逻辑，例如 `production＆(eu-central | eu-west)`。有关更多详细信息，请参见 [参考指南](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/core.html#beans-definition-profiles-java)。
-
-如果在启动应用程序上下文时未明确激活任何配置，则会激活默认配置文件。因此，在以下 YAML 中，我们为 `spring.security.user.password` 设置了一个值，该值仅在“默认”配置文件激活时可用：
-
-```yaml
-server:
-  port: 8000
----
-spring:
-  profiles: default
-  security:
-    user:
-      password: weak
-```
-
-而在以下示例中，始终设置密码是因为该密码未附加到任何配置文件，并且必须根据需要在所有其他配置文件中将其显式重置：
-
-```yaml
-server:
-  port: 8000
-spring:
-  security:
-    user:
-      password: weak
-```
-
-使用 `spring.profiles` 元素指定的 Spring 配置可以通过使用 `!` 字符来取反。如果为单个文档指定了否定的配置文件和非否定的配置文件，则至少一个非否定的配置文件必须匹配，并且否定的配置文件不能匹配。
-
-##### YAML 的缺点
-
-无法通过使用 `@PropertySource` 注解来加载 YAML 文件。因此，在需要以这种方式加载值的情况下，需要使用属性文件。
-
-在特定于配置文件的 YAML 文件中使用多 YAML 文档语法可能会导致意外行为。例如，考虑文件中的以下配置：
-
-application-dev.yml
-
-```yaml
-server:
-  port: 8000
----
-spring:
-  profiles: "!test"
-  security:
-    user:
-      password: "secret"
-```
-
-如果使用参数 `--spring.profiles.active=dev` 来运行应用程序，则可能希望将 `security.user.password` 设置为“秘密的”，但实际情况并非如此。
-
-嵌套文档将被过滤，因为主文件名为 `application-dev.yml`。它已经被认为是特定于配置文件的，并且嵌套文档将被忽略。
-
-> 我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
+> Such arrangement relies on a default empty constructor and getters and setters are usually mandatory, since binding is through standard Java Beans property descriptors, just like in Spring MVC. A setter may be omitted in the following cases:
+>
+> - Maps, as long as they are initialized, need a getter but not necessarily a setter, since they can be mutated by the binder.
+> - Collections and arrays can be accessed either through an index (typically with YAML) or by using a single comma-separated value (properties). In the latter case, a setter is mandatory. We recommend to always add a setter for such types. If you initialize a collection, make sure it is not immutable (as in the preceding example).
+> - If nested POJO properties are initialized (like the `Security` field in the preceding example), a setter is not required. If you want the binder to create the instance on the fly by using its default constructor, you need a setter.
+>
+> Some people use Project Lombok to add getters and setters automatically. Make sure that Lombok does not generate any particular constructor for such a type, as it is used automatically by the container to instantiate the object.
+>
+> Finally, only standard Java Bean properties are considered and binding on static properties is not supported.
 
