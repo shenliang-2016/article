@@ -76,13 +76,13 @@ public class Config {
 }
 ```
 
-##### Exposing YAML as Properties in the Spring Environment
+##### 在 Spring 环境中暴露 YAML 为属性
 
-The `YamlPropertySourceLoader` class can be used to expose YAML as a `PropertySource` in the Spring `Environment`. Doing so lets you use the `@Value` annotation with placeholders syntax to access YAML properties.
+`YamlPropertySourceLoader` 类可用于在 Spring 环境中将 YAML 作为 `PropertySource` 公开。这样做可以让您使用带有占位符语法的 `@Value` 注解来访问 YAML 属性。
 
-##### Multi-profile YAML Documents
+##### 多配置文件的 YAML 文档
 
-You can specify multiple profile-specific YAML documents in a single file by using a `spring.profiles` key to indicate when the document applies, as shown in the following example:
+您可以使用 `spring.profiles` 键在一个文件中指定多个特定于配置文件的 YAML 文档，以指示何时应用该文档，如以下示例所示：
 
 ```yaml
 server:
@@ -99,11 +99,11 @@ server:
     address: 192.168.1.120
 ```
 
-In the preceding example, if the `development` profile is active, the `server.address` property is `127.0.0.1`. Similarly, if the `production` **and** `eu-central` profiles are active, the `server.address` property is `192.168.1.120`. If the `development`, `production` and `eu-central` profiles are **not** enabled, then the value for the property is `192.168.1.100`.
+在前面的示例中，如果 `development` 配置文件处于活动状态，则 `server.address` 属性为 `127.0.0.1`。类似地，如果 `production` **和** `eu-central` 配置文件处于活动状态，则 `server.address` 属性为 `192.168.1.120`。如果未启用 `development` ， `production` 和 `eu-central` 配置文件，则该属性的值为 `192.168.1.100`。
 
-> `spring.profiles` can therefore contain a simple profile name (for example `production`) or a profile expression. A profile expression allows for more complicated profile logic to be expressed, for example `production & (eu-central | eu-west)`. Check the [reference guide](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/core.html#beans-definition-profiles-java) for more details.
+> 因此 `spring.profiles` 可以包含一个简单的配置文件名称（例如 `production`）或一个配置文件表达式。配置文件表达式允许表达更复杂的配置文件逻辑，例如 `production＆(eu-central | eu-west)`。有关更多详细信息，请参见 [参考指南](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/core.html#beans-definition-profiles-java)。
 
-If none are explicitly active when the application context starts, the default profiles are activated. So, in the following YAML, we set a value for `spring.security.user.password` that is available **only** in the "default" profile:
+如果在启动应用程序上下文时未明确激活任何配置，则会激活默认配置文件。因此，在以下 YAML 中，我们为 `spring.security.user.password` 设置了一个值，该值仅在“默认”配置文件激活时可用：
 
 ```yaml
 server:
@@ -116,7 +116,7 @@ spring:
       password: weak
 ```
 
-Whereas, in the following example, the password is always set because it is not attached to any profile, and it would have to be explicitly reset in all other profiles as necessary:
+而在以下示例中，始终设置密码是因为该密码未附加到任何配置文件，并且必须根据需要在所有其他配置文件中将其显式重置：
 
 ```yaml
 server:
@@ -127,7 +127,7 @@ spring:
       password: weak
 ```
 
-Spring profiles designated by using the `spring.profiles` element may optionally be negated by using the `!` character. If both negated and non-negated profiles are specified for a single document, at least one non-negated profile must match, and no negated profiles may match.
+使用 `spring.profiles` 元素指定的 Spring 配置可以通过使用 `!` 字符来取反。如果为单个文档指定了否定的配置文件和非否定的配置文件，则至少一个非否定的配置文件必须匹配，并且否定的配置文件不能匹配。
 
 ##### YAML Shortcomings
 
