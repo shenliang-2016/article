@@ -98,9 +98,9 @@ public class MyApplication {
 
 我们建议 `@ConfigurationProperties` 只处理环境，尤其不要从上下文中注入其他 bean。对于极端情况，可以使用 setter 注入或框架提供的任何 `*Aware` 接口（例如，如果需要访问 `Environment`，则可以使用 `EnvironmentAware`）。如果仍然想使用构造函数注入其他 bean，则必须使用 `@Component` 注解配置属性 bean，并使用基于 JavaBean 的属性绑定。
 
-##### Using `@ConfigurationProperties`-annotated types
+##### 使用 `@ConfigurationProperties` 注解的类型
 
-This style of configuration works particularly well with the `SpringApplication` external YAML configuration, as shown in the following example:
+这种配置样式与 `SpringApplication` 外部 YAML 配置特别有效，如以下示例所示：
 
 ```yaml
 # application.yml
@@ -116,7 +116,7 @@ acme:
 # additional configuration as required
 ```
 
-To work with `@ConfigurationProperties` beans, you can inject them in the same way as any other bean, as shown in the following example:
+要使用 `@ConfigurationProperties` bean，可以像使用其他任何 bean 一样注入它们，如以下示例所示：
 
 ```java
 @Service
@@ -140,4 +140,5 @@ public class MyService {
 }
 ```
 
-> Using `@ConfigurationProperties` also lets you generate metadata files that can be used by IDEs to offer auto-completion for your own keys. See the [appendix](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata) for details.
+> 使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
+
