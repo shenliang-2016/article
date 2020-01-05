@@ -129,11 +129,11 @@ spring:
 
 使用 `spring.profiles` 元素指定的 Spring 配置可以通过使用 `!` 字符来取反。如果为单个文档指定了否定的配置文件和非否定的配置文件，则至少一个非否定的配置文件必须匹配，并且否定的配置文件不能匹配。
 
-##### YAML Shortcomings
+##### YAML 的缺点
 
-YAML files cannot be loaded by using the `@PropertySource` annotation. So, in the case that you need to load values that way, you need to use a properties file.
+无法通过使用 `@PropertySource` 注解来加载 YAML 文件。因此，在需要以这种方式加载值的情况下，需要使用属性文件。
 
-Using the multi YAML document syntax in profile-specific YAML files can lead to unexpected behavior. For example, consider the following config in a file:
+在特定于配置文件的 YAML 文件中使用多 YAML 文档语法可能会导致意外行为。例如，考虑文件中的以下配置：
 
 application-dev.yml
 
@@ -148,9 +148,9 @@ spring:
       password: "secret"
 ```
 
-If you run the application with the argument `--spring.profiles.active=dev` you might expect `security.user.password` to be set to “secret”, but this is not the case.
+如果使用参数 `--spring.profiles.active=dev` 来运行应用程序，则可能希望将 `security.user.password` 设置为“秘密的”，但实际情况并非如此。
 
-The nested document will be filtered because the main file is named `application-dev.yml`. It is already considered to be profile-specific, and nested documents will be ignored.
+嵌套文档将被过滤，因为主文件名为 `application-dev.yml`。它已经被认为是特定于配置文件的，并且嵌套文档将被忽略。
 
-> We recommend that you don’t mix profile-specific YAML files and multiple YAML documents. Stick to using only one of them.
+> 我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
 
