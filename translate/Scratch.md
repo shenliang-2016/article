@@ -1,144 +1,72 @@
-##### 构造器绑定
+##### 第三方配置
 
-上一节中的例子可以被重写为不可变风格，如下所示：
+除了使用 `@ConfigurationProperties` 注解类之外，您还可以在公共 `@Bean` 方法上使用它。当您要将属性绑定到你控制范围之外的第三方组件时，这样做特别有用。
+
+要通过 `Environment` 属性配置 bean，请在其 bean 注册中添加 `@ConfigurationProperties`，如以下示例所示：
 
 ```java
-package com.example;
+@ConfigurationProperties(prefix = "another")
+@Bean
+public AnotherComponent anotherComponent() {
+    ...
+}
+```
 
-import java.net.InetAddress;
-import java.util.List;
+任何以 `another` 前缀定义的 JavaBean 属性都被映射到该 `AnotherComponent` bean上，类似于前面的 `AcmeProperties` 示例。
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
-import org.springframework.boot.context.properties.DefaultValue;
+##### 宽松绑定
 
-@ConstructorBinding
-@ConfigurationProperties("acme")
-public class AcmeProperties {
+Spring Boot 使用一些宽松的规则来将 `Environment` 属性绑定到 `@ConfigurationProperties` bean，因此 `Environment` 属性名称和 bean 属性名称之间不需要完全匹配。有用的常见示例包括破折号分隔的环境属性（例如，`context-path` 绑定到 `contextPath`）和大写的环境属性（例如，`PORT` 绑定到 `port`）。
 
-    private final boolean enabled;
+作为示例，考虑下面的 `@ConfigurationProperties` 类：
 
-    private final InetAddress remoteAddress;
+```java
+@ConfigurationProperties(prefix="acme.my-project.person")
+public class OwnerProperties {
 
-    private final Security security;
+    private String firstName;
 
-    public AcmeProperties(boolean enabled, InetAddress remoteAddress, Security security) {
-        this.enabled = enabled;
-        this.remoteAddress = remoteAddress;
-        this.security = security;
+    public String getFirstName() {
+        return this.firstName;
     }
 
-    public boolean isEnabled() { ... }
-
-    public InetAddress getRemoteAddress() { ... }
-
-    public Security getSecurity() { ... }
-
-    public static class Security {
-
-        private final String username;
-
-        private final String password;
-
-        private final List<String> roles;
-
-        public Security(String username, String password,
-                @DefaultValue("USER") List<String> roles) {
-            this.username = username;
-            this.password = password;
-            this.roles = roles;
-        }
-
-        public String getUsername() { ... }
-
-        public String getPassword() { ... }
-
-        public List<String> getRoles() { ... }
-
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
 }
 ```
 
-在此设置中，使用 `@ConstructorBinding` 注解指示应使用构造函数绑定。这意味着绑定器将期望找到带有您希望绑定的参数的构造函数。
+上面的代码可以使用下面的属性名：
 
-`@ConstructorBinding` 类的嵌套成员（例如上例中的 `Security`）也将通过其构造函数进行绑定。
+| Property                            | Note                                                         |
+| :---------------------------------- | :----------------------------------------------------------- |
+| `acme.my-project.person.first-name` | Kebab case, which is recommended for use in `.properties` and `.yml` files. |
+| `acme.myProject.person.firstName`   | Standard camel case syntax.                                  |
+| `acme.my_project.person.first_name` | Underscore notation, which is an alternative format for use in `.properties` and `.yml` files. |
+| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | Upper case format, which is recommended when using system environment variables. |
 
-可以使用 `@DefaultValue` 指定默认值，并且将应用相同的转换服务将 `String` 值强制转换为缺少属性的目标类型。
+> The `prefix` value for the annotation *must* be in kebab case (lowercase and separated by `-`, such as `acme.my-project.person`).
 
-> 要使用构造函数绑定，必须使用 `@EnableConfigurationProperties` 或配置属性扫描来启用该类。您不能对通过常规 Spring 机制创建的 bean 使用构造函数绑定（例如，`@Component bean` 的 beans，通过 `@Bean` 方法创建的 bean 或使用 `@Import` 加载的 bean）。
+| Property Source       | Simple                                                       | List                                                         |
+| :-------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Properties Files      | Camel case, kebab case, or underscore notation               | Standard list syntax using `[ ]` or comma-separated values   |
+| YAML Files            | Camel case, kebab case, or underscore notation               | Standard YAML list syntax or comma-separated values          |
+| Environment Variables | Upper case format with underscore as the delimiter. `_` should not be used within a property name | Numeric values surrounded by underscores, such as `MY_ACME_1_OTHER = my.acme[1].other` |
+| System properties     | Camel case, kebab case, or underscore notation               | Standard list syntax using `[ ]` or comma-separated values   |
 
-> 如果您的类有多个构造函数，则还可以直接在应绑定的构造函数上使用 `@ConstructorBinding`。
+> We recommend that, when possible, properties are stored in lower-case kebab format, such as `my.property-name=acme`.
 
-##### 启用 `@ConfigurationProperties` 注解的类型
-
-Spring Boot 提供了绑定 `@ConfigurationProperties` 类型并将其注册为 Bean 的基础架构。您可以逐类启用配置属性，也可以启用与组件扫描类似的方式进行配置属性扫描。
-
-有时，带有 `@ConfigurationProperties` 注解的类可能不适用于扫描，例如，如果您正在开发自己的自动配置，或者想要有条件地启用它们。在这些情况下，请使用 `@EnableConfigurationProperties` 注解指定要处理的类型列表。可以在任何 `@Configuration` 类上完成，如以下示例所示：
-
-```java
-@Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(AcmeProperties.class)
-public class MyConfiguration {
-}
-```
-
-要使用配置属性扫描，请在您的应用程序中添加 `@ConfigurationPropertiesScan` 注解。通常，它被添加到以 `@SpringBootApplication` 注解的主应用程序类中，但是也可以被添加到任何 `@Configuration` 类中。默认情况下，将从声明注解的类的包中进行扫描。如果要定义要扫描的特定程序包，可以按照以下示例所示进行操作：
-
-```java
-@SpringBootApplication
-@ConfigurationPropertiesScan({ "com.example.app", "org.acme.another" })
-public class MyApplication {
-}
-```
-
-> 当使用配置属性扫描或通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean时，该 bean 具有常规名称：`<prefix>-<fqn>`，其中，`<prefix>` 是在 `@ConfigurationProperties` 中指定的环境 key 前缀。`<fqn>` 是 Bean 的完全限定名称。如果注解不提供任何前缀，则仅使用 Bean 的完全限定名称。
->
-> 上例中的 bean 名称是 `acme-com.example.AcmeProperties`。
-
-我们建议 `@ConfigurationProperties` 只处理环境，尤其不要从上下文中注入其他 bean。对于极端情况，可以使用 setter 注入或框架提供的任何 `*Aware` 接口（例如，如果需要访问 `Environment`，则可以使用 `EnvironmentAware`）。如果仍然想使用构造函数注入其他 bean，则必须使用 `@Component` 注解配置属性 bean，并使用基于 JavaBean 的属性绑定。
-
-##### 使用 `@ConfigurationProperties` 注解的类型
-
-这种配置样式与 `SpringApplication` 外部 YAML 配置特别有效，如以下示例所示：
+When binding to `Map` properties, if the `key` contains anything other than lowercase alpha-numeric characters or `-`, you need to use the bracket notation so that the original value is preserved. If the key is not surrounded by `[]`, any characters that are not alpha-numeric or `-` are removed. For example, consider binding the following properties to a `Map`:
 
 ```yaml
-# application.yml
-
 acme:
-    remote-address: 192.168.1.1
-    security:
-        username: admin
-        roles:
-          - USER
-          - ADMIN
-
-# additional configuration as required
+  map:
+    "[/key1]": value1
+    "[/key2]": value2
+    /key3: value3
 ```
 
-要使用 `@ConfigurationProperties` bean，可以像使用其他任何 bean 一样注入它们，如以下示例所示：
+The properties above will bind to a `Map` with `/key1`, `/key2` and `key3` as the keys in the map.
 
-```java
-@Service
-public class MyService {
-
-    private final AcmeProperties properties;
-
-    @Autowired
-    public MyService(AcmeProperties properties) {
-        this.properties = properties;
-    }
-
-    //...
-
-    @PostConstruct
-    public void openConnection() {
-        Server server = new Server(this.properties.getRemoteAddress());
-        // ...
-    }
-
-}
-```
-
-> 使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
-
+> For YAML files, the brackets need to be surrounded by quotes for the keys to be parsed properly.
