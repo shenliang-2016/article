@@ -39,25 +39,25 @@ public class OwnerProperties {
 
 上面的代码可以使用下面的属性名：
 
-| Property                            | Note                                                         |
-| :---------------------------------- | :----------------------------------------------------------- |
-| `acme.my-project.person.first-name` | Kebab case, which is recommended for use in `.properties` and `.yml` files. |
-| `acme.myProject.person.firstName`   | Standard camel case syntax.                                  |
-| `acme.my_project.person.first_name` | Underscore notation, which is an alternative format for use in `.properties` and `.yml` files. |
-| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | Upper case format, which is recommended when using system environment variables. |
+| Property                            | Note                                                      |
+| :---------------------------------- | :-------------------------------------------------------- |
+| `acme.my-project.person.first-name` | 短横线隔开式，推荐使用在 `.properties` 和 `.yml` 文件中。 |
+| `acme.myProject.person.firstName`   | 标准驼峰形式。                                            |
+| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。   |
+| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | 大写形式，当使用系统环境变量时推荐使用这种形式。          |
 
-> The `prefix` value for the annotation *must* be in kebab case (lowercase and separated by `-`, such as `acme.my-project.person`).
+> 记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
 
-| Property Source       | Simple                                                       | List                                                         |
-| :-------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| Properties Files      | Camel case, kebab case, or underscore notation               | Standard list syntax using `[ ]` or comma-separated values   |
-| YAML Files            | Camel case, kebab case, or underscore notation               | Standard YAML list syntax or comma-separated values          |
-| Environment Variables | Upper case format with underscore as the delimiter. `_` should not be used within a property name | Numeric values surrounded by underscores, such as `MY_ACME_1_OTHER = my.acme[1].other` |
-| System properties     | Camel case, kebab case, or underscore notation               | Standard list syntax using `[ ]` or comma-separated values   |
+| Property Source | Simple                                                   | List                                                         |
+| :-------------- | :------------------------------------------------------- | :----------------------------------------------------------- |
+| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
+| YAML 文件       | 驼峰形式，短横线隔开形式或者下划线记法                   | 标准 YAML 列表语法或者逗号分隔的值列表                       |
+| 环境变量        | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
+| 系统属性        | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
 
-> We recommend that, when possible, properties are stored in lower-case kebab format, such as `my.property-name=acme`.
+> 我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
 
-When binding to `Map` properties, if the `key` contains anything other than lowercase alpha-numeric characters or `-`, you need to use the bracket notation so that the original value is preserved. If the key is not surrounded by `[]`, any characters that are not alpha-numeric or `-` are removed. For example, consider binding the following properties to a `Map`:
+绑定到 `Map` 属性时，如果 `key` 包含小写字母数字字符或 `-` 以外的任何内容，则需要使用方括号表示法，以便保留原始值。如果键没有被 `[]` 包围，则所有非字母数字或 `-` 的字符都将被删除。例如，考虑将以下属性绑定到 `Map`：
 
 ```yaml
 acme:
@@ -67,6 +67,7 @@ acme:
     /key3: value3
 ```
 
-The properties above will bind to a `Map` with `/key1`, `/key2` and `key3` as the keys in the map.
+上面的属性将会被绑定到 `Map` ，其中包含 `/key1`, `/key2` 和 `key3` 。
 
-> For YAML files, the brackets need to be surrounded by quotes for the keys to be parsed properly.
+> 对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
+
