@@ -1,73 +1,94 @@
-##### 第三方配置
+##### 合并复杂类型
 
-除了使用 `@ConfigurationProperties` 注解类之外，您还可以在公共 `@Bean` 方法上使用它。当您要将属性绑定到你控制范围之外的第三方组件时，这样做特别有用。
+如果在多个位置配置了列表，则通过替换整个列表来进行覆盖。
 
-要通过 `Environment` 属性配置 bean，请在其 bean 注册中添加 `@ConfigurationProperties`，如以下示例所示：
-
-```java
-@ConfigurationProperties(prefix = "another")
-@Bean
-public AnotherComponent anotherComponent() {
-    ...
-}
-```
-
-任何以 `another` 前缀定义的 JavaBean 属性都被映射到该 `AnotherComponent` bean上，类似于前面的 `AcmeProperties` 示例。
-
-##### 宽松绑定
-
-Spring Boot 使用一些宽松的规则来将 `Environment` 属性绑定到 `@ConfigurationProperties` bean，因此 `Environment` 属性名称和 bean 属性名称之间不需要完全匹配。有用的常见示例包括破折号分隔的环境属性（例如，`context-path` 绑定到 `contextPath`）和大写的环境属性（例如，`PORT` 绑定到 `port`）。
-
-作为示例，考虑下面的 `@ConfigurationProperties` 类：
+例如，假设一个 `MyPojo` 对象的 `name` 属性和 `description` 属性默认为 `null`。以下示例从 `AcmeProperties` 中公开了 `MyPojo` 对象的列表：
 
 ```java
-@ConfigurationProperties(prefix="acme.my-project.person")
-public class OwnerProperties {
+@ConfigurationProperties("acme")
+public class AcmeProperties {
 
-    private String firstName;
+    private final List<MyPojo> list = new ArrayList<>();
 
-    public String getFirstName() {
-        return this.firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public List<MyPojo> getList() {
+        return this.list;
     }
 
 }
 ```
 
-上面的代码可以使用下面的属性名：
+考虑下面的配置：
 
-| Property                            | Note                                                      |
-| :---------------------------------- | :-------------------------------------------------------- |
-| `acme.my-project.person.first-name` | 短横线隔开式，推荐使用在 `.properties` 和 `.yml` 文件中。 |
-| `acme.myProject.person.firstName`   | 标准驼峰形式。                                            |
-| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。   |
-| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | 大写形式，当使用系统环境变量时推荐使用这种形式。          |
+```yaml
+acme:
+  list:
+    - name: my name
+      description: my description
+---
+spring:
+  profiles: dev
+acme:
+  list:
+    - name: my another name
+```
 
-> 记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
+如果 `dev` 环境配置文件未激活，则 `AcmeProperties.list` 包含一个 `MyPojo` 条目，如先前定义。但是，如果启用了 `dev` 环境配置文件，则 `list`  仍然仅包含一个条目（名称为 `my another name` ，描述为 `null` ）。此配置*不会*将第二个 `MyPojo` 实例添加到列表中，并且不会合并项目。
 
-| Property Source | Simple                                                   | List                                                         |
-| :-------------- | :------------------------------------------------------- | :----------------------------------------------------------- |
-| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
-| YAML 文件       | 驼峰形式，短横线隔开形式或者下划线记法                   | 标准 YAML 列表语法或者逗号分隔的值列表                       |
-| 环境变量        | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
-| 系统属性        | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
+当在多个配置文件中指定一个 `List` 时，将使用优先级最高的列表（并且只使用那个）。考虑以下示例：
 
-> 我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
+```yaml
+acme:
+  list:
+    - name: my name
+      description: my description
+    - name: another name
+      description: another description
+---
+spring:
+  profiles: dev
+acme:
+  list:
+    - name: my another name
+```
 
-绑定到 `Map` 属性时，如果 `key` 包含小写字母数字字符或 `-` 以外的任何内容，则需要使用方括号表示法，以便保留原始值。如果键没有被 `[]` 包围，则所有非字母数字或 `-` 的字符都将被删除。例如，考虑将以下属性绑定到 `Map`：
+在前面的示例中，如果 `dev` 环境配置文件处于活动状态，则 `AcmeProperties.list` 包含*一个* `MyPojo` 条目（名称为 `my another name`，描述为 `null`）。对于 YAML，可以使用逗号分隔的列表和 YAML 列表来完全覆盖列表的内容。
+
+对于 `Map` 属性，您可以绑定从多个来源的属性值。但是，对于多个源中的同一属性，将使用优先级最高的属性值。以下示例从 `AcmeProperties` 中公开了 `Map<String, MyPojo>`：
+
+```java
+@ConfigurationProperties("acme")
+public class AcmeProperties {
+
+    private final Map<String, MyPojo> map = new HashMap<>();
+
+    public Map<String, MyPojo> getMap() {
+        return this.map;
+    }
+
+}
+```
+
+考虑下面的配置：
 
 ```yaml
 acme:
   map:
-    "[/key1]": value1
-    "[/key2]": value2
-    /key3: value3
+    key1:
+      name: my name 1
+      description: my description 1
+---
+spring:
+  profiles: dev
+acme:
+  map:
+    key1:
+      name: dev name 1
+    key2:
+      name: dev name 2
+      description: dev description 2
 ```
 
-上面的属性将会被绑定到 `Map` ，其中包含 `/key1`, `/key2` 和 `key3` 。
+如果 `dev` 环境配置文件未激活，则 `AcmeProperties.map` 包含一个键为 `key1` 的条目（名称为 `my name 1` ，描述为 `my description 1`）。但是，如果启用了 `dev` 配置文件，则 `map` 包含两个条目，其中包含键 `key1`（名称为 `dev name 1`，名称为 `my description 1`）和 `key2`（名称为 `dev name 2`，名称为 `my description 2`）。
 
-> 对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
+> 前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
 
