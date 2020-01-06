@@ -64,14 +64,15 @@ public class AppSystemProperties {
 
 > 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
-###### Converting Data Sizes
+###### 转换数据尺寸
 
-Spring Framework has a `DataSize` value type that expresses a size in bytes. If you expose a `DataSize` property, the following formats in application properties are available:
+Spring Framework 具有一个 `DataSize` 值类型，该值类型以字节为单位表示大小。如果您公开 `DataSize` 属性，则应用程序属性中的以下格式可用：
 
-- A regular `long` representation (using bytes as the default unit unless a `@DataSizeUnit` has been specified)
-- A more readable format where the value and the unit are coupled (e.g. `10MB` means 10 megabytes)
+- 常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
 
-Consider the following example:
+- 将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
+
+考虑以下示例：
 
 ```java
 @ConfigurationProperties("app.io")
@@ -101,16 +102,19 @@ public class AppIoProperties {
 }
 ```
 
-To specify a buffer size of 10 megabytes, `10` and `10MB` are equivalent. A size threshold of 256 bytes can be specified as `256` or `256B`.
+要指定 10 兆字节的缓冲区大小，`10` 和 `10MB` 是等效的。可以将 256 个字节的大小阈值指定为 `256` 或 `256B`。您也可以使用任何受支持的单位。这些是：
 
-You can also use any of the supported units. These are:
+- `B` 表示字节
 
-- `B` for bytes
-- `KB` for kilobytes
-- `MB` for megabytes
-- `GB` for gigabytes
-- `TB` for terabytes
+- `KB` 代表千字节
 
-The default unit is bytes and can be overridden using `@DataSizeUnit` as illustrated in the sample above.
+- `MB` 代表兆字节
 
-> If you are upgrading from a previous version that is simply using `Long` to express the size, make sure to define the unit (using `@DataSizeUnit`) if it isn’t bytes alongsidethe switch to `DataSize`. Doing so gives a transparent upgrade path while supporting a much richer format.
+- `GB` 代表GB
+
+- `TB`（TB）
+
+默认单位时字节，可以通过使用  `@DataSizeUnit` 覆盖，如上面例子所示。
+
+> 如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+
