@@ -1,94 +1,116 @@
-##### 合并复杂类型
+##### Properties 转换
 
-如果在多个位置配置了列表，则通过替换整个列表来进行覆盖。
+当 Spring Boot 绑定到 `@ConfigurationProperties` bean时，它试图将外部应用程序属性强制转换为正确的类型。如果需要自定义类型转换，则可以提供一个 `ConversionService` bean（带有名为 `conversionService` 的bean）或自定义属性编辑器（通过 `CustomEditorConfigurer` bean）或自定义的 `Converters`（带有定义为 `@ConfigurationPropertiesBinding` 的 bean 定义）。
 
-例如，假设一个 `MyPojo` 对象的 `name` 属性和 `description` 属性默认为 `null`。以下示例从 `AcmeProperties` 中公开了 `MyPojo` 对象的列表：
+> 由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
+
+###### 转换持续时间
+
+Spring Boot 为表达持续时间提供了专门的支持。如果公开 `java.time.Duration` 属性，则应用程序属性中的以下格式可用：
+
+- 常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
+- 标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
+- 值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
+
+考虑下面的例子：
 
 ```java
-@ConfigurationProperties("acme")
-public class AcmeProperties {
+@ConfigurationProperties("app.system")
+public class AppSystemProperties {
 
-    private final List<MyPojo> list = new ArrayList<>();
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Duration sessionTimeout = Duration.ofSeconds(30);
 
-    public List<MyPojo> getList() {
-        return this.list;
+    private Duration readTimeout = Duration.ofMillis(1000);
+
+    public Duration getSessionTimeout() {
+        return this.sessionTimeout;
+    }
+
+    public void setSessionTimeout(Duration sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
+    }
+
+    public Duration getReadTimeout() {
+        return this.readTimeout;
+    }
+
+    public void setReadTimeout(Duration readTimeout) {
+        this.readTimeout = readTimeout;
     }
 
 }
 ```
 
-考虑下面的配置：
+要指定 30 秒的会话超时，`30`，`PT30S` 和 `30s` 都是等效的。可以用以下任何一种形式指定 500ms 的读取超时：`500`，`PT0.5S` 和 `500ms`。
 
-```yaml
-acme:
-  list:
-    - name: my name
-      description: my description
----
-spring:
-  profiles: dev
-acme:
-  list:
-    - name: my another name
-```
+您也可以使用任何受支持的单位。这些是：
 
-如果 `dev` 环境配置文件未激活，则 `AcmeProperties.list` 包含一个 `MyPojo` 条目，如先前定义。但是，如果启用了 `dev` 环境配置文件，则 `list`  仍然仅包含一个条目（名称为 `my another name` ，描述为 `null` ）。此配置*不会*将第二个 `MyPojo` 实例添加到列表中，并且不会合并项目。
+- `ns` 纳秒
 
-当在多个配置文件中指定一个 `List` 时，将使用优先级最高的列表（并且只使用那个）。考虑以下示例：
+- `us` 微秒
 
-```yaml
-acme:
-  list:
-    - name: my name
-      description: my description
-    - name: another name
-      description: another description
----
-spring:
-  profiles: dev
-acme:
-  list:
-    - name: my another name
-```
+- `ms` 毫秒（毫秒）
 
-在前面的示例中，如果 `dev` 环境配置文件处于活动状态，则 `AcmeProperties.list` 包含*一个* `MyPojo` 条目（名称为 `my another name`，描述为 `null`）。对于 YAML，可以使用逗号分隔的列表和 YAML 列表来完全覆盖列表的内容。
+- `s` 秒
 
-对于 `Map` 属性，您可以绑定从多个来源的属性值。但是，对于多个源中的同一属性，将使用优先级最高的属性值。以下示例从 `AcmeProperties` 中公开了 `Map<String, MyPojo>`：
+- `m` 分钟
+
+- `h` 小时
+
+- `d` 天
+
+默认单位是毫秒，可以使用 `@DurationUnit` 覆盖，如上面的示例所示。
+
+> 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+
+###### Converting Data Sizes
+
+Spring Framework has a `DataSize` value type that expresses a size in bytes. If you expose a `DataSize` property, the following formats in application properties are available:
+
+- A regular `long` representation (using bytes as the default unit unless a `@DataSizeUnit` has been specified)
+- A more readable format where the value and the unit are coupled (e.g. `10MB` means 10 megabytes)
+
+Consider the following example:
 
 ```java
-@ConfigurationProperties("acme")
-public class AcmeProperties {
+@ConfigurationProperties("app.io")
+public class AppIoProperties {
 
-    private final Map<String, MyPojo> map = new HashMap<>();
+    @DataSizeUnit(DataUnit.MEGABYTES)
+    private DataSize bufferSize = DataSize.ofMegabytes(2);
 
-    public Map<String, MyPojo> getMap() {
-        return this.map;
+    private DataSize sizeThreshold = DataSize.ofBytes(512);
+
+    public DataSize getBufferSize() {
+        return this.bufferSize;
+    }
+
+    public void setBufferSize(DataSize bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public DataSize getSizeThreshold() {
+        return this.sizeThreshold;
+    }
+
+    public void setSizeThreshold(DataSize sizeThreshold) {
+        this.sizeThreshold = sizeThreshold;
     }
 
 }
 ```
 
-考虑下面的配置：
+To specify a buffer size of 10 megabytes, `10` and `10MB` are equivalent. A size threshold of 256 bytes can be specified as `256` or `256B`.
 
-```yaml
-acme:
-  map:
-    key1:
-      name: my name 1
-      description: my description 1
----
-spring:
-  profiles: dev
-acme:
-  map:
-    key1:
-      name: dev name 1
-    key2:
-      name: dev name 2
-      description: dev description 2
-```
+You can also use any of the supported units. These are:
 
-如果 `dev` 环境配置文件未激活，则 `AcmeProperties.map` 包含一个键为 `key1` 的条目（名称为 `my name 1` ，描述为 `my description 1`）。但是，如果启用了 `dev` 配置文件，则 `map` 包含两个条目，其中包含键 `key1`（名称为 `dev name 1`，名称为 `my description 1`）和 `key2`（名称为 `dev name 2`，名称为 `my description 2`）。
+- `B` for bytes
+- `KB` for kilobytes
+- `MB` for megabytes
+- `GB` for gigabytes
+- `TB` for terabytes
 
-> 前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
+The default unit is bytes and can be overridden using `@DataSizeUnit` as illustrated in the sample above.
 
+> If you are upgrading from a previous version that is simply using `Long` to express the size, make sure to define the unit (using `@DataSizeUnit`) if it isn’t bytes alongsidethe switch to `DataSize`. Doing so gives a transparent upgrade path while supporting a much richer format.
