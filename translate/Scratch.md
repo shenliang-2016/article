@@ -1,120 +1,64 @@
-##### Properties 转换
+##### @ConfigurationProperties 验证
 
-当 Spring Boot 绑定到 `@ConfigurationProperties` bean时，它试图将外部应用程序属性强制转换为正确的类型。如果需要自定义类型转换，则可以提供一个 `ConversionService` bean（带有名为 `conversionService` 的bean）或自定义属性编辑器（通过 `CustomEditorConfigurer` bean）或自定义的 `Converters`（带有定义为 `@ConfigurationPropertiesBinding` 的 bean 定义）。
-
-> 由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
-
-###### 转换持续时间
-
-Spring Boot 为表达持续时间提供了专门的支持。如果公开 `java.time.Duration` 属性，则应用程序属性中的以下格式可用：
-
-- 常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
-- 标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
-- 值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
-
-考虑下面的例子：
+每当使用 Spring 的 `@Validated` 注解进行注释时，Spring Boot 就会尝试验证 `@ConfigurationProperties` 类。您可以在配置类上直接使用 JSR-303 `javax.validation` 约束注解。为此，请确保在类路径上有兼容的 JSR-303 实现，然后将约束注解添加到字段中，如以下示例所示：
 
 ```java
-@ConfigurationProperties("app.system")
-public class AppSystemProperties {
+@ConfigurationProperties(prefix="acme")
+@Validated
+public class AcmeProperties {
 
-    @DurationUnit(ChronoUnit.SECONDS)
-    private Duration sessionTimeout = Duration.ofSeconds(30);
+    @NotNull
+    private InetAddress remoteAddress;
 
-    private Duration readTimeout = Duration.ofMillis(1000);
+    // ... getters and setters
 
-    public Duration getSessionTimeout() {
-        return this.sessionTimeout;
-    }
+}
+```
 
-    public void setSessionTimeout(Duration sessionTimeout) {
-        this.sessionTimeout = sessionTimeout;
-    }
+> 您也可以通过用 `@Validated` 注解创建配置属性的 `@Bean` 方法来触发验证。
 
-    public Duration getReadTimeout() {
-        return this.readTimeout;
-    }
+为了确保始终为嵌套属性触发验证，即使没有找到属性，相关字段也必须使用 `@Valid` 注解修饰。以下示例以前面的 `AcmeProperties` 示例为基础：
 
-    public void setReadTimeout(Duration readTimeout) {
-        this.readTimeout = readTimeout;
+```java
+@ConfigurationProperties(prefix="acme")
+@Validated
+public class AcmeProperties {
+
+    @NotNull
+    private InetAddress remoteAddress;
+
+    @Valid
+    private final Security security = new Security();
+
+    // ... getters and setters
+
+    public static class Security {
+
+        @NotEmpty
+        public String username;
+
+        // ... getters and setters
+
     }
 
 }
 ```
 
-要指定 30 秒的会话超时，`30`，`PT30S` 和 `30s` 都是等效的。可以用以下任何一种形式指定 500ms 的读取超时：`500`，`PT0.5S` 和 `500ms`。
+您也可以通过创建一个名为 `configurationPropertiesValidator` 的 bean 定义来添加一个自定义的 Spring Validator。`@Bean` 方法应该声明为 `static`。配置属性验证器是在应用程序生命周期的早期创建的，并且将 `@Bean` 方法声明为静态方法可以创建 Bean，而不必实例化 `@Configuration` 类。这样做避免了由早期实例化引起的任何问题。
 
-您也可以使用任何受支持的单位。这些是：
+> `spring-boot-actuator` 模块包括一个端点，该端点公开了所有的 `@ConfigurationProperties` bean。将您的 Web 浏览器指向 `/actuator/configprops` 或使用等效的 JMX 端点。有关详细信息，请参见 [Production ready features](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints) 部分。
 
-- `ns` 纳秒
+##### @ConfigurationProperties vs. @Value
 
-- `us` 微秒
+`@Value` 注解是核心容器功能，它没有提供与类型安全的配置属性相同的功能。下表总结了 `@ConfigurationProperties` 和 `@Value` 支持的功能：
 
-- `ms` 毫秒（毫秒）
+| Feature                                                      | `@ConfigurationProperties` | `@Value` |
+| :----------------------------------------------------------- | :------------------------- | :------- |
+| [Relaxed binding](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-relaxed-binding) | Yes                        | No       |
+| [Meta-data support](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata) | Yes                        | No       |
+| `SpEL` evaluation                                            | No                         | Yes      |
 
-- `s` 秒
+如果您为自己的组件定义了一组配置键，我们建议您将它们组合在一个以 `@ConfigurationProperties` 注解修饰的 POJO 中。您还应该意识到，由于 `@Value` 不支持宽松的绑定，因此如果您需要通过使用环境变量来提供值，则不是一个好的选择。
 
-- `m` 分钟
-
-- `h` 小时
-
-- `d` 天
-
-默认单位是毫秒，可以使用 `@DurationUnit` 覆盖，如上面的示例所示。
-
-> 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
-
-###### 转换数据尺寸
-
-Spring Framework 具有一个 `DataSize` 值类型，该值类型以字节为单位表示大小。如果您公开 `DataSize` 属性，则应用程序属性中的以下格式可用：
-
-- 常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
-
-- 将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
-
-考虑以下示例：
-
-```java
-@ConfigurationProperties("app.io")
-public class AppIoProperties {
-
-    @DataSizeUnit(DataUnit.MEGABYTES)
-    private DataSize bufferSize = DataSize.ofMegabytes(2);
-
-    private DataSize sizeThreshold = DataSize.ofBytes(512);
-
-    public DataSize getBufferSize() {
-        return this.bufferSize;
-    }
-
-    public void setBufferSize(DataSize bufferSize) {
-        this.bufferSize = bufferSize;
-    }
-
-    public DataSize getSizeThreshold() {
-        return this.sizeThreshold;
-    }
-
-    public void setSizeThreshold(DataSize sizeThreshold) {
-        this.sizeThreshold = sizeThreshold;
-    }
-
-}
-```
-
-要指定 10 兆字节的缓冲区大小，`10` 和 `10MB` 是等效的。可以将 256 个字节的大小阈值指定为 `256` 或 `256B`。您也可以使用任何受支持的单位。这些是：
-
-- `B` 表示字节
-
-- `KB` 代表千字节
-
-- `MB` 代表兆字节
-
-- `GB` 代表GB
-
-- `TB`（TB）
-
-默认单位时字节，可以通过使用  `@DataSizeUnit` 覆盖，如上面例子所示。
-
-> 如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+最后，尽管你能够在 `@Value` 中编写 `SpEL` 表达式，但不会处理来自 [application property files](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files)  的此类表达式。
 

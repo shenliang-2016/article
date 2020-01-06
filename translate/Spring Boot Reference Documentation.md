@@ -1332,8 +1332,8 @@ restart.include.projectcommon=/mycorp-myproj-[\\w\\d-\.]+\.jar
 你可以通过将以下任意文件添加到 `$HOME/.config/spring-boot` 文件夹下来进行开发者工作的全局配置：
 
 1. `spring-boot-devtools.properties`
-2. `spring-boot-devtools.yaml`
-3. `spring-boot-devtools.yml`
+2.`spring-boot-devtools.yaml`
+3.`spring-boot-devtools.yml`
 
 所有添加到这些文件中的属性都会被应用于你的机器上所有使用开发者工具的 Spring Boot 应用。比如，为了配置重启始终使用 [trigger file](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools-restart-triggerfile)，你可以添加如下属性：
 
@@ -1343,9 +1343,9 @@ restart.include.projectcommon=/mycorp-myproj-[\\w\\d-\.]+\.jar
 spring.devtools.restart.trigger-file=.reloadtrigger
 ```
 
-> 如果开发者工具配置文件没有在 `$HOME/.config/spring-boot` 路径下找到，则会在 `$HOME` 根目录下搜索存在的 `.spring-boot-devtools.properties` 文件。这就允许你在不支持 `$HOME/.config/spring-boot` 配置文件路径的老版本 Spring Boot 应用之间共享开发者工具全局配置。
+>如果开发者工具配置文件没有在 `$HOME/.config/spring-boot` 路径下找到，则会在 `$HOME` 根目录下搜索存在的 `.spring-boot-devtools.properties` 文件。这就允许你在不支持 `$HOME/.config/spring-boot` 配置文件路径的老版本 Spring Boot 应用之间共享开发者工具全局配置。
 
-> 在上述文件中激活的配置文件不会影响 [特定于配置文件的配置文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties) 的加载。
+>在上述文件中激活的配置文件不会影响 [特定于配置文件的配置文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties) 的加载。
 
 #### 3.8.5. 远程应用
 
@@ -1377,15 +1377,15 @@ Spring Boot 开发人员工具不仅限于本地开发。远程运行应用程�
 
 例如，如果您使用的是 Eclipse 或 STS，并且有一个名为 `my-app` 的项目已部署到 Cloud Foundry，则可以执行以下操作：
 
-- 从“运行”菜单中选择“运行配置...”。
+-从“运行”菜单中选择“运行配置...”。
 
-- 创建一个新的 Java 应用程序“启动配置”。
+-创建一个新的 Java 应用程序“启动配置”。
 
-- 选择 `my-app` 项目。
+-选择 `my-app` 项目。
 
-- 使用 `org.springframework.boot.devtools.RemoteSpringApplication` 作为主类。
+-使用 `org.springframework.boot.devtools.RemoteSpringApplication` 作为主类。
 
-- 将 `https://myapp.cfapps.io` （或任何远程URL）添加到“程序参数”。
+-将 `https://myapp.cfapps.io` （或任何远程URL）添加到“程序参数”。
 
 正在运行的远程客户端可能类似于以下清单：
 
@@ -1405,17 +1405,17 @@ Spring Boot 开发人员工具不仅限于本地开发。远程运行应用程�
 2015-06-10 18:25:07.130  INFO 14938 --- [           main] o.s.b.devtools.RemoteSpringApplication   : Started RemoteSpringApplication in 0.74 seconds (JVM running for 1.105)
 ```
 
-> 因为远程客户端使用与真实应用程序相同的类路径，所以它可以直接读取应用程序属性。这就是读取 `spring.devtools.remote.secret` 属性并将其传递给服务器进行身份验证的方式。
+>因为远程客户端使用与真实应用程序相同的类路径，所以它可以直接读取应用程序属性。这就是读取 `spring.devtools.remote.secret` 属性并将其传递给服务器进行身份验证的方式。
 
-> 建议始终使用 `https://` 作为连接协议，以便对流量进行加密并且确保密码不能被截获。
+>建议始终使用 `https://` 作为连接协议，以便对流量进行加密并且确保密码不能被截获。
 
-> 如果您需要使用代理访问远程应用程序，请配置 `spring.devtools.remote.proxy.host` 和 `spring.devtools.remote.proxy.port` 属性。
+>如果您需要使用代理访问远程应用程序，请配置 `spring.devtools.remote.proxy.host` 和 `spring.devtools.remote.proxy.port` 属性。
 
 ##### 远程更新
 
 远程客户端以与 [本地重新启动](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools-restart)  相同的方式监视应用程序类路径的更改。任何更新的资源都会推送到远程应用程序，并且（*如果需要*）会触发重新启动。如果您迭代使用本地没有的云服务的功能，这将很有帮助。通常，远程更新和重新启动比完整的重建和部署周期快得多。
 
-> 仅在远程客户端正在运行时监视文件。如果在启动远程客户端之前更改文件，则不会将其推送到远程服务器。
+>仅在远程客户端正在运行时监视文件。如果在启动远程客户端之前更改文件，则不会将其推送到远程服务器。
 
 ##### 配置文件系统监视器
 
@@ -1475,7 +1475,7 @@ public static void main(String[] args) {
 
 默认地，`INFO` 日志消息会被记录，包含一些相关的启动细节，比如启动应用的用户等。如果你需要 `INFO` 之外的日志级别，你可以设置它，如 [Log Levels](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-custom-log-levels) 中所述。应用版本通过使用来自应用主类所在包的实现版本确定。启动消息日志可以通过将 `spring.main.log-startup-info` 设定为 `false` 来关闭。这将同时关闭应用的活动配置日志。
 
-> 为了在启动过程中添加额外日志，你可以在 `SpringApplication` 的子类中覆盖 `logStartupInfo(boolean)` 方法。
+>为了在启动过程中添加额外日志，你可以在 `SpringApplication` 的子类中覆盖 `logStartupInfo(boolean)` 方法。
 
 #### 4.1.1. 启动失败
 
@@ -1495,7 +1495,7 @@ Action:
 Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
 ```
 
-> Spring Boot 提供了许多 `FailureAnalyzer` 实现，而且你还可以 [添加你自己的](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-failure-analyzer) 。
+>Spring Boot 提供了许多 `FailureAnalyzer` 实现，而且你还可以 [添加你自己的](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-failure-analyzer) 。
 
 如果没有失败分析器能够处理启动异常，你仍然可以显示完整的条件报告用来更好的获知错误信息。为了做到这一点，你需要为 `org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener`  [开启 `debug` 属性](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config) 或者 [开启 `DEBUG` 日志](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-custom-log-levels) 。
 
@@ -1517,7 +1517,7 @@ $ java -jar myproject-0.0.1-SNAPSHOT.jar --debug
 spring.main.lazy-initialization=true
 ```
 
-> 如果您想在应用程序的其余部分使用延迟初始化时禁用某些 bean 的延迟初始化，则可以使用 `@Lazy(false)` 注解将它们的延迟属性显式设置为 `false`。
+>如果您想在应用程序的其余部分使用延迟初始化时禁用某些 bean 的延迟初始化，则可以使用 `@Lazy(false)` 注解将它们的延迟属性显式设置为 `false`。
 
 #### 4.1.3. 自定义启动横幅
 
@@ -1525,16 +1525,16 @@ spring.main.lazy-initialization=true
 
 在你的 `banner.txt` 文件中，你可以使用下面这些占位符：
 
-| Variable                                                     | Description                                                  |
-| :----------------------------------------------------------- | :----------------------------------------------------------- |
-| `${application.version}`                                     | 应用的版本号，在 `MANIFEST.MF` 中声明。比如，`Implementation-Version: 1.0` 被打印为 `1.0`。 |
-| `${application.formatted-version}`                           | 应用的版本号，在 `MANIFEST.MF` 中声明，并为显示进行格式化（括号包围并以 `v` 作为前缀）。比如 `(v1.0)`。 |
-| `${spring-boot.version}`                                     | 你使用的 Spring Boot 版本。比如 `2.2.2.RELEASE`。            |
-| `${spring-boot.formatted-version}`                           | 你使用的 Spring Boot 版本，并为显示进行格式化（括号包围并以 `v` 作为前缀）。比如 `(v2.2.2.RELEASE)`。 |
+| Variable | Description |
+| : | : |
+| `${application.version}` | 应用的版本号，在 `MANIFEST.MF` 中声明。比如，`Implementation-Version: 1.0` 被打印为 `1.0`。 |
+| `${application.formatted-version}` | 应用的版本号，在 `MANIFEST.MF` 中声明，并为显示进行格式化（括号包围并以 `v` 作为前缀）。比如 `(v1.0)`。 |
+| `${spring-boot.version}` | 你使用的 Spring Boot 版本。比如 `2.2.2.RELEASE`。 |
+| `${spring-boot.formatted-version}` | 你使用的 Spring Boot 版本，并为显示进行格式化（括号包围并以 `v` 作为前缀）。比如 `(v2.2.2.RELEASE)`。 |
 | `${Ansi.NAME}` (or `${AnsiColor.NAME}`, `${AnsiBackground.NAME}`, `${AnsiStyle.NAME}`) | 其中 `NAME` 是 ANSI 转义代码的名称。参见 [`AnsiPropertySource`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/ansi/AnsiPropertySource.java) 以获取详细信息。 |
-| `${application.title}`                                       | 您的应用程序的标题，在`MANIFEST.MF`中声明。例如，`Implementation-Title:MyApp` 被打印为 `MyApp`。 |
+| `${application.title}` | 您的应用程序的标题，在`MANIFEST.MF`中声明。例如，`Implementation-Title:MyApp` 被打印为 `MyApp`。 |
 
-> 如果您要以编程方式生成横幅，则可以使用 `SpringApplication.setBanner(…)` 方法。使用 `org.springframework.boot.Banner` 接口并实现自己的 `printBanner()` 方法。
+>如果您要以编程方式生成横幅，则可以使用 `SpringApplication.setBanner(…)` 方法。使用 `org.springframework.boot.Banner` 接口并实现自己的 `printBanner()` 方法。
 
 您还可以使用 `spring.main.banner-mode` 属性来确定横幅是否必须在 `System.out` (`console`) 上打印，发送到已配置的记录器（`log`）还是不生成（`off`）。
 
@@ -1552,7 +1552,7 @@ public static void main(String[] args) {
 }
 ```
 
-> 传递给 `SpringApplication` 的构造函数参数是 Spring bean 的配置源。在大多数情况下，它们是对 `@Configuration` 类的引用，但它们也可以对 XML 配置或应扫描的包进行引用。
+>传递给 `SpringApplication` 的构造函数参数是 Spring bean 的配置源。在大多数情况下，它们是对 `@Configuration` 类的引用，但它们也可以对 XML 配置或应扫描的包进行引用。
 
 通过使用 `application.properties` 文件配置 `SpringApplication` 是可能的。参考 *Externalized Configuration* 获取更多细节。
 
@@ -1572,43 +1572,43 @@ new SpringApplicationBuilder()
         .run(args);
 ```
 
-> 创建 `ApplicationContext` 层次结构时有一些限制。例如，Web 组件必须包含在子上下文中，并且相同的 `Environment` 用于父上下文和子上下文。有关完整的详细信息，请参见 [`SpringApplicationBuilder` Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/builder/SpringApplicationBuilder.html) 。
+>创建 `ApplicationContext` 层次结构时有一些限制。例如，Web 组件必须包含在子上下文中，并且相同的 `Environment` 用于父上下文和子上下文。有关完整的详细信息，请参见 [`SpringApplicationBuilder` Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/builder/SpringApplicationBuilder.html) 。
 
 #### 4.1.6. 应用事件和监听器
 
 除了通常的 Spring 框架事件，比如 [`ContextRefreshedEvent`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/context/event/ContextRefreshedEvent.html)，`SpringApplication` 还发送一些别的应用事件。
 
-> 有些事件实际上是在创建 `ApplicationContext` 之前触发的，因此您不能将这些事件的监听器注册为 `@Bean`。您可以使用 `SpringApplication.addListeners(…)` 方法或 `SpringApplicationBuilder.listeners(…)` 方法注册它们。
+>有些事件实际上是在创建 `ApplicationContext` 之前触发的，因此您不能将这些事件的监听器注册为 `@Bean`。您可以使用 `SpringApplication.addListeners(…)` 方法或 `SpringApplicationBuilder.listeners(…)` 方法注册它们。
 >
-> 如果您希望这些侦听器自动注册，而不管创建应用程序的方式如何，都可以将 `META-INF/spring.factories` 文件添加到您的项目中，并使用 `org.springframework.context.ApplicationListener` 键引用您的侦听器 。如以下示例所示：
+>如果您希望这些侦听器自动注册，而不管创建应用程序的方式如何，都可以将 `META-INF/spring.factories` 文件添加到您的项目中，并使用 `org.springframework.context.ApplicationListener` 键引用您的侦听器 。如以下示例所示：
 >
-> ```
-> org.springframework.context.ApplicationListener=com.example.project.MyListener
-> ```
+>```
+>org.springframework.context.ApplicationListener=com.example.project.MyListener
+>```
 
 当你的应用运行时，应用事件按照下面的顺序发送：
 
-1. `ApplicationStartingEvent` 在运行开始时发送，但在进行任何处理之前（侦听器和初始化器的注册除外）发送。
+1.`ApplicationStartingEvent` 在运行开始时发送，但在进行任何处理之前（侦听器和初始化器的注册除外）发送。
 
-2. 当已知要在上下文中使用的 `Environment` 但在创建上下文之前，发送 `ApplicationEnvironmentPreparedEvent`。
+2.当已知要在上下文中使用的 `Environment` 但在创建上下文之前，发送 `ApplicationEnvironmentPreparedEvent`。
 
-3. 在准备好 `ApplicationContext` 并调用 `ApplicationContextInitializers` 之后，但在加载任何 bean 定义之前，将发送一个 `ApplicationContextInitializedEvent`。
+3.在准备好 `ApplicationContext` 并调用 `ApplicationContextInitializers` 之后，但在加载任何 bean 定义之前，将发送一个 `ApplicationContextInitializedEvent`。
 
-4. 在刷新开始之前，但在加载了 bean 定义之后，发送一个 `ApplicationPreparedEvent`。
+4.在刷新开始之前，但在加载了 bean 定义之后，发送一个 `ApplicationPreparedEvent`。
 
-5. 在刷新上下文之后，但在调用任何应用程序和命令行运行程序之前，将发送 `ApplicationStartedEvent`。
+5.在刷新上下文之后，但在调用任何应用程序和命令行运行程序之前，将发送 `ApplicationStartedEvent`。
 
-6. 在调用了任何应用程序和命令行运行程序之后，将发送 `ApplicationReadyEvent`。它指示该应用程序已准备就绪，可以处理请求。
+6.在调用了任何应用程序和命令行运行程序之后，将发送 `ApplicationReadyEvent`。它指示该应用程序已准备就绪，可以处理请求。
 
-7. 如果启动时发生异常，则发送一个 `ApplicationFailedEvent`。
+7.如果启动时发生异常，则发送一个 `ApplicationFailedEvent`。
 
 上面的列表仅包含与 `SpringApplication` 绑定的 `SpringApplicationEvent`。除此之外，以下事件还会在 `ApplicationPreparedEvent` 之后和 `ApplicationStartedEvent` 之前发布：
 
-1. 当刷新 `ApplicationContext` 时，发送 `ContextRefreshedEvent`。
+1.当刷新 `ApplicationContext` 时，发送 `ContextRefreshedEvent`。
 
-2. 在准备好 WebServer 之后，发送一个 `WebServerInitializedEvent`。`ServletWebServerInitializedEvent` 和 `ServletWebServerInitializedEvent` 分别是 servlet 和反应式变体。
+2.在准备好 WebServer 之后，发送一个 `WebServerInitializedEvent`。`ServletWebServerInitializedEvent` 和 `ServletWebServerInitializedEvent` 分别是 servlet 和反应式变体。
 
-> 您通常不需要使用应用程序事件，但是很容易知道它们的存在。在内部，Spring Boot 使用事件来处理各种任务。
+>您通常不需要使用应用程序事件，但是很容易知道它们的存在。在内部，Spring Boot 使用事件来处理各种任务。
 
 应用程序事件是通过使用 Spring Framework 的事件发布机制发送的。此机制的一部分确保在子级上下文中发布给侦听器的事件也在任何祖先上下文中也发布给侦听器。结果，如果您的应用程序使用 `SpringApplication` 实例的层次结构，则侦听器可能会收到同一类型的应用程序事件的多个实例。
 
@@ -1618,15 +1618,15 @@ new SpringApplicationBuilder()
 
 `SpringApplication` 试图根据你的行为创建正确类型的 `ApplicationContext` 。用来确定 `WebApplicationType` 的算法相当简单：
 
-- 如果存在 Spring MVC ，使用 `AnnotationConfigServletWebServerApplicationContext` 。
-- 如果不存在 Spring MVC，而是存在 Spring WebFlux，使用 `AnnotationConfigReactiveWebServerApplicationContext` 。
-- 否则，使用 `AnnotationConfigApplicationContext` 。
+-如果存在 Spring MVC ，使用 `AnnotationConfigServletWebServerApplicationContext` 。
+-如果不存在 Spring MVC，而是存在 Spring WebFlux，使用 `AnnotationConfigReactiveWebServerApplicationContext` 。
+-否则，使用 `AnnotationConfigApplicationContext` 。
 
 这就意味着如果你在同一个应用中使用 Spring MVC 和新的来自 Spring WebFlux 的 `WebClient` ，Spring MVC 将默认被使用。你可以通过调用 `setWebApplicationType(WebApplicationType)` 很容易地覆盖它。
 
 通过调用 `setApplicationContextClass(…)` 对 `ApplicationContext` 类型进行完全控制也是可能的。
 
-> 在 JUnit 测试中使用 `SpringApplication` 时，通常希望调用 `setWebApplicationType(WebApplicationType.NONE)`。
+>在 JUnit 测试中使用 `SpringApplication` 时，通常希望调用 `setWebApplicationType(WebApplicationType.NONE)`。
 
 #### 4.1.8. 访问应用参数
 
@@ -1650,7 +1650,7 @@ public class MyBean {
 }
 ```
 
-> Spring Boot 还在 Spring `Environment` 中注册了 `CommandLinePropertySource` 。这也使您可以通过使用 `@Value` 注解来注入单个应用程序参数。
+>Spring Boot 还在 Spring `Environment` 中注册了 `CommandLinePropertySource` 。这也使您可以通过使用 `@Value` 注解来注入单个应用程序参数。
 
 #### 4.1.9. 使用 ApplicationRunner 或者 CommandLineRunner
 
@@ -1702,7 +1702,7 @@ public class ExitCodeApplication {
 
 通过指定 `spring.application.admin.enabled` 属性，可以为应用程序启用与管理员相关的功能。这暴露了 MBeanServer平台上的 [`SpringApplicationAdminMXBean`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/admin/SpringApplicationAdminMXBean.java) 。您可以使用此功能来远程管理 Spring Boot 应用程序。此功能对于任何服务包装器实现也可能很有用。
 
-> 如果您想知道应用程序在哪个 HTTP 端口上运行，请使用 `local.server.port` 键获取属性。
+>如果您想知道应用程序在哪个 HTTP 端口上运行，请使用 `local.server.port` 键获取属性。
 
 ### 4.2. 外部化配置
 
@@ -1710,23 +1710,23 @@ Spring Boot 使您可以外部化配置，以便可以在不同环境中使用�
 
 Spring Boot 使用一个非常特殊的 `PropertySource` 顺序，该顺序被设计为允许合理地覆盖值。按以下顺序考虑属性：
 
-1. 当开发者工具激活时首先考虑 `$HOME/.config/spring-boot` 文件夹中的 [Devtools global settings properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools-globalsettings) 。
-2. 你的测试类上的 [`@TestPropertySource`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/test/context/TestPropertySource.html) 注解。
-3. 你的测试类上的 `properties` 属性。在 [`@SpringBootTest`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/test/context/SpringBootTest.html) 和 [test annotations for testing a particular slice of your application](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) 上可用。
-4. 命令行参数。
-5. 来自 `SPRING_APPLICATION_JSON` 的属性（嵌入在环境变量或系统属性中的内联JSON）。
-6. `ServletConfig` 初始参数。
-7. `ServletContext` 初始参数。
-8. 来自 `java:comp/env` 的 JNDI 属性。
-9. Java System 属性 (`System.getProperties()`)。
-10. 操作系统环境变量。
-11.  `RandomValuePropertySource` ，仅拥有在 `random.*` 中的属性。
-12. 在你的打包的 jar 之外的 [Profile-specific application properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties)  (`application-{profile}.properties` 以及 YAML 变体)。
-13. 打包到你的 jar 内部的 [Profile-specific application properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties)  (`application-{profile}.properties` 以及 YAML 变体)。
-14. 你的打包的 jar 之外的应用属性 (`application.properties` 以及 YAML 变体)。
-15. 打包到你的 jar 之内的应用属性 (`application.properties` 以及 YAML 变体)。
-16. 你的 `@Configuration` 类上的 [`@PropertySource`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/context/annotation/PropertySource.html) 注解。请注意，在刷新应用程序上下文之前，不会将此类属性源添加到 `Environment` 中。现在配置某些属性（例如在刷新开始之前读取的 `logging.*` 和  `spring.main.*` ）为时已晚。
-17. 默认属性 (通过设定 `SpringApplication.setDefaultProperties` 指定)。
+1.当开发者工具激活时首先考虑 `$HOME/.config/spring-boot` 文件夹中的 [Devtools global settings properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools-globalsettings) 。
+2.你的测试类上的 [`@TestPropertySource`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/test/context/TestPropertySource.html) 注解。
+3.你的测试类上的 `properties` 属性。在 [`@SpringBootTest`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/test/context/SpringBootTest.html) 和 [test annotations for testing a particular slice of your application](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) 上可用。
+4.命令行参数。
+5.来自 `SPRING_APPLICATION_JSON` 的属性（嵌入在环境变量或系统属性中的内联JSON）。
+6.`ServletConfig` 初始参数。
+7.`ServletContext` 初始参数。
+8.来自 `java:comp/env` 的 JNDI 属性。
+9.Java System 属性 (`System.getProperties()`)。
+10.操作系统环境变量。
+11. `RandomValuePropertySource` ，仅拥有在 `random.*` 中的属性。
+12.在你的打包的 jar 之外的 [Profile-specific application properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties)  (`application-{profile}.properties` 以及 YAML 变体)。
+13.打包到你的 jar 内部的 [Profile-specific application properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties)  (`application-{profile}.properties` 以及 YAML 变体)。
+14.你的打包的 jar 之外的应用属性 (`application.properties` 以及 YAML 变体)。
+15.打包到你的 jar 之内的应用属性 (`application.properties` 以及 YAML 变体)。
+16.你的 `@Configuration` 类上的 [`@PropertySource`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/context/annotation/PropertySource.html) 注解。请注意，在刷新应用程序上下文之前，不会将此类属性源添加到 `Environment` 中。现在配置某些属性（例如在刷新开始之前读取的 `logging.*` 和  `spring.main.*` ）为时已晚。
+17.默认属性 (通过设定 `SpringApplication.setDefaultProperties` 指定)。
 
 为了提供一个具体的示例，假设您开发一个使用 `@name` 属性的 `@Component`，如以下示例所示：
 
@@ -1747,25 +1747,25 @@ public class MyBean {
 
 在您的应用程序类路径上（例如，在 jar 中），您可以有一个 `application.properties` 文件，该文件为 `name` 提供了合理的默认属性值。在新环境中运行时，可以在 jar 外部提供一个 `application.properties` 文件来覆盖 `name`。对于一次性测试，您可以使用特定的命令行开关启动（例如，`java -jar app.jar --name="Spring"`）。
 
-> 可以在命令行中使用环境变量来提供 `SPRING_APPLICATION_JSON` 属性。 例如，您可以在 UN * X shell 中使用以下行：
+>可以在命令行中使用环境变量来提供 `SPRING_APPLICATION_JSON` 属性。 例如，您可以在 UN * X shell 中使用以下行：
 >
-> ```
-> $ SPRING_APPLICATION_JSON='{"acme":{"name":"test"}}' java -jar myapp.jar
-> ```
+>```
+>$ SPRING_APPLICATION_JSON='{"acme":{"name":"test"}}' java -jar myapp.jar
+>```
 >
-> 在前面的示例中，您最终在 Spring `Environment` 中获得了 `acme.name=test` 。您还可以在 System 属性中以 `spring.application.json` 的形式提供 JSON，如以下示例所示：
+>在前面的示例中，您最终在 Spring `Environment` 中获得了 `acme.name=test` 。您还可以在 System 属性中以 `spring.application.json` 的形式提供 JSON，如以下示例所示：
 >
-> ```
-> $ java -Dspring.application.json='{"name":"test"}' -jar myapp.jar
-> ```
+>```
+>$ java -Dspring.application.json='{"name":"test"}' -jar myapp.jar
+>```
 >
-> 您还可以使用命令行参数来提供 JSON，如以下示例所示：
+>您还可以使用命令行参数来提供 JSON，如以下示例所示：
 >
-> ```
-> $ java -jar myapp.jar --spring.application.json='{"name":"test"}'
-> ```
+>```
+>$ java -jar myapp.jar --spring.application.json='{"name":"test"}'
+>```
 >
-> 您还可以将 JSON 作为 JNDI 变量提供，如下所示：`java:comp/env/spring.application.json`。
+>您还可以将 JSON 作为 JNDI 变量提供，如下所示：`java:comp/env/spring.application.json`。
 
 #### 4.2.1. 配置随机值
 
@@ -1792,14 +1792,14 @@ my.number.in.range=${random.int[1024,65536]}
 
 `SpringApplication` 从以下位置的 `application.properties` 文件中加载属性，并将它们添加到 Spring `Environment` 中：
 
-1. 当前路径的 `/config` 子路径
-2. 当前路径
-3. 类路径的 `/config` 包
-4. 类路径根目录
+1.当前路径的 `/config` 子路径
+2.当前路径
+3.类路径的 `/config` 包
+4.类路径根目录
 
 该列表按优先级排序（在列表较高位置定义的属性会覆盖在较低位置定义的属性）。
 
-> 你也可以 [使用 YAML (`.yml`) 文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-yaml) 作为 `.properties` 文件的替代。
+>你也可以 [使用 YAML (`.yml`) 文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-yaml) 作为 `.properties` 文件的替代。
 
 如果您不喜欢 `application.properties` 作为配置文件名，则可以通过指定 `spring.config.name` 环境属性来切换到另一个文件名。您还可以通过使用 `spring.config.location` 环境属性（这是目录位置或文件路径的逗号分隔列表）来引用显式位置。下面的示例演示如何指定其他文件名：
 
@@ -1813,36 +1813,36 @@ $ java -jar myproject.jar --spring.config.name=myproject
 $ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
 ```
 
-> 使用 `spring.config.name` 和 `spring.config.location` 可以很早地确定哪些文件必须被加载。必须将它们定义为环境属性（通常是操作系统环境变量，系统属性或命令行参数）。
+>使用 `spring.config.name` 和 `spring.config.location` 可以很早地确定哪些文件必须被加载。必须将它们定义为环境属性（通常是操作系统环境变量，系统属性或命令行参数）。
 
 如果 `spring.config.location` 包含目录（而不是文件），则它们应以 `/` 结尾（在运行时，应在加载之前附加从 `spring.config.name` 生成的名称，包括特定于配置文件的文件名）。在 `spring.config.location` 中指定的文件按原样使用，不支持特定于配置文件的变体，并且被任何特定于配置文件的属性覆盖。
 
 配置位置以相反的顺序搜索。 默认情况下，配置的位置是 `classpath:/,classpath:/config/,file:./,file:./config/`。实际的搜索顺序如下：
 
-1. `file:./config/`
-2. `file:./`
-3. `classpath:/config/`
-4. `classpath:/`
+1.`file:./config/`
+2.`file:./`
+3.`classpath:/config/`
+4.`classpath:/`
 
 当使用 `spring.config.location` 配置自定义配置位置时，它们将替换默认位置。例如，如果将 `spring.config.location` 配置为值 `classpath:/custom-config/,file:./custom-config/`，则搜索顺序如下：
 
-1. `file:./custom-config/`
-2. `classpath:custom-config/`
+1.`file:./custom-config/`
+2.`classpath:custom-config/`
 
 另外，当使用 `spring.config.additional-location` 配置自定义配置位置时，除了默认位置外，还会使用它们。在默认位置之前会搜索其他位置。例如，如果配置了 `classpath:/custom-config/,file:./custom-config/` 的其他位置，则搜索顺序如下：
 
-1. `file:./custom-config/`
-2. `classpath:custom-config/`
-3. `file:./config/`
-4. `file:./`
-5. `classpath:/config/`
-6. `classpath:/`
+1.`file:./custom-config/`
+2.`classpath:custom-config/`
+3.`file:./config/`
+4.`file:./`
+5.`classpath:/config/`
+6.`classpath:/`
 
 通过此搜索顺序，您可以在一个配置文件中指定默认值，然后在另一个配置文件中有选择地覆盖这些值。您可以在默认位置之一的 `application.properties`（或使用 `spring.config.name` 选择的其他任何基本名称）中为应用程序提供默认值。然后，可以在运行时使用自定义位置之一中的其他文件覆盖这些默认值。
 
-> 如果您使用环境变量而不是系统属性，则大多数操作系统都不允许使用句点分隔的键名，但可以使用下划线（例如，用 `SPRING_CONFIG_NAME` 代替 `spring.config.name`）。
+>如果您使用环境变量而不是系统属性，则大多数操作系统都不允许使用句点分隔的键名，但可以使用下划线（例如，用 `SPRING_CONFIG_NAME` 代替 `spring.config.name`）。
 
-> 如果您的应用程序在容器中运行，则可以使用 JNDI 属性（在 `java:comp/env` 中）或 servlet 上下文初始化参数代替环境变量或系统属性，也可以两者同时使用。
+>如果您的应用程序在容器中运行，则可以使用 JNDI 属性（在 `java:comp/env` 中）或 servlet 上下文初始化参数代替环境变量或系统属性，也可以两者同时使用。
 
 #### 4.2.4. 特定于配置文件的属性
 
@@ -1852,7 +1852,7 @@ $ java -jar myproject.jar --spring.config.location=classpath:/default.properties
 
 如果指定了多个配置文件，则采用后赢策略。例如，由 `spring.profiles.active` 属性指定的配置文件会在通过 `SpringApplication` API 配置的配置文件之后添加，因此具有优先权。
 
-> 如果您在 `spring.config.location` 中指定了任何文件，则不考虑这些文件的特定于配置文件的变体。如果您还想使用特定于配置文件的属性，请使用 `spring.config.location` 中的目录。
+>如果您在 `spring.config.location` 中指定了任何文件，则不考虑这些文件的特定于配置文件的变体。如果您还想使用特定于配置文件的属性，请使用 `spring.config.location` 中的目录。
 
 #### 4.2.5. 属性中的占位符
 
@@ -1863,7 +1863,7 @@ app.name=MyApp
 app.description=${app.name} is a Spring Boot application
 ```
 
-> 你还可以使用此技术创建现有 Spring Boot 属性的"短"变体。参考*如何使用'短'命令行参数*了解更对细节。
+>你还可以使用此技术创建现有 Spring Boot 属性的"短"变体。参考*如何使用'短'命令行参数*了解更对细节。
 
 #### 4.2.6. 属性加密
 
@@ -1875,7 +1875,7 @@ Spring Boot 没有提供任何属性值加密的内建支持，不过，它提�
 
 [YAML](https://yaml.org/) 是 JSON 的超集，因而，是一种描述层级配置数据的方便格式。`SpringApplication` 类自动支持 YAML 作为属性文件的替代，只要你的类路径上存在 [SnakeYAML](https://bitbucket.org/asomov/snakeyaml) 类库。
 
-> 如果你使用启动器，SnakeYAML 则由 `spring-boot-starter` 自动提供。
+>如果你使用启动器，SnakeYAML 则由 `spring-boot-starter` 自动提供。
 
 ##### 加载 YAML
 
@@ -1957,7 +1957,7 @@ server:
 
 在前面的示例中，如果 `development` 配置文件处于活动状态，则 `server.address` 属性为 `127.0.0.1`。类似地，如果 `production` **和** `eu-central` 配置文件处于活动状态，则 `server.address` 属性为 `192.168.1.120`。如果未启用 `development` ， `production` 和 `eu-central` 配置文件，则该属性的值为 `192.168.1.100`。
 
-> 因此 `spring.profiles` 可以包含一个简单的配置文件名称（例如 `production`）或一个配置文件表达式。配置文件表达式允许表达更复杂的配置文件逻辑，例如 `production＆(eu-central | eu-west)`。有关更多详细信息，请参见 [参考指南](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/core.html#beans-definition-profiles-java)。
+>因此 `spring.profiles` 可以包含一个简单的配置文件名称（例如 `production`）或一个配置文件表达式。配置文件表达式允许表达更复杂的配置文件逻辑，例如 `production＆(eu-central | eu-west)`。有关更多详细信息，请参见 [参考指南](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/core.html#beans-definition-profiles-java)。
 
 如果在启动应用程序上下文时未明确激活任何配置，则会激活默认配置文件。因此，在以下 YAML 中，我们为 `spring.security.user.password` 设置了一个值，该值仅在“默认”配置文件激活时可用：
 
@@ -2008,13 +2008,13 @@ spring:
 
 嵌套文档将被过滤，因为主文件名为 `application-dev.yml`。它已经被认为是特定于配置文件的，并且嵌套文档将被忽略。
 
-> 我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
+>我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
 
 #### 4.2.8. 类型安全的配置属性
 
 使用 `@Value("${property}")` 注解来注入配置属性有时会很麻烦，尤其是当您使用多个属性或数据本质上是分层的情况下。Spring Boot 提供了一种使用属性的替代方法，该属性使强类型的 Bean 可以管理和验证应用程序的配置。
 
-> 参考 [differences between `@Value` and type-safe configuration properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-vs-value).
+>参考 [differences between `@Value` and type-safe configuration properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-vs-value).
 
 ##### JavaBean 属性绑定
 
@@ -2075,23 +2075,23 @@ public class AcmeProperties {
 
 上面的 POJO 定义了下面的属性：
 
-- `acme.enabled`，默认值是 `false` 。
-- `acme.remote-address`，其类型可以从 `String` 强制转化而来。
-- `acme.security.username`，带有一个嵌套的 `security` 对象，其名称由属性的名称确定。特别是，返回类型根本不使用，可能是 `SecurityProperties`。
-- `acme.security.password`。
-- `acme.security.roles`，值是默认为 `USER` 的 `String` 集合。
+-`acme.enabled`，默认值是 `false` 。
+-`acme.remote-address`，其类型可以从 `String` 强制转化而来。
+-`acme.security.username`，带有一个嵌套的 `security` 对象，其名称由属性的名称确定。特别是，返回类型根本不使用，可能是 `SecurityProperties`。
+-`acme.security.password`。
+-`acme.security.roles`，值是默认为 `USER` 的 `String` 集合。
 
-> Spring Boot 的自动配置在很大程度上利用了 `@ConfigurationProperties` 来轻松配置自动配置的 bean。与自动配置类相似，Spring Boot 中可用的 `@ConfigurationProperties` 类仅供内部使用。通过属性文件，YAML 文件，环境变量等配置的映射到该类的属性是公共 API，但是该类本身的内容并不意味着可以直接使用。
+>Spring Boot 的自动配置在很大程度上利用了 `@ConfigurationProperties` 来轻松配置自动配置的 bean。与自动配置类相似，Spring Boot 中可用的 `@ConfigurationProperties` 类仅供内部使用。通过属性文件，YAML 文件，环境变量等配置的映射到该类的属性是公共 API，但是该类本身的内容并不意味着可以直接使用。
 
-> 这种安排依赖于默认的空构造器，并且 getter 和 setter 通常是强制性的，因为绑定是通过标准 Java Beans 属性描述符进行的，就像在 Spring MVC 中一样。在以下情况下，可以忽略 setter：
+>这种安排依赖于默认的空构造器，并且 getter 和 setter 通常是强制性的，因为绑定是通过标准 Java Beans 属性描述符进行的，就像在 Spring MVC 中一样。在以下情况下，可以忽略 setter：
 >
-> - 一旦 Map 初始化完成，就只需要使用 getter，而不再需要 setter，因为它们可以由绑定器修改。
-> - 集合和数组能够通过索引（典型的是使用 YAML）或者使用单个逗号分隔的值（属性）来访问。在后者情况下，setter 是必需的。我们推荐始终为该类型添加 setter。如果你初始化一个集合，确保它是不可变的（如前面例子所示）。
-> - 如果嵌套的 POJO 属性已初始化（例如前面示例中的 `Security` 字段），则不需要 setter。如果希望绑定器通过使用其默认构造函数动态创建实例，则需要一个 setter。
+>-一旦 Map 初始化完成，就只需要使用 getter，而不再需要 setter，因为它们可以由绑定器修改。
+>-集合和数组能够通过索引（典型的是使用 YAML）或者使用单个逗号分隔的值（属性）来访问。在后者情况下，setter 是必需的。我们推荐始终为该类型添加 setter。如果你初始化一个集合，确保它是不可变的（如前面例子所示）。
+>-如果嵌套的 POJO 属性已初始化（例如前面示例中的 `Security` 字段），则不需要 setter。如果希望绑定器通过使用其默认构造函数动态创建实例，则需要一个 setter。
 >
-> 有些人使用 Lombok 项目自动添加 getter 和 setter。确保 Lombok 不会为这种类型生成任何特定的构造函数，因为容器会自动使用它来实例化该对象。
+>有些人使用 Lombok 项目自动添加 getter 和 setter。确保 Lombok 不会为这种类型生成任何特定的构造函数，因为容器会自动使用它来实例化该对象。
 >
-> 最后，仅考虑标准 Java Bean 属性，不支持对静态属性的绑定。
+>最后，仅考虑标准 Java Bean 属性，不支持对静态属性的绑定。
 
 ##### 构造器绑定
 
@@ -2161,9 +2161,9 @@ public class AcmeProperties {
 
 可以使用 `@DefaultValue` 指定默认值，并且将应用相同的转换服务将 `String` 值强制转换为缺少属性的目标类型。
 
-> 要使用构造函数绑定，必须使用 `@EnableConfigurationProperties` 或配置属性扫描来启用该类。您不能对通过常规 Spring 机制创建的 bean 使用构造函数绑定（例如，`@Component bean` 的 beans，通过 `@Bean` 方法创建的 bean 或使用 `@Import` 加载的 bean）。
+>要使用构造函数绑定，必须使用 `@EnableConfigurationProperties` 或配置属性扫描来启用该类。您不能对通过常规 Spring 机制创建的 bean 使用构造函数绑定（例如，`@Component bean` 的 beans，通过 `@Bean` 方法创建的 bean 或使用 `@Import` 加载的 bean）。
 
-> 如果您的类有多个构造函数，则还可以直接在应绑定的构造函数上使用 `@ConstructorBinding`。
+>如果您的类有多个构造函数，则还可以直接在应绑定的构造函数上使用 `@ConstructorBinding`。
 
 ##### 启用 `@ConfigurationProperties` 注解的类型
 
@@ -2187,9 +2187,9 @@ public class MyApplication {
 }
 ```
 
-> 当使用配置属性扫描或通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean时，该 bean 具有常规名称：`<prefix>-<fqn>`，其中，`<prefix>` 是在 `@ConfigurationProperties` 中指定的环境 key 前缀。`<fqn>` 是 Bean 的完全限定名称。如果注解不提供任何前缀，则仅使用 Bean 的完全限定名称。
+>当使用配置属性扫描或通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean时，该 bean 具有常规名称：`<prefix>-<fqn>`，其中，`<prefix>` 是在 `@ConfigurationProperties` 中指定的环境 key 前缀。`<fqn>` 是 Bean 的完全限定名称。如果注解不提供任何前缀，则仅使用 Bean 的完全限定名称。
 >
-> 上例中的 bean 名称是 `acme-com.example.AcmeProperties`。
+>上例中的 bean 名称是 `acme-com.example.AcmeProperties`。
 
 我们建议 `@ConfigurationProperties` 只处理环境，尤其不要从上下文中注入其他 bean。对于极端情况，可以使用 setter 注入或框架提供的任何 `*Aware` 接口（例如，如果需要访问 `Environment`，则可以使用 `EnvironmentAware`）。如果仍然想使用构造函数注入其他 bean，则必须使用 `@Component` 注解配置属性 bean，并使用基于 JavaBean 的属性绑定。
 
@@ -2235,7 +2235,7 @@ public class MyService {
 }
 ```
 
-> 使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
+>使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
 
 ##### 第三方配置
 
@@ -2278,23 +2278,23 @@ public class OwnerProperties {
 
 上面的代码可以使用下面的属性名：
 
-| Property                            | Note                                                      |
-| :---------------------------------- | :-------------------------------------------------------- |
+| Property | Note |
+| : | : |
 | `acme.my-project.person.first-name` | 短横线隔开式，推荐使用在 `.properties` 和 `.yml` 文件中。 |
-| `acme.myProject.person.firstName`   | 标准驼峰形式。                                            |
-| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。   |
-| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | 大写形式，当使用系统环境变量时推荐使用这种形式。          |
+| `acme.myProject.person.firstName` | 标准驼峰形式。 |
+| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。 |
+| `ACME_MYPROJECT_PERSON_FIRSTNAME` | 大写形式，当使用系统环境变量时推荐使用这种形式。 |
 
-> 记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
+>记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
 
-| Property Source | Simple                                                   | List                                                         |
-| :-------------- | :------------------------------------------------------- | :----------------------------------------------------------- |
-| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
-| YAML 文件       | 驼峰形式，短横线隔开形式或者下划线记法                   | 标准 YAML 列表语法或者逗号分隔的值列表                       |
-| 环境变量        | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
-| 系统属性        | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
+| Property Source | Simple | List |
+| : | : | : |
+| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法 | 使用 `[]` 的标准列表语法或者逗号分隔的值列表 |
+| YAML 文件 | 驼峰形式，短横线隔开形式或者下划线记法 | 标准 YAML 列表语法或者逗号分隔的值列表 |
+| 环境变量 | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
+| 系统属性 | 驼峰形式，短横线隔开形式或者下划线记法 | 使用 `[]` 的标准列表语法或者逗号分隔的值列表 |
 
-> 我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
+>我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
 
 绑定到 `Map` 属性时，如果 `key` 包含小写字母数字字符或 `-` 以外的任何内容，则需要使用方括号表示法，以便保留原始值。如果键没有被 `[]` 包围，则所有非字母数字或 `-` 的字符都将被删除。例如，考虑将以下属性绑定到 `Map`：
 
@@ -2308,7 +2308,7 @@ acme:
 
 上面的属性将会被绑定到 `Map` ，其中包含 `/key1`, `/key2` 和 `key3` 。
 
-> 对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
+>对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
 
 ##### 合并复杂类型
 
@@ -2402,21 +2402,21 @@ acme:
 
 如果 `dev` 环境配置文件未激活，则 `AcmeProperties.map` 包含一个键为 `key1` 的条目（名称为 `my name 1` ，描述为 `my description 1`）。但是，如果启用了 `dev` 配置文件，则 `map` 包含两个条目，其中包含键 `key1`（名称为 `dev name 1`，名称为 `my description 1`）和 `key2`（名称为 `dev name 2`，名称为 `my description 2`）。
 
-> 前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
+>前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
 
 ##### Properties 转换
 
 当 Spring Boot 绑定到 `@ConfigurationProperties` bean时，它试图将外部应用程序属性强制转换为正确的类型。如果需要自定义类型转换，则可以提供一个 `ConversionService` bean（带有名为 `conversionService` 的bean）或自定义属性编辑器（通过 `CustomEditorConfigurer` bean）或自定义的 `Converters`（带有定义为 `@ConfigurationPropertiesBinding` 的 bean 定义）。
 
-> 由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
+>由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
 
 ###### 转换持续时间
 
 Spring Boot 为表达持续时间提供了专门的支持。如果公开 `java.time.Duration` 属性，则应用程序属性中的以下格式可用：
 
-- 常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
-- 标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
-- 值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
+-常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
+-标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
+-值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
 
 考虑下面的例子：
 
@@ -2452,31 +2452,31 @@ public class AppSystemProperties {
 
 您也可以使用任何受支持的单位。这些是：
 
-- `ns` 纳秒
+-`ns` 纳秒
 
-- `us` 微秒
+-`us` 微秒
 
-- `ms` 毫秒（毫秒）
+-`ms` 毫秒（毫秒）
 
-- `s` 秒
+-`s` 秒
 
-- `m` 分钟
+-`m` 分钟
 
-- `h` 小时
+-`h` 小时
 
-- `d` 天
+-`d` 天
 
 默认单位是毫秒，可以使用 `@DurationUnit` 覆盖，如上面的示例所示。
 
-> 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+>如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
 ###### 转换数据尺寸
 
 Spring Framework 具有一个 `DataSize` 值类型，该值类型以字节为单位表示大小。如果您公开 `DataSize` 属性，则应用程序属性中的以下格式可用：
 
-- 常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
+-常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
 
-- 将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
+-将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
 
 考虑以下示例：
 
@@ -2510,17 +2510,81 @@ public class AppIoProperties {
 
 要指定 10 兆字节的缓冲区大小，`10` 和 `10MB` 是等效的。可以将 256 个字节的大小阈值指定为 `256` 或 `256B`。您也可以使用任何受支持的单位。这些是：
 
-- `B` 表示字节
+-`B` 表示字节
 
-- `KB` 代表千字节
+-`KB` 代表千字节
 
-- `MB` 代表兆字节
+-`MB` 代表兆字节
 
-- `GB` 代表GB
+-`GB` 代表GB
 
-- `TB`（TB）
+-`TB`（TB）
 
 默认单位时字节，可以通过使用  `@DataSizeUnit` 覆盖，如上面例子所示。
 
-> 如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+>如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+
+##### @ConfigurationProperties 验证
+
+每当使用 Spring 的 `@Validated` 注解进行注释时，Spring Boot 就会尝试验证 `@ConfigurationProperties` 类。您可以在配置类上直接使用 JSR-303 `javax.validation` 约束注解。为此，请确保在类路径上有兼容的 JSR-303 实现，然后将约束注解添加到字段中，如以下示例所示：
+
+```java
+@ConfigurationProperties(prefix="acme")
+@Validated
+public class AcmeProperties {
+
+    @NotNull
+    private InetAddress remoteAddress;
+
+    // ... getters and setters
+
+}
+```
+
+>您也可以通过用 `@Validated` 注解创建配置属性的 `@Bean` 方法来触发验证。
+
+为了确保始终为嵌套属性触发验证，即使没有找到属性，相关字段也必须使用 `@Valid` 注解修饰。以下示例以前面的 `AcmeProperties` 示例为基础：
+
+```java
+@ConfigurationProperties(prefix="acme")
+@Validated
+public class AcmeProperties {
+
+    @NotNull
+    private InetAddress remoteAddress;
+
+    @Valid
+    private final Security security = new Security();
+
+    // ... getters and setters
+
+    public static class Security {
+
+        @NotEmpty
+        public String username;
+
+        // ... getters and setters
+
+    }
+
+}
+```
+
+您也可以通过创建一个名为 `configurationPropertiesValidator` 的 bean 定义来添加一个自定义的 Spring Validator。`@Bean` 方法应该声明为 `static`。配置属性验证器是在应用程序生命周期的早期创建的，并且将 `@Bean` 方法声明为静态方法可以创建 Bean，而不必实例化 `@Configuration` 类。这样做避免了由早期实例化引起的任何问题。
+
+>`spring-boot-actuator` 模块包括一个端点，该端点公开了所有的 `@ConfigurationProperties` bean。将您的 Web 浏览器指向 `/actuator/configprops` 或使用等效的 JMX 端点。有关详细信息，请参见 [Production ready features](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints) 部分。
+
+##### @ConfigurationProperties vs. @Value
+
+`@Value` 注解是核心容器功能，它没有提供与类型安全的配置属性相同的功能。下表总结了 `@ConfigurationProperties` 和 `@Value` 支持的功能：
+
+| Feature | `@ConfigurationProperties` | `@Value` |
+| : | : | : |
+| [Relaxed binding](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-relaxed-binding) | Yes | No |
+| [Meta-data support](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata) | Yes | No |
+| `SpEL` evaluation | No | Yes |
+
+如果您为自己的组件定义了一组配置键，我们建议您将它们组合在一个以 `@ConfigurationProperties` 注解修饰的 POJO 中。您还应该意识到，由于 `@Value` 不支持宽松的绑定，因此如果您需要通过使用环境变量来提供值，则不是一个好的选择。
+
+最后，尽管你能够在 `@Value` 中编写 `SpEL` 表达式，但不会处理来自 [application property files](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files)  的此类表达式。
 
