@@ -1,28 +1,40 @@
-#### 4.3.1. 添加活动 Profiles
+### 4.4. 日志
 
-`spring.profiles.active` 属性遵循与其他属性相同的排序规则：最高的 `PropertySource` 获胜。这意味着您可以在 `application.properties` 中指定活动 profile，然后使用命令行开关“替换”它们。
+Spring Boot 使用 [Commons Logging](https://commons.apache.org/logging) 进行所有内部日志记录，但是对底层日志实现保持开放。为  [Java Util Logging](https://docs.oracle.com/javase/8/docs/api//java/util/logging/package-summary.html)， [Log4J2](https://logging.apache.org/log4j/2.x/)， 和 [Logback](https://logback.qos.ch/) 提供默认配置。在每种情况下，记录器都已预先配置为使用控制台输出，同时还提供可选文件输出。
 
-有时，将特定于配置文件的属性“添加”到活动 profile 文件而不是替换它们是有用的。`spring.profiles.include` 属性可用于无条件添加活动 profile 文件。`SpringApplication` 入口点还具有 Java API，用于设置其他配置文件（即，在由 `spring.profiles.active` 属性激活的 profile 的上面）。参见 [SpringApplication](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/SpringApplication.html) 中的 `setAdditionalProfiles()` 方法。
+默认情况下，如果使用“启动器”，则使用 Logback 进行日志记录。还包括适当的 Logback 路由，以确保使用 Java Util Logging，Commons Logging，Log4J 或 SLF4J 的依赖库都可以正常工作。
 
-例如，当使用开关 `--spring.profiles.active=prod` 运行具有以下属性的应用程序时，也会激活 `proddb` 和 `prodmq` profile 文件：
+> Java 有许多可用的日志记录框架。如果上面的列表看起来令人困惑，请不要担心。通常，您不需要更改日志记录依赖项，并且 Spring Boot 默认值可以正常工作。
 
-```yaml
----
-my.property: fromyamlfile
----
-spring.profiles: prod
-spring.profiles.include:
-  - proddb
-  - prodmq
+> 将应用程序部署到 Servlet 容器或应用程序服务器时，通过 Java Util Logging API 执行的日志记录不会路由到应用程序的日志中。这样可以防止容器或其他已部署到容器中的其它应用程序产生的日志记录出现在你的应用程序的日志中。
+
+#### 4.4.1. 日志格式
+
+Spring Boot 的默认日志输出类似于以下示例：
+
+```
+2019-03-05 10:57:51.112  INFO 45469 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet Engine: Apache Tomcat/7.0.52
+2019-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2019-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 1358 ms
+2019-03-05 10:57:51.698  INFO 45469 --- [ost-startStop-1] o.s.b.c.e.ServletRegistrationBean        : Mapping servlet: 'dispatcherServlet' to [/]
+2019-03-05 10:57:51.702  INFO 45469 --- [ost-startStop-1] o.s.b.c.embedded.FilterRegistrationBean  : Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
 ```
 
-> 请记住，可以在 YAML 文档中定义 `spring.profiles` 属性，以确定何时将该特定文档包括在配置中。请参阅 [根据环境更改配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-change-configuration-depending-on-the-environment ) 了解更多细节。
+输出包含以下项目：
 
-#### 4.3.2. 编程式设定 Profiles
+- 日期和时间：毫秒精度，易于排序。
 
-您可以在应用程序运行之前通过调用 `SpringApplication.setAdditionalProfiles(…)` 来以编程方式设置活动 profile 文件。也可以使用 Spring 的 `ConfigurableEnvironment` 接口来激活 profile 文件。
+- 日志级别：`ERROR`， `WARN`， `INFO`， `DEBUG`， 或者 `TRACE`。
 
-#### 4.3.3. 特定于 Profile 的配置文件
+- 进程ID。
 
-`application.properties`（或 `application.yml`）和通过 `@ConfigurationProperties` 引用的文件的特定于配置文件的变体都被视为文件并已加载。参见“ [特定于配置文件的属性](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-profile-specific-properties) “以获取详细信息。
+- 一个 `---` 分隔符，用于区分实际日志消息的开始。
+
+- 线程名称：方括号内（对于控制台输出，可能会被截断）。
+
+- 记录器名称：这通常是源类名称（通常缩写）。
+
+- 日志消息。
+
+> Logback 没有 `FATAL` 级别，该级别对应于其它日志框架的 `ERROR`。
 
