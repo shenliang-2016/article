@@ -1,17 +1,22 @@
-### 4.5. 国际化
+### 4.6. JSON
 
-Spring Boot 支持本地化消息，因此您的应用程序可以迎合不同语言首选项的用户。默认情况下，Spring Boot 在类路径的根目录下查找 `messages` 资源包的存在。
+Spring Boot 提供了三种 JSON 映射类库支持：
 
-> 当配置的资源包的默认属性文件可用时（即默认情况下为 `messages.properties`），将应用自动配置。如果您的资源包仅包含特定于语言的属性文件，则需要添加默认资源文件。如果找不到与任何配置的基本名称匹配的属性文件，则不会有自动配置的 `MessageSource`。
+- Gson
+- Jackson
+- JSON-B
 
-可以使用 `spring.messages` 名称空间配置资源包的基本名称以及其他几个属性，如以下示例所示：
+Jackson 是首选默认的类库。
 
-```properties
-spring.messages.basename=messages,config.i18n.messages
-spring.messages.fallback-to-system-locale=false
-```
+#### 4.6.1. Jackson
 
-> `spring.messages.basename` 支持逗号分隔的位置列表，可以是包限定符，也可以是从类路径根目录解析的资源。
+提供了 Jackson 的自动配置功能，并且 Jackson 是 `spring-boot-starter-json` 的一部分。当 Jackson 在类路径上时，将自动配置 `ObjectMapper` bean。提供了几个配置属性用于 [自定义 `ObjectMapper` 的配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-customize-the-jackson-objectmapper)。
 
-参考 [`MessageSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/context/MessageSourceProperties.java) 获取更多支持的选项。
+#### 4.6.2. Gson
+
+提供了 Gson 的自动配置。当 Gson 在类路径上时，将自动配置 `Gson` bean。提供了几个 `spring.gson.*` 配置属性来定制配置。为了获得更多控制权，可以使用一个或多个 `GsonBuilderCustomizer` bean。
+
+#### 4.6.3. JSON-B
+
+提供了 JSON-B 的自动配置。当 JSON-B API 和实现位于类路径上时，将自动配置 `Jsonb` bean。首选的 JSON-B 实现是提供依赖管理的 Apache Johnzon。
 
