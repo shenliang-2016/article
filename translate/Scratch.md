@@ -63,9 +63,9 @@ Spring Boot 为 Spring MVC 提供了自动配置，可与大多数应用程序�
 
 ##### HttpMessageConverters
 
-Spring MVC uses the `HttpMessageConverter` interface to convert HTTP requests and responses. Sensible defaults are included out of the box. For example, objects can be automatically converted to JSON (by using the Jackson library) or XML (by using the Jackson XML extension, if available, or by using JAXB if the Jackson XML extension is not available). By default, strings are encoded in `UTF-8`.
+Spring MVC 使用 `HttpMessageConverter` 接口转换 HTTP 请求和响应。其中包含开箱即用的明智的默认设置。例如，可以将对象自动转换为 JSON（通过使用 Jackson 库）或 XML（通过使用 Jackson XML 扩展（如果可用）或通过使用 JAXB（如果 Jackson XML 扩展不可用））。默认情况下，字符串以 `UTF-8` 编码。
 
-If you need to add or customize converters, you can use Spring Boot’s `HttpMessageConverters` class, as shown in the following listing:
+如果您需要添加或自定义转换器，则可以使用 Spring Boot 的 `HttpMessageConverters` 类，如以下清单所示：
 
 ```java
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
@@ -85,13 +85,13 @@ public class MyConfiguration {
 }
 ```
 
-Any `HttpMessageConverter` bean that is present in the context is added to the list of converters. You can also override default converters in the same way.
+上下文中的 `HttpMessageConverter` bean 被添加到转换器列表中。你也可以通过相同的方法覆盖默认转换器。
 
-##### Custom JSON Serializers and Deserializers
+##### 自定义 JSON 序列化和反序列化
 
-If you use Jackson to serialize and deserialize JSON data, you might want to write your own `JsonSerializer` and `JsonDeserializer` classes. Custom serializers are usually [registered with Jackson through a module](https://github.com/FasterXML/jackson-docs/wiki/JacksonHowToCustomSerializers), but Spring Boot provides an alternative `@JsonComponent` annotation that makes it easier to directly register Spring Beans.
+如果您使用 Jackson 来序列化和反序列化 JSON 数据，则可能要编写自己的 `JsonSerializer` 和 `JsonDeserializer` 类。自定义序列化程序通常是 [通过模块向 Jackson 进行注册](https://github.com/FasterXML/jackson-docs/wiki/JacksonHowToCustomSerializers)，但是 Spring Boot 提供了替代的 `@JsonComponent` 注解，这使得直接注册 Spring Beans 更容易。
 
-You can use the `@JsonComponent` annotation directly on `JsonSerializer`, `JsonDeserializer` or `KeyDeserializer` implementations. You can also use it on classes that contain serializers/deserializers as inner classes, as shown in the following example:
+您可以直接在 `JsonSerializer`，`JsonDeserializer` 或 `KeyDeserializer` 实现上使用 `@JsonComponent` 注解。您还可以在包含序列化器/反序列化器作为内部类的类上使用它，如以下示例所示：
 
 ```java
 import java.io.*;
