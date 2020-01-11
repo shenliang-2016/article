@@ -1,64 +1,80 @@
-##### 欢迎页面
+##### 错误处理
 
-Spring Boot 支持静态和模板欢迎页面。它首先在配置的静态内容位置中查找 `index.html` 文件。如果没有找到，它会寻找一个 `index` 模板。如果找到任何一个，它将自动用作应用程序的欢迎页面。
+By default, Spring Boot provides an `/error` mapping that handles all errors in a sensible way, and it is registered as a “global” error page in the servlet container. For machine clients, it produces a JSON response with details of the error, the HTTP status, and the exception message. For browser clients, there is a “whitelabel” error view that renders the same data in HTML format (to customize it, add a `View` that resolves to `error`). To replace the default behavior completely, you can implement `ErrorController` and register a bean definition of that type or add a bean of type `ErrorAttributes` to use the existing mechanism but replace the contents.
 
-##### 自定义网站图标
+> The `BasicErrorController` can be used as a base class for a custom `ErrorController`. This is particularly useful if you want to add a handler for a new content type (the default is to handle `text/html` specifically and provide a fallback for everything else). To do so, extend `BasicErrorController`, add a public method with a `@RequestMapping` that has a `produces` attribute, and create a bean of your new type.
 
-与其他静态资源一样，Spring Boot 在已配置的静态内容位置中查找 `favicon.ico`。如果存在这样的文件，它将自动用作应用程序的收藏夹图标。
+You can also define a class annotated with `@ControllerAdvice` to customize the JSON document to return for a particular controller and/or exception type, as shown in the following example:
 
-##### 路径匹配和内容协商
+```java
+@ControllerAdvice(basePackageClasses = AcmeController.class)
+public class AcmeControllerAdvice extends ResponseEntityExceptionHandler {
 
-Spring MVC 可以通过查看请求路径并将其匹配到应用程序中定义的映射（例如 Controller 方法上的 `@GetMapping` 注解），将传入的 HTTP 请求映射到处理程序。
+    @ExceptionHandler(YourException.class)
+    @ResponseBody
+    ResponseEntity<?> handleControllerException(HttpServletRequest request, Throwable ex) {
+        HttpStatus status = getStatus(request);
+        return new ResponseEntity<>(new CustomErrorType(status.value(), ex.getMessage()), status);
+    }
 
-Spring Boot 选择默认情况下禁用后缀模式匹配，这意味着像 `"GET /projects/spring-boot.json"` 这样的请求将不会与 `@GetMapping("/projects/spring-boot")` 映射相匹配。这被视为 [Spring MVC 应用程序的最佳实践](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-ann-requestmapping-suffix-pattern-match) 。 过去，此功能主要用于未发送正确的 `Accept` 请求标头的 HTTP 客户端。我们需要确保将正确的内容类型发送给客户端。如今，内容协商已变得更加可靠。
+    private HttpStatus getStatus(HttpServletRequest request) {
+        Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
+        if (statusCode == null) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return HttpStatus.valueOf(statusCode);
+    }
 
-还有其他处理 HTTP 客户端的方法，这些客户端不能始终发送正确的 `Accept` 请求标头。除了使用后缀匹配，我们还可以使用查询参数来确保将诸如 `"GET /projects/spring-boot?format=json"` 之类的请求映射到 `@GetMapping("/projects/spring-boot")`：
-
-```properties
-spring.mvc.contentnegotiation.favor-parameter=true
-
-# We can change the parameter name, which is "format" by default:
-# spring.mvc.contentnegotiation.parameter-name=myparam
-
-# We can also register additional file extensions/media types with:
-spring.mvc.contentnegotiation.media-types.markdown=text/markdown
+}
 ```
 
-如果您了解了以上注意事项，但仍希望您的应用程序使用后缀模式匹配，则需要以下配置：
+In the preceding example, if `YourException` is thrown by a controller defined in the same package as `AcmeController`, a JSON representation of the `CustomErrorType` POJO is used instead of the `ErrorAttributes` representation.
 
-```properties
-spring.mvc.contentnegotiation.favor-path-extension=true
-spring.mvc.pathmatch.use-suffix-pattern=true
+###### Custom Error Pages
+
+If you want to display a custom HTML error page for a given status code, you can add a file to an `/error` folder. Error pages can either be static HTML (that is, added under any of the static resource folders) or be built by using templates. The name of the file should be the exact status code or a series mask.
+
+For example, to map `404` to a static HTML file, your folder structure would be as follows:
+
+```
+src/
+ +- main/
+     +- java/
+     |   + <source code>
+     +- resources/
+         +- public/
+             +- error/
+             |   +- 404.html
+             +- <other public assets>
 ```
 
-另外，与其打开所有后缀模式，不如只支持已注册的后缀模式，这更安全：
+To map all `5xx` errors by using a FreeMarker template, your folder structure would be as follows:
 
-```properties
-spring.mvc.contentnegotiation.favor-path-extension=true
-spring.mvc.pathmatch.use-registered-suffix-pattern=true
-
-# You can also register additional file extensions/media types with:
-# spring.mvc.contentnegotiation.media-types.adoc=text/asciidoc
+```
+src/
+ +- main/
+     +- java/
+     |   + <source code>
+     +- resources/
+         +- templates/
+             +- error/
+             |   +- 5xx.ftlh
+             +- <other templates>
 ```
 
-##### ConfigurableWebBindingInitializer
+For more complex mappings, you can also add beans that implement the `ErrorViewResolver` interface, as shown in the following example:
 
-Spring MVC 使用 `WebBindingInitializer` 来为特定请求初始化 `WebDataBinder`。如果创建自己的 `ConfigurableWebBindingInitializer` `@Bean`，Spring Boot 会自动配置 Spring MVC 以使用它。
+```java
+public class MyErrorViewResolver implements ErrorViewResolver {
 
-##### 模板引擎
+    @Override
+    public ModelAndView resolveErrorView(HttpServletRequest request,
+            HttpStatus status, Map<String, Object> model) {
+        // Use the request or status to optionally return a ModelAndView
+        return ...
+    }
 
-除了 REST Web 服务之外，您还可以使用 Spring MVC 来提供动态 HTML 内容。Spring MVC 支持各种模板技术，包括 Thymeleaf，FreeMarker 和 JSP。同样，许多其他模板引擎包括他们自己的 Spring MVC 集成。
+}
+```
 
-Spring Boot 包含对以下模板引擎的自动配置支持：
-
-- [FreeMarker](https://freemarker.apache.org/docs/)
-- [Groovy](http://docs.groovy-lang.org/docs/next/html/documentation/template-engines.html#_the_markuptemplateengine)
-- [Thymeleaf](https://www.thymeleaf.org/)
-- [Mustache](https://mustache.github.io/)
-
-> 如果可能，应避免使用 JSP。当将它们与嵌入式 servlet 容器一起使用时，存在几个 [已知限制](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jsp-limitations) 。
-
-当您使用这些模板引擎之一进行默认配置时，您的模板会自动从 `src/main/resources/templates` 中获取。
-
-> 根据您运行应用程序的方式，IntelliJ IDEA 对类路径的排序不同。与使用 Maven 或 Gradle 或从其打包的 jar 运行应用程序时相比，从 IDE 的主要方法运行应用程序的顺序会有所不同。这可能导致 Spring Boot 无法在类路径上找到模板。如果遇到此问题，可以在 IDE 中重新排序类路径，以首先放置模块的类和资源。另外，您可以配置模板前缀，以搜索类路径上的每个 `templates` 目录，如下所示：`classpath*:/templates/`。
-
+You can also use regular Spring MVC features such as [`@ExceptionHandler` methods](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers) and [`@ControllerAdvice`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-ann-controller-advice). The `ErrorController` then picks up any unhandled exceptions.
