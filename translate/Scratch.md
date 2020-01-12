@@ -1,10 +1,10 @@
 ##### 错误处理
 
-By default, Spring Boot provides an `/error` mapping that handles all errors in a sensible way, and it is registered as a “global” error page in the servlet container. For machine clients, it produces a JSON response with details of the error, the HTTP status, and the exception message. For browser clients, there is a “whitelabel” error view that renders the same data in HTML format (to customize it, add a `View` that resolves to `error`). To replace the default behavior completely, you can implement `ErrorController` and register a bean definition of that type or add a bean of type `ErrorAttributes` to use the existing mechanism but replace the contents.
+默认情况下，Spring Boot 提供一个 `/error` 映射，以一种明智的方式处理所有错误，并且在 servlet 容器中被注册为“全局”错误页面。对于机器客户端，它将生成一个 JSON 响应，其中包含错误，HTTP 状态和异常消息的详细信息。对于浏览器客户端，有一个“whitelabel”错误视图以 HTML 格式呈现相同的数据（要对其进行自定义，请添加一个可解析为 `error` 的 `view`）。要完全替换默认行为，您可以实现 `ErrorController` 并注册该类型的 bean 定义，或者添加类型为 `ErrorAttributes` 的 bean 以使用现有机制但替换其内容。
 
-> The `BasicErrorController` can be used as a base class for a custom `ErrorController`. This is particularly useful if you want to add a handler for a new content type (the default is to handle `text/html` specifically and provide a fallback for everything else). To do so, extend `BasicErrorController`, add a public method with a `@RequestMapping` that has a `produces` attribute, and create a bean of your new type.
+> `BasicErrorController` 可用作自定义 `ErrorController` 的基类。如果您要为新的内容类型添加处理程序（默认是专门处理 `text/html` 并为其他所有内容提供后备功能），则此功能特别有用。为此，扩展 `BasicErrorController`，添加一个具有 `produces` 属性的 `@RequestMapping` 注解的公共方法，并创建一个新类型的 bean。
 
-You can also define a class annotated with `@ControllerAdvice` to customize the JSON document to return for a particular controller and/or exception type, as shown in the following example:
+您还可以定义一个带有 `@ControllerAdvice` 注解的类，以自定义 JSON 文档以针对特定的控制器和/或异常类型返回，如以下示例所示：
 
 ```java
 @ControllerAdvice(basePackageClasses = AcmeController.class)
@@ -28,13 +28,13 @@ public class AcmeControllerAdvice extends ResponseEntityExceptionHandler {
 }
 ```
 
-In the preceding example, if `YourException` is thrown by a controller defined in the same package as `AcmeController`, a JSON representation of the `CustomErrorType` POJO is used instead of the `ErrorAttributes` representation.
+在前面的示例中，如果在与 `AcmeController` 相同的包中定义的控制器抛出了 `YourException`，则使用 `CustomErrorType` POJO 的 JSON 表示形式而不是 `ErrorAttributes` 表示形式。
 
-###### Custom Error Pages
+###### 自定义错误页面
 
-If you want to display a custom HTML error page for a given status code, you can add a file to an `/error` folder. Error pages can either be static HTML (that is, added under any of the static resource folders) or be built by using templates. The name of the file should be the exact status code or a series mask.
+如果要显示给定状态代码的自定义 HTML 错误页面，则可以将文件添加到 `/error` 文件夹中。错误页面可以是静态 HTML（即添加到任何静态资源文件夹下），也可以使用模板来构建。文件名应为确切的状态代码或系列掩码。
 
-For example, to map `404` to a static HTML file, your folder structure would be as follows:
+例如，要将 `404` 映射到静态 HTML 文件，您的文件夹结构如下：
 
 ```
 src/
@@ -48,7 +48,7 @@ src/
              +- <other public assets>
 ```
 
-To map all `5xx` errors by using a FreeMarker template, your folder structure would be as follows:
+要使用 `FreeMarker` 模板映射所有 `5xx` 错误，您的文件夹结构如下：
 
 ```
 src/
@@ -62,7 +62,7 @@ src/
              +- <other templates>
 ```
 
-For more complex mappings, you can also add beans that implement the `ErrorViewResolver` interface, as shown in the following example:
+对于更复杂的映射，还可以添加实现 `ErrorViewResolver` 接口的 bean，如以下示例所示：
 
 ```java
 public class MyErrorViewResolver implements ErrorViewResolver {
@@ -77,4 +77,5 @@ public class MyErrorViewResolver implements ErrorViewResolver {
 }
 ```
 
-You can also use regular Spring MVC features such as [`@ExceptionHandler` methods](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers) and [`@ControllerAdvice`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-ann-controller-advice). The `ErrorController` then picks up any unhandled exceptions.
+你也可以使用通用的 Spring MVC 特性，比如 [`@ExceptionHandler` methods](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-exceptionhandlers) 和 [`@ControllerAdvice`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-ann-controller-advice)。`ErrorController` 就会处理任何未处理的异常。
+
