@@ -1,69 +1,40 @@
-#### 4.7.2. Spring WebFlux 框架
+##### Spring WebFlux 自动配置
 
-Spring WebFlux 是 Spring Framework 5.0 中引入的新的响应式 Web 框架。与 Spring MVC 不同，它不需要 Servlet API，是完全异步且无阻塞的，并通过 [Reactor项目](https://projectreactor.io/) 实现 [Reactive Streams](https://www.reactive-streams.org/) 规范。
+Spring Boot 为 Spring WebFlux 提供的自动配置可以很好地应用于大部分的应用。
 
-Spring WebFlux 有两种形式：功能性的和基于注解的。基于注解的模型非常类似于 Spring MVC 模型，如以下示例所示：
+自动配置在 Spring 默认基础上添加爱了以下特性：
 
-```java
-@RestController
-@RequestMapping("/users")
-public class MyRestController {
+- 为 `HttpMessageReader` 和 `HttpMessageWriter` 实例配置编解码器（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-httpcodecs) 介绍）。
+- 支持提供静态资源，包括对 WebJars 的支持（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content) 介绍）。
 
-    @GetMapping("/{user}")
-    public Mono<User> getUser(@PathVariable Long user) {
-        // ...
-    }
+如果您想保留 Spring Boot WebFlux 功能并想要添加其他 [WebFlux配置](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-config)，您可以添加自己的类型为 `WebFluxConfigurer` 的 `@Configuration` 类，而不需要添加 `@EnableWebFlux` 。
 
-    @GetMapping("/{user}/customers")
-    public Flux<Customer> getUserCustomers(@PathVariable Long user) {
-        // ...
-    }
+如果您想完全控制 Spring WebFlux，则可以添加带有 `@EnableWebFlux` 注解的自己的 `@Configuration`。
 
-    @DeleteMapping("/{user}")
-    public Mono<User> deleteUser(@PathVariable Long user) {
-        // ...
-    }
+##### 带有 HttpMessageReaders 和 HttpMessageWriters 的 HTTP 编解码器
 
-}
-```
+Spring WebFlux 使用 `HttpMessageReader` 和 `HttpMessageWriter` 接口来转换 HTTP 请求和响应。通过查看类路径中可用的库，将它们配置为 `CodecConfigurer` 以具有合理的默认值。
 
-功能变体 “WebFlux.fn” 将路由配置与请求的实际处理分开，如以下示例所示：
+Spring Boot 为编解码器 `spring.codec.*` 提供了专用的配置属性。它还通过使用 `CodecCustomizer` 实例来应用进一步的自定义。例如，将 `spring.jackson.*` 配置键应用于 Jackson 编解码器。
+
+如果您需要添加或自定义编解码器，则可以创建自定义 `CodecCustomizer` 组件，如以下示例所示：
 
 ```java
+import org.springframework.boot.web.codec.CodecCustomizer;
+
 @Configuration(proxyBeanMethods = false)
-public class RoutingConfiguration {
+public class MyConfiguration {
 
     @Bean
-    public RouterFunction<ServerResponse> monoRouterFunction(UserHandler userHandler) {
-        return route(GET("/{user}").and(accept(APPLICATION_JSON)), userHandler::getUser)
-                .andRoute(GET("/{user}/customers").and(accept(APPLICATION_JSON)), userHandler::getUserCustomers)
-                .andRoute(DELETE("/{user}").and(accept(APPLICATION_JSON)), userHandler::deleteUser);
+    public CodecCustomizer myCodecCustomizer() {
+        return codecConfigurer -> {
+            // ...
+        };
     }
 
-}
-
-@Component
-public class UserHandler {
-
-    public Mono<ServerResponse> getUser(ServerRequest request) {
-        // ...
-    }
-
-    public Mono<ServerResponse> getUserCustomers(ServerRequest request) {
-        // ...
-    }
-
-    public Mono<ServerResponse> deleteUser(ServerRequest request) {
-        // ...
-    }
 }
 ```
 
-WebFlux 是 Spring 框架的一部分，详细信息可在其 [参考文档](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-fn) 中找到。
+您还可以利用 [Boot的自定义JSON序列化器和反序列化器](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-json-components)。
 
-> 您可以根据需要定义尽可能多的 `RouterFunction` bean，以对路由器的定义进行模块化。如果需要应用优先级，可以对 Bean 进行排序。
-
-首先，将 `spring-boot-starter-webflux` 模块添加到您的应用程序中。
-
-> 在应用程序中添加 `spring-boot-starter-web` 和 `spring-boot-starter-webflux` 模块会导致 Spring Boot 自动配置 Spring MVC，而不是 WebFlux。之所以选择这种行为，是因为许多 Spring 开发人员在其 Spring MVC 应用程序中添加了 `spring-boot-starter-webflux` 以使用反应性 WebClient。您仍然可以通过将选定的应用程序类型设置为 `SpringApplication.setWebApplicationType(WebApplicationType.REACTIVE)` 来强制执行选择。
-
+ 
