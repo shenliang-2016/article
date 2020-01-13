@@ -1,40 +1,58 @@
-##### Spring WebFlux 自动配置
+##### 错误处理
 
-Spring Boot 为 Spring WebFlux 提供的自动配置可以很好地应用于大部分的应用。
+Spring Boot 提供了一个 WebExceptionHandler，以一种明智的方式处理所有错误。它在处理顺序中的位置紧靠 WebFlux 提供的处理程序之前，该处理程序被认为是最后一个。对于机器客户端，它将生成一个 JSON 响应，其中包含错误，HTTP 状态和异常消息的详细信息。对于浏览器客户端，有一个 "whitelabel” 错误处理程序，以 HTML 格式呈现相同的数据。您还可以提供自己的 HTML 模板来显示错误（请参见 [下一节](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-error-handling-custom-error-pages)）。
 
-自动配置在 Spring 默认基础上添加爱了以下特性：
+定制此功能的第一步通常涉及使用现有机制，但替换或增加错误内容。为此，您可以添加类型为 `ErrorAttributes` 的 bean。
 
-- 为 `HttpMessageReader` 和 `HttpMessageWriter` 实例配置编解码器（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-httpcodecs) 介绍）。
-- 支持提供静态资源，包括对 WebJars 的支持（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content) 介绍）。
-
-如果您想保留 Spring Boot WebFlux 功能并想要添加其他 [WebFlux配置](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-config)，您可以添加自己的类型为 `WebFluxConfigurer` 的 `@Configuration` 类，而不需要添加 `@EnableWebFlux` 。
-
-如果您想完全控制 Spring WebFlux，则可以添加带有 `@EnableWebFlux` 注解的自己的 `@Configuration`。
-
-##### 带有 HttpMessageReaders 和 HttpMessageWriters 的 HTTP 编解码器
-
-Spring WebFlux 使用 `HttpMessageReader` 和 `HttpMessageWriter` 接口来转换 HTTP 请求和响应。通过查看类路径中可用的库，将它们配置为 `CodecConfigurer` 以具有合理的默认值。
-
-Spring Boot 为编解码器 `spring.codec.*` 提供了专用的配置属性。它还通过使用 `CodecCustomizer` 实例来应用进一步的自定义。例如，将 `spring.jackson.*` 配置键应用于 Jackson 编解码器。
-
-如果您需要添加或自定义编解码器，则可以创建自定义 `CodecCustomizer` 组件，如以下示例所示：
+要更改错误处理行为，可以实现 `ErrorWebExceptionHandler` 并注册该类型的 bean 定义。由于 `WebExceptionHandler` 的级别很低，因此 Spring Boot 还提供了一个便捷的 `AbstractErrorWebExceptionHandler`，可让您以 WebFlux 功能性的方式处理错误，如以下示例所示：
 
 ```java
-import org.springframework.boot.web.codec.CodecCustomizer;
+public class CustomErrorWebExceptionHandler extends AbstractErrorWebExceptionHandler {
 
-@Configuration(proxyBeanMethods = false)
-public class MyConfiguration {
+    // Define constructor here
 
-    @Bean
-    public CodecCustomizer myCodecCustomizer() {
-        return codecConfigurer -> {
-            // ...
-        };
+    @Override
+    protected RouterFunction<ServerResponse> getRoutingFunction(ErrorAttributes errorAttributes) {
+
+        return RouterFunctions
+                .route(aPredicate, aHandler)
+                .andRoute(anotherPredicate, anotherHandler);
     }
 
 }
 ```
 
-您还可以利用 [Boot的自定义JSON序列化器和反序列化器](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-json-components)。
+为了获得更完整的视图，您还可以直接将 `DefaultErrorWebExceptionHandler` 子类化，并覆盖特定的方法。
 
- 
+###### 自定义错误页面
+
+如果要显示给定状态代码的自定义 HTML 错误页面，则可以将文件添加到 `/error` 文件夹中。错误页面可以是静态 HTML（即添加到任何静态资源文件夹下），也可以使用模板构建。文件名应为确切的状态代码或系列掩码。
+
+例如，要将 `404` 映射到静态 HTML 文件，您的文件夹结构如下：
+
+```
+src/
+ +- main/
+     +- java/
+     |   + <source code>
+     +- resources/
+         +- public/
+             +- error/
+             |   +- 404.html
+             +- <other public assets>
+```
+
+要使用 Moustache 模板映射所有 `5xx` 错误，您的文件夹结构如下：
+
+```
+src/
+ +- main/
+     +- java/
+     |   + <source code>
+     +- resources/
+         +- templates/
+             +- error/
+             |   +- 5xx.mustache
+             +- <other templates>
+```
+
