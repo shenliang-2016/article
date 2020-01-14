@@ -1,40 +1,22 @@
-#### 4.7.3. JAX-RS 和 Jersey
+#### 4.7.4. 内置 Servlet 容器支持
 
-如果您更喜欢 REST 端点的 JAX-RS 编程模型，则可以使用可用的实现之一来代替 Spring MVC。[Jersey](https://jersey.github.io/) 和 [Apache CXF](https://cxf.apache.org/) 开箱即用。CXF 要求您在应用程序上下文中将其 Servlet 或 Filter 作为 `@Bean` 注册。Jersey 提供了一些本地的 Spring 支持，因此我们在 Spring Boot 中还与启动程序一起为其提供了自动配置支持。
+Spring Boot 包含对 [Tomcat](https://tomcat.apache.org/)、[Jetty](https://www.eclipse.org/jetty/) 和 [Undertow](https://github.com/undertow-io/undertow) 等多种内置 Servlet 服务器的支持。大多数开发者使用合适的启动器来获取完整配置的实例。默认情况下，内置的服务器在端口 `8080` 上监听 HTTP 请求。
 
-要开始使用 Jersey，请将 `spring-boot-starter-jersey` 作为依赖项，然后需要一个 `ResourceConfig` 类型的 `@Bean` 在其中注册所有端点，如以下示例所示：
+##### Servlets, Filters, 和 listeners
 
-```java
-@Component
-public class JerseyConfig extends ResourceConfig {
+使用内置 Servlet 容器时，您可以通过使用 Spring Bean 或扫描 Servlet 组件来注册 Servlet 规范中的 Servlet、过滤器和所有侦听器（例如 `HttpSessionListener`）。
 
-    public JerseyConfig() {
-        register(Endpoint.class);
-    }
+###### 将 Servlets, Filters, 和 Listeners 注册为 Spring Beans
 
-}
-```
+任何作为 Spring bean 的 Servlet，Filter 或 Servlet  `*Listener` 实例都向嵌入式容器注册。如果您想在配置过程中引用来自 `application.properties` 的值，这将特别方便。
 
-> Jersey 对扫描可执行档案的支持非常有限。例如，它无法扫描 [完全可执行的jar文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-install) 中的包内部的端点，或运行可执行 war 文件时在 `WEB-INF/classes` 中的端点。为了避免这种限制，不应该使用 `packages` 方法，并且应该使用 `register` 方法分别注册端点，如前面的示例所示。
+默认情况下，如果上下文仅包含单个 Servlet，则将其映射到 `/`。对于多个 servlet bean，bean 名称用作路径前缀。过滤器映射到 `/*`。
 
-对于更高级的定制，您还可以注册任意数量的实现 `ResourceConfigCustomizer` 的 bean。
+如果基于约定的映射不够灵活，则可以使用 `ServletRegistrationBean`，`FilterRegistrationBean` 和 `ServletListenerRegistrationBean` 类进行完全控制。
 
-所有注册的端点应该是带有 HTTP 资源注解的 `@Components`（`@GET` 和其他注解），如以下示例所示：
+通常情况下，过滤器 bean 处于无序状态是安全的。如果需要特定的顺序，则应使用 `@Order` 来注解 `Filter` 或使其实现 `Ordered`。您不能通过使用 `@Order` 注解 bean 方法的方法来配置 `Filter` 的顺序。如果您不能将 `Filter` 类更改为添加 `@Order` 或实现 `Ordered`，则必须为 `Filter` 定义 `FilterRegistrationBean` 并使用 `setOrder(int)` 方法设置注册 bean 的顺序。避免配置一个在 `Ordered.HIGHEST_PRECEDENCE` 上读取请求正文的过滤器，因为它可能与应用程序的字符编码配置不符。如果 Servlet 过滤器包装了请求，则应使用小于或等于 `OrderedFilter.REQUEST_WRAPPER_FILTER_MAX_ORDER` 的顺序来配置它。
 
-```java
-@Component
-@Path("/hello")
-public class Endpoint {
+> 要查看应用程序中每个 `Filter` 的顺序，请为 `web` [logging group](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-custom-log-groups)（`logging.level.web=debug`）启用 `debug` 级别日志。然后，将在启动时记录已注册过滤器的详细信息，包括其顺序和 URL 模式。
 
-    @GET
-    public String message() {
-        return "Hello";
-    }
-
-}
-```
-
-由于 `Endpoint` 是 Spring 的 `@Component`，它的生命周期是由 Spring 管理的，因此您可以使用 `@Autowired` 注解注入依赖项，并使用 `@Value` 注解注入外部配置。默认情况下，Jersey servlet 被注册并映射到 `/*`。您可以通过将 `@ApplicationPath` 添加到 `ResourceConfig` 中来更改映射。
-
-默认情况下，Jersey 被设置为名为 `jerseyServletRegistration` 的 `ServletRegistrationBean` 类型的 `@Bean` 中的 Servlet。默认情况下，该 Servlet 的初始化是延迟的，但是您可以通过设置 `spring.jersey.servlet.load-on-startup` 来自定义该行为。您可以通过创建自己的同名 bean 来禁用或覆盖该 bean。您还可以通过设置 `spring.jersey.type=filter`（在这种情况下，要替换或覆盖的 `@Bean` 是 `jerseyFilterRegistration`）来使用过滤器而非 Servlet。过滤器具有一个 `@Order`，可以通过 `spring.jersey.filter.order` 进行设置。可以通过使用 `spring.jersey.init.*` 来指定属性映射，从而为 servlet 和过滤器注册都赋予 `init` 参数。
+> 注册 `Filter` bean 时要小心，因为它们是在应用程序生命周期中很早就初始化的。如果您需要注册与其他 bean 交互的 `Filter`，请考虑使用 [`DelegatingFilterProxyRegistrationBean`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBean.html) 。
 
