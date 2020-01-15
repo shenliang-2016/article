@@ -1,24 +1,8 @@
-### 4.9. 安全
+#### 4.9.1. MVC 安全
 
-如果 [Spring Security](https://spring.io/projects/spring-security) 位于类路径中，则默认情况下 Web 应用程序是安全的。Spring Boot 依靠 Spring Security 的内容协商策略来确定是使用 `httpBasic` 还是 `formLogin`。要将方法级安全性添加到 Web 应用程序，您还可以使用所需的设置添加 `@EnableGlobalMethodSecurity`。可以在 [Spring Security参考指南](https://docs.spring.io/spring-security/site/docs/5.2.1.RELEASE/reference/htmlsingle/#jc-method) 中找到更多信息。
+默认的安全配置在 `SecurityAutoConfiguration` 和 `UserDetailsServiceAutoConfiguration` 中实现。`SecuritySecurityConfiguration` 导入 `SpringBootWebSecurityConfiguration` 来实现 Web 安全，而 `UserDetailsServiceAutoConfiguration` 则配置身份验证，这在非 Web 应用程序中也很重要。要完全关闭默认的 Web 应用程序安全性配置或合并多个 Spring Security 组件（例如 OAuth 2 客户端和资源服务器），请添加类型为 `WebSecurityConfigurerAdapter` 的 bean（这样做不会禁用 `UserDetailsService` 配置或 `Actuator` 的安全性）。
 
-默认的 `UserDetailsService` 只有一个用户。用户名为 `user`，密码为随机密码，并在应用程序启动时以 `INFO` 级别显示，如下例所示：
+要也关闭 `UserDetailsService` 配置，可以添加 `UserDetailsService`，`AuthenticationProvider` 或 `AuthenticationManager` 类型的 Bean。
 
-```
-Using generated security password: 78fa095d-3f4c-48b1-ad50-e24c31d5cf35
-```
-
-> 如果您微调日志记录配置，请确保将 `org.springframework.boot.autoconfigure.security` 类别设置为记录 `INFO` 级消息。否则，不会打印默认密码。
-
-您可以通过提供 `spring.security.user.name` 和 `spring.security.user.password` 来更改用户名和密码。
-
-默认情况下，您在 Web 应用程序中获得的基本功能是：
-
-- 具有内存存储区的 `UserDetailsService`（如果是 WebFlux 应用程序，则为 `ReactiveUserDetailsService`）Bean 和具有生成的密码的单个用户（请参阅 [`SecurityProperties.User`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/autoconfigure/security/SecurityProperties.User.html) 以获取用户的属性）。
-
-- 整个应用程序的基于表单的登录或 HTTP 基本安全性（取决于请求中的 `Accept` 标头）（如果执行器位于类路径上，则包括执行器端点）。
-
-- 用于发布身份验证事件的 `DefaultAuthenticationEventPublisher`。
-
-您可以通过添加一个bean来提供一个不同的`AuthenticationEventPublisher`。
+可以通过添加自定义 `WebSecurityConfigurerAdapter` 来覆盖访问规则。Spring Boot 提供了方便的方法，可用于覆盖执行器端点和静态资源的访问规则。`EndpointRequest` 可以用来创建基于 `management.endpoints.web.base-path` 属性的 `RequestMatcher`。`PathRequest` 可以用来为常用位置的资源创建一个 `RequestMatcher`。
 
