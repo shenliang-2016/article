@@ -1,18 +1,17 @@
-#### 4.7.5. 内置反应式服务器支持
+### 4.8. RSocket
 
-Spring Boot 包含对以下内置反应式 Web 服务器的支持：Reactor Netty，Tomcat，Jetty 和 Undertow。大多数开发人员使用适当的“启动器”来获取完全配置的实例。默认情况下，内置服务器在端口 8080 上侦听 HTTP 请求。
+[RSocket](https://rsocket.io/) 是一个用于字节流传输的二进制协议。它通过通过单个连接传递的异步消息来启用对称交互模型。
 
-#### 4.7.6. 反应式服务器资源配置
+Spring 框架的 `spring-messaging` 模块在客户端和服务器端都支持 RSocket 请求者和响应者。有关更多信息，请参见 Spring Framework 参考文档的 [RSocket部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#rsocket-spring) 详细信息，包括 RSocket 协议概述。
 
-当自动配置 Reactor Netty 或 Jetty 服务器时，Spring Boot 将创建特定的 bean，这些 bean 将向服务器实例提供 HTTP 资源：`ReactorResourceFactory` 或 `JettyResourceFactory`。
+#### 4.8.1. RSocket 策略自动配置
 
-默认情况下，这些资源还将与 Reactor Netty 和 Jetty 客户端共享，以实现最佳性能，前提是：
+Spring Boot 自动配置一个 `RSocketStrategies` bean，该 bean 提供了编码和解码 RSocket 有效负载所需的所有基础结构。默认情况下，自动配置将尝试（按顺序）配置以下内容：
 
-- 服务器和客户端使用相同的技术
+1. [CBOR](https://cbor.io/) 使用 Jackson 编码解码
+2. JSON 使用 Jackson 编码解码
 
-- 使用 Spring Boot 自动配置的 `WebClient.Builder` bean构建客户端实例
+`spring-boot-starter-rsocket` 启动器提供了两种依赖关系。查阅 [Jackson支持部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-json-jackson) 以了解有关自定义可能性的更多信息 。
 
-开发者可以通过提供自定义的 `ReactorResourceFactory` 或 `JettyResourceFactory` bean 来覆盖 Jetty 和 Reactor Netty 的资源配置-这将同时应用于客户端和服务器。
-
-您可以在 [WebClient运行时部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webclient-runtime) 中了解有关客户端资源配置的更多信息。
+开发人员可以通过创建实现 `RSocketStrategiesCustomizer` 接口的 bean 来自定义 `RSocketStrategies` 组件。注意，它们的 `@Order` 很重要，因为它确定编解码器的顺序。
 
