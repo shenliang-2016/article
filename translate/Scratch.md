@@ -1,17 +1,58 @@
-### 4.8. RSocket
+#### 4.8.2. RSocket 服务器自动配置
 
-[RSocket](https://rsocket.io/) 是一个用于字节流传输的二进制协议。它通过通过单个连接传递的异步消息来启用对称交互模型。
+Spring Boot 提供了 RSocket 服务器自动配置。所需的依赖关系由 `spring-boot-starter-rsocket` 提供。
 
-Spring 框架的 `spring-messaging` 模块在客户端和服务器端都支持 RSocket 请求者和响应者。有关更多信息，请参见 Spring Framework 参考文档的 [RSocket部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#rsocket-spring) 详细信息，包括 RSocket 协议概述。
+Spring Boot 允许从 WebFlux 服务器通过 WebSocket 公开 RSocket，或支持独立的 RSocket 服务器。这取决于应用程序的类型及其配置。
 
-#### 4.8.1. RSocket 策略自动配置
+对于 WebFlux 应用程序（即 `WebApplicationType.REACTIVE` 类型的应用程序），只有在以下属性匹配的情况下，RSocket 服务器才会插入 Web 服务器：
 
-Spring Boot 自动配置一个 `RSocketStrategies` bean，该 bean 提供了编码和解码 RSocket 有效负载所需的所有基础结构。默认情况下，自动配置将尝试（按顺序）配置以下内容：
+```properties
+spring.rsocket.server.mapping-path=/rsocket # a mapping path is defined
+spring.rsocket.server.transport=websocket # websocket is chosen as a transport
+#spring.rsocket.server.port= # no port is defined
+```
 
-1. [CBOR](https://cbor.io/) 使用 Jackson 编码解码
-2. JSON 使用 Jackson 编码解码
+> 由于 RSocket 本身是使用该库构建的，因此只有 Reactor Netty 支持将 RSocket 插入 Web 服务器。
 
-`spring-boot-starter-rsocket` 启动器提供了两种依赖关系。查阅 [Jackson支持部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-json-jackson) 以了解有关自定义可能性的更多信息 。
+另外，RSocket TCP 或 Websocket 服务器也可以作为独立的内置服务器启动。除了依赖性要求之外，唯一需要的配置是为该服务器定义端口：
 
-开发人员可以通过创建实现 `RSocketStrategiesCustomizer` 接口的 bean 来自定义 `RSocketStrategies` 组件。注意，它们的 `@Order` 很重要，因为它确定编解码器的顺序。
+```properties
+spring.rsocket.server.port=9898 # the only required configuration
+spring.rsocket.server.transport=tcp # you're free to configure other properties
+```
+
+#### 4.8.3. Spring Messaging RSocket 支持
+
+Spring Boot 将为 RSocket 自动配置 Spring Messaging 基础结构。
+
+这意味着 Spring Boot 将创建一个 `RSocketMessageHandler` bean，该 bean 将处理对您的应用程序的 RSocket 请求。
+
+#### 4.8.4. 使用 `RSocketRequester` 调用 RSocket 服务
+
+一旦在服务器和客户端之间建立了 `RSocket` 通道，任何一方都可以向对方发送或接收请求。
+
+作为服务器，您可以在 RSocket `@Controller` 的任何处理程序方法上注入 `RSocketRequester` 实例。作为客户端，您需要首先配置和建立 RSocket 连接。在这种情况下，Spring Boot 使用预期的编解码器自动配置 `RSocketRequester.Builder`。
+
+`RSocketRequester.Builder` 实例是一个原型 bean，这意味着每个注入点将为您提供一个新实例。这样做是有目的的，因为此构建器是有状态的，因此您不应使用同一实例创建具有不同设置的请求者。
+
+下面的代码展示了一个典型的例子：
+
+```java
+@Service
+public class MyService {
+
+    private final RSocketRequester rsocketRequester;
+
+    public MyService(RSocketRequester.Builder rsocketRequesterBuilder) {
+        this.rsocketRequester = rsocketRequesterBuilder
+                .connectTcp("example.org", 9898).block();
+    }
+
+    public Mono<User> someRSocketCall(String name) {
+        return this.requester.route("user").data(name)
+                .retrieveMono(User.class);
+    }
+
+}
+```
 
