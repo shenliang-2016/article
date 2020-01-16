@@ -1,38 +1,56 @@
-### 4.10. 使用 SQL 数据库
+##### 连接到生产数据库
 
- [Spring Framework](https://spring.io/projects/spring-framework) 提供了使用 SQL 数据库的丰富支持，从使用 `JdbcTemplate` 的直接 JDBC 访问到诸如 Hibernate 的完善的 "对象关系映射" 技术。 [Spring Data](https://spring.io/projects/spring-data) 提供了另一个级别的功能：直接从接口创建 `Repository` 实现，并使用约定从你的方法名称生成查询。
+生产数据库的连接也可以通过使用 `DataSource` 池来自动配置。Spring Boot 使用以下算法来选择特定的实现：
 
-#### 4.10.1. 配置数据库
+1. 我们更喜欢 [HikariCP](https://github.com/brettwooldridge/HikariCP) 的性能和并发性。如果有 HikariCP，我们总是选择它。
 
-Java 的 `javax.sql.DataSource` 接口提供使用数据库连接的标准方法。传统上，`DataSource` 使用一个 `URL` 和一些凭证来建立数据库连接。
+2. 否则，如果 Tomcat 池 `DataSource` 可用，我们将使用它。
 
-> 参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
+3. 如果 HikariCP 和 Tomcat 池数据源均不可用，而 [Commons DBCP2](https://commons.apache.org/proper/commons-dbcp/) 可用，我们将使用它。
 
-##### 内置数据库支持
+如果您使用 `spring-boot-starter-jdbc` 或 `spring-boot-starter-data-jpa` `starters`，则会自动获得对  `HikariCP` 的依赖。
 
-使用内存内置数据库来开发应用程序通常很方便。显然，内存数据库不提供持久存储。您需要在应用程序启动时填充数据库，并准备在应用程序结束时丢弃数据。
+> 您可以通过设置 `spring.datasource.type` 属性来完全绕过该算法，并指定要使用的连接池。如果您在 Tomcat 容器中运行应用程序，这一点尤其重要，因为默认情况下会提供 `tomcat-jdbc`。
 
-> “How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
+> 额外连接池始终可以手动配置。如果定义自己的 `DataSource` bean，则不会进行自动配置。
 
-Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](http://hsqldb.org/) 和 [Derby](https://db.apache.org/derby/) 数据库。您无需提供任何连接 URL。您只需要包含要使用的内置数据库的构建依赖项即可。
+数据源的配置由 `spring.datasource.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
 
-> 如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
-
-比如，典型的 POM 依赖应该是：
-
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.hsqldb</groupId>
-    <artifactId>hsqldb</artifactId>
-    <scope>runtime</scope>
-</dependency>
+```properties
+spring.datasource.url=jdbc:mysql://localhost/test
+spring.datasource.username=dbuser
+spring.datasource.password=dbpass
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 ```
 
-> 您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
+> 您至少应通过设置 `spring.datasource.url` 属性来指定 URL。否则，Spring Boot 会尝试自动配置内置数据库。
 
-> 如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
+> 您通常不需要指定 `driver-class-name`，因为 Spring Boot 可以从 `url` 中为大多数数据库推断出它。
+
+> 对于要创建的 `DataSource` 池，我们需要能够验证有效的 `Driver` 类是否可用，因此我们在进行任何操作之前都要进行检查。换句话说，如果设置 `spring.datasource.driver-class-name=com.mysql.jdbc.Driver`，则该类必须是可加载的。
+
+参见 [`DataSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jdbc/DataSourceProperties.java) 以获取更多受支持的选项。这些是不管实际实现如何都起作用的标准选项。也可以通过使用各自的前缀（`spring.datasource.hikari.*`，`spring.datasource.tomcat.*` 和 `spring.datasource.dbcp2.*`）微调实现特定的设置。有关更多详细信息，请参阅所用连接池实现的文档。
+
+例如，如果你使用 [Tomcat connection pool](https://tomcat.apache.org/tomcat-8.0-doc/jdbc-pool.html#Common_Attributes)，你可以自定义很多额外的设定，如下面例子所示：
+
+```properties
+# Number of ms to wait before throwing an exception if no connection is available.
+spring.datasource.tomcat.max-wait=10000
+
+# Maximum number of active connections that can be allocated from this pool at the same time.
+spring.datasource.tomcat.max-active=50
+
+# Validate the connection before borrowing it from the pool.
+spring.datasource.tomcat.test-on-borrow=true
+```
+
+##### 连接到 JNDI 数据库
+
+如果您将 Spring Boot 应用程序部署到 Application Server，则可能需要使用 Application Server 的内置功能来配置和管理 DataSource，并使用 JNDI 对其进行访问。
+
+`spring.datasource.jndi-name` 属性可以替代 `spring.datasource.url`，`spring.datasource.username` 和 `spring.datasource.password` 属性来从特定的 JNDI 位置访问 `DataSource`。例如，`application.properties` 中的以下部分显示了如何访问 JBoss 作为定义的 `DataSource`：
+
+```properties
+spring.datasource.jndi-name=java:jboss/datasources/customers
+```
 
