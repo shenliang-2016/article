@@ -1,38 +1,38 @@
-#### 4.9.4. SAML 2.0
+### 4.10. 使用 SQL 数据库
 
-##### Relying Party
+ [Spring Framework](https://spring.io/projects/spring-framework) 提供了使用 SQL 数据库的丰富支持，从使用 `JdbcTemplate` 的直接 JDBC 访问到诸如 Hibernate 的完善的 "对象关系映射" 技术。 [Spring Data](https://spring.io/projects/spring-data) 提供了另一个级别的功能：直接从接口创建 `Repository` 实现，并使用约定从你的方法名称生成查询。
 
-如果您在类路径中具有 `spring-security-saml2-service-provider`，则可以利用一些自动配置功能来轻松设置 SAML 2.0 Relying Party。该配置利用了 `Saml2RelyingPartyProperties` 下的属性。
+#### 4.10.1. 配置数据库
 
-Relying Party 注册代表身份提供商 IDP 和服务提供商 SP 之间的配对配置。您可以在 `spring.security.saml2.relyingparty` 前缀下注册多个 Relying Party，如以下示例所示：
+Java 的 `javax.sql.DataSource` 接口提供使用数据库连接的标准方法。传统上，`DataSource` 使用一个 `URL` 和一些凭证来建立数据库连接。
 
-```properties
-spring.security.saml2.relyingparty.registration.my-relying-party1.signing.credentials[0].private-key-location=path-to-private-key
-spring.security.saml2.relyingparty.registration.my-relying-party1.signing.credentials[0].certificate-location=path-to-certificate
-spring.security.saml2.relyingparty.registration.my-relying-party1.identityprovider.verification.credentials[0].certificate-location=path-to-verification-cert
-spring.security.saml2.relyingparty.registration.my-relying-party1.identityprovider.entity-id=remote-idp-entity-id1
-spring.security.saml2.relyingparty.registration.my-relying-party1.identityprovider.sso-url=https://remoteidp1.sso.url
+> 参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
 
-spring.security.saml2.relyingparty.registration.my-relying-party2.signing.credentials[0].private-key-location=path-to-private-key
-spring.security.saml2.relyingparty.registration.my-relying-party2.signing.credentials[0].certificate-location=path-to-certificate
-spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovider.verification.credentials[0].certificate-location=path-to-other-verification-cert
-spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovider.entity-id=remote-idp-entity-id2
-spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovider.sso-url=https://remoteidp2.sso.url
+##### 内置数据库支持
+
+使用内存内置数据库来开发应用程序通常很方便。显然，内存数据库不提供持久存储。您需要在应用程序启动时填充数据库，并准备在应用程序结束时丢弃数据。
+
+> “How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
+
+Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](http://hsqldb.org/) 和 [Derby](https://db.apache.org/derby/) 数据库。您无需提供任何连接 URL。您只需要包含要使用的内置数据库的构建依赖项即可。
+
+> 如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
+
+比如，典型的 POM 依赖应该是：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.hsqldb</groupId>
+    <artifactId>hsqldb</artifactId>
+    <scope>runtime</scope>
+</dependency>
 ```
 
-#### 4.9.5. Actuator 安全
+> 您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
 
-为了安全起见，默认情况下禁用除 `/health` 和 `/info` 外的所有执行器。`management.endpoints.web.exposure.include` 属性可用于启用执行器。
-
-如果 Spring Security 在类路径上，并且不存在其他 `WebSecurityConfigurerAdapter`，则通过 Spring Boot 自动配置保护除 `/health` 和 `/info` 以外的所有执行器。如果您定义了一个自定义的 `WebSecurityConfigurerAdapter`，Spring Boot 的自动配置将退出，您将完全控制执行器访问规则。
-
-> 在设置 `management.endpoints.web.exposure.include` 之前，请确保裸露的执行器不包含敏感信息和/或通过将它们放置在防火墙后面或通过诸如 Spring Security 之类的东西进行保护。
-
-##### 跨站点请求伪造保护
-
-由于 Spring Boot 依赖于 Spring Security 的默认设置，因此 CSRF 保护默认情况下处于启用状态。这意味着，在使用默认安全配置时，需要 `POST`（关闭和记录器端点），`PUT` 或 `DELETE` 的执行器端点将收到 `403` 禁止错误。
-
-> 我们建议仅在创建非浏览器客户端使用的服务时完全禁用 CSRF 保护。
-
-关于 CSRF 保护的其他信息可以在 [Spring Security参考指南](https://docs.spring.io/spring-security/site/docs/5.2.1.RELEASE/reference/htmlsingle/#csrf) 中找到。
+> 如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
 
