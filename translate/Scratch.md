@@ -1,23 +1,87 @@
-#### 4.10.4. Spring Data JDBC
+#### 4.10.6. 使用 jOOQ
 
-Spring Data 包括对 JDBC 的存储库支持，并将自动为 `CrudRepository` 上的方法生成 SQL。对于更高级的查询，提供了一个 `@Query` 注解。
+jOOQ Object Oriented Querying ([jOOQ](https://www.jooq.org/)) 是一个来自 [Data Geekery](https://www.datageekery.com/) 的非常流行的产品，它可以依据你的数据库生成 Java 代码并帮助你通过它提供的链式 API 构建类型安全的 SQL 查询。商业版和开源版产品都可以在 Spring Boot 中使用。
 
-当必要的依赖项位于类路径上时，Spring Boot 将自动配置 Spring Data 的 JDBC 存储库。可以将它们添加到您的项目中，而只需依赖于 `spring-boot-starter-data-jdbc`。如有必要，您可以通过向应用程序添加 `@EnableJdbcRepositories` 注解或 `JdbcConfiguration` 子类来控制 Spring Data JDBC 的配置。
+##### 代码生成
 
-> 关于 Spring Data JDBC 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
+为了使用 jOOQ 类型安全查询，您需要从数据库模式中生成 Java 类。您可以按照 [jOOQ用户手册](https://www.jooq.org/doc/3.12.3/manual-single-page/#jooq-in-7-steps-step3) 中的说明进行操作。如果您使用 `jooq-codegen-maven` 插件，并且还使用 `spring-boot-starter-parent` “父POM”，则可以安全地忽略该插件的 `<version>` 标签。您还可以使用 Spring Boot 定义的版本变量（例如 `h2.version`）来声明插件的数据库依赖项。以下清单显示了一个示例：
 
-#### 4.10.5. 使用 H2 的 Web 控制台
+```xml
+<plugin>
+    <groupId>org.jooq</groupId>
+    <artifactId>jooq-codegen-maven</artifactId>
+    <executions>
+        ...
+    </executions>
+    <dependencies>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+        </dependency>
+    </dependencies>
+    <configuration>
+        <jdbc>
+            <driver>org.h2.Driver</driver>
+            <url>jdbc:h2:~/yourdatabase</url>
+        </jdbc>
+        <generator>
+            ...
+        </generator>
+    </configuration>
+</plugin>
+```
 
-[H2 database](https://www.h2database.com/) 提供一个 [browser-based console](https://www.h2database.com/html/quickstart.html#h2_console) ，Spring Boot 能够为你自动配置。当下列条件满足时该控制台会被自动配置：
+##### 使用 DSLContext
 
-- 你在开发的是基于 servlet 的 web 应用。
-- `com.h2database:h2` 在类路径上。
-- 你正在使用 [Spring Boot’s developer tools](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools) 。
+jOOQ 提供的链式 API 是通过 `org.jooq.DSLContext` 接口启动的。Spring Boot 将一个 `DSLContext` 自动配置为一个 Spring Bean，并将其连接到您的应用程序 `DataSource`。要使用 `DSLContext`，可以使用 `@Autowire`，如以下示例所示：
 
-> 如果你没有使用 Spring Boot 的开发工具，仍然可以使用 H2 的控制台，你可以将 `spring.h2.console.enabled` 属性设置为 `true`。
+```java
+@Component
+public class JooqExample implements CommandLineRunner {
 
-> H2 控制台应该仅在开发过程中使用，因此，你需要保证生产环境中 `spring.h2.console.enabled` 属性没有设定为 `true` 。
+    private final DSLContext create;
 
-##### 修改 H2 控制台路径
+    @Autowired
+    public JooqExample(DSLContext dslContext) {
+        this.create = dslContext;
+    }
 
-默认情况下，控制台的访问路径是 `/h2-console`。你可以通过使用 `spring.h2.console.path` 属性来自定义控制台访问路径。
+}
+```
+
+> jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
+
+然后，你可以使用 `DSLContext` 来构建你的查询，如下面例子所示：
+
+```java
+public List<GregorianCalendar> authorsBornAfter1980() {
+    return this.create.selectFrom(AUTHOR)
+        .where(AUTHOR.DATE_OF_BIRTH.greaterThan(new GregorianCalendar(1980, 0, 1)))
+        .fetch(AUTHOR.DATE_OF_BIRTH);
+}
+```
+
+##### jOOQ SQL 方言
+
+除非 `spring.jooq.sql-dialect` 属性已经被配置，Spring Boot 决定用于你的数据库的 SQL 方言。如果 Spring Boot 无法探测到方言，使用 `DEFAULT`。
+
+> Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
+
+##### 自定义 jOOQ
+
+可以通过定义自己的 `@Bean` 定义来实现更高级的自定义，这在创建 jOOQ `Configuration` 时使用。您可以为以下 jOOQ 类型定义 bean：
+
+- `ConnectionProvider`
+- `ExecutorProvider`
+- `TransactionProvider`
+- `RecordMapperProvider`
+- `RecordUnmapperProvider`
+- `Settings`
+- `RecordListenerProvider`
+- `ExecuteListenerProvider`
+- `VisitListenerProvider`
+- `TransactionListenerProvider`
+
+如果您想完全控制 jOOQ 配置，也可以创建自己的 `org.jooq.Configuration` `@Bean`。
+
