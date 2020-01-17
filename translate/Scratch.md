@@ -1,87 +1,48 @@
-#### 4.10.6. 使用 jOOQ
+### 4.11. 使用 NoSQL 技术
 
-jOOQ Object Oriented Querying ([jOOQ](https://www.jooq.org/)) 是一个来自 [Data Geekery](https://www.datageekery.com/) 的非常流行的产品，它可以依据你的数据库生成 Java 代码并帮助你通过它提供的链式 API 构建类型安全的 SQL 查询。商业版和开源版产品都可以在 Spring Boot 中使用。
+Spring Data 提供了其他项目来帮助您访问各种 NoSQL 技术，包括：
 
-##### 代码生成
+- [MongoDB](https://spring.io/projects/spring-data-mongodb)
+- [Neo4J](https://spring.io/projects/spring-data-neo4j)
+- [Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
+- [Solr](https://spring.io/projects/spring-data-solr)
+- [Redis](https://spring.io/projects/spring-data-redis)
+- [GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
+- [Cassandra](https://spring.io/projects/spring-data-cassandra)
+- [Couchbase](https://spring.io/projects/spring-data-couchbase)
+- [LDAP](https://spring.io/projects/spring-data-ldap)
 
-为了使用 jOOQ 类型安全查询，您需要从数据库模式中生成 Java 类。您可以按照 [jOOQ用户手册](https://www.jooq.org/doc/3.12.3/manual-single-page/#jooq-in-7-steps-step3) 中的说明进行操作。如果您使用 `jooq-codegen-maven` 插件，并且还使用 `spring-boot-starter-parent` “父POM”，则可以安全地忽略该插件的 `<version>` 标签。您还可以使用 Spring Boot 定义的版本变量（例如 `h2.version`）来声明插件的数据库依赖项。以下清单显示了一个示例：
+Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couchbase 和 LDAP 提供自动配置。您可以使用其他项目，但必须自己进行配置。请参阅 [spring.io/projects/spring-data](https://spring.io/projects/spring-data) 上的相应参考文档。
 
-```xml
-<plugin>
-    <groupId>org.jooq</groupId>
-    <artifactId>jooq-codegen-maven</artifactId>
-    <executions>
-        ...
-    </executions>
-    <dependencies>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
-        </dependency>
-    </dependencies>
-    <configuration>
-        <jdbc>
-            <driver>org.h2.Driver</driver>
-            <url>jdbc:h2:~/yourdatabase</url>
-        </jdbc>
-        <generator>
-            ...
-        </generator>
-    </configuration>
-</plugin>
-```
+#### 4.11.1. Redis
 
-##### 使用 DSLContext
+[Redis](https://redis.io/) 是一个缓存，消息代理，以及一个拥有丰富特性的键值存储。Spring Boot 为 [Lettuce](https://github.com/lettuce-io/lettuce-core/) 和 [Jedis](https://github.com/xetorthio/jedis/) 客户端类库提供了基本的自动配置，并通过 [Spring Data Redis](https://github.com/spring-projects/spring-data-redis) 提供了它们之上的抽象。
 
-jOOQ 提供的链式 API 是通过 `org.jooq.DSLContext` 接口启动的。Spring Boot 将一个 `DSLContext` 自动配置为一个 Spring Bean，并将其连接到您的应用程序 `DataSource`。要使用 `DSLContext`，可以使用 `@Autowire`，如以下示例所示：
+有一个 `spring-boot-starter-data-redis` `Starter`，用于以方便的方式收集依赖项。默认情况下，它使用 [Lettuce](https://github.com/lettuce-io/lettuce-core/)。该启动程序可以处理传统应用程序和响应式应用程序。
+
+> 我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
+
+##### 连接到 Redis
+
+您可以像其他任何 Spring Bean 一样注入自动配置的 `RedisConnectionFactory`，`StringRedisTemplate` 或普通的 `RedisTemplate` 实例。默认情况下，该实例尝试连接到 Redis 服务器的 `localhost:6379`。下面的清单显示了这种 Bean 的示例：
 
 ```java
 @Component
-public class JooqExample implements CommandLineRunner {
+public class MyBean {
 
-    private final DSLContext create;
+    private StringRedisTemplate template;
 
     @Autowired
-    public JooqExample(DSLContext dslContext) {
-        this.create = dslContext;
+    public MyBean(StringRedisTemplate template) {
+        this.template = template;
     }
 
+    // ...
+
 }
 ```
 
-> jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
+> 您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
 
-然后，你可以使用 `DSLContext` 来构建你的查询，如下面例子所示：
-
-```java
-public List<GregorianCalendar> authorsBornAfter1980() {
-    return this.create.selectFrom(AUTHOR)
-        .where(AUTHOR.DATE_OF_BIRTH.greaterThan(new GregorianCalendar(1980, 0, 1)))
-        .fetch(AUTHOR.DATE_OF_BIRTH);
-}
-```
-
-##### jOOQ SQL 方言
-
-除非 `spring.jooq.sql-dialect` 属性已经被配置，Spring Boot 决定用于你的数据库的 SQL 方言。如果 Spring Boot 无法探测到方言，使用 `DEFAULT`。
-
-> Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
-
-##### 自定义 jOOQ
-
-可以通过定义自己的 `@Bean` 定义来实现更高级的自定义，这在创建 jOOQ `Configuration` 时使用。您可以为以下 jOOQ 类型定义 bean：
-
-- `ConnectionProvider`
-- `ExecutorProvider`
-- `TransactionProvider`
-- `RecordMapperProvider`
-- `RecordUnmapperProvider`
-- `Settings`
-- `RecordListenerProvider`
-- `ExecuteListenerProvider`
-- `VisitListenerProvider`
-- `TransactionListenerProvider`
-
-如果您想完全控制 jOOQ 配置，也可以创建自己的 `org.jooq.Configuration` `@Bean`。
+如果您添加自己的任何自动配置类型的 `@Bean`，它将替换默认值（除非排除是基于 bean 名称 `redisTemplate`而不是其类型的 `RedisTemplate` 除外） 。默认情况下，如果 `commons-pool2` 在类路径中，则将得到一个池化连接工厂。
 
