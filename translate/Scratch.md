@@ -1,48 +1,55 @@
-### 4.11. 使用 NoSQL 技术
+#### 4.11.2. MongoDB
 
-Spring Data 提供了其他项目来帮助您访问各种 NoSQL 技术，包括：
+[MongoDB](https://www.mongodb.com/) 是一个开源 NoSQL 文档数据库，它使用类似 JSON 的数据结构而不是传统的基于表的关系数据。Spring Boot 为使用 MongoDB 提供了许多便利，包括 `spring-boot-starter-data-mongodb` 和 `spring-boot-starter-data-mongodb-active` “Starters”。
 
-- [MongoDB](https://spring.io/projects/spring-data-mongodb)
-- [Neo4J](https://spring.io/projects/spring-data-neo4j)
-- [Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
-- [Solr](https://spring.io/projects/spring-data-solr)
-- [Redis](https://spring.io/projects/spring-data-redis)
-- [GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
-- [Cassandra](https://spring.io/projects/spring-data-cassandra)
-- [Couchbase](https://spring.io/projects/spring-data-couchbase)
-- [LDAP](https://spring.io/projects/spring-data-ldap)
+##### 连接到 MongoDB 数据库
 
-Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couchbase 和 LDAP 提供自动配置。您可以使用其他项目，但必须自己进行配置。请参阅 [spring.io/projects/spring-data](https://spring.io/projects/spring-data) 上的相应参考文档。
-
-#### 4.11.1. Redis
-
-[Redis](https://redis.io/) 是一个缓存，消息代理，以及一个拥有丰富特性的键值存储。Spring Boot 为 [Lettuce](https://github.com/lettuce-io/lettuce-core/) 和 [Jedis](https://github.com/xetorthio/jedis/) 客户端类库提供了基本的自动配置，并通过 [Spring Data Redis](https://github.com/spring-projects/spring-data-redis) 提供了它们之上的抽象。
-
-有一个 `spring-boot-starter-data-redis` `Starter`，用于以方便的方式收集依赖项。默认情况下，它使用 [Lettuce](https://github.com/lettuce-io/lettuce-core/)。该启动程序可以处理传统应用程序和响应式应用程序。
-
-> 我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
-
-##### 连接到 Redis
-
-您可以像其他任何 Spring Bean 一样注入自动配置的 `RedisConnectionFactory`，`StringRedisTemplate` 或普通的 `RedisTemplate` 实例。默认情况下，该实例尝试连接到 Redis 服务器的 `localhost:6379`。下面的清单显示了这种 Bean 的示例：
+要访问 Mongo 数据库，您可以注入自动配置的 `org.springframework.data.mongodb.MongoDbFactory` 。默认情况下，该实例尝试通过 `mongodb://localhost/test` 连接到 MongoDB 服务器。以下示例显示了如何连接到 MongoDB 数据库：
 
 ```java
+import org.springframework.data.mongodb.MongoDbFactory;
+import com.mongodb.DB;
+
 @Component
 public class MyBean {
 
-    private StringRedisTemplate template;
+    private final MongoDbFactory mongo;
 
     @Autowired
-    public MyBean(StringRedisTemplate template) {
-        this.template = template;
+    public MyBean(MongoDbFactory mongo) {
+        this.mongo = mongo;
     }
 
     // ...
 
+    public void example() {
+        DB db = mongo.getDb();
+        // ...
+    }
+
 }
 ```
 
-> 您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
+您可以设置 `spring.data.mongodb.uri` 属性来更改 URL 并配置其他设置，例如*数据库副本集*，如以下示例所示：
 
-如果您添加自己的任何自动配置类型的 `@Bean`，它将替换默认值（除非排除是基于 bean 名称 `redisTemplate`而不是其类型的 `RedisTemplate` 除外） 。默认情况下，如果 `commons-pool2` 在类路径中，则将得到一个池化连接工厂。
+```properties
+spring.data.mongodb.uri=mongodb://user:secret@mongo1.example.com:12345,mongo2.example.com:23456/test
+```
+
+另外，只要您使用 Mongo 2.x，就可以指定一个 `host`/`port`。例如，您可以在 `application.properties` 中声明以下设置：
+
+```properties
+spring.data.mongodb.host=mongoserver
+spring.data.mongodb.port=27017
+```
+
+如果定义了自己的 `MongoClient`，它将用于自动配置合适的 `MongoDbFactory`。`com.mongodb.MongoClient` 和 `com.mongodb.client.MongoClient` 均受支持。
+
+> 如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
+
+> 如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
+
+> 如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
+
+> 如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
 
