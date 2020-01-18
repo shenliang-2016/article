@@ -1,55 +1,63 @@
-#### 4.11.2. MongoDB
+##### MongoTemplate
 
-[MongoDB](https://www.mongodb.com/) 是一个开源 NoSQL 文档数据库，它使用类似 JSON 的数据结构而不是传统的基于表的关系数据。Spring Boot 为使用 MongoDB 提供了许多便利，包括 `spring-boot-starter-data-mongodb` 和 `spring-boot-starter-data-mongodb-active` “Starters”。
-
-##### 连接到 MongoDB 数据库
-
-要访问 Mongo 数据库，您可以注入自动配置的 `org.springframework.data.mongodb.MongoDbFactory` 。默认情况下，该实例尝试通过 `mongodb://localhost/test` 连接到 MongoDB 服务器。以下示例显示了如何连接到 MongoDB 数据库：
+[Spring Data MongoDB](https://spring.io/projects/spring-data-mongodb) 提供了一个 [`MongoTemplate`](https://docs.spring.io/spring-data/mongodb/docs/2.2.3.RELEASE/api/org/springframework/data/mongodb/core/MongoTemplate.html) 类，非常类似于 Spring 的 `JdbcTemplate` 。就像使用 `JdbcTemplate` 那样，Spring Boot 自动为你配置 bean 来注入该模板，如下所示：
 
 ```java
-import org.springframework.data.mongodb.MongoDbFactory;
-import com.mongodb.DB;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Component;
 
 @Component
 public class MyBean {
 
-    private final MongoDbFactory mongo;
+    private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public MyBean(MongoDbFactory mongo) {
-        this.mongo = mongo;
+    public MyBean(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
     }
 
     // ...
 
-    public void example() {
-        DB db = mongo.getDb();
-        // ...
-    }
+}
+```
+
+参考 [`MongoOperations` Javadoc](https://docs.spring.io/spring-data/mongodb/docs/2.2.3.RELEASE/api/org/springframework/data/mongodb/core/MongoOperations.html) 了解完整细节。
+
+##### Spring Data MongoDB Repositories
+
+Spring Data 包含对 MongoDB 的存储库支持。与前面讨论的 JPA 存储库一样，基本原理是根据方法名称自动构造查询。
+
+实际上，Spring Data JPA 和 Spring Data MongoDB 共享相同的通用基础架构。您可以从前面的 JPA 示例开始，并假设 `City` 现在是 Mongo 数据类，而不是 JPA `@Entity`，它的工作方式相同，如以下示例所示：
+
+```java
+package com.example.myapp.domain;
+
+import org.springframework.data.domain.*;
+import org.springframework.data.repository.*;
+
+public interface CityRepository extends Repository<City, Long> {
+
+    Page<City> findAll(Pageable pageable);
+
+    City findByNameAndStateAllIgnoringCase(String name, String state);
 
 }
 ```
 
-您可以设置 `spring.data.mongodb.uri` 属性来更改 URL 并配置其他设置，例如*数据库副本集*，如以下示例所示：
+> 您可以使用 `@EntityScan` 注解来自定义文档扫描位置。
 
-```properties
-spring.data.mongodb.uri=mongodb://user:secret@mongo1.example.com:12345,mongo2.example.com:23456/test
-```
+> 有关 Spring Data MongoDB 的完整详细信息，包括其丰富的对象映射技术，请参阅其 [参考文档](https://spring.io/projects/spring-data-mongodb)。
 
-另外，只要您使用 Mongo 2.x，就可以指定一个 `host`/`port`。例如，您可以在 `application.properties` 中声明以下设置：
+##### 内置 Mongo
 
-```properties
-spring.data.mongodb.host=mongoserver
-spring.data.mongodb.port=27017
-```
+Spring Boot 为 [内置 Mongo](https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo) 提供了自动配置。要在 Spring Boot 应用程序中使用它，请添加对 `de.flapdoodle.embed:de.flapdoodle.embed.mongo` 的依赖。
 
-如果定义了自己的 `MongoClient`，它将用于自动配置合适的 `MongoDbFactory`。`com.mongodb.MongoClient` 和 `com.mongodb.client.MongoClient` 均受支持。
+可以通过设置 `spring.data.mongodb.port` 属性来配置 Mongo 监听的端口。要使用随机分配的空闲端口，请使用 0 值。由 `MongoAutoConfiguration` 创建的 `MongoClient` 将自动配置为使用随机分配的端口。
 
-> 如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
+> 如果未配置自定义端口，则默认情况下，内置支持会使用随机端口（而不是 27017）。
 
-> 如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
+如果在类路径上有 SLF4J，则 Mongo 产生的输出将自动路由到名为 `org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongo` 的记录器。
 
-> 如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
-
-> 如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
+您可以声明自己的 `IMongodConfig` 和 `IRuntimeConfig` bean，以控制 Mongo 实例的配置和日志记录路由。可以通过声明一个 `DownloadConfigBuilderCustomizer` bean来定制下载配置。
 
