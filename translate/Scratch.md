@@ -1,31 +1,36 @@
-### 4.12. 缓存
+#### 4.12.1. 支持的缓存提供程序
 
-Spring 框架支持透明地向应用程序添加缓存。从本质上讲，抽象将缓存应用于方法，从而根据缓存中可用的信息减少执行次数。缓存逻辑是对应用透明的，不会对调用者造成任何干扰。只要通过 `@EnableCaching` 注解启用了缓存支持，Spring Boot 就会自动配置缓存基础架构。
+缓存抽象不提供实际的存储，而是依赖于由 `org.springframework.cache.Cache` 和 `org.springframework.cache.CacheManager` 接口实现的抽象。
 
-> 参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
+如果尚未定义类型为 `CacheManager` 或名为 `CacheResolver` 的 `CacheResolver` 的 Bean（请参见 [`CachingConfigurer`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/cache/annotation/CachingConfigurer.html)），Spring Boot 会尝试检测以下提供程序（按指示的顺序）：
 
-简而言之，将缓存添加到服务的操作就像将相关注解添加到其方法一样容易，如以下示例所示：
+1. [Generic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-generic)
+2. [JCache (JSR-107)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-jcache) (EhCache 3, Hazelcast, Infinispan, and others)
+3. [EhCache 2.x](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-ehcache2)
+4. [Hazelcast](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
+5. [Infinispan](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-infinispan)
+6. [Couchbase](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-couchbase)
+7. [Redis](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-redis)
+8. [Caffeine](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-caffeine)
+9. [Simple](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple)
+
+> 也可以通过设置 `spring.cache.type` 属性来强制特定的缓存提供程序。在某些环境中（例如测试环境），如果您需要 [完全禁用缓存](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-none)，请使用此属性。
+
+> 使用 `spring-boot-starter-cache` “Starter”快速添加基本的缓存依赖项。该启动器引入了 `spring-context-support`。如果手动添加依赖项，则必须包含 `spring-context-support` 才能使用 JCache，EhCache 2.x 或 Caffeine 支持。
+
+如果 `CacheManager` 是由 Spring Boot 自动配置的，则可以通过暴露一个实现 `CacheManagerCustomizer` 接口的 bean，在完全初始化之前进一步调整其配置。下面的示例设置一个标志，表示应将 `null` 值向下传递给基础映射：
 
 ```java
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Component;
-
-@Component
-public class MathService {
-
-    @Cacheable("piDecimals")
-    public int computePiDecimal(int i) {
-        // ...
-    }
-
+@Bean
+public CacheManagerCustomizer<ConcurrentMapCacheManager> cacheManagerCustomizer() {
+    return new CacheManagerCustomizer<ConcurrentMapCacheManager>() {
+        @Override
+        public void customize(ConcurrentMapCacheManager cacheManager) {
+            cacheManager.setAllowNullValues(false);
+        }
+    };
 }
 ```
 
-本示例说明了在潜在的代价高昂操作上使用缓存的方法。在调用 `computePiDecimal` 之前，抽象将在 `piDecimals` 缓存中查找与 `i` 参数匹配的条目。如果找到条目，则缓存中的内容会立即返回给调用方，并且不会调用该方法。否则，将调用该方法，并在返回值之前更新缓存。
-
-> 您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
-
-如果您不添加任何特定的缓存库，Spring Boot 会自动配置一个 [简单提供程序](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple) ，在内存中使用并发映射。需要缓存时（例如上例中的 `piDecimals`），此提供程序将为您创建它。实际上，不建议将简单的提供程序用于生产用途，但是它对于入门并确保您了解功能非常有用。确定要使用的缓存提供程序后，请确保阅读其文档，以了解如何配置应用程序使用的缓存。几乎所有提供程序都要求您显式配置在应用程序中使用的每个缓存。一些提供了一种方法来定制由 `spring.cache.cache-names` 属性定义的默认缓存。
-
-> 也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
+> 在前面的示例中，应该使用自动配置的 `ConcurrentMapCacheManager`。如果不是这种情况（您提供了自己的配置，或者自动配置了其他缓存提供程序），则根本不会调用定制程序。您可以根据需要设置任意数量的定制器，也可以使用 `@Order` 或 `Ordered` 对其进行排序。
 
