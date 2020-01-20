@@ -1,16 +1,31 @@
-#### 4.11.9. InfluxDB
+### 4.12. 缓存
 
-[InfluxDB](https://www.influxdata.com/) 是一个开源的时间序列数据库，已针对运行监控，应用程序度量，物联网传感器数据和实时分析等领域中的时间序列数据进行快速，高可用性的存储和检索进行了优化。
+Spring 框架支持透明地向应用程序添加缓存。从本质上讲，抽象将缓存应用于方法，从而根据缓存中可用的信息减少执行次数。缓存逻辑是对应用透明的，不会对调用者造成任何干扰。只要通过 `@EnableCaching` 注解启用了缓存支持，Spring Boot 就会自动配置缓存基础架构。
 
-##### 连接 InfluxDB
+> 参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
 
-Spring Boot 自动配置一个 `InfluxDB` 实例，前提是 `influxdb-java` 客户端位于类路径上，并且设置了数据库的 URL，如以下示例所示：
+简而言之，将缓存添加到服务的操作就像将相关注解添加到其方法一样容易，如以下示例所示：
 
-```properties
-spring.influx.url=https://172.0.0.1:8086
+```java
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
+
+@Component
+public class MathService {
+
+    @Cacheable("piDecimals")
+    public int computePiDecimal(int i) {
+        // ...
+    }
+
+}
 ```
 
-如果到 InfluxDB 的连接需要用户名和密码，则可以相应地设置 `spring.influx.user` 和 `spring.influx.password` 属性。
+本示例说明了在潜在的代价高昂操作上使用缓存的方法。在调用 `computePiDecimal` 之前，抽象将在 `piDecimals` 缓存中查找与 `i` 参数匹配的条目。如果找到条目，则缓存中的内容会立即返回给调用方，并且不会调用该方法。否则，将调用该方法，并在返回值之前更新缓存。
 
-InfluxDB 依赖 OkHttp。如果您需要调整 InfluxDB 在后台使用的 HTTP 客户端，则可以注册 `InfluxDbOkHttpClientBuilderProvider` bean。
+> 您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
+
+如果您不添加任何特定的缓存库，Spring Boot 会自动配置一个 [简单提供程序](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple) ，在内存中使用并发映射。需要缓存时（例如上例中的 `piDecimals`），此提供程序将为您创建它。实际上，不建议将简单的提供程序用于生产用途，但是它对于入门并确保您了解功能非常有用。确定要使用的缓存提供程序后，请确保阅读其文档，以了解如何配置应用程序使用的缓存。几乎所有提供程序都要求您显式配置在应用程序中使用的每个缓存。一些提供了一种方法来定制由 `spring.cache.cache-names` 属性定义的默认缓存。
+
+> 也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
 
