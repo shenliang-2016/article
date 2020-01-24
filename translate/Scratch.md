@@ -1,75 +1,36 @@
-##### EhCache 2.x
+##### Caffeine
 
-如果在类路径根目录找到名为 `ehcache.xml` 的文件 [EhCache](https://www.ehcache.org/) 2.x 就会被使用， `EhCacheCacheManager` 由 `spring-boot-starter-cache` “Starter” 提供，用于引导缓存管理器。也可以提供如下的另外一种形式的配置文件：
+[Caffeine](https://github.com/ben-manes/caffeine) 是对 Guava 缓存的 Java 8 重写，取代了对 Guava 的支持。如果存在 Caffeine，则会自动配置 `CaffeineCacheManager`（由 `spring-boot-starter-cache` “Starter” 提供）。缓存可以在启动时通过设置 `spring.cache.cache-names` 属性来创建，并且可以通过以下方式之一自定义（按指示的顺序）：
 
-```properties
-spring.cache.ehcache.config=classpath:config/another-config.xml
-```
+1. 由 `spring.cache.caffeine.spec` 定义的缓存规范
 
-##### Hazelcast
+2. 定义了一个 `com.github.benmanes.caffeine.cache.CaffeineSpec` bean
 
-Spring Boot 提供了 [对 Hazelcast 的通用支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果已经自动配置了 `HazelcastInstance` ，它就会被自动包装为 `CacheManager`。
+3. 定义了一个 `com.github.benmanes.caffeine.cache.Caffeine` bean
 
-##### Infinispan
-
-[Infinispan](https://infinispan.org/) 没有默认的配置文件位置，因此必须显式指定。否则将使用默认引导：
+例如，以下配置将创建 `cache1` 和 `cache2` 缓存，最大大小为 500，并且“生存时间”为 10 分钟。
 
 ```properties
-spring.cache.infinispan.config=infinispan.xml
+spring.cache.cache-names=cache1,cache2
+spring.cache.caffeine.spec=maximumSize=500,expireAfterAccess=600s
 ```
 
-通过设定 `spring.cache.cache-names` 属性，缓存可以在启动期间创建。如果自定义了 `ConfigurationBuilder` bean，它就会被用于自定义缓存。
+如果定义了 `com.github.benmanes.caffeine.cache.CacheLoader` Bean，它将自动与 `CaffeineCacheManager` 关联。由于 `CacheLoader` 将与由缓存管理器管理的所有缓存相关联，因此必须将其定义为 `CacheLoader<Object, Object>`。自动配置将忽略任何其他通用类型。
 
-> Spring Boot 对 Infinispan 的支持仅限于嵌入式模式，并且非常基础。如果您需要更多选择，则应该使用官方的 Infinispan Spring Boot starter。有关更多详细信息，请参见 [Infinispan 文档](https://github.com/infinispan/infinispan-spring-boot)。
+##### 简单缓存
 
-##### Couchbase
-
-如果 [Couchbase](https://www.couchbase.com/) Java 客户端和 `couchbase-spring-cache` 实现可用，并且 Couchbase 已 [配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-couchbase)，则会自动配置 `CouchbaseCacheManager` 。也可以通过设置 `spring.cache.cache-names` 属性来在启动时创建其他缓存。这些缓存在自动配置的 `Bucket` 上运行。您还可以定制在另一个 `Bucket` 上创建其他缓存。假设您在主 `Bucket` 上需要两个缓存（ `cache1` 和 `cache2`），并且在另一个 `Bucket` 上需要一个（自定义生存时间）为2秒的（ `cache3` ）缓存。您可以通过配置创建前两个缓存，如下所示：
+如果找不到其他提供者，则配置一个使用 `ConcurrentHashMap` 作为缓存存储的简单实现。如果您的应用程序中没有缓存库，则这是默认设置。默认情况下，根据需要创建缓存，但是您可以通过设置 `cache-names` 属性来限制可用缓存的列表。例如，如果只需要 `cache1` 和 `cache2` 缓存，则按如下所示设置 `cache-names` 属性：
 
 ```properties
 spring.cache.cache-names=cache1,cache2
 ```
 
-然后你就可以定义 `@Configuration` 类来配置额外的 `Bucket` 和 `cache3` 缓存，如下所示：
+如果这样做，并且您的应用程序使用了未列出的缓存，那么当需要该缓存时，它将在运行时失败，但不会在启动时失败。这类似于使用未声明的缓存时“实际”缓存提供程序的行为。
 
-```java
-@Configuration(proxyBeanMethods = false)
-public class CouchbaseCacheConfiguration {
+##### 无缓存
 
-    private final Cluster cluster;
-
-    public CouchbaseCacheConfiguration(Cluster cluster) {
-        this.cluster = cluster;
-    }
-
-    @Bean
-    public Bucket anotherBucket() {
-        return this.cluster.openBucket("another", "secret");
-    }
-
-    @Bean
-    public CacheManagerCustomizer<CouchbaseCacheManager> cacheManagerCustomizer() {
-        return c -> {
-            c.prepareCache("cache3", CacheBuilder.newInstance(anotherBucket())
-                    .withExpiration(2));
-        };
-    }
-
-}
-```
-
-这个示例配置服用了通过自动配置创建的 `Cluster` 。
-
-##### Redis
-
-如果 [Redis](https://redis.io/) 可用并已配置，则将自动配置 `RedisCacheManager`。通过设置 `spring.cache.cache-names` 属性可以在启动时创建其他缓存，并且可以使用 `spring.cache.redis.*` 属性配置缓存默认值。例如，以下配置将创建 `cache1` 和 `cache2` 缓存，其“生存时间”为10分钟：
+当您的配置中存在 `@EnableCaching` 时，也需要合适的缓存配置。如果需要在某些环境中完全禁用缓存，请强制将缓存类型设置为 `none` 以使用无操作实现，如以下示例所示：
 
 ```properties
-spring.cache.cache-names=cache1,cache2
-spring.cache.redis.time-to-live=600000
+spring.cache.type=none
 ```
-
-> 默认情况下，会自动添加 key 前缀，以便如果两个单独的缓存使用相同的 key，Redis 中也不会有相同的 key，也不会返回无效值。如果您创建自己的 `RedisCacheManager`，我们强烈建议将此设置保持启用状态。
-
-> 您可以通过添加自己的 `RedisCacheConfiguration` `@Bean` 来完全控制配置。如果您要自定义序列化策略，这可能会很有用。
-
