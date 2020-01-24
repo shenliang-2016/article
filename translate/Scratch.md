@@ -1,36 +1,38 @@
-##### Caffeine
+### 4.13. Messaging
 
-[Caffeine](https://github.com/ben-manes/caffeine) 是对 Guava 缓存的 Java 8 重写，取代了对 Guava 的支持。如果存在 Caffeine，则会自动配置 `CaffeineCacheManager`（由 `spring-boot-starter-cache` “Starter” 提供）。缓存可以在启动时通过设置 `spring.cache.cache-names` 属性来创建，并且可以通过以下方式之一自定义（按指示的顺序）：
+The Spring Framework provides extensive support for integrating with messaging systems, from simplified use of the JMS API using `JmsTemplate` to a complete infrastructure to receive messages asynchronously. Spring AMQP provides a similar feature set for the Advanced Message Queuing Protocol. Spring Boot also provides auto-configuration options for `RabbitTemplate` and RabbitMQ. Spring WebSocket natively includes support for STOMP messaging, and Spring Boot has support for that through starters and a small amount of auto-configuration. Spring Boot also has support for Apache Kafka.
 
-1. 由 `spring.cache.caffeine.spec` 定义的缓存规范
+#### 4.13.1. JMS
 
-2. 定义了一个 `com.github.benmanes.caffeine.cache.CaffeineSpec` bean
+The `javax.jms.ConnectionFactory` interface provides a standard method of creating a `javax.jms.Connection` for interacting with a JMS broker. Although Spring needs a `ConnectionFactory` to work with JMS, you generally need not use it directly yourself and can instead rely on higher level messaging abstractions. (See the [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#jms) of the Spring Framework reference documentation for details.) Spring Boot also auto-configures the necessary infrastructure to send and receive messages.
 
-3. 定义了一个 `com.github.benmanes.caffeine.cache.Caffeine` bean
+##### ActiveMQ Support
 
-例如，以下配置将创建 `cache1` 和 `cache2` 缓存，最大大小为 500，并且“生存时间”为 10 分钟。
+When [ActiveMQ](https://activemq.apache.org/) is available on the classpath, Spring Boot can also configure a `ConnectionFactory`. If the broker is present, an embedded broker is automatically started and configured (provided no broker URL is specified through configuration).
 
-```properties
-spring.cache.cache-names=cache1,cache2
-spring.cache.caffeine.spec=maximumSize=500,expireAfterAccess=600s
-```
+> If you use `spring-boot-starter-activemq`, the necessary dependencies to connect or embed an ActiveMQ instance are provided, as is the Spring infrastructure to integrate with JMS.
 
-如果定义了 `com.github.benmanes.caffeine.cache.CacheLoader` Bean，它将自动与 `CaffeineCacheManager` 关联。由于 `CacheLoader` 将与由缓存管理器管理的所有缓存相关联，因此必须将其定义为 `CacheLoader<Object, Object>`。自动配置将忽略任何其他通用类型。
-
-##### 简单缓存
-
-如果找不到其他提供者，则配置一个使用 `ConcurrentHashMap` 作为缓存存储的简单实现。如果您的应用程序中没有缓存库，则这是默认设置。默认情况下，根据需要创建缓存，但是您可以通过设置 `cache-names` 属性来限制可用缓存的列表。例如，如果只需要 `cache1` 和 `cache2` 缓存，则按如下所示设置 `cache-names` 属性：
+ActiveMQ configuration is controlled by external configuration properties in `spring.activemq.*`. For example, you might declare the following section in `application.properties`:
 
 ```properties
-spring.cache.cache-names=cache1,cache2
+spring.activemq.broker-url=tcp://192.168.1.210:9876
+spring.activemq.user=admin
+spring.activemq.password=secret
 ```
 
-如果这样做，并且您的应用程序使用了未列出的缓存，那么当需要该缓存时，它将在运行时失败，但不会在启动时失败。这类似于使用未声明的缓存时“实际”缓存提供程序的行为。
-
-##### 无缓存
-
-当您的配置中存在 `@EnableCaching` 时，也需要合适的缓存配置。如果需要在某些环境中完全禁用缓存，请强制将缓存类型设置为 `none` 以使用无操作实现，如以下示例所示：
+By default, a `CachingConnectionFactory` wraps the native `ConnectionFactory` with sensible settings that you can control by external configuration properties in `spring.jms.*`:
 
 ```properties
-spring.cache.type=none
+spring.jms.cache.session-cache-size=5
 ```
+
+If you’d rather use native pooling, you can do so by adding a dependency to `org.messaginghub:pooled-jms` and configuring the `JmsPoolConnectionFactory` accordingly, as shown in the following example:
+
+```properties
+spring.activemq.pool.enabled=true
+spring.activemq.pool.max-connections=50
+```
+
+> See [`ActiveMQProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jms/activemq/ActiveMQProperties.java) for more of the supported options. You can also register an arbitrary number of beans that implement `ActiveMQConnectionFactoryCustomizer` for more advanced customizations.
+
+By default, ActiveMQ creates a destination if it does not yet exist so that destinations are resolved against their provided names.
