@@ -822,74 +822,74 @@ Spring Boot 包含一个 [Maven plugin](https://docs.spring.io/spring-boot/docs/
 
 下面的应用启动器由 Spring Boot 提供，位于 `org.springframework.boot` 组之下：
 
-| Name                                          | Description                                                  | Pom                                                          |
-| :-------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| `spring-boot-starter`                         | 核心启动器，包含自动配置支持，日志以及 YAML。                | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter/pom.xml) |
-| `spring-boot-starter-activemq`                | 使用 Apache ActiveMQ 处理的 JMS 消息的启动器。               | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-activemq/pom.xml) |
-| `spring-boot-starter-amqp`                    | 使用 Spring AMQP 和 Rabbit MQ 的启动器。                     | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-amqp/pom.xml) |
-| `spring-boot-starter-aop`                     | 使用 Spring AOP 和 AspectJ 进行面向切面编程的启动器。        | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-aop/pom.xml) |
-| `spring-boot-starter-artemis`                 | 使用 Apache Artemis 处理的 JMS 消息的启动器。                | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-artemis/pom.xml) |
-| `spring-boot-starter-batch`                   | 使用 Spring Batch 的启动器。                                 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-batch/pom.xml) |
-| `spring-boot-starter-cache`                   | 使用 Spring 框架缓存支持的启动器。                           | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-cache/pom.xml) |
-| `spring-boot-starter-cloud-connectors`        | 使用 Spring Cloud Connectors 的启动器，可简化与 Cloud Foundry 和 Heroku 等云平台中服务的连接。不建议使用 Java CFEnv。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-cloud-connectors/pom.xml) |
-| `spring-boot-starter-data-cassandra`          | 使用 Cassandra 分布式数据库和 Spring Data Cassandra 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-cassandra/pom.xml) |
+| Name | Description | Pom |
+| : | : | : |
+| `spring-boot-starter` | 核心启动器，包含自动配置支持，日志以及 YAML。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter/pom.xml) |
+| `spring-boot-starter-activemq` | 使用 Apache ActiveMQ 处理的 JMS 消息的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-activemq/pom.xml) |
+| `spring-boot-starter-amqp` | 使用 Spring AMQP 和 Rabbit MQ 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-amqp/pom.xml) |
+| `spring-boot-starter-aop` | 使用 Spring AOP 和 AspectJ 进行面向切面编程的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-aop/pom.xml) |
+| `spring-boot-starter-artemis` | 使用 Apache Artemis 处理的 JMS 消息的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-artemis/pom.xml) |
+| `spring-boot-starter-batch` | 使用 Spring Batch 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-batch/pom.xml) |
+| `spring-boot-starter-cache` | 使用 Spring 框架缓存支持的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-cache/pom.xml) |
+| `spring-boot-starter-cloud-connectors` | 使用 Spring Cloud Connectors 的启动器，可简化与 Cloud Foundry 和 Heroku 等云平台中服务的连接。不建议使用 Java CFEnv。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-cloud-connectors/pom.xml) |
+| `spring-boot-starter-data-cassandra` | 使用 Cassandra 分布式数据库和 Spring Data Cassandra 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-cassandra/pom.xml) |
 | `spring-boot-starter-data-cassandra-reactive` | 使用 Cassandra Reactive 分布式数据库和 Spring Data Cassandra 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-cassandra-reactive/pom.xml) |
-| `spring-boot-starter-data-couchbase`          | 使用 Couchbase 文档数据库和 Spring Data Couchbase 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-couchbase/pom.xml) |
+| `spring-boot-starter-data-couchbase` | 使用 Couchbase 文档数据库和 Spring Data Couchbase 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-couchbase/pom.xml) |
 | `spring-boot-starter-data-couchbase-reactive` | 使用 Couchbase 文档数据库和 Spring Data Couchbase Reactive 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-couchbase-reactive/pom.xml) |
-| `spring-boot-starter-data-elasticsearch`      | 使用 Elasticsearch 搜索和分析引擎以及 Spring Data Elasticsearch 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-elasticsearch/pom.xml) |
-| `spring-boot-starter-data-jdbc`               | 使用 Spring Data JDBC 的启动器。                             | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jdbc/pom.xml) |
-| `spring-boot-starter-data-jpa`                | 使用 Spring Data JPA 和 Hibernate 的启动器。                 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jpa/pom.xml) |
-| `spring-boot-starter-data-ldap`               | 使用 Spring Data LDAP 的启动器。                             | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-ldap/pom.xml) |
-| `spring-boot-starter-data-mongodb`            | 使用 MongoDB 文档数据库和 Spring Data MongoDB 的启动器。     | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-mongodb/pom.xml) |
-| `spring-boot-starter-data-mongodb-reactive`   | 使用 MongoDB 文档数据库和 Spring Data MongoDB Reactive 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-mongodb-reactive/pom.xml) |
-| `spring-boot-starter-data-neo4j`              | 使用 Neo4j 图数据库和 Spring Data Neo4j 的启动器。           | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-neo4j/pom.xml) |
-| `spring-boot-starter-data-redis`              | 通过 Spring Data Redis 和 Lettuce 客户端使用 Redis 键－值数据存储的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-redis/pom.xml) |
-| `spring-boot-starter-data-redis-reactive`     | 通过 Spring Data Redis reactive 和 Lettuce 客户端使用 Redis 键－值数据存储的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-redis-reactive/pom.xml) |
-| `spring-boot-starter-data-rest`               | 使用 Spring Data REST 通过 REST 暴露 Spring Data repositories 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-rest/pom.xml) |
-| `spring-boot-starter-data-solr`               | 通过 Spring Data Solr 使用 Apache Solr 搜索平台的启动器。    | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-solr/pom.xml) |
-| `spring-boot-starter-freemarker`              | 使用 FreeMarker 视图构建 MVC web 应用的启动器。              | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-freemarker/pom.xml) |
-| `spring-boot-starter-groovy-templates`        | 使用 Groovy 模板视图构建 MVC web 应用的启动器。              | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-groovy-templates/pom.xml) |
-| `spring-boot-starter-hateoas`                 | 使用 Spring MVC 和 Spring HATEOAS 构建基于超媒体的 RESTful Web 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-hateoas/pom.xml) |
-| `spring-boot-starter-integration`             | 使用 Spring Integration 的启动器。                           | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-integration/pom.xml) |
-| `spring-boot-starter-jdbc`                    | 通过 HikariCP 连接池使用 JDBC 的启动器。                     | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jdbc/pom.xml) |
-| `spring-boot-starter-jersey`                  | 使用 JAX-RS 和 Jersey 构建 RESTful web 应用的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jersey/pom.xml) |
-| `spring-boot-starter-jooq`                    | 使用 JOOQ 访问 SQL 数据库的启动器。是 [`spring-boot-starter-data-jpa`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-data-jpa) 或者 [`spring-boot-starter-jdbc`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-jdbc) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jooq/pom.xml) |
-| `spring-boot-starter-json`                    | 读写 json 的启动器。                                         | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-json/pom.xml) |
-| `spring-boot-starter-jta-atomikos`            | 使用 Atomikos 实现 JTA 事务的启动器。                        | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jta-atomikos/pom.xml) |
-| `spring-boot-starter-jta-bitronix`            | 使用 Bitronix 实现 JTA 事务的启动器。                        | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jta-bitronix/pom.xml) |
-| `spring-boot-starter-mail`                    | 使用 Java Mail 和 Spring 框架的邮件发送支持的启动器。        | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-mail/pom.xml) |
-| `spring-boot-starter-mustache`                | 使用 Mustache 视图构建 web 应用的启动器。                    | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-mustache/pom.xml) |
-| `spring-boot-starter-oauth2-client`           | 使用 Spring Security 的 OAuth2/OpenID 连接客户端特性的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-oauth2-client/pom.xml) |
-| `spring-boot-starter-oauth2-resource-server`  | 使用 Spring Security 的 OAuth2 资源服务器特性的启动器。      | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-oauth2-resource-server/pom.xml) |
-| `spring-boot-starter-quartz`                  | 使用 Quartz 调度器的启动器。                                 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-quartz/pom.xml) |
-| `spring-boot-starter-rsocket`                 | 构建 RSocket 客户端和服务器的启动器。                        | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-rsocket/pom.xml) |
-| `spring-boot-starter-security`                | 使用 Spring Security 的启动器。                              | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-security/pom.xml) |
-| `spring-boot-starter-test`                    | 用于使用包括 JUnit，Hamcrest 和 Mockito 在内的库测试 Spring Boot 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-test/pom.xml) |
-| `spring-boot-starter-thymeleaf`               | 使用 Thymeleaf 视图构建 MVC web 应用的启动器。               | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-thymeleaf/pom.xml) |
-| `spring-boot-starter-validation`              | 使用 Hibernate Validator 进行 Java Bean Validation 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-validation/pom.xml) |
-| `spring-boot-starter-web`                     | 使用 Spring MVC 构建 web（包括 RESTful）应用程序的启动器。使用 Tomcat 作为默认的嵌入式容器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-web/pom.xml) |
-| `spring-boot-starter-web-services`            | 使用 Spring Web Services 的启动器。                          | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-web-services/pom.xml) |
-| `spring-boot-starter-webflux`                 | 使用 Spring Framework 的 Reactive Web 支持构建 WebFlux 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-webflux/pom.xml) |
-| `spring-boot-starter-websocket`               | 使用 Spring Framework 的 WebSocket 支持构建 WebSocket 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-websocket/pom.xml) |
+| `spring-boot-starter-data-elasticsearch` | 使用 Elasticsearch 搜索和分析引擎以及 Spring Data Elasticsearch 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-elasticsearch/pom.xml) |
+| `spring-boot-starter-data-jdbc` | 使用 Spring Data JDBC 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jdbc/pom.xml) |
+| `spring-boot-starter-data-jpa` | 使用 Spring Data JPA 和 Hibernate 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jpa/pom.xml) |
+| `spring-boot-starter-data-ldap` | 使用 Spring Data LDAP 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-ldap/pom.xml) |
+| `spring-boot-starter-data-mongodb` | 使用 MongoDB 文档数据库和 Spring Data MongoDB 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-mongodb/pom.xml) |
+| `spring-boot-starter-data-mongodb-reactive` | 使用 MongoDB 文档数据库和 Spring Data MongoDB Reactive 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-mongodb-reactive/pom.xml) |
+| `spring-boot-starter-data-neo4j` | 使用 Neo4j 图数据库和 Spring Data Neo4j 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-neo4j/pom.xml) |
+| `spring-boot-starter-data-redis` | 通过 Spring Data Redis 和 Lettuce 客户端使用 Redis 键－值数据存储的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-redis/pom.xml) |
+| `spring-boot-starter-data-redis-reactive` | 通过 Spring Data Redis reactive 和 Lettuce 客户端使用 Redis 键－值数据存储的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-redis-reactive/pom.xml) |
+| `spring-boot-starter-data-rest` | 使用 Spring Data REST 通过 REST 暴露 Spring Data repositories 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-rest/pom.xml) |
+| `spring-boot-starter-data-solr` | 通过 Spring Data Solr 使用 Apache Solr 搜索平台的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-data-solr/pom.xml) |
+| `spring-boot-starter-freemarker` | 使用 FreeMarker 视图构建 MVC web 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-freemarker/pom.xml) |
+| `spring-boot-starter-groovy-templates` | 使用 Groovy 模板视图构建 MVC web 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-groovy-templates/pom.xml) |
+| `spring-boot-starter-hateoas` | 使用 Spring MVC 和 Spring HATEOAS 构建基于超媒体的 RESTful Web 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-hateoas/pom.xml) |
+| `spring-boot-starter-integration` | 使用 Spring Integration 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-integration/pom.xml) |
+| `spring-boot-starter-jdbc` | 通过 HikariCP 连接池使用 JDBC 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jdbc/pom.xml) |
+| `spring-boot-starter-jersey` | 使用 JAX-RS 和 Jersey 构建 RESTful web 应用的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jersey/pom.xml) |
+| `spring-boot-starter-jooq` | 使用 JOOQ 访问 SQL 数据库的启动器。是 [`spring-boot-starter-data-jpa`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-data-jpa) 或者 [`spring-boot-starter-jdbc`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-jdbc) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jooq/pom.xml) |
+| `spring-boot-starter-json` | 读写 json 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-json/pom.xml) |
+| `spring-boot-starter-jta-atomikos` | 使用 Atomikos 实现 JTA 事务的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jta-atomikos/pom.xml) |
+| `spring-boot-starter-jta-bitronix` | 使用 Bitronix 实现 JTA 事务的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jta-bitronix/pom.xml) |
+| `spring-boot-starter-mail` | 使用 Java Mail 和 Spring 框架的邮件发送支持的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-mail/pom.xml) |
+| `spring-boot-starter-mustache` | 使用 Mustache 视图构建 web 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-mustache/pom.xml) |
+| `spring-boot-starter-oauth2-client` | 使用 Spring Security 的 OAuth2/OpenID 连接客户端特性的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-oauth2-client/pom.xml) |
+| `spring-boot-starter-oauth2-resource-server` | 使用 Spring Security 的 OAuth2 资源服务器特性的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-oauth2-resource-server/pom.xml) |
+| `spring-boot-starter-quartz` | 使用 Quartz 调度器的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-quartz/pom.xml) |
+| `spring-boot-starter-rsocket` | 构建 RSocket 客户端和服务器的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-rsocket/pom.xml) |
+| `spring-boot-starter-security` | 使用 Spring Security 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-security/pom.xml) |
+| `spring-boot-starter-test` | 用于使用包括 JUnit，Hamcrest 和 Mockito 在内的库测试 Spring Boot 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-test/pom.xml) |
+| `spring-boot-starter-thymeleaf` | 使用 Thymeleaf 视图构建 MVC web 应用的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-thymeleaf/pom.xml) |
+| `spring-boot-starter-validation` | 使用 Hibernate Validator 进行 Java Bean Validation 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-validation/pom.xml) |
+| `spring-boot-starter-web` | 使用 Spring MVC 构建 web（包括 RESTful）应用程序的启动器。使用 Tomcat 作为默认的嵌入式容器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-web/pom.xml) |
+| `spring-boot-starter-web-services` | 使用 Spring Web Services 的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-web-services/pom.xml) |
+| `spring-boot-starter-webflux` | 使用 Spring Framework 的 Reactive Web 支持构建 WebFlux 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-webflux/pom.xml) |
+| `spring-boot-starter-websocket` | 使用 Spring Framework 的 WebSocket 支持构建 WebSocket 应用程序的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-websocket/pom.xml) |
 
 除了上面的应用启动器，下面的启动器可以被用于添加*生产就绪*特性：
 
-| Name                           | Description                                                  | Pom                                                          |
-| :----------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Name | Description | Pom |
+| : | : | : |
 | `spring-boot-starter-actuator` | 使用 Spring Boot 的 Actuator 的启动器，Actuator 提供了生产就绪功能，可帮助您监视和管理应用程序。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-actuator/pom.xml) |
 
 最后，Spring Boot 还包括以下启动程序，如果您想排除或替换特定的技术，可以使用这些启动程序：
 
-| Name                                | Description                                                  | Pom                                                          |
-| :---------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| `spring-boot-starter-jetty`         | 使用 Jetty 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jetty/pom.xml) |
-| `spring-boot-starter-log4j2`        | 使用 Log4j2 记录日志的启动器。是 [`spring-boot-starter-logging`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-logging) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-log4j2/pom.xml) |
-| `spring-boot-starter-logging`       | 使用 Logback 记录日志的启动器。是默认的日志启动器。          | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-logging/pom.xml) |
-| `spring-boot-starter-reactor-netty` | 使用 Reactor Netty 作为内置 reactive HTTP 服务器的启动器。   | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-reactor-netty/pom.xml) |
-| `spring-boot-starter-tomcat`        | 使用 Tomcat 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 使用的默认 servlet 容器启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-tomcat/pom.xml) |
-| `spring-boot-starter-undertow`      | 使用 Undertow 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-undertow/pom.xml) |
+| Name | Description | Pom |
+| : | : | : |
+| `spring-boot-starter-jetty` | 使用 Jetty 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jetty/pom.xml) |
+| `spring-boot-starter-log4j2` | 使用 Log4j2 记录日志的启动器。是 [`spring-boot-starter-logging`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-logging) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-log4j2/pom.xml) |
+| `spring-boot-starter-logging` | 使用 Logback 记录日志的启动器。是默认的日志启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-logging/pom.xml) |
+| `spring-boot-starter-reactor-netty` | 使用 Reactor Netty 作为内置 reactive HTTP 服务器的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-reactor-netty/pom.xml) |
+| `spring-boot-starter-tomcat` | 使用 Tomcat 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 使用的默认 servlet 容器启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-tomcat/pom.xml) |
+| `spring-boot-starter-undertow` | 使用 Undertow 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-undertow/pom.xml) |
 
-> 了解额外的社区贡献的启动器列表，参考 GitHub 上 `spring-boot-starters` 模块中的 [README](https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot-starters/README.adoc) 文件。
+>了解额外的社区贡献的启动器列表，参考 GitHub 上 `spring-boot-starters` 模块中的 [README](https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot-starters/README.adoc) 文件。
 
 ### 3.2. 构建你的代码
 
@@ -899,13 +899,13 @@ Spring Boot 并不强制任何固定形式的代码组织形式。不过，倒�
 
 如果一个类不包含 `package` 声明，它就会被认为处于所谓的默认包中。通常情况下应该尽量避免使用默认包。因为它可能导致使用 `@ComponentScan` ，`@ConfigurationPropertiesScan` ，`@EntityScen` ，`@SpringBootApplication` 等注解的 Spring Boot 应用中发生某些问题，因为每个 jar 中的每个类都会被读取。
 
-> 我们推荐你遵循 Java 推荐的包命名传统，使用逆序的域名作为包名（比如，`com.example.project`）
+>我们推荐你遵循 Java 推荐的包命名传统，使用逆序的域名作为包名（比如，`com.example.project`）
 
 #### 3.2.2. 定位应用主类
 
 我们通常建议您将应用程序主类放在其他类之上的根包中。通常将 [`@SpringBootApplication` 注解](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-using-springbootapplication-annotation) 放在您的主类上，它隐式定义某些项目的基本“搜索包”。例如，如果您正在编写 JPA 应用程序，则使用 `@SpringBootApplication` 注解修饰的类的包来搜索 `@Entity` 项目。使用根软件包还允许组件扫描仅应用于您的项目。
 
-> 如果您不想使用  `@SpringBootApplication` ，由于它是通过引入 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解来定义该行为，因此也可以直接使用它们来替代。
+>如果您不想使用  `@SpringBootApplication` ，由于它是通过引入 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解来定义该行为，因此也可以直接使用它们来替代。
 
 下面的列表展示了一种典型的项目结构：
 
@@ -950,7 +950,7 @@ public class Application {
 
 Spring 更喜欢基于 Java 的配置。尽管通过 XML 源文件使用 `SpringApplication` 也是可能的，我们还是推荐你将主要的配置源写成一个单独的 `@Configuration` 类。通常，定义 `main` 方法的类就是这个主 `@Configuration` 的理想选择。
 
-> 许多已经发布到网上的 Spring 配置示例都使用了 XML 配置。如果可能，请始终使用等效的基于 Java 的配置。搜索 `Enable*` 注解将是一个很好的切入点。
+>许多已经发布到网上的 Spring 配置示例都使用了 XML 配置。如果可能，请始终使用等效的基于 Java 的配置。搜索 `Enable*` 注解将是一个很好的切入点。
 
 #### 3.3.1. 引入额外的配置类
 
@@ -966,7 +966,7 @@ Spring Boot 自动配置试图基于你已经添加的 jar 依赖自动配置你
 
 你需要通过将 `@EnableAutoConfiguration` 或者 `@SpringBootApplication` 注解添加到其中一个你的 `@Configuration` 类中来选择加入自动配置。
 
-> 您应该只添加一个 `@SpringBootApplication` 或 `@EnableAutoConfiguration` 注解。我们通常建议您仅将其中一个添加到您的主要 `@Configuration` 类中。
+>您应该只添加一个 `@SpringBootApplication` 或 `@EnableAutoConfiguration` 注解。我们通常建议您仅将其中一个添加到您的主要 `@Configuration` 类中。
 
 #### 3.4.1. 逐步替换自动配置
 
@@ -991,9 +991,9 @@ public class MyConfiguration {
 
 如果类不在类路径下，你可以使用注解的 `excludeName` 属性并指定全限定名。你也可以通过使用 `spring.autoconfigure.exclude` 属性控制需要禁用的自动配置类列表。
 
-> 您可以在注解级别和使用属性来定义排除项。
+>您可以在注解级别和使用属性来定义排除项。
 
-> 即使自动配置类是 `public` 的，该类的唯一被认为是公共 API 的方面是可用于禁用自动配置的类的名称。这些类的实际内容（例如嵌套配置类或 bean 方法）仅供内部使用，我们不建议直接使用它们。
+>即使自动配置类是 `public` 的，该类的唯一被认为是公共 API 的方面是可用于禁用自动配置的类的名称。这些类的实际内容（例如嵌套配置类或 bean 方法）仅供内部使用，我们不建议直接使用它们。
 
 ### 3.5. Spring Beans 和依赖注入
 
@@ -1041,13 +1041,13 @@ public class DatabaseAccountService implements AccountService {
 }
 ```
 
-> 请注意，使用构造函数注入如何将 `riskAssessor` 字段标记为 `final`，指示其随后无法更改。
+>请注意，使用构造函数注入如何将 `riskAssessor` 字段标记为 `final`，指示其随后无法更改。
 
 ### 3.6. 使用 @SpringBootApplication 注解
 
 许多 Spring Boot 开发者喜欢他们的应用使用自动配置，组件扫描，并能够在他们的"应用类”中定义额外的配置。单独一个 `@SpringBootApplication` 就可以同时开启这三个特性。也就是：
 
-- `@EnableAutoConfiguration`: 开启 [Spring Boot’s auto-configuration mechanism](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-auto-configuration) 。
+-`@EnableAutoConfiguration`: 开启 [Spring Boot’s auto-configuration mechanism](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-auto-configuration) 。
 - `@ComponentScan`: 在应用所在的包上开启 `@Component` 扫描 (参考 [the best practices](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-structuring-your-code))。
 - `@Configuration`: 允许在上下文中注册额外 bean 或者引入额外的配置类。
 
@@ -2008,13 +2008,13 @@ spring:
 
 嵌套文档将被过滤，因为主文件名为 `application-dev.yml`。它已经被认为是特定于配置文件的，并且嵌套文档将被忽略。
 
->我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
+> 我们建议您不要混用特定于配置文件的 YAML 文件和多个 YAML 文档。坚持只使用其中之一。
 
 #### 4.2.8. 类型安全的配置属性
 
 使用 `@Value("${property}")` 注解来注入配置属性有时会很麻烦，尤其是当您使用多个属性或数据本质上是分层的情况下。Spring Boot 提供了一种使用属性的替代方法，该属性使强类型的 Bean 可以管理和验证应用程序的配置。
 
->参考 [differences between `@Value` and type-safe configuration properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-vs-value).
+> 参考 [differences between `@Value` and type-safe configuration properties](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-vs-value).
 
 ##### JavaBean 属性绑定
 
@@ -2075,23 +2075,23 @@ public class AcmeProperties {
 
 上面的 POJO 定义了下面的属性：
 
--`acme.enabled`，默认值是 `false` 。
--`acme.remote-address`，其类型可以从 `String` 强制转化而来。
--`acme.security.username`，带有一个嵌套的 `security` 对象，其名称由属性的名称确定。特别是，返回类型根本不使用，可能是 `SecurityProperties`。
--`acme.security.password`。
--`acme.security.roles`，值是默认为 `USER` 的 `String` 集合。
+- `acme.enabled`，默认值是 `false` 。
+- `acme.remote-address`，其类型可以从 `String` 强制转化而来。
+- `acme.security.username`，带有一个嵌套的 `security` 对象，其名称由属性的名称确定。特别是，返回类型根本不使用，可能是 `SecurityProperties`。
+- `acme.security.password`。
+- `acme.security.roles`，值是默认为 `USER` 的 `String` 集合。
 
->Spring Boot 的自动配置在很大程度上利用了 `@ConfigurationProperties` 来轻松配置自动配置的 bean。与自动配置类相似，Spring Boot 中可用的 `@ConfigurationProperties` 类仅供内部使用。通过属性文件，YAML 文件，环境变量等配置的映射到该类的属性是公共 API，但是该类本身的内容并不意味着可以直接使用。
+> Spring Boot 的自动配置在很大程度上利用了 `@ConfigurationProperties` 来轻松配置自动配置的 bean。与自动配置类相似，Spring Boot 中可用的 `@ConfigurationProperties` 类仅供内部使用。通过属性文件，YAML 文件，环境变量等配置的映射到该类的属性是公共 API，但是该类本身的内容并不意味着可以直接使用。
 
->这种安排依赖于默认的空构造器，并且 getter 和 setter 通常是强制性的，因为绑定是通过标准 Java Beans 属性描述符进行的，就像在 Spring MVC 中一样。在以下情况下，可以忽略 setter：
+> 这种安排依赖于默认的空构造器，并且 getter 和 setter 通常是强制性的，因为绑定是通过标准 Java Beans 属性描述符进行的，就像在 Spring MVC 中一样。在以下情况下，可以忽略 setter：
 >
->-一旦 Map 初始化完成，就只需要使用 getter，而不再需要 setter，因为它们可以由绑定器修改。
->-集合和数组能够通过索引（典型的是使用 YAML）或者使用单个逗号分隔的值（属性）来访问。在后者情况下，setter 是必需的。我们推荐始终为该类型添加 setter。如果你初始化一个集合，确保它是不可变的（如前面例子所示）。
->-如果嵌套的 POJO 属性已初始化（例如前面示例中的 `Security` 字段），则不需要 setter。如果希望绑定器通过使用其默认构造函数动态创建实例，则需要一个 setter。
+> - 一旦 Map 初始化完成，就只需要使用 getter，而不再需要 setter，因为它们可以由绑定器修改。
+> - 集合和数组能够通过索引（典型的是使用 YAML）或者使用单个逗号分隔的值（属性）来访问。在后者情况下，setter 是必需的。我们推荐始终为该类型添加 setter。如果你初始化一个集合，确保它是不可变的（如前面例子所示）。
+> - 如果嵌套的 POJO 属性已初始化（例如前面示例中的 `Security` 字段），则不需要 setter。如果希望绑定器通过使用其默认构造函数动态创建实例，则需要一个 setter。
 >
->有些人使用 Lombok 项目自动添加 getter 和 setter。确保 Lombok 不会为这种类型生成任何特定的构造函数，因为容器会自动使用它来实例化该对象。
+> 有些人使用 Lombok 项目自动添加 getter 和 setter。确保 Lombok 不会为这种类型生成任何特定的构造函数，因为容器会自动使用它来实例化该对象。
 >
->最后，仅考虑标准 Java Bean 属性，不支持对静态属性的绑定。
+> 最后，仅考虑标准 Java Bean 属性，不支持对静态属性的绑定。
 
 ##### 构造器绑定
 
@@ -2161,9 +2161,9 @@ public class AcmeProperties {
 
 可以使用 `@DefaultValue` 指定默认值，并且将应用相同的转换服务将 `String` 值强制转换为缺少属性的目标类型。
 
->要使用构造函数绑定，必须使用 `@EnableConfigurationProperties` 或配置属性扫描来启用该类。您不能对通过常规 Spring 机制创建的 bean 使用构造函数绑定（例如，`@Component bean` 的 beans，通过 `@Bean` 方法创建的 bean 或使用 `@Import` 加载的 bean）。
+> 要使用构造函数绑定，必须使用 `@EnableConfigurationProperties` 或配置属性扫描来启用该类。您不能对通过常规 Spring 机制创建的 bean 使用构造函数绑定（例如，`@Component bean` 的 beans，通过 `@Bean` 方法创建的 bean 或使用 `@Import` 加载的 bean）。
 
->如果您的类有多个构造函数，则还可以直接在应绑定的构造函数上使用 `@ConstructorBinding`。
+> 如果您的类有多个构造函数，则还可以直接在应绑定的构造函数上使用 `@ConstructorBinding`。
 
 ##### 启用 `@ConfigurationProperties` 注解的类型
 
@@ -2187,9 +2187,9 @@ public class MyApplication {
 }
 ```
 
->当使用配置属性扫描或通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean时，该 bean 具有常规名称：`<prefix>-<fqn>`，其中，`<prefix>` 是在 `@ConfigurationProperties` 中指定的环境 key 前缀。`<fqn>` 是 Bean 的完全限定名称。如果注解不提供任何前缀，则仅使用 Bean 的完全限定名称。
+> 当使用配置属性扫描或通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean时，该 bean 具有常规名称：`<prefix>-<fqn>`，其中，`<prefix>` 是在 `@ConfigurationProperties` 中指定的环境 key 前缀。`<fqn>` 是 Bean 的完全限定名称。如果注解不提供任何前缀，则仅使用 Bean 的完全限定名称。
 >
->上例中的 bean 名称是 `acme-com.example.AcmeProperties`。
+> 上例中的 bean 名称是 `acme-com.example.AcmeProperties`。
 
 我们建议 `@ConfigurationProperties` 只处理环境，尤其不要从上下文中注入其他 bean。对于极端情况，可以使用 setter 注入或框架提供的任何 `*Aware` 接口（例如，如果需要访问 `Environment`，则可以使用 `EnvironmentAware`）。如果仍然想使用构造函数注入其他 bean，则必须使用 `@Component` 注解配置属性 bean，并使用基于 JavaBean 的属性绑定。
 
@@ -2235,7 +2235,7 @@ public class MyService {
 }
 ```
 
->使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
+> 使用 `@ConfigurationProperties` 还可以让您生成元数据文件，IDE 可以使用这些元数据文件为您提供关键字自动完成功能。有关详细信息，请参见 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata)。
 
 ##### 第三方配置
 
@@ -2278,23 +2278,23 @@ public class OwnerProperties {
 
 上面的代码可以使用下面的属性名：
 
-| Property | Note |
-| : | : |
+| Property                            | Note                                                      |
+| :---------------------------------- | :-------------------------------------------------------- |
 | `acme.my-project.person.first-name` | 短横线隔开式，推荐使用在 `.properties` 和 `.yml` 文件中。 |
-| `acme.myProject.person.firstName` | 标准驼峰形式。 |
-| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。 |
-| `ACME_MYPROJECT_PERSON_FIRSTNAME` | 大写形式，当使用系统环境变量时推荐使用这种形式。 |
+| `acme.myProject.person.firstName`   | 标准驼峰形式。                                            |
+| `acme.my_project.person.first_name` | 下划线表示法，可以用于 `.properties` 和 `.yml` 文件中。   |
+| `ACME_MYPROJECT_PERSON_FIRSTNAME`   | 大写形式，当使用系统环境变量时推荐使用这种形式。          |
 
->记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
+> 记号中的 `prefix`值必须是短横线隔开形式(由短横线 `-` 隔开的小写字母，如 `acme.my-project.person`) 。
 
-| Property Source | Simple | List |
-| : | : | : |
-| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法 | 使用 `[]` 的标准列表语法或者逗号分隔的值列表 |
-| YAML 文件 | 驼峰形式，短横线隔开形式或者下划线记法 | 标准 YAML 列表语法或者逗号分隔的值列表 |
-| 环境变量 | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
-| 系统属性 | 驼峰形式，短横线隔开形式或者下划线记法 | 使用 `[]` 的标准列表语法或者逗号分隔的值列表 |
+| Property Source | Simple                                                   | List                                                         |
+| :-------------- | :------------------------------------------------------- | :----------------------------------------------------------- |
+| Properties 文件 | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
+| YAML 文件       | 驼峰形式，短横线隔开形式或者下划线记法                   | 标准 YAML 列表语法或者逗号分隔的值列表                       |
+| 环境变量        | 以下划线作为定界符的大写格式。不得在属性名称中使用 `_`。 | 由下划线包围的数值，比如 `MY_ACME_1_OTHER = my.acme[1].other` |
+| 系统属性        | 驼峰形式，短横线隔开形式或者下划线记法                   | 使用 `[]` 的标准列表语法或者逗号分隔的值列表                 |
 
->我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
+> 我们建议，如果可能的话，属性以小写的短横线分隔格式存储，例如 `my.property-name = acme`。
 
 绑定到 `Map` 属性时，如果 `key` 包含小写字母数字字符或 `-` 以外的任何内容，则需要使用方括号表示法，以便保留原始值。如果键没有被 `[]` 包围，则所有非字母数字或 `-` 的字符都将被删除。例如，考虑将以下属性绑定到 `Map`：
 
@@ -2308,7 +2308,7 @@ acme:
 
 上面的属性将会被绑定到 `Map` ，其中包含 `/key1`, `/key2` 和 `key3` 。
 
->对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
+> 对于 YAML 文件，方括号需要用引号包围起来，以便正确解析 keys。
 
 ##### 合并复杂类型
 
@@ -2402,21 +2402,21 @@ acme:
 
 如果 `dev` 环境配置文件未激活，则 `AcmeProperties.map` 包含一个键为 `key1` 的条目（名称为 `my name 1` ，描述为 `my description 1`）。但是，如果启用了 `dev` 配置文件，则 `map` 包含两个条目，其中包含键 `key1`（名称为 `dev name 1`，名称为 `my description 1`）和 `key2`（名称为 `dev name 2`，名称为 `my description 2`）。
 
->前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
+> 前述合并规则不仅适用于 YAML 文件，而且适用于所有属性源中的属性。
 
 ##### Properties 转换
 
 当 Spring Boot 绑定到 `@ConfigurationProperties` bean时，它试图将外部应用程序属性强制转换为正确的类型。如果需要自定义类型转换，则可以提供一个 `ConversionService` bean（带有名为 `conversionService` 的bean）或自定义属性编辑器（通过 `CustomEditorConfigurer` bean）或自定义的 `Converters`（带有定义为 `@ConfigurationPropertiesBinding` 的 bean 定义）。
 
->由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
+> 由于在应用程序生命周期中非常早就请求了此 bean，因此请确保限制您的 `ConversionService` 使用的依赖项。通常，您需要的任何依赖项可能在创建时未完全初始化。如果配置键强制不需要自定义的 `ConversionService`，则可能要重命名，而仅依赖于具有 `@ConfigurationPropertiesBinding` 限定的自定义转换器。
 
 ###### 转换持续时间
 
 Spring Boot 为表达持续时间提供了专门的支持。如果公开 `java.time.Duration` 属性，则应用程序属性中的以下格式可用：
 
--常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
--标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
--值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
+- 常规的 `long` 表示形式（使用毫秒作为默认单位，除非指定了 `@DurationUnit`）
+- 标准的 ISO-8601 格式 [used by `java.time.Duration`](https://docs.oracle.com/javase/8/docs/api//java/time/Duration.html#parse-java.lang.CharSequence-)
+- 值和单位相结合的更具可读性的格式（例如，`10s` 表示10秒）
 
 考虑下面的例子：
 
@@ -2452,31 +2452,31 @@ public class AppSystemProperties {
 
 您也可以使用任何受支持的单位。这些是：
 
--`ns` 纳秒
+- `ns` 纳秒
 
--`us` 微秒
+- `us` 微秒
 
--`ms` 毫秒（毫秒）
+- `ms` 毫秒（毫秒）
 
--`s` 秒
+- `s` 秒
 
--`m` 分钟
+- `m` 分钟
 
--`h` 小时
+- `h` 小时
 
--`d` 天
+- `d` 天
 
 默认单位是毫秒，可以使用 `@DurationUnit` 覆盖，如上面的示例所示。
 
->如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+> 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
 ###### 转换数据尺寸
 
 Spring Framework 具有一个 `DataSize` 值类型，该值类型以字节为单位表示大小。如果您公开 `DataSize` 属性，则应用程序属性中的以下格式可用：
 
--常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
+- 常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
 
--将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
+- 将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
 
 考虑以下示例：
 
@@ -2510,19 +2510,19 @@ public class AppIoProperties {
 
 要指定 10 兆字节的缓冲区大小，`10` 和 `10MB` 是等效的。可以将 256 个字节的大小阈值指定为 `256` 或 `256B`。您也可以使用任何受支持的单位。这些是：
 
--`B` 表示字节
+- `B` 表示字节
 
--`KB` 代表千字节
+- `KB` 代表千字节
 
--`MB` 代表兆字节
+- `MB` 代表兆字节
 
--`GB` 代表GB
+- `GB` 代表GB
 
--`TB`（TB）
+- `TB`（TB）
 
 默认单位时字节，可以通过使用  `@DataSizeUnit` 覆盖，如上面例子所示。
 
->如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+> 如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
 ##### @ConfigurationProperties 验证
 
@@ -3964,17 +3964,17 @@ spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovid
 
 Java 的 `javax.sql.DataSource` 接口提供使用数据库连接的标准方法。传统上，`DataSource` 使用一个 `URL` 和一些凭证来建立数据库连接。
 
->参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
+> 参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
 
 ##### 内置数据库支持
 
 使用内存内置数据库来开发应用程序通常很方便。显然，内存数据库不提供持久存储。您需要在应用程序启动时填充数据库，并准备在应用程序结束时丢弃数据。
 
->“How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
+> “How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
 
 Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](http://hsqldb.org/) 和 [Derby](https://db.apache.org/derby/) 数据库。您无需提供任何连接 URL。您只需要包含要使用的内置数据库的构建依赖项即可。
 
->如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
+> 如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
 
 比如，典型的 POM 依赖应该是：
 
@@ -3990,25 +3990,25 @@ Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](
 </dependency>
 ```
 
->您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
+> 您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
 
->如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
+> 如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
 
 ##### 连接到生产数据库
 
 生产数据库的连接也可以通过使用 `DataSource` 池来自动配置。Spring Boot 使用以下算法来选择特定的实现：
 
-1.我们更喜欢 [HikariCP](https://github.com/brettwooldridge/HikariCP) 的性能和并发性。如果有 HikariCP，我们总是选择它。
+1. 我们更喜欢 [HikariCP](https://github.com/brettwooldridge/HikariCP) 的性能和并发性。如果有 HikariCP，我们总是选择它。
 
-2.否则，如果 Tomcat 池 `DataSource` 可用，我们将使用它。
+2. 否则，如果 Tomcat 池 `DataSource` 可用，我们将使用它。
 
-3.如果 HikariCP 和 Tomcat 池数据源均不可用，而 [Commons DBCP2](https://commons.apache.org/proper/commons-dbcp/) 可用，我们将使用它。
+3. 如果 HikariCP 和 Tomcat 池数据源均不可用，而 [Commons DBCP2](https://commons.apache.org/proper/commons-dbcp/) 可用，我们将使用它。
 
 如果您使用 `spring-boot-starter-jdbc` 或 `spring-boot-starter-data-jpa` `starters`，则会自动获得对  `HikariCP` 的依赖。
 
->您可以通过设置 `spring.datasource.type` 属性来完全绕过该算法，并指定要使用的连接池。如果您在 Tomcat 容器中运行应用程序，这一点尤其重要，因为默认情况下会提供 `tomcat-jdbc`。
+> 您可以通过设置 `spring.datasource.type` 属性来完全绕过该算法，并指定要使用的连接池。如果您在 Tomcat 容器中运行应用程序，这一点尤其重要，因为默认情况下会提供 `tomcat-jdbc`。
 
->额外连接池始终可以手动配置。如果定义自己的 `DataSource` bean，则不会进行自动配置。
+> 额外连接池始终可以手动配置。如果定义自己的 `DataSource` bean，则不会进行自动配置。
 
 数据源的配置由 `spring.datasource.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
 
@@ -4019,11 +4019,11 @@ spring.datasource.password=dbpass
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 ```
 
->您至少应通过设置 `spring.datasource.url` 属性来指定 URL。否则，Spring Boot 会尝试自动配置内置数据库。
+> 您至少应通过设置 `spring.datasource.url` 属性来指定 URL。否则，Spring Boot 会尝试自动配置内置数据库。
 
->您通常不需要指定 `driver-class-name`，因为 Spring Boot 可以从 `url` 中为大多数数据库推断出它。
+> 您通常不需要指定 `driver-class-name`，因为 Spring Boot 可以从 `url` 中为大多数数据库推断出它。
 
->对于要创建的 `DataSource` 池，我们需要能够验证有效的 `Driver` 类是否可用，因此我们在进行任何操作之前都要进行检查。换句话说，如果设置 `spring.datasource.driver-class-name=com.mysql.jdbc.Driver`，则该类必须是可加载的。
+> 对于要创建的 `DataSource` 池，我们需要能够验证有效的 `Driver` 类是否可用，因此我们在进行任何操作之前都要进行检查。换句话说，如果设置 `spring.datasource.driver-class-name=com.mysql.jdbc.Driver`，则该类必须是可加载的。
 
 参见 [`DataSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jdbc/DataSourceProperties.java) 以获取更多受支持的选项。这些是不管实际实现如何都起作用的标准选项。也可以通过使用各自的前缀（`spring.datasource.hikari.*`，`spring.datasource.tomcat.*` 和 `spring.datasource.dbcp2.*`）微调实现特定的设置。有关更多详细信息，请参阅所用连接池实现的文档。
 
@@ -4080,17 +4080,17 @@ public class MyBean {
 spring.jdbc.template.max-rows=500
 ```
 
-> `NamedParameterJdbcTemplate` 内部复用了相同的 `JdbcTemplate` 实例。如果不只一个 `JdbcTemplate` 被定义而又不存在主要的候选者， `NamedParameterJdbcTemplate` 就不会被自动配置。
+>  `NamedParameterJdbcTemplate` 内部复用了相同的 `JdbcTemplate` 实例。如果不只一个 `JdbcTemplate` 被定义而又不存在主要的候选者， `NamedParameterJdbcTemplate` 就不会被自动配置。
 
 #### 4.10.3. JPA 和 Spring Data JPA
 
 Java Persistence API 是一种标准技术，允许你将对象映射到关系数据库。`spring-boot-starter-data-jpa` POM 提供了一种快捷的入手方式。它提供了下面的关键依赖：
 
--Hibernate: 一种最流行的 JPA 实现。
--Spring Data JPA: 使基于 JPA 的存储库的实现变得容易。
--Spring ORMs: Spring Framework 中的核心 ORM 支持。
+- Hibernate: 一种最流行的 JPA 实现。
+- Spring Data JPA: 使基于 JPA 的存储库的实现变得容易。
+- Spring ORMs: Spring Framework 中的核心 ORM 支持。
 
->本章节我们并不深入太多 JPA 或者 [Spring Data](https://spring.io/projects/spring-data) 的细节。你可以参考 [spring.io](https://spring.io/) 上的 [“Accessing Data with JPA”](https://spring.io/guides/gs/accessing-data-jpa/) 文档以及 [Spring Data JPA](https://spring.io/projects/spring-data-jpa) 和 [Hibernate](https://hibernate.org/orm/documentation/) 参考文档。
+> 本章节我们并不深入太多 JPA 或者 [Spring Data](https://spring.io/projects/spring-data) 的细节。你可以参考 [spring.io](https://spring.io/) 上的 [“Accessing Data with JPA”](https://spring.io/guides/gs/accessing-data-jpa/) 文档以及 [Spring Data JPA](https://spring.io/projects/spring-data-jpa) 和 [Hibernate](https://hibernate.org/orm/documentation/) 参考文档。
 
 ##### Entity 类
 
@@ -4142,7 +4142,7 @@ public class City implements Serializable {
 }
 ```
 
->你可以自定义实体扫描位置，通过使用 `@EntityScan` 注解。参考 “[Separate @Entity Definitions from Spring Configuration](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-separate-entity-definitions-from-spring-configuration)” 了解如何做。
+> 你可以自定义实体扫描位置，通过使用 `@EntityScan` 注解。参考 “[Separate @Entity Definitions from Spring Configuration](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-separate-entity-definitions-from-spring-configuration)” 了解如何做。
 
 ##### Spring Data JPA Repositories
 
@@ -4171,7 +4171,7 @@ public interface CityRepository extends Repository<City, Long> {
 
 Spring Data JPA 存储库支持三种不同的引导模式：默认，延迟和惰性。要启用延迟引导或惰性引导，请将 `spring.data.jpa.repositories.bootstrap-mode` 属性分别设置为 `deferred` 或 `lazy`。当使用延迟或惰性引导时，自动配置的 `EntityManagerFactoryBuilder` 将使用上下文的 `AsyncTaskExecutor`（如果有）作为引导执行器。如果存在多个，将使用一个名为 `applicationTaskExecutor` 的应用。
 
->我们仅仅是走马观花一般概述 Spring Data JPA 的表面特性。完整的细节，请参考 [Spring Data JPA reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
+> 我们仅仅是走马观花一般概述 Spring Data JPA 的表面特性。完整的细节，请参考 [Spring Data JPA reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
 
 ##### 创建和丢弃 JPA Databases
 
@@ -4181,7 +4181,7 @@ Spring Data JPA 存储库支持三种不同的引导模式：默认，延迟和�
 spring.jpa.hibernate.ddl-auto=create-drop
 ```
 
->Hibernate 自己的内部属性名称（如果您记得更好的话）是 `hibernate.hbm2ddl.auto`。您可以通过使用 `spring.jpa.properties.*`（在将前缀添加到实体管理器之前删除前缀）来设置它以及其他 Hibernate 本地属性。下面的行显示了为 Hibernate 设置 JPA 属性的示例：
+> Hibernate 自己的内部属性名称（如果您记得更好的话）是 `hibernate.hbm2ddl.auto`。您可以通过使用 `spring.jpa.properties.*`（在将前缀添加到实体管理器之前删除前缀）来设置它以及其他 Hibernate 本地属性。下面的行显示了为 Hibernate 设置 JPA 属性的示例：
 
 ```
 spring.jpa.properties.hibernate.globally_quoted_identifiers=true
@@ -4201,19 +4201,19 @@ Spring Data 包括对 JDBC 的存储库支持，并将自动为 `CrudRepository`
 
 当必要的依赖项位于类路径上时，Spring Boot 将自动配置 Spring Data 的 JDBC 存储库。可以将它们添加到您的项目中，而只需依赖于 `spring-boot-starter-data-jdbc`。如有必要，您可以通过向应用程序添加 `@EnableJdbcRepositories` 注解或 `JdbcConfiguration` 子类来控制 Spring Data JDBC 的配置。
 
->关于 Spring Data JDBC 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
+> 关于 Spring Data JDBC 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
 
 #### 4.10.5. 使用 H2 的 Web 控制台
 
 [H2 database](https://www.h2database.com/) 提供一个 [browser-based console](https://www.h2database.com/html/quickstart.html#h2_console) ，Spring Boot 能够为你自动配置。当下列条件满足时该控制台会被自动配置：
 
--你在开发的是基于 servlet 的 web 应用。
--`com.h2database:h2` 在类路径上。
--你正在使用 [Spring Boot’s developer tools](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools) 。
+- 你在开发的是基于 servlet 的 web 应用。
+- `com.h2database:h2` 在类路径上。
+- 你正在使用 [Spring Boot’s developer tools](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools) 。
 
->如果你没有使用 Spring Boot 的开发工具，仍然可以使用 H2 的控制台，你可以将 `spring.h2.console.enabled` 属性设置为 `true`。
+> 如果你没有使用 Spring Boot 的开发工具，仍然可以使用 H2 的控制台，你可以将 `spring.h2.console.enabled` 属性设置为 `true`。
 
->H2 控制台应该仅在开发过程中使用，因此，你需要保证生产环境中 `spring.h2.console.enabled` 属性没有设定为 `true` 。
+> H2 控制台应该仅在开发过程中使用，因此，你需要保证生产环境中 `spring.h2.console.enabled` 属性没有设定为 `true` 。
 
 ##### 修改 H2 控制台路径
 
@@ -4271,7 +4271,7 @@ public class JooqExample implements CommandLineRunner {
 }
 ```
 
->jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
+> jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
 
 然后，你可以使用 `DSLContext` 来构建你的查询，如下面例子所示：
 
@@ -4287,22 +4287,22 @@ public List<GregorianCalendar> authorsBornAfter1980() {
 
 除非 `spring.jooq.sql-dialect` 属性已经被配置，Spring Boot 决定用于你的数据库的 SQL 方言。如果 Spring Boot 无法探测到方言，使用 `DEFAULT`。
 
->Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
+> Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
 
 ##### 自定义 jOOQ
 
 可以通过定义自己的 `@Bean` 定义来实现更高级的自定义，这在创建 jOOQ `Configuration` 时使用。您可以为以下 jOOQ 类型定义 bean：
 
--`ConnectionProvider`
--`ExecutorProvider`
--`TransactionProvider`
--`RecordMapperProvider`
--`RecordUnmapperProvider`
--`Settings`
--`RecordListenerProvider`
--`ExecuteListenerProvider`
--`VisitListenerProvider`
--`TransactionListenerProvider`
+- `ConnectionProvider`
+- `ExecutorProvider`
+- `TransactionProvider`
+- `RecordMapperProvider`
+- `RecordUnmapperProvider`
+- `Settings`
+- `RecordListenerProvider`
+- `ExecuteListenerProvider`
+- `VisitListenerProvider`
+- `TransactionListenerProvider`
 
 如果您想完全控制 jOOQ 配置，也可以创建自己的 `org.jooq.Configuration` `@Bean`。
 
@@ -4310,15 +4310,15 @@ public List<GregorianCalendar> authorsBornAfter1980() {
 
 Spring Data 提供了其他项目来帮助您访问各种 NoSQL 技术，包括：
 
--[MongoDB](https://spring.io/projects/spring-data-mongodb)
--[Neo4J](https://spring.io/projects/spring-data-neo4j)
--[Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
--[Solr](https://spring.io/projects/spring-data-solr)
--[Redis](https://spring.io/projects/spring-data-redis)
--[GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
--[Cassandra](https://spring.io/projects/spring-data-cassandra)
--[Couchbase](https://spring.io/projects/spring-data-couchbase)
--[LDAP](https://spring.io/projects/spring-data-ldap)
+- [MongoDB](https://spring.io/projects/spring-data-mongodb)
+- [Neo4J](https://spring.io/projects/spring-data-neo4j)
+- [Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
+- [Solr](https://spring.io/projects/spring-data-solr)
+- [Redis](https://spring.io/projects/spring-data-redis)
+- [GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
+- [Cassandra](https://spring.io/projects/spring-data-cassandra)
+- [Couchbase](https://spring.io/projects/spring-data-couchbase)
+- [LDAP](https://spring.io/projects/spring-data-ldap)
 
 Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couchbase 和 LDAP 提供自动配置。您可以使用其他项目，但必须自己进行配置。请参阅 [spring.io/projects/spring-data](https://spring.io/projects/spring-data) 上的相应参考文档。
 
@@ -4328,7 +4328,7 @@ Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couch
 
 有一个 `spring-boot-starter-data-redis` `Starter`，用于以方便的方式收集依赖项。默认情况下，它使用 [Lettuce](https://github.com/lettuce-io/lettuce-core/)。该启动程序可以处理传统应用程序和响应式应用程序。
 
->我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
+> 我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
 
 ##### 连接到 Redis
 
@@ -4350,7 +4350,7 @@ public class MyBean {
 }
 ```
 
->您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
+> 您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
 
 如果您添加自己的任何自动配置类型的 `@Bean`，它将替换默认值（除非排除是基于 bean 名称 `redisTemplate`而不是其类型的 `RedisTemplate` 除外） 。默认情况下，如果 `commons-pool2` 在类路径中，则将得到一个池化连接工厂。
 
@@ -4401,13 +4401,13 @@ spring.data.mongodb.port=27017
 
 如果定义了自己的 `MongoClient`，它将用于自动配置合适的 `MongoDbFactory`。`com.mongodb.MongoClient` 和 `com.mongodb.client.MongoClient` 均受支持。
 
->如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
+> 如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
 
->如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
+> 如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
 
->如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
+> 如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
 
->如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
+> 如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
 
 ##### MongoTemplate
 
@@ -4456,9 +4456,9 @@ public interface CityRepository extends Repository<City, Long> {
 }
 ```
 
->您可以使用 `@EntityScan` 注解来自定义文档扫描位置。
+> 您可以使用 `@EntityScan` 注解来自定义文档扫描位置。
 
->有关 Spring Data MongoDB 的完整详细信息，包括其丰富的对象映射技术，请参阅其 [参考文档](https://spring.io/projects/spring-data-mongodb)。
+> 有关 Spring Data MongoDB 的完整详细信息，包括其丰富的对象映射技术，请参阅其 [参考文档](https://spring.io/projects/spring-data-mongodb)。
 
 ##### 内置 Mongo
 
@@ -4466,7 +4466,7 @@ Spring Boot 为 [内置 Mongo](https://github.com/flapdoodle-oss/de.flapdoodle.e
 
 可以通过设置 `spring.data.mongodb.port` 属性来配置 Mongo 监听的端口。要使用随机分配的空闲端口，请使用 0 值。由 `MongoAutoConfiguration` 创建的 `MongoClient` 将自动配置为使用随机分配的端口。
 
->如果未配置自定义端口，则默认情况下，内置支持会使用随机端口（而不是 27017）。
+> 如果未配置自定义端口，则默认情况下，内置支持会使用随机端口（而不是 27017）。
 
 如果在类路径上有 SLF4J，则 Mongo 产生的输出将自动路由到名为 `org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongo` 的记录器。
 
@@ -4510,13 +4510,13 @@ spring.data.neo4j.password=secret
 
 如果你添加 `org.neo4j:neo4j-ogm-embedded-driver` 到你的应用依赖中，Spring Boot 将自动配置一个同进程的内置 Neo4j 实例，你的应用关闭时不会有任何数据被持久化。
 
->由于嵌入式 Neo4j OGM 驱动程序本身不提供 Neo4j 内核，因此您必须自己声明 `org.neo4j:neo4j` 作为依赖项。有关兼容版本的列表，请参阅 [Neo4j OGM文档](https://neo4j.com/docs/ogm-manual/current/reference/#reference:getting-started) 。
+> 由于嵌入式 Neo4j OGM 驱动程序本身不提供 Neo4j 内核，因此您必须自己声明 `org.neo4j:neo4j` 作为依赖项。有关兼容版本的列表，请参阅 [Neo4j OGM文档](https://neo4j.com/docs/ogm-manual/current/reference/#reference:getting-started) 。
 
 当类路径上有多个驱动程序时，内置驱动程序优先于其他驱动程序。您可以通过设置 `spring.data.neo4j.embedded.enabled=false` 显式禁用内置模式。
 
 如果内置驱动程序和 Neo4j 内核位于上述类路径上，则 [Data Neo4j Tests](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-neo4j-test) 会自动使用内置 Neo4j 实例。
 
->您可以通过在配置中提供数据库文件的路径来启用内置模式的持久性。比如 `spring.data.neo4j.uri=file://var/tmp/graph.db`。
+> 您可以通过在配置中提供数据库文件的路径来启用内置模式的持久性。比如 `spring.data.neo4j.uri=file://var/tmp/graph.db`。
 
 ##### 使用本地类型
 
@@ -4556,7 +4556,7 @@ public interface CityRepository extends Neo4jRepository<City, Long> {
 
 `spring-boot-starter-data-neo4j` “Starter” 可启用存储库支持以及事务管理。您可以通过在 `@Configuration` bean上分别使用 `@EnableNeo4jRepositories` 和 `@EntityScan` 来定制位置以查找存储库和实体。
 
->有关 Spring Data Neo4j 的完整详细信息，包括其对象映射技术，请参阅 [参考文档](https://docs.spring.io/spring-data/neo4j/docs/5.2.3.RELEASE/reference/html/ )。
+> 有关 Spring Data Neo4j 的完整详细信息，包括其对象映射技术，请参阅 [参考文档](https://docs.spring.io/spring-data/neo4j/docs/5.2.3.RELEASE/reference/html/ )。
 
 #### 4.11.4. Solr
 
@@ -4598,8 +4598,8 @@ Spring Data Solr 的完整细节，请参考 [reference documentation](https://d
 
 Spring Boot 支持几种客户端：
 
--官方 Java “高级”和“低级” REST 客户端
--由 Spring Data Elasticsearch 提供的 `ReactiveElasticsearchClient` 
+- 官方 Java “高级”和“低级” REST 客户端
+- 由 Spring Data Elasticsearch 提供的 `ReactiveElasticsearchClient` 
 
 传输客户端仍然可用，但是 [Spring Data Elasticsearch](https://github.com/spring-projects/spring-data-elasticsearch) 和 Elasticsearch 本身已弃用了它的支持。它将在将来的版本中删除。Spring Boot 提供了专用的 “Starter”，即 `spring-boot-starter-data-elasticsearch`。
 
@@ -4693,7 +4693,7 @@ Spring Data 包括对 Elasticsearch 的存储库支持。与前面讨论的 JPA 
 
 实际上，Spring Data JPA 和 Spring Data Elasticsearch 共享相同的通用基础架构。您可以从前面的 JPA 示例开始，并假设 `City` 现在是 Elasticsearch `@Document` 类，而不是 JPA `@Entity`，它的工作方式相同。
 
->有关 Spring Data Elasticsearch 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/elasticsearch/docs/current/reference/html/) 。
+> 有关 Spring Data Elasticsearch 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/elasticsearch/docs/current/reference/html/) 。
 
 Spring Boot 使用 `ElasticsearchRestTemplate` 或 `ReactiveElasticsearchTemplate` bean 支持经典和反应式 Elasticsearch 存储库。给定所需的依赖项，这些 bean 最有可能由 Spring Boot 自动配置。
 
@@ -4744,7 +4744,7 @@ public class MyBean {
 
 Spring Data 包含对 Cassandra 的基本存储库支持。当前，它比前面讨论的 JPA 存储库受到更多限制，并且需要使用 `@Query` 注解查找器方法。
 
->有关 Spring Data Cassandra 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/cassandra/docs/)。
+> 有关 Spring Data Cassandra 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/cassandra/docs/)。
 
 #### 4.11.7. Couchbase
 
@@ -4760,7 +4760,7 @@ spring.couchbase.bucket.name=my-bucket
 spring.couchbase.bucket.password=secret
 ```
 
->您*至少*需要提供引导主机，在这种情况下，存储区名称为 `default` ，密码为空字符串。另外，您可以定义自己的 `org.springframework.data.couchbase.config.CouchbaseConfigurer` `@Bean` 以控制整个配置。
+> 您*至少*需要提供引导主机，在这种情况下，存储区名称为 `default` ，密码为空字符串。另外，您可以定义自己的 `org.springframework.data.couchbase.config.CouchbaseConfigurer` `@Bean` 以控制整个配置。
 
 也可以自定义某些 `CouchbaseEnvironment` 设置。例如，以下配置更改了用于打开新的 `Bucket` 并启用 SSL 支持的超时：
 
@@ -4798,11 +4798,11 @@ public class MyBean {
 
 您可以在自己的配置中定义一些 Bean，以覆盖自动配置提供的那些：
 
--一个名为 `CouchbaseTemplate` `@Bean`的名称。
+- 一个名为 `CouchbaseTemplate` `@Bean`的名称。
 
--名称为 `couchbaseIndexManager的IndexManager` `@Bean`。
+- 名称为 `couchbaseIndexManager的IndexManager` `@Bean`。
 
--名称为 `couchbaseCustomConversions` 的 CustomBeans `@Bean`。
+- 名称为 `couchbaseCustomConversions` 的 CustomBeans `@Bean`。
 
 为了避免在您自己的配置中对这些名称进行硬编码，您可以重用 Spring Data Couchbase 提供的 `BeanNames`。例如，您可以自定义要使用的转换器，如下所示：
 
@@ -4820,7 +4820,7 @@ public class SomeConfiguration {
 }
 ```
 
->如果您想完全绕过Spring Data Couchbase的自动配置，请提供您自己的`org.springframework.data.couchbase.config.AbstractCouchbaseDataConfiguration` 实现。
+> 如果您想完全绕过Spring Data Couchbase的自动配置，请提供您自己的`org.springframework.data.couchbase.config.AbstractCouchbaseDataConfiguration` 实现。
 
 #### 4.11.8. LDAP
 
@@ -4872,20 +4872,20 @@ public class MyBean {
 spring.ldap.embedded.base-dn=dc=spring,dc=io
 ```
 
->可以定义多个 base-dn 值，但是，由于专有名称通常包含逗号，因此必须使用正确的符号进行定义。在 yaml 文件中，可以使用 yaml 列表符号：
+> 可以定义多个 base-dn 值，但是，由于专有名称通常包含逗号，因此必须使用正确的符号进行定义。在 yaml 文件中，可以使用 yaml 列表符号：
 >
->```yaml
->spring.ldap.embedded.base-dn:
->	- dc=spring,dc=io
->	- dc=pivotal,dc=io
->```
+> ```yaml
+> spring.ldap.embedded.base-dn:
+> 	- dc=spring,dc=io
+> 	- dc=pivotal,dc=io
+> ```
 >
->在 properties 文件中，您必须将索引作为属性名称的一部分包括在内：
+> 在 properties 文件中，您必须将索引作为属性名称的一部分包括在内：
 >
->```properties
->spring.ldap.embedded.base-dn[0]=dc=spring,dc=io
->spring.ldap.embedded.base-dn[1]=dc=pivotal,dc=io
->```
+> ```properties
+> spring.ldap.embedded.base-dn[0]=dc=spring,dc=io
+> spring.ldap.embedded.base-dn[1]=dc=pivotal,dc=io
+> ```
 
 默认情况下，服务器在随机端口上启动并触发常规 LDAP 支持。无需指定 `spring.ldap.urls` 属性。
 
@@ -4913,7 +4913,7 @@ InfluxDB 依赖 OkHttp。如果您需要调整 InfluxDB 在后台使用的 HTTP 
 
 Spring 框架支持透明地向应用程序添加缓存。从本质上讲，抽象将缓存应用于方法，从而根据缓存中可用的信息减少执行次数。缓存逻辑是对应用透明的，不会对调用者造成任何干扰。只要通过 `@EnableCaching` 注解启用了缓存支持，Spring Boot 就会自动配置缓存基础架构。
 
->参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
+> 参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
 
 简而言之，将缓存添加到服务的操作就像将相关注解添加到其方法一样容易，如以下示例所示：
 
@@ -4934,11 +4934,11 @@ public class MathService {
 
 本示例说明了在潜在的代价高昂操作上使用缓存的方法。在调用 `computePiDecimal` 之前，抽象将在 `piDecimals` 缓存中查找与 `i` 参数匹配的条目。如果找到条目，则缓存中的内容会立即返回给调用方，并且不会调用该方法。否则，将调用该方法，并在返回值之前更新缓存。
 
->您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
+> 您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
 
 如果您不添加任何特定的缓存库，Spring Boot 会自动配置一个 [简单提供程序](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple) ，在内存中使用并发映射。需要缓存时（例如上例中的 `piDecimals`），此提供程序将为您创建它。实际上，不建议将简单的提供程序用于生产用途，但是它对于入门并确保您了解功能非常有用。确定要使用的缓存提供程序后，请确保阅读其文档，以了解如何配置应用程序使用的缓存。几乎所有提供程序都要求您显式配置在应用程序中使用的每个缓存。一些提供了一种方法来定制由 `spring.cache.cache-names` 属性定义的默认缓存。
 
->也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
+> 也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
 
 #### 4.12.1. 支持的缓存提供程序
 
@@ -4946,19 +4946,19 @@ public class MathService {
 
 如果尚未定义类型为 `CacheManager` 或名为 `CacheResolver` 的 `CacheResolver` 的 Bean（请参见 [`CachingConfigurer`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/cache/annotation/CachingConfigurer.html)），Spring Boot 会尝试检测以下提供程序（按指示的顺序）：
 
-1.[Generic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-generic)
-2.[JCache (JSR-107)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-jcache) (EhCache 3, Hazelcast, Infinispan, and others)
-3.[EhCache 2.x](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-ehcache2)
-4.[Hazelcast](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
-5.[Infinispan](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-infinispan)
-6.[Couchbase](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-couchbase)
-7.[Redis](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-redis)
-8.[Caffeine](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-caffeine)
-9.[Simple](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple)
+1. [Generic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-generic)
+2. [JCache (JSR-107)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-jcache) (EhCache 3, Hazelcast, Infinispan, and others)
+3. [EhCache 2.x](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-ehcache2)
+4. [Hazelcast](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
+5. [Infinispan](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-infinispan)
+6. [Couchbase](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-couchbase)
+7. [Redis](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-redis)
+8. [Caffeine](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-caffeine)
+9. [Simple](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple)
 
->也可以通过设置 `spring.cache.type` 属性来强制特定的缓存提供程序。在某些环境中（例如测试环境），如果您需要 [完全禁用缓存](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-none)，请使用此属性。
+> 也可以通过设置 `spring.cache.type` 属性来强制特定的缓存提供程序。在某些环境中（例如测试环境），如果您需要 [完全禁用缓存](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-none)，请使用此属性。
 
->使用 `spring-boot-starter-cache` “Starter”快速添加基本的缓存依赖项。该启动器引入了 `spring-context-support`。如果手动添加依赖项，则必须包含 `spring-context-support` 才能使用 JCache，EhCache 2.x 或 Caffeine 支持。
+> 使用 `spring-boot-starter-cache` “Starter”快速添加基本的缓存依赖项。该启动器引入了 `spring-context-support`。如果手动添加依赖项，则必须包含 `spring-context-support` 才能使用 JCache，EhCache 2.x 或 Caffeine 支持。
 
 如果 `CacheManager` 是由 Spring Boot 自动配置的，则可以通过暴露一个实现 `CacheManagerCustomizer` 接口的 bean，在完全初始化之前进一步调整其配置。下面的示例设置一个标志，表示应将 `null` 值向下传递给基础映射：
 
@@ -4974,7 +4974,7 @@ public CacheManagerCustomizer<ConcurrentMapCacheManager> cacheManagerCustomizer(
 }
 ```
 
->在前面的示例中，应该使用自动配置的 `ConcurrentMapCacheManager`。如果不是这种情况（您提供了自己的配置，或者自动配置了其他缓存提供程序），则根本不会调用定制程序。您可以根据需要设置任意数量的定制器，也可以使用 `@Order` 或 `Ordered` 对其进行排序。
+> 在前面的示例中，应该使用自动配置的 `ConcurrentMapCacheManager`。如果不是这种情况（您提供了自己的配置，或者自动配置了其他缓存提供程序），则根本不会调用定制程序。您可以根据需要设置任意数量的定制器，也可以使用 `@Order` 或 `Ordered` 对其进行排序。
 
 ##### 通用缓存
 
@@ -4992,15 +4992,90 @@ spring.cache.jcache.provider=com.acme.MyCachingProvider
 spring.cache.jcache.config=classpath:acme.xml
 ```
 
->当缓存库同时提供本机实现和 JSR-107 支持时，Spring Boot 会首选 JSR-107 支持，因此如果您切换到其他 JSR-107 实现，则可以使用相同的功能。
+> 当缓存库同时提供本机实现和 JSR-107 支持时，Spring Boot 会首选 JSR-107 支持，因此如果您切换到其他 JSR-107 实现，则可以使用相同的功能。
 
->Spring Boot 具有 [Hazelcast的一般支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果单个 `HazelcastInstance` 可用，则除非指定了 `spring.cache.jcache.config` 属性，否则它也会自动被 `CacheManager` 重用。
+> Spring Boot 具有 [Hazelcast的一般支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果单个 `HazelcastInstance` 可用，则除非指定了 `spring.cache.jcache.config` 属性，否则它也会自动被 `CacheManager` 重用。
 
 有两种方法可以自定义基础的 `javax.cache.cacheManager`：
 
--可以在启动时通过设置 `spring.cache.cache-names` 属性来创建缓存。如果定义了自定义的 `javax.cache.configuration.Configuration` bean，则用于自定义它们。
+- 可以在启动时通过设置 `spring.cache.cache-names` 属性来创建缓存。如果定义了自定义的 `javax.cache.configuration.Configuration` bean，则用于自定义它们。
 
--使用 `CacheManager` 的引用调用 `org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer` bean 进行完全定制。
+- 使用 `CacheManager` 的引用调用 `org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer` bean 进行完全定制。
 
->如果定义了标准的 `javax.cache.CacheManager` bean，它将自动包装在抽象期望的 `org.springframework.cache.CacheManager` 实现中。不再对其进行定制。
+> 如果定义了标准的 `javax.cache.CacheManager` bean，它将自动包装在抽象期望的 `org.springframework.cache.CacheManager` 实现中。不再对其进行定制。
+
+##### EhCache 2.x
+
+如果在类路径根目录找到名为 `ehcache.xml` 的文件 [EhCache](https://www.ehcache.org/) 2.x 就会被使用， `EhCacheCacheManager` 由 `spring-boot-starter-cache` “Starter” 提供，用于引导缓存管理器。也可以提供如下的另外一种形式的配置文件：
+
+```properties
+spring.cache.ehcache.config=classpath:config/another-config.xml
+```
+
+##### Hazelcast
+
+Spring Boot 提供了 [对 Hazelcast 的通用支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果已经自动配置了 `HazelcastInstance` ，它就会被自动包装为 `CacheManager`。
+
+##### Infinispan
+
+[Infinispan](https://infinispan.org/) 没有默认的配置文件位置，因此必须显式指定。否则将使用默认引导：
+
+```properties
+spring.cache.infinispan.config=infinispan.xml
+```
+
+通过设定 `spring.cache.cache-names` 属性，缓存可以在启动期间创建。如果自定义了 `ConfigurationBuilder` bean，它就会被用于自定义缓存。
+
+> Spring Boot 对 Infinispan 的支持仅限于嵌入式模式，并且非常基础。如果您需要更多选择，则应该使用官方的 Infinispan Spring Boot starter。有关更多详细信息，请参见 [Infinispan 文档](https://github.com/infinispan/infinispan-spring-boot)。
+
+##### Couchbase
+
+如果 [Couchbase](https://www.couchbase.com/) Java 客户端和 `couchbase-spring-cache` 实现可用，并且 Couchbase 已 [配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-couchbase)，则会自动配置 `CouchbaseCacheManager` 。也可以通过设置 `spring.cache.cache-names` 属性来在启动时创建其他缓存。这些缓存在自动配置的 `Bucket` 上运行。您还可以定制在另一个 `Bucket` 上创建其他缓存。假设您在主 `Bucket` 上需要两个缓存（ `cache1` 和 `cache2`），并且在另一个 `Bucket` 上需要一个（自定义生存时间）为2秒的（ `cache3` ）缓存。您可以通过配置创建前两个缓存，如下所示：
+
+```properties
+spring.cache.cache-names=cache1,cache2
+```
+
+然后你就可以定义 `@Configuration` 类来配置额外的 `Bucket` 和 `cache3` 缓存，如下所示：
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class CouchbaseCacheConfiguration {
+
+    private final Cluster cluster;
+
+    public CouchbaseCacheConfiguration(Cluster cluster) {
+        this.cluster = cluster;
+    }
+
+    @Bean
+    public Bucket anotherBucket() {
+        return this.cluster.openBucket("another", "secret");
+    }
+
+    @Bean
+    public CacheManagerCustomizer<CouchbaseCacheManager> cacheManagerCustomizer() {
+        return c -> {
+            c.prepareCache("cache3", CacheBuilder.newInstance(anotherBucket())
+                    .withExpiration(2));
+        };
+    }
+
+}
+```
+
+这个示例配置服用了通过自动配置创建的 `Cluster` 。
+
+##### Redis
+
+如果 [Redis](https://redis.io/) 可用并已配置，则将自动配置 `RedisCacheManager`。通过设置 `spring.cache.cache-names` 属性可以在启动时创建其他缓存，并且可以使用 `spring.cache.redis.*` 属性配置缓存默认值。例如，以下配置将创建 `cache1` 和 `cache2` 缓存，其“生存时间”为10分钟：
+
+```properties
+spring.cache.cache-names=cache1,cache2
+spring.cache.redis.time-to-live=600000
+```
+
+> 默认情况下，会自动添加 key 前缀，以便如果两个单独的缓存使用相同的 key，Redis 中也不会有相同的 key，也不会返回无效值。如果您创建自己的 `RedisCacheManager`，我们强烈建议将此设置保持启用状态。
+
+> 您可以通过添加自己的 `RedisCacheConfiguration` `@Bean` 来完全控制配置。如果您要自定义序列化策略，这可能会很有用。
 
