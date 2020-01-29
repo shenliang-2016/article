@@ -1,34 +1,56 @@
-##### 使用 JNDI ConnectionFactory
+##### 接收消息
 
-如果你要在应用服务器上运行你的应用，Spring Boot 就会尝试使用 JNDI 寻找 JMS `ConnectionFactory` 。默认情况下，会检查 `java:/JmsXA` 和 `java:/XAConnectionFactory` 这两个位置。你可以使用 `spring.jms.jndi-name` 属性来指定别的位置。如下面例子所示：
+存在 JMS 基础设施时，可以使用 `@JmsListener` 注解任何 bean 以创建侦听器端点。如果未定义 `JmsListenerContainerFactory`，则会自动配置一个默认值。如果定义了 `DestinationResolver` 或 `MessageConverter` bean，则它们将自动关联到默认工厂。
 
-```properties
-spring.jms.jndi-name=java:/MyConnectionFactory
-```
+默认情况下，默认工厂是事务性的。如果您在存在 `JtaTransactionManager` 的基础架构中运行，则默认情况下将其关联到侦听器容器。如果不是，则启用 `sessionTransacted` 标志。在后一种情况下，可以通过在侦听器方法（或其委托）上添加 `@Transactional` 来将本地数据存储事务与传入消息的处理相关联。这样可以确保本地事务完成后，传入消息得到确认。这还包括发送已在同一 JMS 会话上执行的响应消息。
 
-##### 发送消息
-
-Spring 的 `JmsTemplate` 会被自动配置，你可以直接将其注入自己的 beans，如下面例子所示：
+以下组件在 `someQueue` 目标上创建侦听器端点：
 
 ```java
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jms.core.JmsTemplate;
-import org.springframework.stereotype.Component;
-
 @Component
 public class MyBean {
 
-    private final JmsTemplate jmsTemplate;
-
-    @Autowired
-    public MyBean(JmsTemplate jmsTemplate) {
-        this.jmsTemplate = jmsTemplate;
+    @JmsListener(destination = "someQueue")
+    public void processMessage(String content) {
+        // ...
     }
-
-    // ...
 
 }
 ```
 
-> [`JmsMessagingTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/core/JmsMessagingTemplate.html) 能够通过类似的方式注入。如果定义了 `DestinationResolver` 或者 `MessageConverter` bean，它们就会自动联系到自动配置的 `JmsTemplate`。
+> 参考 [the Javadoc of `@EnableJms`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/annotation/EnableJms.html) 获取更多细节。
 
+如果您需要创建更多的 `JmsListenerContainerFactory` 实例，或者想要覆盖默认实例，Spring Boot 提供了 `DefaultJmsListenerContainerFactoryConfigurer` ，您可以使用与自动配置相同的设置来初始化 `DefaultJmsListenerContainerFactory`。
+
+例如，以下示例公开了另一个工厂，该工厂使用特定的 `MessageConverter`：
+
+```java
+@Configuration(proxyBeanMethods = false)
+static class JmsConfiguration {
+
+    @Bean
+    public DefaultJmsListenerContainerFactory myFactory(
+            DefaultJmsListenerContainerFactoryConfigurer configurer) {
+        DefaultJmsListenerContainerFactory factory =
+                new DefaultJmsListenerContainerFactory();
+        configurer.configure(factory, connectionFactory());
+        factory.setMessageConverter(myMessageConverter());
+        return factory;
+    }
+
+}
+```
+
+然后，您可以在任何带有 `@JmsListener` 注解的方法中使用该工厂，如下所示：
+
+```java
+@Component
+public class MyBean {
+
+    @JmsListener(destination = "someQueue", containerFactory="myFactory")
+    public void processMessage(String content) {
+        // ...
+    }
+
+}
+```
