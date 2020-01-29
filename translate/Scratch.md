@@ -1,67 +1,61 @@
-#### 4.13.2. AMQP
+##### Receiving a Message
 
-高级消息队列协议（AMQP）是面向消息中间件的与平台无关的有线级别协议。Spring AMQP 项目将 Spring 的核心概念应用于基于 AMQP 的消息传递解决方案的开发。Spring Boot 为通过 RabbitMQ 使用 AMQP 提供了许多便利，包括 `spring-boot-starter-amqp` “Starter”。
+When the Rabbit infrastructure is present, any bean can be annotated with `@RabbitListener` to create a listener endpoint. If no `RabbitListenerContainerFactory` has been defined, a default `SimpleRabbitListenerContainerFactory` is automatically configured and you can switch to a direct container using the `spring.rabbitmq.listener.type` property. If a `MessageConverter` or a `MessageRecoverer` bean is defined, it is automatically associated with the default factory.
 
-##### RabbitMQ 支持
-
-[RabbitMQ](https://www.rabbitmq.com/) 时一个轻量级的，可靠的，可扩展的，可移植的消息代理，基于 AMQP 协议。Spring 使用 `RabbitMQ` 来通过 AMQP 协议进行通信。
-
-RabbitMQ 配置由 `spring.rabbitmq.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
-
-```properties
-spring.rabbitmq.host=localhost
-spring.rabbitmq.port=5672
-spring.rabbitmq.username=admin
-spring.rabbitmq.password=secret
-```
-
-另外，你可以使用 `addresses` 属性来配置相同的连接：
-
-```properties
-spring.rabbitmq.addresses=amqp://admin:secret@localhost
-```
-
-如果上下文中存在一个 `ConnectionNameStrategy` bean，它将被自动用来命名由自动配置的 `ConnectionFactory` 创建的连接。参见 [`RabbitProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/amqp/RabbitProperties.java) 以获取更多受支持的选项。
-
-> 参考 [Understanding AMQP, the protocol used by RabbitMQ](https://spring.io/blog/2010/06/14/understanding-amqp-the-protocol-used-by-rabbitmq/) 获取更多细节。
-
-##### 发送消息
-
-Spring 的 `AmqpTemplate` 和 `AmqpAdmin` 都是自动配置的，你可以直接将其注入自己的 beans，如下面例子所示：
+The following sample component creates a listener endpoint on the `someQueue` queue:
 
 ```java
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 @Component
 public class MyBean {
 
-    private final AmqpAdmin amqpAdmin;
-    private final AmqpTemplate amqpTemplate;
-
-    @Autowired
-    public MyBean(AmqpAdmin amqpAdmin, AmqpTemplate amqpTemplate) {
-        this.amqpAdmin = amqpAdmin;
-        this.amqpTemplate = amqpTemplate;
+    @RabbitListener(queues = "someQueue")
+    public void processMessage(String content) {
+        // ...
     }
-
-    // ...
 
 }
 ```
 
-> [`RabbitMessagingTemplate`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/core/RabbitMessagingTemplate.html) 可以通过类似方式注入。如果定义了 `MessageConverter` bean，它就会自动联系到自动配置的 `AmqpTemplate`。
+> See [the Javadoc of `@EnableRabbit`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/annotation/EnableRabbit.html) for more details.
 
-如有必要，任何定义为 bean 的 `org.springframework.amqp.core.Queue` 都会自动用于在 RabbitMQ 实例上声明相应的队列。
+If you need to create more `RabbitListenerContainerFactory` instances or if you want to override the default, Spring Boot provides a `SimpleRabbitListenerContainerFactoryConfigurer` and a `DirectRabbitListenerContainerFactoryConfigurer` that you can use to initialize a `SimpleRabbitListenerContainerFactory` and a `DirectRabbitListenerContainerFactory` with the same settings as the factories used by the auto-configuration.
 
-要重试操作，可以在 `AmqpTemplate` 上启用重试（例如，在代理连接丢失的情况下）：
+> It does not matter which container type you chose. Those two beans are exposed by the auto-configuration.
 
-```properties
-spring.rabbitmq.template.retry.enabled=true
-spring.rabbitmq.template.retry.initial-interval=2s
+For instance, the following configuration class exposes another factory that uses a specific `MessageConverter`:
+
+```java
+@Configuration(proxyBeanMethods = false)
+static class RabbitConfiguration {
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory myFactory(
+            SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+        SimpleRabbitListenerContainerFactory factory =
+                new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setMessageConverter(myMessageConverter());
+        return factory;
+    }
+
+}
 ```
 
-默认是禁用重试的。你也可以通过声明 `RabbitRetryTemplateCustomizer` bean 来以编程方式自定义 `RetryTemplate` 。
+Then you can use the factory in any `@RabbitListener`-annotated method, as follows:
+
+```java
+@Component
+public class MyBean {
+
+    @RabbitListener(queues = "someQueue", containerFactory="myFactory")
+    public void processMessage(String content) {
+        // ...
+    }
+
+}
+```
+
+You can enable retries to handle situations where your listener throws an exception. By default, `RejectAndDontRequeueRecoverer` is used, but you can define a `MessageRecoverer` of your own. When retries are exhausted, the message is rejected and either dropped or routed to a dead-letter exchange if the broker is configured to do so. By default, retries are disabled. You can also customize the `RetryTemplate` programmatically by declaring a `RabbitRetryTemplateCustomizer` bean.
+
+> By default, if retries are disabled and the listener throws an exception, the delivery is retried indefinitely. You can modify this behavior in two ways: Set the `defaultRequeueRejected` property to `false` so that zero re-deliveries are attempted or throw an `AmqpRejectAndDontRequeueException` to signal the message should be rejected. The latter is the mechanism used when retries are enabled and the maximum number of delivery attempts is reached.
 
