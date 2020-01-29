@@ -1,14 +1,14 @@
-##### Using a JNDI ConnectionFactory
+##### 使用 JNDI ConnectionFactory
 
-If you are running your application in an application server, Spring Boot tries to locate a JMS `ConnectionFactory` by using JNDI. By default, the `java:/JmsXA` and `java:/XAConnectionFactory` location are checked. You can use the `spring.jms.jndi-name` property if you need to specify an alternative location, as shown in the following example:
+如果你要在应用服务器上运行你的应用，Spring Boot 就会尝试使用 JNDI 寻找 JMS `ConnectionFactory` 。默认情况下，会检查 `java:/JmsXA` 和 `java:/XAConnectionFactory` 这两个位置。你可以使用 `spring.jms.jndi-name` 属性来指定别的位置。如下面例子所示：
 
 ```properties
 spring.jms.jndi-name=java:/MyConnectionFactory
 ```
 
-##### Sending a Message
+##### 发送消息
 
-Spring’s `JmsTemplate` is auto-configured, and you can autowire it directly into your own beans, as shown in the following example:
+Spring 的 `JmsTemplate` 会被自动配置，你可以直接将其注入自己的 beans，如下面例子所示：
 
 ```java
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +30,5 @@ public class MyBean {
 }
 ```
 
-> [`JmsMessagingTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/core/JmsMessagingTemplate.html) can be injected in a similar manner. If a `DestinationResolver` or a `MessageConverter` bean is defined, it is associated automatically to the auto-configured `JmsTemplate`.
+> [`JmsMessagingTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/core/JmsMessagingTemplate.html) 能够通过类似的方式注入。如果定义了 `DestinationResolver` 或者 `MessageConverter` bean，它们就会自动联系到自动配置的 `JmsTemplate`。
 
