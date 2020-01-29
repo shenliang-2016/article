@@ -880,16 +880,16 @@ Spring Boot 包含一个 [Maven plugin](https://docs.spring.io/spring-boot/docs/
 
 最后，Spring Boot 还包括以下启动程序，如果您想排除或替换特定的技术，可以使用这些启动程序：
 
-| Name | Description | Pom |
-| : | : | : |
-| `spring-boot-starter-jetty` | 使用 Jetty 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jetty/pom.xml) |
-| `spring-boot-starter-log4j2` | 使用 Log4j2 记录日志的启动器。是 [`spring-boot-starter-logging`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-logging) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-log4j2/pom.xml) |
-| `spring-boot-starter-logging` | 使用 Logback 记录日志的启动器。是默认的日志启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-logging/pom.xml) |
-| `spring-boot-starter-reactor-netty` | 使用 Reactor Netty 作为内置 reactive HTTP 服务器的启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-reactor-netty/pom.xml) |
-| `spring-boot-starter-tomcat` | 使用 Tomcat 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 使用的默认 servlet 容器启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-tomcat/pom.xml) |
-| `spring-boot-starter-undertow` | 使用 Undertow 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-undertow/pom.xml) |
+| Name                                | Description                                                  | Pom                                                          |
+| :---------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `spring-boot-starter-jetty`         | 使用 Jetty 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-jetty/pom.xml) |
+| `spring-boot-starter-log4j2`        | 使用 Log4j2 记录日志的启动器。是 [`spring-boot-starter-logging`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-logging) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-log4j2/pom.xml) |
+| `spring-boot-starter-logging`       | 使用 Logback 记录日志的启动器。是默认的日志启动器。          | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-logging/pom.xml) |
+| `spring-boot-starter-reactor-netty` | 使用 Reactor Netty 作为内置 reactive HTTP 服务器的启动器。   | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-reactor-netty/pom.xml) |
+| `spring-boot-starter-tomcat`        | 使用 Tomcat 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-web`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-web) 使用的默认 servlet 容器启动器。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-tomcat/pom.xml) |
+| `spring-boot-starter-undertow`      | 使用 Undertow 作为内置 servlet 容器的启动器。是 [`spring-boot-starter-tomcat`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-starter-tomcat) 的替代品。 | [Pom](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-starters/spring-boot-starter-undertow/pom.xml) |
 
->了解额外的社区贡献的启动器列表，参考 GitHub 上 `spring-boot-starters` 模块中的 [README](https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot-starters/README.adoc) 文件。
+> 了解额外的社区贡献的启动器列表，参考 GitHub 上 `spring-boot-starters` 模块中的 [README](https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot-starters/README.adoc) 文件。
 
 ### 3.2. 构建你的代码
 
@@ -899,13 +899,13 @@ Spring Boot 并不强制任何固定形式的代码组织形式。不过，倒�
 
 如果一个类不包含 `package` 声明，它就会被认为处于所谓的默认包中。通常情况下应该尽量避免使用默认包。因为它可能导致使用 `@ComponentScan` ，`@ConfigurationPropertiesScan` ，`@EntityScen` ，`@SpringBootApplication` 等注解的 Spring Boot 应用中发生某些问题，因为每个 jar 中的每个类都会被读取。
 
->我们推荐你遵循 Java 推荐的包命名传统，使用逆序的域名作为包名（比如，`com.example.project`）
+> 我们推荐你遵循 Java 推荐的包命名传统，使用逆序的域名作为包名（比如，`com.example.project`）
 
 #### 3.2.2. 定位应用主类
 
 我们通常建议您将应用程序主类放在其他类之上的根包中。通常将 [`@SpringBootApplication` 注解](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-using-springbootapplication-annotation) 放在您的主类上，它隐式定义某些项目的基本“搜索包”。例如，如果您正在编写 JPA 应用程序，则使用 `@SpringBootApplication` 注解修饰的类的包来搜索 `@Entity` 项目。使用根软件包还允许组件扫描仅应用于您的项目。
 
->如果您不想使用  `@SpringBootApplication` ，由于它是通过引入 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解来定义该行为，因此也可以直接使用它们来替代。
+> 如果您不想使用  `@SpringBootApplication` ，由于它是通过引入 `@EnableAutoConfiguration` 和 `@ComponentScan` 注解来定义该行为，因此也可以直接使用它们来替代。
 
 下面的列表展示了一种典型的项目结构：
 
@@ -2468,15 +2468,15 @@ public class AppSystemProperties {
 
 默认单位是毫秒，可以使用 `@DurationUnit` 覆盖，如上面的示例所示。
 
->如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+> 如果您要从仅使用 `Long` 表示持续时间的先前版本进行升级，请确保在转换为 `Duration` 的时间单位不是毫秒的情况下定义单位（使用 `@DurationUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
 ###### 转换数据尺寸
 
 Spring Framework 具有一个 `DataSize` 值类型，该值类型以字节为单位表示大小。如果您公开 `DataSize` 属性，则应用程序属性中的以下格式可用：
 
--常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
+- 常规的 `long` 表示形式（除非指定了 `@DataSizeUnit`，否则使用字节作为默认单位）
 
--将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
+- 将值和单位组合在一起的更具可读性的格式（例如，`10MB` 表示 10 兆字节）
 
 考虑以下示例：
 
@@ -2510,19 +2510,19 @@ public class AppIoProperties {
 
 要指定 10 兆字节的缓冲区大小，`10` 和 `10MB` 是等效的。可以将 256 个字节的大小阈值指定为 `256` 或 `256B`。您也可以使用任何受支持的单位。这些是：
 
--`B` 表示字节
+- `B` 表示字节
 
--`KB` 代表千字节
+- `KB` 代表千字节
 
--`MB` 代表兆字节
+- `MB` 代表兆字节
 
--`GB` 代表GB
+- `GB` 代表GB
 
--`TB`（TB）
+- `TB`（TB）
 
 默认单位时字节，可以通过使用  `@DataSizeUnit` 覆盖，如上面例子所示。
 
->如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
+> 如果您要从仅使用 `Long` 表示大小的先前版本进行升级，请确保在切换至 `DataSize` 而没有使用字节作为单位的情况下定义单位（使用 `@DataSizeUnit`）。这样做可以提供透明的升级路径，同时支持更丰富的格式。
 
 ##### @ConfigurationProperties 验证
 
@@ -2541,7 +2541,7 @@ public class AcmeProperties {
 }
 ```
 
->您也可以通过用 `@Validated` 注解创建配置属性的 `@Bean` 方法来触发验证。
+> 您也可以通过用 `@Validated` 注解创建配置属性的 `@Bean` 方法来触发验证。
 
 为了确保始终为嵌套属性触发验证，即使没有找到属性，相关字段也必须使用 `@Valid` 注解修饰。以下示例以前面的 `AcmeProperties` 示例为基础：
 
@@ -2572,17 +2572,17 @@ public class AcmeProperties {
 
 您也可以通过创建一个名为 `configurationPropertiesValidator` 的 bean 定义来添加一个自定义的 Spring Validator。`@Bean` 方法应该声明为 `static`。配置属性验证器是在应用程序生命周期的早期创建的，并且将 `@Bean` 方法声明为静态方法可以创建 Bean，而不必实例化 `@Configuration` 类。这样做避免了由早期实例化引起的任何问题。
 
->`spring-boot-actuator` 模块包括一个端点，该端点公开了所有的 `@ConfigurationProperties` bean。将您的 Web 浏览器指向 `/actuator/configprops` 或使用等效的 JMX 端点。有关详细信息，请参见 [Production ready features](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints) 部分。
+> `spring-boot-actuator` 模块包括一个端点，该端点公开了所有的 `@ConfigurationProperties` bean。将您的 Web 浏览器指向 `/actuator/configprops` 或使用等效的 JMX 端点。有关详细信息，请参见 [Production ready features](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints) 部分。
 
 ##### @ConfigurationProperties vs. @Value
 
 `@Value` 注解是核心容器功能，它没有提供与类型安全的配置属性相同的功能。下表总结了 `@ConfigurationProperties` 和 `@Value` 支持的功能：
 
-| Feature | `@ConfigurationProperties` | `@Value` |
-| : | : | : |
-| [Relaxed binding](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-relaxed-binding) | Yes | No |
-| [Meta-data support](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata) | Yes | No |
-| `SpEL` evaluation | No | Yes |
+| Feature                                                      | `@ConfigurationProperties` | `@Value` |
+| :----------------------------------------------------------- | :------------------------- | :------- |
+| [Relaxed binding](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-relaxed-binding) | Yes                        | No       |
+| [Meta-data support](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#configuration-metadata) | Yes                        | No       |
+| `SpEL` evaluation                                            | No                         | Yes      |
 
 如果您为自己的组件定义了一组配置键，我们建议您将它们组合在一个以 `@ConfigurationProperties` 注解修饰的 POJO 中。您还应该意识到，由于 `@Value` 不支持宽松的绑定，因此如果您需要通过使用环境变量来提供值，则不是一个好的选择。
 
@@ -2602,7 +2602,7 @@ public class ProductionConfiguration {
 }
 ```
 
->如果通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean而不是通过自动扫描进行注册，则需要在具有 `@EnableConfigurationProperties` 注解的 `@Configuration` 类上指定 `@Profile` 注解。在扫描 `@ConfigurationProperties` 的情况下，可以在 `@ConfigurationProperties` 类本身上指定 `@ Profile`。
+> 如果通过 `@EnableConfigurationProperties` 注册了 `@ConfigurationProperties` bean而不是通过自动扫描进行注册，则需要在具有 `@EnableConfigurationProperties` 注解的 `@Configuration` 类上指定 `@Profile` 注解。在扫描 `@ConfigurationProperties` 的情况下，可以在 `@ConfigurationProperties` 类本身上指定 `@ Profile`。
 
 您可以使用 `spring.profiles.active` 环境属性来指定哪些配置文件处于活动状态。您可以通过本章前面介绍的任何方式指定属性。例如，您可以将其包含在 `application.properties` 中，如以下示例所示：
 
@@ -2630,7 +2630,7 @@ spring.profiles.include:
   - prodmq
 ```
 
->请记住，可以在 YAML 文档中定义 `spring.profiles` 属性，以确定何时将该特定文档包括在配置中。请参阅 [根据环境更改配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-change-configuration-depending-on-the-environment ) 了解更多细节。
+> 请记住，可以在 YAML 文档中定义 `spring.profiles` 属性，以确定何时将该特定文档包括在配置中。请参阅 [根据环境更改配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-change-configuration-depending-on-the-environment ) 了解更多细节。
 
 #### 4.3.2. 编程式设定 Profiles
 
@@ -2646,9 +2646,9 @@ Spring Boot 使用 [Commons Logging](https://commons.apache.org/logging) 进行�
 
 默认情况下，如果使用“启动器”，则使用 Logback 进行日志记录。还包括适当的 Logback 路由，以确保使用 Java Util Logging，Commons Logging，Log4J 或 SLF4J 的依赖库都可以正常工作。
 
->Java 有许多可用的日志记录框架。如果上面的列表看起来令人困惑，请不要担心。通常，您不需要更改日志记录依赖项，并且 Spring Boot 默认值可以正常工作。
+> Java 有许多可用的日志记录框架。如果上面的列表看起来令人困惑，请不要担心。通常，您不需要更改日志记录依赖项，并且 Spring Boot 默认值可以正常工作。
 
->将应用程序部署到 Servlet 容器或应用程序服务器时，通过 Java Util Logging API 执行的日志记录不会路由到应用程序的日志中。这样可以防止容器或其他已部署到容器中的其它应用程序产生的日志记录出现在你的应用程序的日志中。
+> 将应用程序部署到 Servlet 容器或应用程序服务器时，通过 Java Util Logging API 执行的日志记录不会路由到应用程序的日志中。这样可以防止容器或其他已部署到容器中的其它应用程序产生的日志记录出现在你的应用程序的日志中。
 
 #### 4.4.1. 日志格式
 
@@ -2664,21 +2664,21 @@ Spring Boot 的默认日志输出类似于以下示例：
 
 输出包含以下项目：
 
--日期和时间：毫秒精度，易于排序。
+- 日期和时间：毫秒精度，易于排序。
 
--日志级别：`ERROR`， `WARN`， `INFO`， `DEBUG`， 或者 `TRACE`。
+- 日志级别：`ERROR`， `WARN`， `INFO`， `DEBUG`， 或者 `TRACE`。
 
--进程ID。
+- 进程ID。
 
--一个 `---` 分隔符，用于区分实际日志消息的开始。
+- 一个 `---` 分隔符，用于区分实际日志消息的开始。
 
--线程名称：方括号内（对于控制台输出，可能会被截断）。
+- 线程名称：方括号内（对于控制台输出，可能会被截断）。
 
--记录器名称：这通常是源类名称（通常缩写）。
+- 记录器名称：这通常是源类名称（通常缩写）。
 
--日志消息。
+- 日志消息。
 
->Logback 没有 `FATAL` 级别，该级别对应于其它日志框架的 `ERROR`。
+> Logback 没有 `FATAL` 级别，该级别对应于其它日志框架的 `ERROR`。
 
 #### 4.4.2. 控制台输出
 
@@ -2688,7 +2688,7 @@ Spring Boot 的默认日志输出类似于以下示例：
 $ java -jar myapp.jar --debug
 ```
 
->你还可以在你的 `application.properties` 指定 `debug=true` 。
+> 你还可以在你的 `application.properties` 指定 `debug=true` 。
 
 启用调试模式后，将配置一些核心记录器（嵌入式容器，Hibernate 和 Spring Boot）以输出更多信息。启用调试模式*不会*将您的应用程序配置为记录所有具有 `DEBUG` 级别的消息。
 
@@ -2706,14 +2706,14 @@ $ java -jar myapp.jar --debug
 
 下表列出了日志级别与颜色的映射关系：
 
-| Level | Color |
-| : | : |
-| `FATAL` | Red |
-| `ERROR` | Red |
-| `WARN` | Yellow |
-| `INFO` | Green |
-| `DEBUG` | Green |
-| `TRACE` | Green |
+| Level   | Color  |
+| :------ | :----- |
+| `FATAL` | Red    |
+| `ERROR` | Red    |
+| `WARN`  | Yellow |
+| `INFO`  | Green  |
+| `DEBUG` | Green  |
+| `TRACE` | Green  |
 
 另外，您可以通过将其提供为转换的选项来指定应使用的颜色或样式。例如，要使文本变黄，请使用以下设置：
 
@@ -2723,13 +2723,13 @@ $ java -jar myapp.jar --debug
 
 支持的颜色和风格如下：
 
--`blue`
--`cyan`
--`faint`
--`green`
--`magenta`
--`red`
--`yellow`
+- `blue`
+- `cyan`
+- `faint`
+- `green`
+- `magenta`
+- `red`
+- `yellow`
 
 #### 4.4.3. 文件输出
 
@@ -2737,15 +2737,15 @@ $ java -jar myapp.jar --debug
 
 下表显示了如何一起使用 `logging.*` 属性：
 
-| `logging.file.name` | `logging.file.path` | Example | Description |
-| : | : | : | : |
-| *(none)* | *(none)* |  | 仅输出到控制台。 |
-| 指定文件 | *(none)* | `my.log` | 写入指定日志文件。文件名可以是外部位置或者当前目录的相对位置。 |
-| *(none)* | 指定路径 | `/var/log` | 将 `spring.log` 写入指定目录。文件名可以是外部位置或者当前目录的相对位置。 |
+| `logging.file.name` | `logging.file.path` | Example    | Description                                                  |
+| :------------------ | :------------------ | :--------- | :----------------------------------------------------------- |
+| *(none)*            | *(none)*            |            | 仅输出到控制台。                                             |
+| 指定文件            | *(none)*            | `my.log`   | 写入指定日志文件。文件名可以是外部位置或者当前目录的相对位置。 |
+| *(none)*            | 指定路径            | `/var/log` | 将 `spring.log` 写入指定目录。文件名可以是外部位置或者当前目录的相对位置。 |
 
 日志文件达到 10 MB 时会自动切换，并且与控制台输出一样，缺省情况下会记录 `ERROR` 级，`WARN` 级和 `INFO` 级消息。大小限制可以使用 `logging.file.max-size` 属性来更改。除非已设置 `logging.file.max-history` 属性，否则以前生成的文件将无限期存档。可以使用 `logging.file.total-size-cap` 限制日志档案的总大小。当日志归档的总大小超过该阈值时，将删除备份。要在应用程序启动时强制清除日志存档，请使用 `logging.file.clean-history-on-start` 属性。
 
->日志记录属性独立于实际的日志记录基础结构。因此，特定的配置键（例如 Logback 的 `loglog.configurationFile`）不是由 Spring Boot 管理的。
+> 日志记录属性独立于实际的日志记录基础结构。因此，特定的配置键（例如 Logback 的 `loglog.configurationFile`）不是由 Spring Boot 管理的。
 
 #### 4.4.4. 日志级别
 
@@ -2761,7 +2761,7 @@ logging.level.org.hibernate=error
 
 也可以使用环境变量设置日志记录级别。例如，`LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=DEBUG` 将 `org.springframework.web` 设置为 `DEBUG`。
 
->以上方法仅适用于程序包级别的日志记录。由于宽松的绑定总是将环境变量转换为小写，因此无法以这种方式为单个类配置日志记录。如果您需要为一个类配置日志记录，则可以使用 [the `SPRING_APPLICATION_JSON`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-application-json) 变量。
+> 以上方法仅适用于程序包级别的日志记录。由于宽松的绑定总是将环境变量转换为小写，因此无法以这种方式为单个类配置日志记录。如果您需要为一个类配置日志记录，则可以使用 [the `SPRING_APPLICATION_JSON`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-application-json) 变量。
 
 #### 4.4.5. 日志组
 
@@ -2781,10 +2781,10 @@ logging.level.tomcat=TRACE
 
 Spring Boot 包含以下预定义的日志记录组，它们可以直接使用：
 
-| Name | Loggers |
-| : | : |
-| web | `org.springframework.core.codec`, `org.springframework.http`, `org.springframework.web`, `org.springframework.boot.actuate.endpoint.web`, `org.springframework.boot.web.servlet.ServletContextInitializerBeans` |
-| sql | `org.springframework.jdbc.core`, `org.hibernate.SQL`, `org.jooq.tools.LoggerListener` |
+| Name | Loggers                                                      |
+| :--- | :----------------------------------------------------------- |
+| web  | `org.springframework.core.codec`, `org.springframework.http`, `org.springframework.web`, `org.springframework.boot.actuate.endpoint.web`, `org.springframework.boot.web.servlet.ServletContextInitializerBeans` |
+| sql  | `org.springframework.jdbc.core`, `org.hibernate.SQL`, `org.jooq.tools.LoggerListener` |
 
 #### 4.4.6. 自定义日志配置
 
@@ -2792,60 +2792,60 @@ Spring Boot 包含以下预定义的日志记录组，它们可以直接使用�
 
 您可以通过使用 `org.springframework.boot.logging.LoggingSystem` 系统属性来强制 Spring Boot 使用特定的日志系统。该值应该是 `LoggingSystem` 实现的完全限定的类名。您还可以通过使用值 `null` 来完全禁用 Spring Boot 的日志记录配置。
 
->由于日志系统是在 `ApplicationContext` 创建**之前**初始化的，因此将无法从 Spring `@Configuration` 文件中的 `@PropertySources` 中控制日志系统。更改日志记录系统或完全禁用它的唯一方法是通过系统属性。
+> 由于日志系统是在 `ApplicationContext` 创建**之前**初始化的，因此将无法从 Spring `@Configuration` 文件中的 `@PropertySources` 中控制日志系统。更改日志记录系统或完全禁用它的唯一方法是通过系统属性。
 
 根据你的日志系统，下面的文件被加载：
 
-| Logging System | Customization |
-| : | : |
-| Logback | `logback-spring.xml`, `logback-spring.groovy`, `logback.xml`, or `logback.groovy` |
-| Log4j2 | `log4j2-spring.xml` or `log4j2.xml` |
-| JDK (Java Util Logging) | `logging.properties` |
+| Logging System          | Customization                                                |
+| :---------------------- | :----------------------------------------------------------- |
+| Logback                 | `logback-spring.xml`, `logback-spring.groovy`, `logback.xml`, or `logback.groovy` |
+| Log4j2                  | `log4j2-spring.xml` or `log4j2.xml`                          |
+| JDK (Java Util Logging) | `logging.properties`                                         |
 
->如果可能，我们建议您为日志配置使用 `-spring` 变体（例如，`logback-spring.xml` 而不是 `logback.xml`）。如果使用标准配置位置，Spring 将无法完全控制日志系统初始化。
+> 如果可能，我们建议您为日志配置使用 `-spring` 变体（例如，`logback-spring.xml` 而不是 `logback.xml`）。如果使用标准配置位置，Spring 将无法完全控制日志系统初始化。
 
->从“可执行jar”运行时，Java Util Logging 存在一些已知的类加载问题，这会引起问题。我们建议您从“可执行jar”运行时尽可能避免使用它。
+> 从“可执行jar”运行时，Java Util Logging 存在一些已知的类加载问题，这会引起问题。我们建议您从“可执行jar”运行时尽可能避免使用它。
 
 为了帮助进行自定义，如下表所述，将一些其他属性从Spring `Environment` 转移到 `System` 属性：
 
-| Spring Environment | System Property | Comments |
-| : | : | : |
-| `logging.exception-conversion-word` | `LOG_EXCEPTION_CONVERSION_WORD` | 记录异常时使用的转换字。 |
+| Spring Environment                    | System Property                   | Comments                                                     |
+| :------------------------------------ | :-------------------------------- | :----------------------------------------------------------- |
+| `logging.exception-conversion-word`   | `LOG_EXCEPTION_CONVERSION_WORD`   | 记录异常时使用的转换字。                                     |
 | `logging.file.clean-history-on-start` | `LOG_FILE_CLEAN_HISTORY_ON_START` | 是否在启动时清除存档日志文件（如果启用了 LOG_FILE ）。 （仅默认的 Logback 设置受支持。） |
-| `logging.file.name` | `LOG_FILE` | 如果定义，它将在默认日志配置中使用。 |
-| `logging.file.max-size` | `LOG_FILE_MAX_SIZE` | 最大日志文件大小（如果启用了LOG_FILE）。（仅默认的Logback设置受支持。） |
-| `logging.file.max-history` | `LOG_FILE_MAX_HISTORY` | 要保留的最大归档日志文件数（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
-| `logging.file.path` | `LOG_PATH` | 如果定义，它将在默认日志配置中使用。 |
-| `logging.file.total-size-cap` | `LOG_FILE_TOTAL_SIZE_CAP` | 要保留的日志备份的总大小（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
-| `logging.pattern.console` | `CONSOLE_LOG_PATTERN` | 控制台上使用的日志模式（stdout）。 （仅默认的Logback设置受支持。） |
-| `logging.pattern.dateformat` | `LOG_DATEFORMAT_PATTERN` | 记录日期格式的附加模式。 （仅默认的Logback设置受支持。） |
-| `logging.pattern.file` | `FILE_LOG_PATTERN` | 文件中使用的日志模式（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
-| `logging.pattern.level` | `LOG_LEVEL_PATTERN` | 呈现日志级别时使用的格式（默认为 `％5p`）。（仅默认的Logback设置受支持。） |
-| `logging.pattern.rolling-file-name` | `ROLLING_FILE_NAME_PATTERN` | 滚动日志文件名的模式（默认为`${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz`）。（仅默认的Logback设置受支持。） |
-| `PID` | `PID` | 当前进程ID（如果可能被发现，并且尚未将其定义为OS环境变量时）。 |
+| `logging.file.name`                   | `LOG_FILE`                        | 如果定义，它将在默认日志配置中使用。                         |
+| `logging.file.max-size`               | `LOG_FILE_MAX_SIZE`               | 最大日志文件大小（如果启用了LOG_FILE）。（仅默认的Logback设置受支持。） |
+| `logging.file.max-history`            | `LOG_FILE_MAX_HISTORY`            | 要保留的最大归档日志文件数（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
+| `logging.file.path`                   | `LOG_PATH`                        | 如果定义，它将在默认日志配置中使用。                         |
+| `logging.file.total-size-cap`         | `LOG_FILE_TOTAL_SIZE_CAP`         | 要保留的日志备份的总大小（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
+| `logging.pattern.console`             | `CONSOLE_LOG_PATTERN`             | 控制台上使用的日志模式（stdout）。 （仅默认的Logback设置受支持。） |
+| `logging.pattern.dateformat`          | `LOG_DATEFORMAT_PATTERN`          | 记录日期格式的附加模式。 （仅默认的Logback设置受支持。）     |
+| `logging.pattern.file`                | `FILE_LOG_PATTERN`                | 文件中使用的日志模式（如果启用了LOG_FILE）。 （仅默认的Logback设置受支持。） |
+| `logging.pattern.level`               | `LOG_LEVEL_PATTERN`               | 呈现日志级别时使用的格式（默认为 `％5p`）。（仅默认的Logback设置受支持。） |
+| `logging.pattern.rolling-file-name`   | `ROLLING_FILE_NAME_PATTERN`       | 滚动日志文件名的模式（默认为`${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz`）。（仅默认的Logback设置受支持。） |
+| `PID`                                 | `PID`                             | 当前进程ID（如果可能被发现，并且尚未将其定义为OS环境变量时）。 |
 
 所有受支持的日志记录系统在解析其配置文件时都可以查阅系统属性。有关示例，请参见 `spring-boot.jar` 中的默认配置：
 
--[Logback](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/logback/defaults.xml)
--[Log4j 2](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/log4j2/log4j2.xml)
--[Java Util logging](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/java/logging-file.properties)
+- [Logback](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/logback/defaults.xml)
+- [Log4j 2](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/log4j2/log4j2.xml)
+- [Java Util logging](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/java/logging-file.properties)
 
->如果要在日志记录属性中使用占位符，则应使用 [Spring Boot的语法](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-placeholders-in-properties) ，而不是基础框架的语法。值得注意的是，如果使用 Logback，则应使用 `:` 作为属性名称与其默认值之间的分隔符，而不应使用 `:-`。
+> 如果要在日志记录属性中使用占位符，则应使用 [Spring Boot的语法](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-external-config-placeholders-in-properties) ，而不是基础框架的语法。值得注意的是，如果使用 Logback，则应使用 `:` 作为属性名称与其默认值之间的分隔符，而不应使用 `:-`。
 
->您可以通过仅覆盖 `LOG_LEVEL_PATTERN`（或带有 Logback 的 `logging.pattern.level`）来将 MDC 和其他临时内容添加到日志行。例如，如果使用`logging.pattern.level=user:%X{user} %5p`，则默认日志格式包含“ user”的 MDC 条目（如果存在），如以下示例所示。
+> 您可以通过仅覆盖 `LOG_LEVEL_PATTERN`（或带有 Logback 的 `logging.pattern.level`）来将 MDC 和其他临时内容添加到日志行。例如，如果使用`logging.pattern.level=user:%X{user} %5p`，则默认日志格式包含“ user”的 MDC 条目（如果存在），如以下示例所示。
 >
->```
->2019-08-30 12:30:04.031 user:someone INFO 22174 --- [  nio-8080-exec-0] demo.Controller
->Handling authenticated request
->```
+> ```
+> 2019-08-30 12:30:04.031 user:someone INFO 22174 --- [  nio-8080-exec-0] demo.Controller
+> Handling authenticated request
+> ```
 
 #### 4.4.7. Logback 扩展
 
 Spring Boot 包含许多 Logback 扩展，可以帮助进行高级配置。您可以在 `logback-spring.xml` 配置文件中使用这些扩展名。
 
->由于标准的 `logback.xml` 配置文件加载得太早，因此您不能在其中使用扩展名。您需要使用 `logback-spring.xml` 或定义 `logging.config` 属性。
+> 由于标准的 `logback.xml` 配置文件加载得太早，因此您不能在其中使用扩展名。您需要使用 `logback-spring.xml` 或定义 `logging.config` 属性。
 
->这些扩展不能与 Logback 的 [配置扫描](https://logback.qos.ch/manual/configuration.html#autoScan) 一起使用。如果尝试这样做，则对配置文件进行更改将导致类似于以下记录之一的错误：
+> 这些扩展不能与 Logback 的 [配置扫描](https://logback.qos.ch/manual/configuration.html#autoScan) 一起使用。如果尝试这样做，则对配置文件进行更改将导致类似于以下记录之一的错误：
 
 ```
 ERROR in ch.qos.logback.core.joran.spi.Interpreter@4:71 - no applicable action for [springProperty], current ElementPath is [[configuration][springProperty]]
@@ -2883,13 +2883,13 @@ ERROR in ch.qos.logback.core.joran.spi.Interpreter@4:71 - no applicable action f
 </appender>
 ```
 
->必须在短横线分隔形式下指定 `source`（例如 `my.property-name`）。但是，可以使用宽松的规则将属性添加到 `Environment` 中。
+> 必须在短横线分隔形式下指定 `source`（例如 `my.property-name`）。但是，可以使用宽松的规则将属性添加到 `Environment` 中。
 
 ### 4.5. 国际化
 
 Spring Boot 支持本地化消息，因此您的应用程序可以迎合不同语言首选项的用户。默认情况下，Spring Boot 在类路径的根目录下查找 `messages` 资源包的存在。
 
->当配置的资源包的默认属性文件可用时（即默认情况下为 `messages.properties`），将应用自动配置。如果您的资源包仅包含特定于语言的属性文件，则需要添加默认资源文件。如果找不到与任何配置的基本名称匹配的属性文件，则不会有自动配置的 `MessageSource`。
+> 当配置的资源包的默认属性文件可用时（即默认情况下为 `messages.properties`），将应用自动配置。如果您的资源包仅包含特定于语言的属性文件，则需要添加默认资源文件。如果找不到与任何配置的基本名称匹配的属性文件，则不会有自动配置的 `MessageSource`。
 
 可以使用 `spring.messages` 名称空间配置资源包的基本名称以及其他几个属性，如以下示例所示：
 
@@ -2898,7 +2898,7 @@ spring.messages.basename=messages,config.i18n.messages
 spring.messages.fallback-to-system-locale=false
 ```
 
->`spring.messages.basename` 支持逗号分隔的位置列表，可以是包限定符，也可以是从类路径根目录解析的资源。
+> `spring.messages.basename` 支持逗号分隔的位置列表，可以是包限定符，也可以是从类路径根目录解析的资源。
 
 参考 [`MessageSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/context/MessageSourceProperties.java) 获取更多支持的选项。
 
@@ -2906,9 +2906,9 @@ spring.messages.fallback-to-system-locale=false
 
 Spring Boot 提供了三种 JSON 映射类库支持：
 
--Gson
--Jackson
--JSON-B
+- Gson
+- Jackson
+- JSON-B
 
 Jackson 是首选默认的类库。
 
@@ -2967,21 +2967,21 @@ Spring Boot 为 Spring MVC 提供了自动配置，可与大多数应用程序�
 
 自动配置在 Spring 的默认设置之上添加了以下功能：
 
--包含 `ContentNegotiatingViewResolver` 和 `BeanNameViewResolver` bean。
+- 包含 `ContentNegotiatingViewResolver` 和 `BeanNameViewResolver` bean。
 
--支持提供静态资源，包括对 WebJars 的支持（在[本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content)）。
+- 支持提供静态资源，包括对 WebJars 的支持（在[本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content)）。
 
--自动转换 `Converter`，`GenericConverter` 和 `Formatter` bean。
+- 自动转换 `Converter`，`GenericConverter` 和 `Formatter` bean。
 
--支持 `HttpMessageConverters`（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-message-converters)）。
+- 支持 `HttpMessageConverters`（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-message-converters)）。
 
--自动注册 `MessageCodesResolver`（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-message-codes)）。
+- 自动注册 `MessageCodesResolver`（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-message-codes)）。
 
--静态的 `index.html` 支持。
+- 静态的 `index.html` 支持。
 
--自定义 `Favicon` 支持（在 [文档后续介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-favicon)）。
+- 自定义 `Favicon` 支持（在 [文档后续介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-favicon)）。
 
--自动使用 `ConfigurableWebBindingInitializer` bean（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-web-binding-initializer)）。
+- 自动使用 `ConfigurableWebBindingInitializer` bean（在 [本文档后面介绍](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-web-binding-initializer)）。
 
 如果您想保留 Spring Boot MVC 功能并想要添加其他 [MVC配置](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc)（拦截器，格式化程序，视图控制器和其他功能），则可以添加自己的类型 `@WebConfiguration` 的类，类型为 `WebMvcConfigurer`，但不包含 `@EnableWebMvc`。如果您希望提供 `RequestMappingHandlerMapping`，`RequestMappingHandlerAdapter` 或 `ExceptionHandlerExceptionResolver` 的自定义实例，则可以声明 `WebMvcRegistrationsAdapter` 实例以提供此类组件。
 
@@ -3063,13 +3063,13 @@ spring.mvc.static-path-pattern=/resources/**
 
 除了前面提到的“标准”静态资源位置外，[Webjars内容](https://www.webjars.org/) 也有特殊情况。如果 jar 文件以 Webjars 格式打包，则所有 `/webjars/**` 中所有路径下的资源都将通过 jar 文件提供。
 
->如果您的应用程序打包为 jar，则不要使用 `src/main/webapp` 目录。尽管此目录是一个通用标准，但它仅在 war 打包中有效，并且在生成 jar 时，大多数构建工具都将其忽略。
+> 如果您的应用程序打包为 jar，则不要使用 `src/main/webapp` 目录。尽管此目录是一个通用标准，但它仅在 war 打包中有效，并且在生成 jar 时，大多数构建工具都将其忽略。
 
 Spring Boot 还支持 Spring MVC 提供的高级资源处理功能，例如缓存清除静态资源或对 Webjars 使用版本无关的 URL。
 
 要为 Webjar 使用与版本无关的 URL，请添加 `webjars-locator-core` 依赖项。然后声明您的 Webjar。以 jQuery 为例，添加 `/webjars/jquery/jquery.min.js` 会生成 `/webjars/jquery/x.y.z/jquery.min.js`，其中 `x.y.z` 是 Webjar 版本。
 
->如果使用 JBoss，则需要声明 `webjars-locator-jboss-vfs` 依赖，而不是 `webjars-locator-core`。否则，所有 Webjar 都解析为 `404`。
+> 如果使用 JBoss，则需要声明 `webjars-locator-jboss-vfs` 依赖，而不是 `webjars-locator-core`。否则，所有 Webjar 都解析为 `404`。
 
 要使用缓存清除，以下配置可为所有静态资源配置缓存清除解决方案，并在 URL 中有效地添加内容哈希，例如 `<link href="/css/spring-2a2d595e6ed9a0b24f027f2b63b134d6.css"/>` ：
 
@@ -3078,7 +3078,7 @@ spring.resources.chain.strategy.content.enabled=true
 spring.resources.chain.strategy.content.paths=/**
 ```
 
->通过为 Thymeleaf 和 FreeMarker 自动配置的 `ResourceUrlEncodingFilter`，可以在运行时在模板中重写资源链接。使用 JSP 时，您应该手动声明此过滤器。目前尚不自动支持其他模板引擎，但可以使用自定义模板宏/帮助器以及使用 [`ResourceUrlProvider`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceUrlProvider.html)。
+> 通过为 Thymeleaf 和 FreeMarker 自动配置的 `ResourceUrlEncodingFilter`，可以在运行时在模板中重写资源链接。使用 JSP 时，您应该手动声明此过滤器。目前尚不自动支持其他模板引擎，但可以使用自定义模板宏/帮助器以及使用 [`ResourceUrlProvider`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/web/servlet/resource/ResourceUrlProvider.html)。
 
 例如，当使用 JavaScript 模块加载器动态加载资源时，不能重命名文件。这就是为什么其他策略也受支持并且可以组合的原因。 “固定”策略在 URL 中添加静态版本字符串，而不更改文件名，如以下示例所示：
 
@@ -3094,7 +3094,7 @@ spring.resources.chain.strategy.fixed.version=v12
 
 参见 [`ResourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ResourceProperties.java) 以获取更多受支持的选项。
 
->本特性已经在相关专门 [blog post](https://spring.io/blog/2014/07/24/spring-framework-4-1-handling-static-web-resources) 和 Spring Framework 的 [reference documentation](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-config-static-resources) 中进行了详尽描述。
+> 本特性已经在相关专门 [blog post](https://spring.io/blog/2014/07/24/spring-framework-4-1-handling-static-web-resources) 和 Spring Framework 的 [reference documentation](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web.html#mvc-config-static-resources) 中进行了详尽描述。
 
 ##### 欢迎页面
 
@@ -3149,22 +3149,22 @@ Spring MVC 使用 `WebBindingInitializer` 来为特定请求初始化 `WebDataBi
 
 Spring Boot 包含对以下模板引擎的自动配置支持：
 
--[FreeMarker](https://freemarker.apache.org/docs/)
--[Groovy](http://docs.groovy-lang.org/docs/next/html/documentation/template-engines.html#_the_markuptemplateengine)
--[Thymeleaf](https://www.thymeleaf.org/)
--[Mustache](https://mustache.github.io/)
+- [FreeMarker](https://freemarker.apache.org/docs/)
+- [Groovy](http://docs.groovy-lang.org/docs/next/html/documentation/template-engines.html#_the_markuptemplateengine)
+- [Thymeleaf](https://www.thymeleaf.org/)
+- [Mustache](https://mustache.github.io/)
 
->如果可能，应避免使用 JSP。当将它们与嵌入式 servlet 容器一起使用时，存在几个 [已知限制](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jsp-limitations) 。
+> 如果可能，应避免使用 JSP。当将它们与嵌入式 servlet 容器一起使用时，存在几个 [已知限制](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jsp-limitations) 。
 
 当您使用这些模板引擎之一进行默认配置时，您的模板会自动从 `src/main/resources/templates` 中获取。
 
->根据您运行应用程序的方式，IntelliJ IDEA 对类路径的排序不同。与使用 Maven 或 Gradle 或从其打包的 jar 运行应用程序时相比，从 IDE 的主要方法运行应用程序的顺序会有所不同。这可能导致 Spring Boot 无法在类路径上找到模板。如果遇到此问题，可以在 IDE 中重新排序类路径，以首先放置模块的类和资源。另外，您可以配置模板前缀，以搜索类路径上的每个 `templates` 目录，如下所示：`classpath*:/templates/`。
+> 根据您运行应用程序的方式，IntelliJ IDEA 对类路径的排序不同。与使用 Maven 或 Gradle 或从其打包的 jar 运行应用程序时相比，从 IDE 的主要方法运行应用程序的顺序会有所不同。这可能导致 Spring Boot 无法在类路径上找到模板。如果遇到此问题，可以在 IDE 中重新排序类路径，以首先放置模块的类和资源。另外，您可以配置模板前缀，以搜索类路径上的每个 `templates` 目录，如下所示：`classpath*:/templates/`。
 
 ##### 错误处理
 
 默认情况下，Spring Boot 提供一个 `/error` 映射，以一种明智的方式处理所有错误，并且在 servlet 容器中被注册为“全局”错误页面。对于机器客户端，它将生成一个 JSON 响应，其中包含错误，HTTP 状态和异常消息的详细信息。对于浏览器客户端，有一个“whitelabel”错误视图以 HTML 格式呈现相同的数据（要对其进行自定义，请添加一个可解析为 `error` 的 `view`）。要完全替换默认行为，您可以实现 `ErrorController` 并注册该类型的 bean 定义，或者添加类型为 `ErrorAttributes` 的 bean 以使用现有机制但替换其内容。
 
->`BasicErrorController` 可用作自定义 `ErrorController` 的基类。如果您要为新的内容类型添加处理程序（默认是专门处理 `text/html` 并为其他所有内容提供后备功能），则此功能特别有用。为此，扩展 `BasicErrorController`，添加一个具有 `produces` 属性的 `@RequestMapping` 注解的公共方法，并创建一个新类型的 bean。
+> `BasicErrorController` 可用作自定义 `ErrorController` 的基类。如果您要为新的内容类型添加处理程序（默认是专门处理 `text/html` 并为其他所有内容提供后备功能），则此功能特别有用。为此，扩展 `BasicErrorController`，添加一个具有 `produces` 属性的 `@RequestMapping` 注解的公共方法，并创建一个新类型的 bean。
 
 您还可以定义一个带有 `@ControllerAdvice` 注解的类，以自定义 JSON 文档以针对特定的控制器和/或异常类型返回，如以下示例所示：
 
@@ -3263,7 +3263,7 @@ private static class MyErrorPageRegistrar implements ErrorPageRegistrar {
 }
 ```
 
->如果您注册的 `ErrorPage` 具有最终由 `Filter` 处理的路径（这在某些非 Spring Web 框架，如 Jersey 和 Wicket，中很常见），则必须将 `Filter` 明确注册为 `ERROR` 调度程序，如以下示例所示：
+> 如果您注册的 `ErrorPage` 具有最终由 `Filter` 处理的路径（这在某些非 Spring Web 框架，如 Jersey 和 Wicket，中很常见），则必须将 `Filter` 明确注册为 `ERROR` 调度程序，如以下示例所示：
 
 ```java
 @Bean
@@ -3371,11 +3371,11 @@ public class UserHandler {
 
 WebFlux 是 Spring 框架的一部分，详细信息可在其 [参考文档](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-fn) 中找到。
 
->您可以根据需要定义尽可能多的 `RouterFunction` bean，以对路由器的定义进行模块化。如果需要应用优先级，可以对 Bean 进行排序。
+> 您可以根据需要定义尽可能多的 `RouterFunction` bean，以对路由器的定义进行模块化。如果需要应用优先级，可以对 Bean 进行排序。
 
 首先，将 `spring-boot-starter-webflux` 模块添加到您的应用程序中。
 
->在应用程序中添加 `spring-boot-starter-web` 和 `spring-boot-starter-webflux` 模块会导致 Spring Boot 自动配置 Spring MVC，而不是 WebFlux。之所以选择这种行为，是因为许多 Spring 开发人员在其 Spring MVC 应用程序中添加了 `spring-boot-starter-webflux` 以使用反应性 WebClient。您仍然可以通过将选定的应用程序类型设置为 `SpringApplication.setWebApplicationType(WebApplicationType.REACTIVE)` 来强制执行选择。
+> 在应用程序中添加 `spring-boot-starter-web` 和 `spring-boot-starter-webflux` 模块会导致 Spring Boot 自动配置 Spring MVC，而不是 WebFlux。之所以选择这种行为，是因为许多 Spring 开发人员在其 Spring MVC 应用程序中添加了 `spring-boot-starter-webflux` 以使用反应性 WebClient。您仍然可以通过将选定的应用程序类型设置为 `SpringApplication.setWebApplicationType(WebApplicationType.REACTIVE)` 来强制执行选择。
 
 ##### Spring WebFlux 自动配置
 
@@ -3383,8 +3383,8 @@ Spring Boot 为 Spring WebFlux 提供的自动配置可以很好地应用于大�
 
 自动配置在 Spring 默认基础上添加爱了以下特性：
 
--为 `HttpMessageReader` 和 `HttpMessageWriter` 实例配置编解码器（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-httpcodecs) 介绍）。
--支持提供静态资源，包括对 WebJars 的支持（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content) 介绍）。
+- 为 `HttpMessageReader` 和 `HttpMessageWriter` 实例配置编解码器（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-httpcodecs) 介绍）。
+- 支持提供静态资源，包括对 WebJars 的支持（在 [本文档后面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-spring-mvc-static-content) 介绍）。
 
 如果您想保留 Spring Boot WebFlux 功能并想要添加其他 [WebFlux配置](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-config)，您可以添加自己的类型为 `WebFluxConfigurer` 的 `@Configuration` 类，而不需要添加 `@EnableWebFlux` 。
 
@@ -3430,7 +3430,7 @@ spring.webflux.static-path-pattern=/resources/**
 
 除了前面列出的“标准”静态资源位置之外，[Webjars内容](https://www.webjars.org/) 也有特殊情况。如果 jar 文件以 Webjars 格式打包，则所有 `/webjars/**` 中具有路径的资源都将通过 jar 文件提供。
 
->Spring WebFlux 应用程序不严格依赖 Servlet API，因此不能将它们部署为 war 文件，也不使用 `src/main/webapp` 目录。
+> Spring WebFlux 应用程序不严格依赖 Servlet API，因此不能将它们部署为 war 文件，也不使用 `src/main/webapp` 目录。
 
 ##### 模板引擎
 
@@ -3438,9 +3438,9 @@ spring.webflux.static-path-pattern=/resources/**
 
 Spring Boot 包含对以下模板引擎的自动配置支持：
 
--[FreeMarker](https://freemarker.apache.org/docs/)
--[Thymeleaf](https://www.thymeleaf.org/)
--[Mustache](https://mustache.github.io/)
+- [FreeMarker](https://freemarker.apache.org/docs/)
+- [Thymeleaf](https://www.thymeleaf.org/)
+- [Mustache](https://mustache.github.io/)
 
 当您使用这些模板引擎之一进行默认配置时，您的模板会自动从 `src/main/resources/templates` 中获取。
 
@@ -3508,11 +3508,11 @@ Spring WebFlux 提供了一个 `WebFilter` 接口，可以用来过滤 HTTP 请�
 
 当过滤器的顺序很重要时，它们可以实现 `Ordered` 或用 `@Order` 注解。Spring Boot 自动配置可能会为您配置 Web 过滤器。这样做时，将使用下表中显示的顺序：
 
-| Web Filter | Order |
-| : | : |
-| `MetricsWebFilter` | `Ordered.HIGHEST_PRECEDENCE + 1` |
-| `WebFilterChainProxy` (Spring Security) | `-100` |
-| `HttpTraceWebFilter` | `Ordered.LOWEST_PRECEDENCE - 10` |
+| Web Filter                              | Order                            |
+| :-------------------------------------- | :------------------------------- |
+| `MetricsWebFilter`                      | `Ordered.HIGHEST_PRECEDENCE + 1` |
+| `WebFilterChainProxy` (Spring Security) | `-100`                           |
+| `HttpTraceWebFilter`                    | `Ordered.LOWEST_PRECEDENCE - 10` |
 
 #### 4.7.3. JAX-RS 和 Jersey
 
@@ -3531,7 +3531,7 @@ public class JerseyConfig extends ResourceConfig {
 }
 ```
 
->Jersey 对扫描可执行档案的支持非常有限。例如，它无法扫描 [完全可执行的jar文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-install) 中的包内部的端点，或运行可执行 war 文件时在 `WEB-INF/classes` 中的端点。为了避免这种限制，不应该使用 `packages` 方法，并且应该使用 `register` 方法分别注册端点，如前面的示例所示。
+> Jersey 对扫描可执行档案的支持非常有限。例如，它无法扫描 [完全可执行的jar文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-install) 中的包内部的端点，或运行可执行 war 文件时在 `WEB-INF/classes` 中的端点。为了避免这种限制，不应该使用 `packages` 方法，并且应该使用 `register` 方法分别注册端点，如前面的示例所示。
 
 对于更高级的定制，您还可以注册任意数量的实现 `ResourceConfigCustomizer` 的 bean。
 
@@ -3572,9 +3572,9 @@ Spring Boot 包含对 [Tomcat](https://tomcat.apache.org/)、[Jetty](https://www
 
 通常情况下，过滤器 bean 处于无序状态是安全的。如果需要特定的顺序，则应使用 `@Order` 来注解 `Filter` 或使其实现 `Ordered`。您不能通过使用 `@Order` 注解 bean 方法的方法来配置 `Filter` 的顺序。如果您不能将 `Filter` 类更改为添加 `@Order` 或实现 `Ordered`，则必须为 `Filter` 定义 `FilterRegistrationBean` 并使用 `setOrder(int)` 方法设置注册 bean 的顺序。避免配置一个在 `Ordered.HIGHEST_PRECEDENCE` 上读取请求正文的过滤器，因为它可能与应用程序的字符编码配置不符。如果 Servlet 过滤器包装了请求，则应使用小于或等于 `OrderedFilter.REQUEST_WRAPPER_FILTER_MAX_ORDER` 的顺序来配置它。
 
->要查看应用程序中每个 `Filter` 的顺序，请为 `web` [logging group](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-custom-log-groups)（`logging.level.web=debug`）启用 `debug` 级别日志。然后，将在启动时记录已注册过滤器的详细信息，包括其顺序和 URL 模式。
+> 要查看应用程序中每个 `Filter` 的顺序，请为 `web` [logging group](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-custom-log-groups)（`logging.level.web=debug`）启用 `debug` 级别日志。然后，将在启动时记录已注册过滤器的详细信息，包括其顺序和 URL 模式。
 
->注册 `Filter` bean 时要小心，因为它们是在应用程序生命周期中很早就初始化的。如果您需要注册与其他 bean 交互的 `Filter`，请考虑使用 [`DelegatingFilterProxyRegistrationBean`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBean.html) 。
+> 注册 `Filter` bean 时要小心，因为它们是在应用程序生命周期中很早就初始化的。如果您需要注册与其他 bean 交互的 `Filter`，请考虑使用 [`DelegatingFilterProxyRegistrationBean`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBean.html) 。
 
 ##### Servlet 上下文初始化
 
@@ -3586,13 +3586,13 @@ Spring Boot 包含对 [Tomcat](https://tomcat.apache.org/)、[Jetty](https://www
 
 当使用内置容器时，可以通过使用 `@ServletComponentScan` 来启用自动注册带有 `@WebServlet`，`@WebFilter` 和 `@WebListener` 的类。
 
->`@ServletComponentScan` 在独立容器中无效，在该容器中使用了容器的内置发现机制。
+> `@ServletComponentScan` 在独立容器中无效，在该容器中使用了容器的内置发现机制。
 
 ##### ServletWebServerApplicationContext
 
 在后台，Spring Boot 使用另一种类型的 `ApplicationContext` 来支持内置 servlet 容器。`ServletWebServerApplicationContext` 是 `WebApplicationContext` 的一种特殊类型，它通过搜索单个 `ServletWebServerFactory` bean来进行自我引导。通常，已经自动配置了 `TomcatServletWebServerFactory`，`JettyServletWebServerFactory` 或 `UndertowServletWebServerFactory`。
 
->通常，您不需要了解这些实现类。大多数应用程序都是自动配置的，并且代表您创建了相应的 `ApplicationContext` 和 `ServletWebServerFactory`。
+> 通常，您不需要了解这些实现类。大多数应用程序都是自动配置的，并且代表您创建了相应的 `ApplicationContext` 和 `ServletWebServerFactory`。
 
 ##### 自定义内置 Servlet 容器
 
@@ -3600,15 +3600,15 @@ Spring Boot 包含对 [Tomcat](https://tomcat.apache.org/)、[Jetty](https://www
 
 常用服务器设置包括：
 
--网络设置：侦听传入HTTP请求的端口（`server.port`），绑定到 `server.address` 的接口地址，等等。
--会话设置：会话是否是持久性的（`server.servlet.session.persistent`），会话超时（`server.servlet.session.timeout`），会话数据的位置（`server.servlet.session.store-dir`）和会话 Cookie 配置（`server.servlet.session.cookie.*`）。
--错误管理：错误页面位置 (`server.error.path`) 等等。
--[SSL](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-ssl)
--[HTTP 压缩](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#how-to-enable-http-response-compression)
+- 网络设置：侦听传入HTTP请求的端口（`server.port`），绑定到 `server.address` 的接口地址，等等。
+- 会话设置：会话是否是持久性的（`server.servlet.session.persistent`），会话超时（`server.servlet.session.timeout`），会话数据的位置（`server.servlet.session.store-dir`）和会话 Cookie 配置（`server.servlet.session.cookie.*`）。
+- 错误管理：错误页面位置 (`server.error.path`) 等等。
+- [SSL](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-ssl)
+- [HTTP 压缩](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#how-to-enable-http-response-compression)
 
 Spring Boot 尝试尽可能多地公开通用设置，但这并不总是可能的。在这种情况下，专用名称空间可提供服务器特定的自定义设置（请参见 `server.tomcat` 和 `server.undertow`）。例如，可以使用内置 servlet 容器特定功能配置 [访问日志](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-accesslogs)。
 
->参考 [`ServerProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ServerProperties.java) 类以获得完整列表。
+> 参考 [`ServerProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ServerProperties.java) 类以获得完整列表。
 
 ###### 编程式自定义
 
@@ -3630,7 +3630,7 @@ public class CustomizationBean implements WebServerFactoryCustomizer<Configurabl
 }
 ```
 
->`TomcatServletWebServerFactory`，`JettyServletWebServerFactory` 和 `UndertowServletWebServerFactory` 是 `ConfigurableServletWebServerFactory` 的专用变体，分别具有针对 Tomcat，Jetty 和 Undertow 的其他自定义设置方法。
+> `TomcatServletWebServerFactory`，`JettyServletWebServerFactory` 和 `UndertowServletWebServerFactory` 是 `ConfigurableServletWebServerFactory` 的专用变体，分别具有针对 Tomcat，Jetty 和 Undertow 的其他自定义设置方法。
 
 ###### 直接自定义 ConfigurableServletWebServerFactory
 
@@ -3653,11 +3653,11 @@ public ConfigurableServletWebServerFactory webServerFactory() {
 
 运行使用内置 servlet 容器（并打包为可执行档案）的 Spring Boot 应用程序时，JSP 支持存在一些限制。
 
--使用 Jetty 和 Tomcat，如果使用 war 包装，它应该可以工作。可执行的 war 与 `java -jar` 一起启动时将起作用，并且也可部署到任何标准容器中。使用可执行 jar 时，不支持 JSP。
+- 使用 Jetty 和 Tomcat，如果使用 war 包装，它应该可以工作。可执行的 war 与 `java -jar` 一起启动时将起作用，并且也可部署到任何标准容器中。使用可执行 jar 时，不支持 JSP。
 
--Undertow 不支持 JSP。
+- Undertow 不支持 JSP。
 
--创建自定义 `error.jsp` 页面不会覆盖 [错误处理](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling) 的默认视图。应使用 [自定义错误页面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling-custom-error-pages) 代替。
+- 创建自定义 `error.jsp` 页面不会覆盖 [错误处理](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling) 的默认视图。应使用 [自定义错误页面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling-custom-error-pages) 代替。
 
 #### 4.7.5. 内置反应式服务器支持
 
@@ -3669,9 +3669,9 @@ Spring Boot 包含对以下内置反应式 Web 服务器的支持：Reactor Nett
 
 默认情况下，这些资源还将与 Reactor Netty 和 Jetty 客户端共享，以实现最佳性能，前提是：
 
--服务器和客户端使用相同的技术
+- 服务器和客户端使用相同的技术
 
--使用 Spring Boot 自动配置的 `WebClient.Builder` bean构建客户端实例
+- 使用 Spring Boot 自动配置的 `WebClient.Builder` bean构建客户端实例
 
 开发者可以通过提供自定义的 `ReactorResourceFactory` 或 `JettyResourceFactory` bean 来覆盖 Jetty 和 Reactor Netty 的资源配置-这将同时应用于客户端和服务器。
 
@@ -3687,8 +3687,8 @@ Spring 框架的 `spring-messaging` 模块在客户端和服务器端都支持 R
 
 Spring Boot 自动配置一个 `RSocketStrategies` bean，该 bean 提供了编码和解码 RSocket 有效负载所需的所有基础结构。默认情况下，自动配置将尝试（按顺序）配置以下内容：
 
-1.[CBOR](https://cbor.io/) 使用 Jackson 编码解码
-2.JSON 使用 Jackson 编码解码
+1. [CBOR](https://cbor.io/) 使用 Jackson 编码解码
+2. JSON 使用 Jackson 编码解码
 
 `spring-boot-starter-rsocket` 启动器提供了两种依赖关系。查阅 [Jackson支持部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-json-jackson) 以了解有关自定义可能性的更多信息 。
 
@@ -3708,7 +3708,7 @@ spring.rsocket.server.transport=websocket # websocket is chosen as a transport
 #spring.rsocket.server.port= # no port is defined
 ```
 
->由于 RSocket 本身是使用该库构建的，因此只有 Reactor Netty 支持将 RSocket 插入 Web 服务器。
+> 由于 RSocket 本身是使用该库构建的，因此只有 Reactor Netty 支持将 RSocket 插入 Web 服务器。
 
 另外，RSocket TCP 或 Websocket 服务器也可以作为独立的内置服务器启动。除了依赖性要求之外，唯一需要的配置是为该服务器定义端口：
 
@@ -3762,17 +3762,17 @@ public class MyService {
 Using generated security password: 78fa095d-3f4c-48b1-ad50-e24c31d5cf35
 ```
 
->如果您微调日志记录配置，请确保将 `org.springframework.boot.autoconfigure.security` 类别设置为记录 `INFO` 级消息。否则，不会打印默认密码。
+> 如果您微调日志记录配置，请确保将 `org.springframework.boot.autoconfigure.security` 类别设置为记录 `INFO` 级消息。否则，不会打印默认密码。
 
 您可以通过提供 `spring.security.user.name` 和 `spring.security.user.password` 来更改用户名和密码。
 
 默认情况下，您在 Web 应用程序中获得的基本功能是：
 
--具有内存存储区的 `UserDetailsService`（如果是 WebFlux 应用程序，则为 `ReactiveUserDetailsService`）Bean 和具有生成的密码的单个用户（请参阅 [`SecurityProperties.User`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/autoconfigure/security/SecurityProperties.User.html) 以获取用户的属性）。
+- 具有内存存储区的 `UserDetailsService`（如果是 WebFlux 应用程序，则为 `ReactiveUserDetailsService`）Bean 和具有生成的密码的单个用户（请参阅 [`SecurityProperties.User`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/autoconfigure/security/SecurityProperties.User.html) 以获取用户的属性）。
 
--整个应用程序的基于表单的登录或 HTTP 基本安全性（取决于请求中的 `Accept` 标头）（如果执行器位于类路径上，则包括执行器端点）。
+- 整个应用程序的基于表单的登录或 HTTP 基本安全性（取决于请求中的 `Accept` 标头）（如果执行器位于类路径上，则包括执行器端点）。
 
--用于发布身份验证事件的 `DefaultAuthenticationEventPublisher`。
+- 用于发布身份验证事件的 `DefaultAuthenticationEventPublisher`。
 
 您可以通过添加一个bean来提供一个不同的`AuthenticationEventPublisher`。
 
@@ -3896,7 +3896,7 @@ spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://example.com/oauth2
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://dev-123456.oktapreview.com/oauth2/default/
 ```
 
->如果授权服务器不支持 JWK 设置 URI，则可以使用用于验证 JWT 签名的公共密钥来配置资源服务器。这可以通过使用 `spring.security.oauth2.resourceserver.jwt.public-key-location` 属性来完成，该属性值需要指向包含 PEM 编码的 x509 格式的公钥的文件。
+> 如果授权服务器不支持 JWK 设置 URI，则可以使用用于验证 JWT 签名的公共密钥来配置资源服务器。这可以通过使用 `spring.security.oauth2.resourceserver.jwt.public-key-location` 属性来完成，该属性值需要指向包含 PEM 编码的 x509 格式的公钥的文件。
 
 相同的属性适用于 servlet 和反应式应用程序。
 
@@ -3946,13 +3946,13 @@ spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovid
 
 如果 Spring Security 在类路径上，并且不存在其他 `WebSecurityConfigurerAdapter`，则通过 Spring Boot 自动配置保护除 `/health` 和 `/info` 以外的所有执行器。如果您定义了一个自定义的 `WebSecurityConfigurerAdapter`，Spring Boot 的自动配置将退出，您将完全控制执行器访问规则。
 
->在设置 `management.endpoints.web.exposure.include` 之前，请确保裸露的执行器不包含敏感信息和/或通过将它们放置在防火墙后面或通过诸如 Spring Security 之类的东西进行保护。
+> 在设置 `management.endpoints.web.exposure.include` 之前，请确保裸露的执行器不包含敏感信息和/或通过将它们放置在防火墙后面或通过诸如 Spring Security 之类的东西进行保护。
 
 ##### 跨站点请求伪造保护
 
 由于 Spring Boot 依赖于 Spring Security 的默认设置，因此 CSRF 保护默认情况下处于启用状态。这意味着，在使用默认安全配置时，需要 `POST`（关闭和记录器端点），`PUT` 或 `DELETE` 的执行器端点将收到 `403` 禁止错误。
 
->我们建议仅在创建非浏览器客户端使用的服务时完全禁用 CSRF 保护。
+> 我们建议仅在创建非浏览器客户端使用的服务时完全禁用 CSRF 保护。
 
 关于 CSRF 保护的其他信息可以在 [Spring Security参考指南](https://docs.spring.io/spring-security/site/docs/5.2.1.RELEASE/reference/htmlsingle/#csrf) 中找到。
 
@@ -3964,17 +3964,17 @@ spring.security.saml2.relyingparty.registration.my-relying-party2.identityprovid
 
 Java 的 `javax.sql.DataSource` 接口提供使用数据库连接的标准方法。传统上，`DataSource` 使用一个 `URL` 和一些凭证来建立数据库连接。
 
->参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
+> 参考 [the “How-to” section](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-configure-a-datasource) 了解更多高级示例，其中一些是关于如何完全控制数据库配置。
 
 ##### 内置数据库支持
 
 使用内存内置数据库来开发应用程序通常很方便。显然，内存数据库不提供持久存储。您需要在应用程序启动时填充数据库，并准备在应用程序结束时丢弃数据。
 
->“How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
+> “How-to” 章节包含 [section on how to initialize a database](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-database-initialization) 。
 
 Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](http://hsqldb.org/) 和 [Derby](https://db.apache.org/derby/) 数据库。您无需提供任何连接 URL。您只需要包含要使用的内置数据库的构建依赖项即可。
 
->如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
+> 如果您在测试中使用此功能，则可能会注意到，整个测试套件将重复使用同一数据库，而不管您使用的应用程序上下文有多少。如果要确保每个上下文都有一个单独的内置数据库，则应将 `spring.datasource.generate-unique-name` 设置为 `true`。
 
 比如，典型的 POM 依赖应该是：
 
@@ -3990,25 +3990,25 @@ Spring Boot 可以自动配置内置 [H2](https://www.h2database.com/)，[HSQL](
 </dependency>
 ```
 
->您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
+> 您需要依赖于 `spring-jdbc` 才能自动配置内置数据库。在这个例子中，它是通过 `spring-boot-starter-data-jpa` 传递的。
 
->如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
+> 如果出于某种原因确实为内置数据库配置了连接 URL，请务必确保禁用了数据库的自动关闭功能。如果您使用的是 H2，则应使用 `DB_CLOSE_ON_EXIT=FALSE`。如果使用 HSQLDB，则应确保不使用 `shutdown=true`。通过禁用数据库的自动关闭功能，Spring Boot 可以控制何时关闭数据库，从而确保一旦不再需要访问数据库时就可以进行自动关闭。
 
 ##### 连接到生产数据库
 
 生产数据库的连接也可以通过使用 `DataSource` 池来自动配置。Spring Boot 使用以下算法来选择特定的实现：
 
-1.我们更喜欢 [HikariCP](https://github.com/brettwooldridge/HikariCP) 的性能和并发性。如果有 HikariCP，我们总是选择它。
+1. 我们更喜欢 [HikariCP](https://github.com/brettwooldridge/HikariCP) 的性能和并发性。如果有 HikariCP，我们总是选择它。
 
-2.否则，如果 Tomcat 池 `DataSource` 可用，我们将使用它。
+2. 否则，如果 Tomcat 池 `DataSource` 可用，我们将使用它。
 
-3.如果 HikariCP 和 Tomcat 池数据源均不可用，而 [Commons DBCP2](https://commons.apache.org/proper/commons-dbcp/) 可用，我们将使用它。
+3. 如果 HikariCP 和 Tomcat 池数据源均不可用，而 [Commons DBCP2](https://commons.apache.org/proper/commons-dbcp/) 可用，我们将使用它。
 
 如果您使用 `spring-boot-starter-jdbc` 或 `spring-boot-starter-data-jpa` `starters`，则会自动获得对  `HikariCP` 的依赖。
 
->您可以通过设置 `spring.datasource.type` 属性来完全绕过该算法，并指定要使用的连接池。如果您在 Tomcat 容器中运行应用程序，这一点尤其重要，因为默认情况下会提供 `tomcat-jdbc`。
+> 您可以通过设置 `spring.datasource.type` 属性来完全绕过该算法，并指定要使用的连接池。如果您在 Tomcat 容器中运行应用程序，这一点尤其重要，因为默认情况下会提供 `tomcat-jdbc`。
 
->额外连接池始终可以手动配置。如果定义自己的 `DataSource` bean，则不会进行自动配置。
+> 额外连接池始终可以手动配置。如果定义自己的 `DataSource` bean，则不会进行自动配置。
 
 数据源的配置由 `spring.datasource.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
 
@@ -4019,11 +4019,11 @@ spring.datasource.password=dbpass
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 ```
 
->您至少应通过设置 `spring.datasource.url` 属性来指定 URL。否则，Spring Boot 会尝试自动配置内置数据库。
+> 您至少应通过设置 `spring.datasource.url` 属性来指定 URL。否则，Spring Boot 会尝试自动配置内置数据库。
 
->您通常不需要指定 `driver-class-name`，因为 Spring Boot 可以从 `url` 中为大多数数据库推断出它。
+> 您通常不需要指定 `driver-class-name`，因为 Spring Boot 可以从 `url` 中为大多数数据库推断出它。
 
->对于要创建的 `DataSource` 池，我们需要能够验证有效的 `Driver` 类是否可用，因此我们在进行任何操作之前都要进行检查。换句话说，如果设置 `spring.datasource.driver-class-name=com.mysql.jdbc.Driver`，则该类必须是可加载的。
+> 对于要创建的 `DataSource` 池，我们需要能够验证有效的 `Driver` 类是否可用，因此我们在进行任何操作之前都要进行检查。换句话说，如果设置 `spring.datasource.driver-class-name=com.mysql.jdbc.Driver`，则该类必须是可加载的。
 
 参见 [`DataSourceProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jdbc/DataSourceProperties.java) 以获取更多受支持的选项。这些是不管实际实现如何都起作用的标准选项。也可以通过使用各自的前缀（`spring.datasource.hikari.*`，`spring.datasource.tomcat.*` 和 `spring.datasource.dbcp2.*`）微调实现特定的设置。有关更多详细信息，请参阅所用连接池实现的文档。
 
@@ -4080,17 +4080,17 @@ public class MyBean {
 spring.jdbc.template.max-rows=500
 ```
 
-> `NamedParameterJdbcTemplate` 内部复用了相同的 `JdbcTemplate` 实例。如果不只一个 `JdbcTemplate` 被定义而又不存在主要的候选者， `NamedParameterJdbcTemplate` 就不会被自动配置。
+>  `NamedParameterJdbcTemplate` 内部复用了相同的 `JdbcTemplate` 实例。如果不只一个 `JdbcTemplate` 被定义而又不存在主要的候选者， `NamedParameterJdbcTemplate` 就不会被自动配置。
 
 #### 4.10.3. JPA 和 Spring Data JPA
 
 Java Persistence API 是一种标准技术，允许你将对象映射到关系数据库。`spring-boot-starter-data-jpa` POM 提供了一种快捷的入手方式。它提供了下面的关键依赖：
 
--Hibernate: 一种最流行的 JPA 实现。
--Spring Data JPA: 使基于 JPA 的存储库的实现变得容易。
--Spring ORMs: Spring Framework 中的核心 ORM 支持。
+- Hibernate: 一种最流行的 JPA 实现。
+- Spring Data JPA: 使基于 JPA 的存储库的实现变得容易。
+- Spring ORMs: Spring Framework 中的核心 ORM 支持。
 
->本章节我们并不深入太多 JPA 或者 [Spring Data](https://spring.io/projects/spring-data) 的细节。你可以参考 [spring.io](https://spring.io/) 上的 [“Accessing Data with JPA”](https://spring.io/guides/gs/accessing-data-jpa/) 文档以及 [Spring Data JPA](https://spring.io/projects/spring-data-jpa) 和 [Hibernate](https://hibernate.org/orm/documentation/) 参考文档。
+> 本章节我们并不深入太多 JPA 或者 [Spring Data](https://spring.io/projects/spring-data) 的细节。你可以参考 [spring.io](https://spring.io/) 上的 [“Accessing Data with JPA”](https://spring.io/guides/gs/accessing-data-jpa/) 文档以及 [Spring Data JPA](https://spring.io/projects/spring-data-jpa) 和 [Hibernate](https://hibernate.org/orm/documentation/) 参考文档。
 
 ##### Entity 类
 
@@ -4142,7 +4142,7 @@ public class City implements Serializable {
 }
 ```
 
->你可以自定义实体扫描位置，通过使用 `@EntityScan` 注解。参考 “[Separate @Entity Definitions from Spring Configuration](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-separate-entity-definitions-from-spring-configuration)” 了解如何做。
+> 你可以自定义实体扫描位置，通过使用 `@EntityScan` 注解。参考 “[Separate @Entity Definitions from Spring Configuration](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-separate-entity-definitions-from-spring-configuration)” 了解如何做。
 
 ##### Spring Data JPA Repositories
 
@@ -4171,7 +4171,7 @@ public interface CityRepository extends Repository<City, Long> {
 
 Spring Data JPA 存储库支持三种不同的引导模式：默认，延迟和惰性。要启用延迟引导或惰性引导，请将 `spring.data.jpa.repositories.bootstrap-mode` 属性分别设置为 `deferred` 或 `lazy`。当使用延迟或惰性引导时，自动配置的 `EntityManagerFactoryBuilder` 将使用上下文的 `AsyncTaskExecutor`（如果有）作为引导执行器。如果存在多个，将使用一个名为 `applicationTaskExecutor` 的应用。
 
->我们仅仅是走马观花一般概述 Spring Data JPA 的表面特性。完整的细节，请参考 [Spring Data JPA reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
+> 我们仅仅是走马观花一般概述 Spring Data JPA 的表面特性。完整的细节，请参考 [Spring Data JPA reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
 
 ##### 创建和丢弃 JPA Databases
 
@@ -4181,7 +4181,7 @@ Spring Data JPA 存储库支持三种不同的引导模式：默认，延迟和�
 spring.jpa.hibernate.ddl-auto=create-drop
 ```
 
->Hibernate 自己的内部属性名称（如果您记得更好的话）是 `hibernate.hbm2ddl.auto`。您可以通过使用 `spring.jpa.properties.*`（在将前缀添加到实体管理器之前删除前缀）来设置它以及其他 Hibernate 本地属性。下面的行显示了为 Hibernate 设置 JPA 属性的示例：
+> Hibernate 自己的内部属性名称（如果您记得更好的话）是 `hibernate.hbm2ddl.auto`。您可以通过使用 `spring.jpa.properties.*`（在将前缀添加到实体管理器之前删除前缀）来设置它以及其他 Hibernate 本地属性。下面的行显示了为 Hibernate 设置 JPA 属性的示例：
 
 ```
 spring.jpa.properties.hibernate.globally_quoted_identifiers=true
@@ -4201,19 +4201,19 @@ Spring Data 包括对 JDBC 的存储库支持，并将自动为 `CrudRepository`
 
 当必要的依赖项位于类路径上时，Spring Boot 将自动配置 Spring Data 的 JDBC 存储库。可以将它们添加到您的项目中，而只需依赖于 `spring-boot-starter-data-jdbc`。如有必要，您可以通过向应用程序添加 `@EnableJdbcRepositories` 注解或 `JdbcConfiguration` 子类来控制 Spring Data JDBC 的配置。
 
->关于 Spring Data JDBC 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
+> 关于 Spring Data JDBC 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/jdbc/docs/1.1.3.RELEASE/reference/html/) 。
 
 #### 4.10.5. 使用 H2 的 Web 控制台
 
 [H2 database](https://www.h2database.com/) 提供一个 [browser-based console](https://www.h2database.com/html/quickstart.html#h2_console) ，Spring Boot 能够为你自动配置。当下列条件满足时该控制台会被自动配置：
 
--你在开发的是基于 servlet 的 web 应用。
--`com.h2database:h2` 在类路径上。
--你正在使用 [Spring Boot’s developer tools](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools) 。
+- 你在开发的是基于 servlet 的 web 应用。
+- `com.h2database:h2` 在类路径上。
+- 你正在使用 [Spring Boot’s developer tools](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-devtools) 。
 
->如果你没有使用 Spring Boot 的开发工具，仍然可以使用 H2 的控制台，你可以将 `spring.h2.console.enabled` 属性设置为 `true`。
+> 如果你没有使用 Spring Boot 的开发工具，仍然可以使用 H2 的控制台，你可以将 `spring.h2.console.enabled` 属性设置为 `true`。
 
->H2 控制台应该仅在开发过程中使用，因此，你需要保证生产环境中 `spring.h2.console.enabled` 属性没有设定为 `true` 。
+> H2 控制台应该仅在开发过程中使用，因此，你需要保证生产环境中 `spring.h2.console.enabled` 属性没有设定为 `true` 。
 
 ##### 修改 H2 控制台路径
 
@@ -4271,7 +4271,7 @@ public class JooqExample implements CommandLineRunner {
 }
 ```
 
->jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
+> jOOQ 手册使用名为 `create` 的变量来持有 `DSLContext`。
 
 然后，你可以使用 `DSLContext` 来构建你的查询，如下面例子所示：
 
@@ -4287,22 +4287,22 @@ public List<GregorianCalendar> authorsBornAfter1980() {
 
 除非 `spring.jooq.sql-dialect` 属性已经被配置，Spring Boot 决定用于你的数据库的 SQL 方言。如果 Spring Boot 无法探测到方言，使用 `DEFAULT`。
 
->Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
+> Spring Boot 只能自动配置开源版本的 jOOQ 支持的方言。
 
 ##### 自定义 jOOQ
 
 可以通过定义自己的 `@Bean` 定义来实现更高级的自定义，这在创建 jOOQ `Configuration` 时使用。您可以为以下 jOOQ 类型定义 bean：
 
--`ConnectionProvider`
--`ExecutorProvider`
--`TransactionProvider`
--`RecordMapperProvider`
--`RecordUnmapperProvider`
--`Settings`
--`RecordListenerProvider`
--`ExecuteListenerProvider`
--`VisitListenerProvider`
--`TransactionListenerProvider`
+- `ConnectionProvider`
+- `ExecutorProvider`
+- `TransactionProvider`
+- `RecordMapperProvider`
+- `RecordUnmapperProvider`
+- `Settings`
+- `RecordListenerProvider`
+- `ExecuteListenerProvider`
+- `VisitListenerProvider`
+- `TransactionListenerProvider`
 
 如果您想完全控制 jOOQ 配置，也可以创建自己的 `org.jooq.Configuration` `@Bean`。
 
@@ -4310,15 +4310,15 @@ public List<GregorianCalendar> authorsBornAfter1980() {
 
 Spring Data 提供了其他项目来帮助您访问各种 NoSQL 技术，包括：
 
--[MongoDB](https://spring.io/projects/spring-data-mongodb)
--[Neo4J](https://spring.io/projects/spring-data-neo4j)
--[Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
--[Solr](https://spring.io/projects/spring-data-solr)
--[Redis](https://spring.io/projects/spring-data-redis)
--[GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
--[Cassandra](https://spring.io/projects/spring-data-cassandra)
--[Couchbase](https://spring.io/projects/spring-data-couchbase)
--[LDAP](https://spring.io/projects/spring-data-ldap)
+- [MongoDB](https://spring.io/projects/spring-data-mongodb)
+- [Neo4J](https://spring.io/projects/spring-data-neo4j)
+- [Elasticsearch](https://spring.io/projects/spring-data-elasticsearch)
+- [Solr](https://spring.io/projects/spring-data-solr)
+- [Redis](https://spring.io/projects/spring-data-redis)
+- [GemFire](https://spring.io/projects/spring-data-gemfire) or [Geode](https://spring.io/projects/spring-data-geode)
+- [Cassandra](https://spring.io/projects/spring-data-cassandra)
+- [Couchbase](https://spring.io/projects/spring-data-couchbase)
+- [LDAP](https://spring.io/projects/spring-data-ldap)
 
 Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couchbase 和 LDAP 提供自动配置。您可以使用其他项目，但必须自己进行配置。请参阅 [spring.io/projects/spring-data](https://spring.io/projects/spring-data) 上的相应参考文档。
 
@@ -4328,7 +4328,7 @@ Spring Boot 为 Redis，MongoDB，Neo4j，Elasticsearch，Solr Cassandra，Couch
 
 有一个 `spring-boot-starter-data-redis` `Starter`，用于以方便的方式收集依赖项。默认情况下，它使用 [Lettuce](https://github.com/lettuce-io/lettuce-core/)。该启动程序可以处理传统应用程序和响应式应用程序。
 
->我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
+> 我们还提供了一个 `spring-boot-starter-data-redis-reactive` `Starter`，以与其他具有反应性支持的存储保持一致。
 
 ##### 连接到 Redis
 
@@ -4350,7 +4350,7 @@ public class MyBean {
 }
 ```
 
->您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
+> 您还可以注册任意数量的实现 `LettuceClientConfigurationBuilderCustomizer` 的 bean，以进行更高级的自定义。如果您使用 Jedis，`JedisClientConfigurationBuilderCustomizer` 也可用。
 
 如果您添加自己的任何自动配置类型的 `@Bean`，它将替换默认值（除非排除是基于 bean 名称 `redisTemplate`而不是其类型的 `RedisTemplate` 除外） 。默认情况下，如果 `commons-pool2` 在类路径中，则将得到一个池化连接工厂。
 
@@ -4401,13 +4401,13 @@ spring.data.mongodb.port=27017
 
 如果定义了自己的 `MongoClient`，它将用于自动配置合适的 `MongoDbFactory`。`com.mongodb.MongoClient` 和 `com.mongodb.client.MongoClient` 均受支持。
 
->如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
+> 如果您使用 Mongo 3.0 Java 驱动程序，则不支持 `spring.data.mongodb.host` 和 `spring.data.mongodb.port`。在这种情况下，应使用 `spring.data.mongodb.uri` 来提供所有配置。
 
->如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
+> 如果未指定 `spring.data.mongodb.port`，则使用默认值 `27017`。您可以从前面展示的示例中删除此行。
 
->如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
+> 如果您不使用 Spring Data Mongo，则可以注入 `com.mongodb.MongoClient` bean而不是使用 `MongoDbFactory`。如果您想完全控制建立 MongoDB 连接的方式，还可以声明自己的 `MongoDbFactory` 或 `MongoClient` bean。
 
->如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
+> 如果您使用反应式驱动程序，则 SSL 需要 Netty。如果可以使用 Netty 并且尚未自定义要使用的工厂，则自动配置会自动配置该工厂。
 
 ##### MongoTemplate
 
@@ -4456,9 +4456,9 @@ public interface CityRepository extends Repository<City, Long> {
 }
 ```
 
->您可以使用 `@EntityScan` 注解来自定义文档扫描位置。
+> 您可以使用 `@EntityScan` 注解来自定义文档扫描位置。
 
->有关 Spring Data MongoDB 的完整详细信息，包括其丰富的对象映射技术，请参阅其 [参考文档](https://spring.io/projects/spring-data-mongodb)。
+> 有关 Spring Data MongoDB 的完整详细信息，包括其丰富的对象映射技术，请参阅其 [参考文档](https://spring.io/projects/spring-data-mongodb)。
 
 ##### 内置 Mongo
 
@@ -4466,7 +4466,7 @@ Spring Boot 为 [内置 Mongo](https://github.com/flapdoodle-oss/de.flapdoodle.e
 
 可以通过设置 `spring.data.mongodb.port` 属性来配置 Mongo 监听的端口。要使用随机分配的空闲端口，请使用 0 值。由 `MongoAutoConfiguration` 创建的 `MongoClient` 将自动配置为使用随机分配的端口。
 
->如果未配置自定义端口，则默认情况下，内置支持会使用随机端口（而不是 27017）。
+> 如果未配置自定义端口，则默认情况下，内置支持会使用随机端口（而不是 27017）。
 
 如果在类路径上有 SLF4J，则 Mongo 产生的输出将自动路由到名为 `org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongo` 的记录器。
 
@@ -4510,13 +4510,13 @@ spring.data.neo4j.password=secret
 
 如果你添加 `org.neo4j:neo4j-ogm-embedded-driver` 到你的应用依赖中，Spring Boot 将自动配置一个同进程的内置 Neo4j 实例，你的应用关闭时不会有任何数据被持久化。
 
->由于嵌入式 Neo4j OGM 驱动程序本身不提供 Neo4j 内核，因此您必须自己声明 `org.neo4j:neo4j` 作为依赖项。有关兼容版本的列表，请参阅 [Neo4j OGM文档](https://neo4j.com/docs/ogm-manual/current/reference/#reference:getting-started) 。
+> 由于嵌入式 Neo4j OGM 驱动程序本身不提供 Neo4j 内核，因此您必须自己声明 `org.neo4j:neo4j` 作为依赖项。有关兼容版本的列表，请参阅 [Neo4j OGM文档](https://neo4j.com/docs/ogm-manual/current/reference/#reference:getting-started) 。
 
 当类路径上有多个驱动程序时，内置驱动程序优先于其他驱动程序。您可以通过设置 `spring.data.neo4j.embedded.enabled=false` 显式禁用内置模式。
 
 如果内置驱动程序和 Neo4j 内核位于上述类路径上，则 [Data Neo4j Tests](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-neo4j-test) 会自动使用内置 Neo4j 实例。
 
->您可以通过在配置中提供数据库文件的路径来启用内置模式的持久性。比如 `spring.data.neo4j.uri=file://var/tmp/graph.db`。
+> 您可以通过在配置中提供数据库文件的路径来启用内置模式的持久性。比如 `spring.data.neo4j.uri=file://var/tmp/graph.db`。
 
 ##### 使用本地类型
 
@@ -4556,7 +4556,7 @@ public interface CityRepository extends Neo4jRepository<City, Long> {
 
 `spring-boot-starter-data-neo4j` “Starter” 可启用存储库支持以及事务管理。您可以通过在 `@Configuration` bean上分别使用 `@EnableNeo4jRepositories` 和 `@EntityScan` 来定制位置以查找存储库和实体。
 
->有关 Spring Data Neo4j 的完整详细信息，包括其对象映射技术，请参阅 [参考文档](https://docs.spring.io/spring-data/neo4j/docs/5.2.3.RELEASE/reference/html/ )。
+> 有关 Spring Data Neo4j 的完整详细信息，包括其对象映射技术，请参阅 [参考文档](https://docs.spring.io/spring-data/neo4j/docs/5.2.3.RELEASE/reference/html/ )。
 
 #### 4.11.4. Solr
 
@@ -4598,8 +4598,8 @@ Spring Data Solr 的完整细节，请参考 [reference documentation](https://d
 
 Spring Boot 支持几种客户端：
 
--官方 Java “高级”和“低级” REST 客户端
--由 Spring Data Elasticsearch 提供的 `ReactiveElasticsearchClient` 
+- 官方 Java “高级”和“低级” REST 客户端
+- 由 Spring Data Elasticsearch 提供的 `ReactiveElasticsearchClient` 
 
 传输客户端仍然可用，但是 [Spring Data Elasticsearch](https://github.com/spring-projects/spring-data-elasticsearch) 和 Elasticsearch 本身已弃用了它的支持。它将在将来的版本中删除。Spring Boot 提供了专用的 “Starter”，即 `spring-boot-starter-data-elasticsearch`。
 
@@ -4693,7 +4693,7 @@ Spring Data 包括对 Elasticsearch 的存储库支持。与前面讨论的 JPA 
 
 实际上，Spring Data JPA 和 Spring Data Elasticsearch 共享相同的通用基础架构。您可以从前面的 JPA 示例开始，并假设 `City` 现在是 Elasticsearch `@Document` 类，而不是 JPA `@Entity`，它的工作方式相同。
 
->有关 Spring Data Elasticsearch 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/elasticsearch/docs/current/reference/html/) 。
+> 有关 Spring Data Elasticsearch 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/elasticsearch/docs/current/reference/html/) 。
 
 Spring Boot 使用 `ElasticsearchRestTemplate` 或 `ReactiveElasticsearchTemplate` bean 支持经典和反应式 Elasticsearch 存储库。给定所需的依赖项，这些 bean 最有可能由 Spring Boot 自动配置。
 
@@ -4744,7 +4744,7 @@ public class MyBean {
 
 Spring Data 包含对 Cassandra 的基本存储库支持。当前，它比前面讨论的 JPA 存储库受到更多限制，并且需要使用 `@Query` 注解查找器方法。
 
->有关 Spring Data Cassandra 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/cassandra/docs/)。
+> 有关 Spring Data Cassandra 的完整细节，请参考 [reference documentation](https://docs.spring.io/spring-data/cassandra/docs/)。
 
 #### 4.11.7. Couchbase
 
@@ -4760,7 +4760,7 @@ spring.couchbase.bucket.name=my-bucket
 spring.couchbase.bucket.password=secret
 ```
 
->您*至少*需要提供引导主机，在这种情况下，存储区名称为 `default` ，密码为空字符串。另外，您可以定义自己的 `org.springframework.data.couchbase.config.CouchbaseConfigurer` `@Bean` 以控制整个配置。
+> 您*至少*需要提供引导主机，在这种情况下，存储区名称为 `default` ，密码为空字符串。另外，您可以定义自己的 `org.springframework.data.couchbase.config.CouchbaseConfigurer` `@Bean` 以控制整个配置。
 
 也可以自定义某些 `CouchbaseEnvironment` 设置。例如，以下配置更改了用于打开新的 `Bucket` 并启用 SSL 支持的超时：
 
@@ -4798,11 +4798,11 @@ public class MyBean {
 
 您可以在自己的配置中定义一些 Bean，以覆盖自动配置提供的那些：
 
--一个名为 `CouchbaseTemplate` `@Bean`的名称。
+- 一个名为 `CouchbaseTemplate` `@Bean`的名称。
 
--名称为 `couchbaseIndexManager的IndexManager` `@Bean`。
+- 名称为 `couchbaseIndexManager的IndexManager` `@Bean`。
 
--名称为 `couchbaseCustomConversions` 的 CustomBeans `@Bean`。
+- 名称为 `couchbaseCustomConversions` 的 CustomBeans `@Bean`。
 
 为了避免在您自己的配置中对这些名称进行硬编码，您可以重用 Spring Data Couchbase 提供的 `BeanNames`。例如，您可以自定义要使用的转换器，如下所示：
 
@@ -4820,7 +4820,7 @@ public class SomeConfiguration {
 }
 ```
 
->如果您想完全绕过Spring Data Couchbase的自动配置，请提供您自己的`org.springframework.data.couchbase.config.AbstractCouchbaseDataConfiguration` 实现。
+> 如果您想完全绕过Spring Data Couchbase的自动配置，请提供您自己的`org.springframework.data.couchbase.config.AbstractCouchbaseDataConfiguration` 实现。
 
 #### 4.11.8. LDAP
 
@@ -4872,20 +4872,20 @@ public class MyBean {
 spring.ldap.embedded.base-dn=dc=spring,dc=io
 ```
 
->可以定义多个 base-dn 值，但是，由于专有名称通常包含逗号，因此必须使用正确的符号进行定义。在 yaml 文件中，可以使用 yaml 列表符号：
+> 可以定义多个 base-dn 值，但是，由于专有名称通常包含逗号，因此必须使用正确的符号进行定义。在 yaml 文件中，可以使用 yaml 列表符号：
 >
->```yaml
->spring.ldap.embedded.base-dn:
->	- dc=spring,dc=io
->	- dc=pivotal,dc=io
->```
+> ```yaml
+> spring.ldap.embedded.base-dn:
+> 	- dc=spring,dc=io
+> 	- dc=pivotal,dc=io
+> ```
 >
->在 properties 文件中，您必须将索引作为属性名称的一部分包括在内：
+> 在 properties 文件中，您必须将索引作为属性名称的一部分包括在内：
 >
->```properties
->spring.ldap.embedded.base-dn[0]=dc=spring,dc=io
->spring.ldap.embedded.base-dn[1]=dc=pivotal,dc=io
->```
+> ```properties
+> spring.ldap.embedded.base-dn[0]=dc=spring,dc=io
+> spring.ldap.embedded.base-dn[1]=dc=pivotal,dc=io
+> ```
 
 默认情况下，服务器在随机端口上启动并触发常规 LDAP 支持。无需指定 `spring.ldap.urls` 属性。
 
@@ -4913,7 +4913,7 @@ InfluxDB 依赖 OkHttp。如果您需要调整 InfluxDB 在后台使用的 HTTP 
 
 Spring 框架支持透明地向应用程序添加缓存。从本质上讲，抽象将缓存应用于方法，从而根据缓存中可用的信息减少执行次数。缓存逻辑是对应用透明的，不会对调用者造成任何干扰。只要通过 `@EnableCaching` 注解启用了缓存支持，Spring Boot 就会自动配置缓存基础架构。
 
->参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
+> 参考 Spring 框架文档的 [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache) 获取更多细节。
 
 简而言之，将缓存添加到服务的操作就像将相关注解添加到其方法一样容易，如以下示例所示：
 
@@ -4934,11 +4934,11 @@ public class MathService {
 
 本示例说明了在潜在的代价高昂操作上使用缓存的方法。在调用 `computePiDecimal` 之前，抽象将在 `piDecimals` 缓存中查找与 `i` 参数匹配的条目。如果找到条目，则缓存中的内容会立即返回给调用方，并且不会调用该方法。否则，将调用该方法，并在返回值之前更新缓存。
 
->您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
+> 您还可以透明地使用标准 JSR-107（JCache）注解（例如，`@CacheResult`）。但是，我们强烈建议您不要混合使用 Spring Cache 和 JCache 注解。
 
 如果您不添加任何特定的缓存库，Spring Boot 会自动配置一个 [简单提供程序](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple) ，在内存中使用并发映射。需要缓存时（例如上例中的 `piDecimals`），此提供程序将为您创建它。实际上，不建议将简单的提供程序用于生产用途，但是它对于入门并确保您了解功能非常有用。确定要使用的缓存提供程序后，请确保阅读其文档，以了解如何配置应用程序使用的缓存。几乎所有提供程序都要求您显式配置在应用程序中使用的每个缓存。一些提供了一种方法来定制由 `spring.cache.cache-names` 属性定义的默认缓存。
 
->也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
+> 也可以透明地 [更新](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-put) 或 [淘汰](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#cache-annotations-evict) 来自缓存的数据。
 
 #### 4.12.1. 支持的缓存提供程序
 
@@ -4946,19 +4946,19 @@ public class MathService {
 
 如果尚未定义类型为 `CacheManager` 或名为 `CacheResolver` 的 `CacheResolver` 的 Bean（请参见 [`CachingConfigurer`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/cache/annotation/CachingConfigurer.html)），Spring Boot 会尝试检测以下提供程序（按指示的顺序）：
 
-1.[Generic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-generic)
-2.[JCache (JSR-107)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-jcache) (EhCache 3, Hazelcast, Infinispan, and others)
-3.[EhCache 2.x](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-ehcache2)
-4.[Hazelcast](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
-5.[Infinispan](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-infinispan)
-6.[Couchbase](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-couchbase)
-7.[Redis](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-redis)
-8.[Caffeine](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-caffeine)
-9.[Simple](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple)
+1. [Generic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-generic)
+2. [JCache (JSR-107)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-jcache) (EhCache 3, Hazelcast, Infinispan, and others)
+3. [EhCache 2.x](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-ehcache2)
+4. [Hazelcast](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)
+5. [Infinispan](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-infinispan)
+6. [Couchbase](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-couchbase)
+7. [Redis](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-redis)
+8. [Caffeine](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-caffeine)
+9. [Simple](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-simple)
 
->也可以通过设置 `spring.cache.type` 属性来强制特定的缓存提供程序。在某些环境中（例如测试环境），如果您需要 [完全禁用缓存](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-none)，请使用此属性。
+> 也可以通过设置 `spring.cache.type` 属性来强制特定的缓存提供程序。在某些环境中（例如测试环境），如果您需要 [完全禁用缓存](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-caching-provider-none)，请使用此属性。
 
->使用 `spring-boot-starter-cache` “Starter”快速添加基本的缓存依赖项。该启动器引入了 `spring-context-support`。如果手动添加依赖项，则必须包含 `spring-context-support` 才能使用 JCache，EhCache 2.x 或 Caffeine 支持。
+> 使用 `spring-boot-starter-cache` “Starter”快速添加基本的缓存依赖项。该启动器引入了 `spring-context-support`。如果手动添加依赖项，则必须包含 `spring-context-support` 才能使用 JCache，EhCache 2.x 或 Caffeine 支持。
 
 如果 `CacheManager` 是由 Spring Boot 自动配置的，则可以通过暴露一个实现 `CacheManagerCustomizer` 接口的 bean，在完全初始化之前进一步调整其配置。下面的示例设置一个标志，表示应将 `null` 值向下传递给基础映射：
 
@@ -4974,7 +4974,7 @@ public CacheManagerCustomizer<ConcurrentMapCacheManager> cacheManagerCustomizer(
 }
 ```
 
->在前面的示例中，应该使用自动配置的 `ConcurrentMapCacheManager`。如果不是这种情况（您提供了自己的配置，或者自动配置了其他缓存提供程序），则根本不会调用定制程序。您可以根据需要设置任意数量的定制器，也可以使用 `@Order` 或 `Ordered` 对其进行排序。
+> 在前面的示例中，应该使用自动配置的 `ConcurrentMapCacheManager`。如果不是这种情况（您提供了自己的配置，或者自动配置了其他缓存提供程序），则根本不会调用定制程序。您可以根据需要设置任意数量的定制器，也可以使用 `@Order` 或 `Ordered` 对其进行排序。
 
 ##### 通用缓存
 
@@ -4992,17 +4992,17 @@ spring.cache.jcache.provider=com.acme.MyCachingProvider
 spring.cache.jcache.config=classpath:acme.xml
 ```
 
->当缓存库同时提供本机实现和 JSR-107 支持时，Spring Boot 会首选 JSR-107 支持，因此如果您切换到其他 JSR-107 实现，则可以使用相同的功能。
+> 当缓存库同时提供本机实现和 JSR-107 支持时，Spring Boot 会首选 JSR-107 支持，因此如果您切换到其他 JSR-107 实现，则可以使用相同的功能。
 
->Spring Boot 具有 [Hazelcast的一般支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果单个 `HazelcastInstance` 可用，则除非指定了 `spring.cache.jcache.config` 属性，否则它也会自动被 `CacheManager` 重用。
+> Spring Boot 具有 [Hazelcast的一般支持](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-hazelcast)。如果单个 `HazelcastInstance` 可用，则除非指定了 `spring.cache.jcache.config` 属性，否则它也会自动被 `CacheManager` 重用。
 
 有两种方法可以自定义基础的 `javax.cache.cacheManager`：
 
--可以在启动时通过设置 `spring.cache.cache-names` 属性来创建缓存。如果定义了自定义的 `javax.cache.configuration.Configuration` bean，则用于自定义它们。
+- 可以在启动时通过设置 `spring.cache.cache-names` 属性来创建缓存。如果定义了自定义的 `javax.cache.configuration.Configuration` bean，则用于自定义它们。
 
--使用 `CacheManager` 的引用调用 `org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer` bean 进行完全定制。
+- 使用 `CacheManager` 的引用调用 `org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer` bean 进行完全定制。
 
->如果定义了标准的 `javax.cache.CacheManager` bean，它将自动包装在抽象期望的 `org.springframework.cache.CacheManager` 实现中。不再对其进行定制。
+> 如果定义了标准的 `javax.cache.CacheManager` bean，它将自动包装在抽象期望的 `org.springframework.cache.CacheManager` 实现中。不再对其进行定制。
 
 ##### EhCache 2.x
 
@@ -5026,7 +5026,7 @@ spring.cache.infinispan.config=infinispan.xml
 
 通过设定 `spring.cache.cache-names` 属性，缓存可以在启动期间创建。如果自定义了 `ConfigurationBuilder` bean，它就会被用于自定义缓存。
 
->Spring Boot 对 Infinispan 的支持仅限于嵌入式模式，并且非常基础。如果您需要更多选择，则应该使用官方的 Infinispan Spring Boot starter。有关更多详细信息，请参见 [Infinispan 文档](https://github.com/infinispan/infinispan-spring-boot)。
+> Spring Boot 对 Infinispan 的支持仅限于嵌入式模式，并且非常基础。如果您需要更多选择，则应该使用官方的 Infinispan Spring Boot starter。有关更多详细信息，请参见 [Infinispan 文档](https://github.com/infinispan/infinispan-spring-boot)。
 
 ##### Couchbase
 
@@ -5075,19 +5075,19 @@ spring.cache.cache-names=cache1,cache2
 spring.cache.redis.time-to-live=600000
 ```
 
->默认情况下，会自动添加 key 前缀，以便如果两个单独的缓存使用相同的 key，Redis 中也不会有相同的 key，也不会返回无效值。如果您创建自己的 `RedisCacheManager`，我们强烈建议将此设置保持启用状态。
+> 默认情况下，会自动添加 key 前缀，以便如果两个单独的缓存使用相同的 key，Redis 中也不会有相同的 key，也不会返回无效值。如果您创建自己的 `RedisCacheManager`，我们强烈建议将此设置保持启用状态。
 
->您可以通过添加自己的 `RedisCacheConfiguration` `@Bean` 来完全控制配置。如果您要自定义序列化策略，这可能会很有用。
+> 您可以通过添加自己的 `RedisCacheConfiguration` `@Bean` 来完全控制配置。如果您要自定义序列化策略，这可能会很有用。
 
 ##### Caffeine
 
 [Caffeine](https://github.com/ben-manes/caffeine) 是对 Guava 缓存的 Java 8 重写，取代了对 Guava 的支持。如果存在 Caffeine，则会自动配置 `CaffeineCacheManager`（由 `spring-boot-starter-cache` “Starter” 提供）。缓存可以在启动时通过设置 `spring.cache.cache-names` 属性来创建，并且可以通过以下方式之一自定义（按指示的顺序）：
 
-1.由 `spring.cache.caffeine.spec` 定义的缓存规范
+1. 由 `spring.cache.caffeine.spec` 定义的缓存规范
 
-2.定义了一个 `com.github.benmanes.caffeine.cache.CaffeineSpec` bean
+2. 定义了一个 `com.github.benmanes.caffeine.cache.CaffeineSpec` bean
 
-3.定义了一个 `com.github.benmanes.caffeine.cache.Caffeine` bean
+3. 定义了一个 `com.github.benmanes.caffeine.cache.Caffeine` bean
 
 例如，以下配置将创建 `cache1` 和 `cache2` 缓存，最大大小为 500，并且“生存时间”为 10 分钟。
 
@@ -5128,7 +5128,7 @@ Spring 框架为与消息系统的集成提供了丰富的支持，从通过使�
 
 当 [ActiveMQ](https://activemq.apache.org/) 在类路径上可用时，Spring Boot 也能够配置一个 `ConnectionFactory`。如果代理存在，则会自动配置（如果没有通过配置指定代理 URL）并启动一个内置代理。
 
->如果你使用 `spring-boot-starter-activemq`，连接或者内置 ActiveMQ 实例所必需的依赖就都提供好了，它们作为 Spring 集成 JMS 的基础设施存在。
+> 如果你使用 `spring-boot-starter-activemq`，连接或者内置 ActiveMQ 实例所必需的依赖就都提供好了，它们作为 Spring 集成 JMS 的基础设施存在。
 
 ActiveMQ 配置由 `spring.activemq.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
 
@@ -5151,7 +5151,7 @@ spring.activemq.pool.enabled=true
 spring.activemq.pool.max-connections=50
 ```
 
->参考 [`ActiveMQProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jms/activemq/ActiveMQProperties.java) 了解更多支持的选项。你还可以注册任意数量实现了 `ActiveMQConnectionFactoryCustomizer` 的 beans 来实现更高级的定制化。
+> 参考 [`ActiveMQProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jms/activemq/ActiveMQProperties.java) 了解更多支持的选项。你还可以注册任意数量实现了 `ActiveMQConnectionFactoryCustomizer` 的 beans 来实现更高级的定制化。
 
 默认情况下，ActiveMQ 创建一个目的地（如果尚不存在），以便根据其提供的名称解析目的地。
 
@@ -5159,7 +5159,7 @@ spring.activemq.pool.max-connections=50
 
 当 Spring Boot 检测到 [Artemis](https://activemq.apache.org/artemis/) 在类路径上可用时，它可以自动配置一个 `ConnectionFactory`。如果存在代理，则将自动启动和配置嵌入式代理（除非已明确设置 `mode` 属性）。支持的模式为 `embeded`（以明确要求使用嵌入式代理，并且如果代理在类路径上不可用，则会发生错误）和 `native`（使用 `netty` 传输协议连接到代理）。配置后者后，Spring Boot 会配置一个 `ConnectionFactory`，以默认设置连接到在本地计算机上运行的代理。
 
->如果使用 `spring-boot-starter-artemis`，则将提供连接到现有 Artemis 实例所需的依赖项，以及与 JMS 集成的 Spring 基础结构。在您的应用程序中添加 `org.apache.activemq:artemis-jms-server` 可以使您使用嵌入式模式。
+> 如果使用 `spring-boot-starter-artemis`，则将提供连接到现有 Artemis 实例所需的依赖项，以及与 JMS 集成的 Spring 基础结构。在您的应用程序中添加 `org.apache.activemq:artemis-jms-server` 可以使您使用嵌入式模式。
 
 Artemis 配置由 `spring.artemis.*` 中的外部配置属性控制。例如，您可以在 `application.properties` 中声明以下部分：
 
@@ -5222,7 +5222,7 @@ public class MyBean {
 }
 ```
 
->[`JmsMessagingTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/core/JmsMessagingTemplate.html) 能够通过类似的方式注入。如果定义了 `DestinationResolver` 或者 `MessageConverter` bean，它们就会自动联系到自动配置的 `JmsTemplate`。
+> [`JmsMessagingTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/core/JmsMessagingTemplate.html) 能够通过类似的方式注入。如果定义了 `DestinationResolver` 或者 `MessageConverter` bean，它们就会自动联系到自动配置的 `JmsTemplate`。
 
 ##### 接收消息
 
@@ -5244,7 +5244,7 @@ public class MyBean {
 }
 ```
 
->参考 [the Javadoc of `@EnableJms`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/annotation/EnableJms.html) 获取更多细节。
+> 参考 [the Javadoc of `@EnableJms`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/jms/annotation/EnableJms.html) 获取更多细节。
 
 如果您需要创建更多的 `JmsListenerContainerFactory` 实例，或者想要覆盖默认实例，Spring Boot 提供了 `DefaultJmsListenerContainerFactoryConfigurer` ，您可以使用与自动配置相同的设置来初始化 `DefaultJmsListenerContainerFactory`。
 
@@ -5306,7 +5306,7 @@ spring.rabbitmq.addresses=amqp://admin:secret@localhost
 
 如果上下文中存在一个 `ConnectionNameStrategy` bean，它将被自动用来命名由自动配置的 `ConnectionFactory` 创建的连接。参见 [`RabbitProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/amqp/RabbitProperties.java) 以获取更多受支持的选项。
 
->参考 [Understanding AMQP, the protocol used by RabbitMQ](https://spring.io/blog/2010/06/14/understanding-amqp-the-protocol-used-by-rabbitmq/) 获取更多细节。
+> 参考 [Understanding AMQP, the protocol used by RabbitMQ](https://spring.io/blog/2010/06/14/understanding-amqp-the-protocol-used-by-rabbitmq/) 获取更多细节。
 
 ##### 发送消息
 
@@ -5335,7 +5335,7 @@ public class MyBean {
 }
 ```
 
->[`RabbitMessagingTemplate`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/core/RabbitMessagingTemplate.html) 可以通过类似方式注入。如果定义了 `MessageConverter` bean，它就会自动联系到自动配置的 `AmqpTemplate`。
+> [`RabbitMessagingTemplate`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/core/RabbitMessagingTemplate.html) 可以通过类似方式注入。如果定义了 `MessageConverter` bean，它就会自动联系到自动配置的 `AmqpTemplate`。
 
 如有必要，任何定义为 bean 的 `org.springframework.amqp.core.Queue` 都会自动用于在 RabbitMQ 实例上声明相应的队列。
 
@@ -5347,4 +5347,65 @@ spring.rabbitmq.template.retry.initial-interval=2s
 ```
 
 默认是禁用重试的。你也可以通过声明 `RabbitRetryTemplateCustomizer` bean 来以编程方式自定义 `RetryTemplate` 。
+
+##### 接收消息
+
+当存在 Rabbit 基础设施时，可以使用 `@RabbitListener` 注解任何 bean 以创建侦听器端点。如果未定义 `RabbitListenerContainerFactory`，则会自动配置默认的 `SimpleRabbitListenerContainerFactory`，您可以使用 `spring.rabbitmq.listener.type` 属性切换到直接容器。如果定义了一个 `MessageConverter` 或 `MessageRecoverer` bean，它将自动与默认工厂关联。
+
+以下示例组件在 `someQueue` 队列上创建一个侦听器端点：
+
+```java
+@Component
+public class MyBean {
+
+    @RabbitListener(queues = "someQueue")
+    public void processMessage(String content) {
+        // ...
+    }
+
+}
+```
+
+> 参考 [the Javadoc of `@EnableRabbit`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/annotation/EnableRabbit.html) 获取更多细节。
+
+如果您需要创建更多的 `RabbitListenerContainerFactory` 实例，或者想要覆盖默认实例，Spring Boot 提供了 `SimpleRabbitListenerContainerFactoryConfigurer` 和 `DirectRabbitListenerContainerFactoryConfigurer`，您可以使用它们初始化具有相同设置的 `SimpleRabbitListenerContainerFactory` 和 `DirectRabbitListenerContainerFactory`  作为自动配置使用的工厂。
+
+> 选择哪种容器都没有关系。 这两个 bean 通过自动配置公开。
+
+例如，以下配置类公开了另一个使用特定 `MessageConverter` 的工厂：
+
+```java
+@Configuration(proxyBeanMethods = false)
+static class RabbitConfiguration {
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory myFactory(
+            SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+        SimpleRabbitListenerContainerFactory factory =
+                new SimpleRabbitListenerContainerFactory();
+        configurer.configure(factory, connectionFactory);
+        factory.setMessageConverter(myMessageConverter());
+        return factory;
+    }
+
+}
+```
+
+然后，您可以在任何带有 `@RabbitListener` 注解的方法中使用工厂，如下所示：
+
+```java
+@Component
+public class MyBean {
+
+    @RabbitListener(queues = "someQueue", containerFactory="myFactory")
+    public void processMessage(String content) {
+        // ...
+    }
+
+}
+```
+
+您可以启用重试以处理侦听器引发异常的情况。默认情况下，使用 `RejectAndDontRequeueRecoverer`，但是您可以定义自己的 `MessageRecoverer`。重试用尽后，如果将代理配置为这样做，则消息将被拒绝并被丢弃或路由到死信队列。默认情况下，重试是禁用的。您还可以通过声明 `RabbitRetryTemplateCustomizer` bean 来以编程方式自定义 `RetryTemplate`。
+
+> 默认情况下，如果禁用了重试，并且侦听器引发了异常，则会无限期地重试传递。您可以通过两种方式修改此行为：将 `defaultRequeueRejected` 属性设置为 `false`，以便尝试进行零次重新传递，或者抛出 `AmqpRejectAndDontRequeueException` 来指示应拒绝该消息。后者是启用重试并达到最大传递尝试次数时使用的机制。
 

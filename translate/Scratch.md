@@ -1,8 +1,8 @@
-##### Receiving a Message
+##### 接收消息
 
-When the Rabbit infrastructure is present, any bean can be annotated with `@RabbitListener` to create a listener endpoint. If no `RabbitListenerContainerFactory` has been defined, a default `SimpleRabbitListenerContainerFactory` is automatically configured and you can switch to a direct container using the `spring.rabbitmq.listener.type` property. If a `MessageConverter` or a `MessageRecoverer` bean is defined, it is automatically associated with the default factory.
+当存在 Rabbit 基础设施时，可以使用 `@RabbitListener` 注解任何 bean 以创建侦听器端点。如果未定义 `RabbitListenerContainerFactory`，则会自动配置默认的 `SimpleRabbitListenerContainerFactory`，您可以使用 `spring.rabbitmq.listener.type` 属性切换到直接容器。如果定义了一个 `MessageConverter` 或 `MessageRecoverer` bean，它将自动与默认工厂关联。
 
-The following sample component creates a listener endpoint on the `someQueue` queue:
+以下示例组件在 `someQueue` 队列上创建一个侦听器端点：
 
 ```java
 @Component
@@ -16,13 +16,13 @@ public class MyBean {
 }
 ```
 
-> See [the Javadoc of `@EnableRabbit`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/annotation/EnableRabbit.html) for more details.
+> 参考 [the Javadoc of `@EnableRabbit`](https://docs.spring.io/spring-amqp/docs/2.2.2.RELEASE/api/org/springframework/amqp/rabbit/annotation/EnableRabbit.html) 获取更多细节。
 
-If you need to create more `RabbitListenerContainerFactory` instances or if you want to override the default, Spring Boot provides a `SimpleRabbitListenerContainerFactoryConfigurer` and a `DirectRabbitListenerContainerFactoryConfigurer` that you can use to initialize a `SimpleRabbitListenerContainerFactory` and a `DirectRabbitListenerContainerFactory` with the same settings as the factories used by the auto-configuration.
+如果您需要创建更多的 `RabbitListenerContainerFactory` 实例，或者想要覆盖默认实例，Spring Boot 提供了 `SimpleRabbitListenerContainerFactoryConfigurer` 和 `DirectRabbitListenerContainerFactoryConfigurer`，您可以使用它们初始化具有相同设置的 `SimpleRabbitListenerContainerFactory` 和 `DirectRabbitListenerContainerFactory`  作为自动配置使用的工厂。
 
-> It does not matter which container type you chose. Those two beans are exposed by the auto-configuration.
+> 选择哪种容器都没有关系。 这两个 bean 通过自动配置公开。
 
-For instance, the following configuration class exposes another factory that uses a specific `MessageConverter`:
+例如，以下配置类公开了另一个使用特定 `MessageConverter` 的工厂：
 
 ```java
 @Configuration(proxyBeanMethods = false)
@@ -41,7 +41,7 @@ static class RabbitConfiguration {
 }
 ```
 
-Then you can use the factory in any `@RabbitListener`-annotated method, as follows:
+然后，您可以在任何带有 `@RabbitListener` 注解的方法中使用工厂，如下所示：
 
 ```java
 @Component
@@ -55,7 +55,7 @@ public class MyBean {
 }
 ```
 
-You can enable retries to handle situations where your listener throws an exception. By default, `RejectAndDontRequeueRecoverer` is used, but you can define a `MessageRecoverer` of your own. When retries are exhausted, the message is rejected and either dropped or routed to a dead-letter exchange if the broker is configured to do so. By default, retries are disabled. You can also customize the `RetryTemplate` programmatically by declaring a `RabbitRetryTemplateCustomizer` bean.
+您可以启用重试以处理侦听器引发异常的情况。默认情况下，使用 `RejectAndDontRequeueRecoverer`，但是您可以定义自己的 `MessageRecoverer`。重试用尽后，如果将代理配置为这样做，则消息将被拒绝并被丢弃或路由到死信队列。默认情况下，重试是禁用的。您还可以通过声明 `RabbitRetryTemplateCustomizer` bean 来以编程方式自定义 `RetryTemplate`。
 
-> By default, if retries are disabled and the listener throws an exception, the delivery is retried indefinitely. You can modify this behavior in two ways: Set the `defaultRequeueRejected` property to `false` so that zero re-deliveries are attempted or throw an `AmqpRejectAndDontRequeueException` to signal the message should be rejected. The latter is the mechanism used when retries are enabled and the maximum number of delivery attempts is reached.
+> 默认情况下，如果禁用了重试，并且侦听器引发了异常，则会无限期地重试传递。您可以通过两种方式修改此行为：将 `defaultRequeueRejected` 属性设置为 `false`，以便尝试进行零次重新传递，或者抛出 `AmqpRejectAndDontRequeueException` 来指示应拒绝该消息。后者是启用重试并达到最大传递尝试次数时使用的机制。
 
