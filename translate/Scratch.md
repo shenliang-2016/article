@@ -1,21 +1,21 @@
-#### 4.13.3. Apache Kafka Support
+#### 4.13.3. Apache Kafka 支持
 
-[Apache Kafka](https://kafka.apache.org/) is supported by providing auto-configuration of the `spring-kafka` project.
+[Apache Kafka](https://kafka.apache.org/) 通过提供 `spring-kafka` 项目的自动配置而被支持。
 
-Kafka configuration is controlled by external configuration properties in `spring.kafka.*`. For example, you might declare the following section in `application.properties`:
+Kafka 配置由 `spring.kafka.*` 中的外部配置属性控制。比如，你可能会在 `application.properties` 中声明下面的内容：
 
 ```properties
 spring.kafka.bootstrap-servers=localhost:9092
 spring.kafka.consumer.group-id=myGroup
 ```
 
-> To create a topic on startup, add a bean of type `NewTopic`. If the topic already exists, the bean is ignored.
+> 想要在启动时创建主题，请添加一个 `NewTopic` 类型的 bean。如果该主题已经存在，该 bean 就会被忽略。
 
-See [`KafkaProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/kafka/KafkaProperties.java) for more supported options.
+参考 [`KafkaProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/kafka/KafkaProperties.java) 了解更多支持的选项。
 
-##### Sending a Message
+##### 发送消息
 
-Spring’s `KafkaTemplate` is auto-configured, and you can autowire it directly in your own beans, as shown in the following example:
+Spring 的 `KafkaTemplate` 自动配置，你可以直接将其注入自己的 beans 中，如下面例子所示：
 
 ```java
 @Component
@@ -33,13 +33,13 @@ public class MyBean {
 }
 ```
 
-> If the property `spring.kafka.producer.transaction-id-prefix` is defined, a `KafkaTransactionManager` is automatically configured. Also, if a `RecordMessageConverter` bean is defined, it is automatically associated to the auto-configured `KafkaTemplate`.
+> 如果定义了 `spring.kafka.producer.transaction-id-prefix` 属性， `KafkaTransactionManager` 就会被自动配置。同时，如果定义了 `RecordMessageConverter` bean，它就会自动关联到自动配置好的 `KafkaTemplate`。
 
-##### Receiving a Message
+##### 接收消息
 
-When the Apache Kafka infrastructure is present, any bean can be annotated with `@KafkaListener` to create a listener endpoint. If no `KafkaListenerContainerFactory` has been defined, a default one is automatically configured with keys defined in `spring.kafka.listener.*`.
+存在 Apache Kafka 基础结构时，可以使用 `@KafkaListener` 注解任何 bean，以创建侦听器端点。如果未定义 `KafkaListenerContainerFactory`，则会使用 `spring.kafka.listener.*` 中定义的键自动配置默认值。
 
-The following component creates a listener endpoint on the `someTopic` topic:
+以下组件在 `someTopic` 主题上创建侦听器端点：
 
 ```java
 @Component
@@ -53,8 +53,9 @@ public class MyBean {
 }
 ```
 
-If a `KafkaTransactionManager` bean is defined, it is automatically associated to the container factory. Similarly, if a `ErrorHandler`, `AfterRollbackProcessor` or `ConsumerAwareRebalanceListener` bean is defined, it is automatically associated to the default factory.
+如果定义了 `KafkaTransactionManager` bean，它将自动与容器工厂关联。类似地，如果定义了 `ErrorHandler`，`AfterRollbackProcessor` 或 `ConsumerAwareRebalanceListener` bean，它将自动与默认工厂关联。
 
-Depending on the listener type, a `RecordMessageConverter` or `BatchMessageConverter` bean is associated to the default factory. If only a `RecordMessageConverter` bean is present for a batch listener, it is wrapped in a `BatchMessageConverter`.
+根据侦听器的类型，`RecordMessageConverter` 或 `BatchMessageConverter` Bean与默认工厂关联。如果批处理侦听器仅存在一个 `RecordMessageConverter` Bean，则将其包装在 `BatchMessageConverter` 中。
 
-> A custom `ChainedKafkaTransactionManager` must be marked `@Primary` as it usually references the auto-configured `KafkaTransactionManager` bean.
+> 自定义的 `ChainedKafkaTransactionManager` 必须标记为 `@Primary`，因为它通常引用自动配置的 `KafkaTransactionManager` bean。
+
