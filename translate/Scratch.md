@@ -1,10 +1,10 @@
-##### Testing with Embedded Kafka
+##### 使用嵌入式 Kafka 进行测试
 
-Spring for Apache Kafka provides a convenient way to test projects with an embedded Apache Kafka broker. To use this feature, annotate a test class with `@EmbeddedKafka` from the `spring-kafka-test` module. For more information, please see the Spring for Apache Kafka [reference manual](https://docs.spring.io/spring-kafka/docs/current/reference/html/#embedded-kafka-annotation).
+Spring 为 Apache Kafka 提供了一种使用嵌入式 Apache Kafka 代理测试项目的便捷方法。要使用此功能，请用 `spring-kafka-test` 模块的 `@EmbeddedKafka` 注解测试类。有关更多信息，请参见 [Spring for Apache Kafka 参考手册](https://docs.spring.io/spring-kafka/docs/current/reference/html/#embedded-kafka-annotation)。
 
-To make Spring Boot auto-configuration work with the aforementioned embedded Apache Kafka broker, you need to remap a system property for embedded broker addresses (populated by the `EmbeddedKafkaBroker`) into the Spring Boot configuration property for Apache Kafka. There are several ways to do that:
+要使 Spring Boot 自动配置与上述嵌入式 Apache Kafka 代理一起使用，您需要将嵌入式代理地址（由 `EmbeddedKafkaBroker` 填充）的系统属性重新映射到 Apache Kafka 的 Spring Boot 配置属性中。有几种方法可以做到这一点：
 
-- Provide a system property to map embedded broker addresses into `spring.kafka.bootstrap-servers` in the test class:
+- 提供一个系统属性，以将嵌入式代理地址映射到测试类中的 `spring.kafka.bootstrap-servers` 中：
 
 ```java
 static {
@@ -12,14 +12,14 @@ static {
 }
 ```
 
-- Configure a property name on the `@EmbeddedKafka` annotation:
+- 在 `@EmbeddedKafka` 注解上配置属性名称：
 
 ```java
 @EmbeddedKafka(topics = "someTopic",
         bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 ```
 
-- Use a placeholder in configuration properties:
+- 在配置属性中使用占位符：
 
 ```properties
 spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}
