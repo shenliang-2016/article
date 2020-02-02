@@ -1,36 +1,25 @@
-#### 4.14.1. RestTemplate 定制
+### 4.15. 使用 `WebClient` 调用 REST 服务
 
-可以通过三种方法定制 `RestTemplate` ，采用哪种方法取决于你想在何种范围上定制。
+如果您的类路径中包含 Spring WebFlux，则还可以选择使用 `WebClient` 来调用远程 REST 服务。与 `RestTemplate` 相比，此客户端具有更多的功能感，并且具有完全的反应性。您可以在 Spring Framework 文档的 [专用部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/web-reactive.html#webflux-client) 中了解有关 WebClient 的更多信息。
 
-为了使任何自定义的范围尽可能狭窄，请注入自动配置的 `RestTemplateBuilder`，然后根据需要调用其方法。每个方法调用都会返回一个新的 `RestTemplateBuilder` 实例，因此自定义设置仅会影响构建器的使用。
+Spring Boot 为您创建并预配置了 `WebClient.Builder`。强烈建议将其注入您的组件中，并使用它来创建 `WebClient` 实例。Spring Boot 配置该构建器以共享 HTTP 资源，以与服务器相同的方式反映编解码器的设置（请参阅 [WebFlux HTTP编解码器自动配置](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-webflux-httpcodecs)）等。
 
-要进行整个应用程序的附加定制，请使用 `RestTemplateCustomizer` bean。所有这些 bean 都会自动注册到自动配置的 `RestTemplateBuilder` 中，并应用于使用它构建的任何模板。
-
-以下示例显示了一个定制器，该定制器为除 `192.168.0.5` 之外的所有主机配置代理的使用：
+下面的代码展示了典型的示例：
 
 ```java
-static class ProxyCustomizer implements RestTemplateCustomizer {
+@Service
+public class MyService {
 
-    @Override
-    public void customize(RestTemplate restTemplate) {
-        HttpHost proxy = new HttpHost("proxy.example.com");
-        HttpClient httpClient = HttpClientBuilder.create().setRoutePlanner(new DefaultProxyRoutePlanner(proxy) {
+    private final WebClient webClient;
 
-            @Override
-            public HttpHost determineProxy(HttpHost target, HttpRequest request, HttpContext context)
-                    throws HttpException {
-                if (target.getHostName().equals("192.168.0.5")) {
-                    return null;
-                }
-                return super.determineProxy(target, request, context);
-            }
+    public MyService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://example.org").build();
+    }
 
-        }).build();
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+    public Mono<Details> someRestCall(String name) {
+        return this.webClient.get().uri("/{name}/details", name)
+                        .retrieve().bodyToMono(Details.class);
     }
 
 }
 ```
-
-最后，最极端（很少使用）的选项是创建自己的 `RestTemplateBuilder` bean。这样做会关闭 `RestTemplateBuilder` 的自动配置，并阻止使用任何 `RestTemplateCustomizer` bean。
-
