@@ -1,27 +1,25 @@
-##### 使用嵌入式 Kafka 进行测试
+### 4.14. 使用 `RestTemplate` 调用 REST 服务 
 
-Spring 为 Apache Kafka 提供了一种使用嵌入式 Apache Kafka 代理测试项目的便捷方法。要使用此功能，请用 `spring-kafka-test` 模块的 `@EmbeddedKafka` 注解测试类。有关更多信息，请参见 [Spring for Apache Kafka 参考手册](https://docs.spring.io/spring-kafka/docs/current/reference/html/#embedded-kafka-annotation)。
+如果你的应用需要调用远程 REST 服务，你可以使用 Spring 框架的 [`RestTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/web/client/RestTemplate.html) 类。由于 [`RestTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/web/client/RestTemplate.html) 在使用之前通常都需要进行定制，Spring Boot 不提供任何单独自动配置的 [`RestTemplate`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/javadoc-api/org/springframework/web/client/RestTemplate.html) bean。不过，它提供了一个自动配置好的 `RestTemplateBuilder` ，它可以被用来在需要的时候创建 `RestTemplate` 实例。自动配置的 `RestTemplateBuilder` 保证了合适的 `HttpMessageConverters` 被应用于 `RestTemplate` 实例。
 
-要使 Spring Boot 自动配置与上述嵌入式 Apache Kafka 代理一起使用，您需要将嵌入式代理地址（由 `EmbeddedKafkaBroker` 填充）的系统属性重新映射到 Apache Kafka 的 Spring Boot 配置属性中。有几种方法可以做到这一点：
-
-- 提供一个系统属性，以将嵌入式代理地址映射到测试类中的 `spring.kafka.bootstrap-servers` 中：
+下面的代码是个典型的示例：
 
 ```java
-static {
-    System.setProperty(EmbeddedKafkaBroker.BROKER_LIST_PROPERTY, "spring.kafka.bootstrap-servers");
+@Service
+public class MyService {
+
+    private final RestTemplate restTemplate;
+
+    public MyService(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder.build();
+    }
+
+    public Details someRestCall(String name) {
+        return this.restTemplate.getForObject("/{name}/details", Details.class, name);
+    }
+
 }
 ```
 
-- 在 `@EmbeddedKafka` 注解上配置属性名称：
-
-```java
-@EmbeddedKafka(topics = "someTopic",
-        bootstrapServersProperty = "spring.kafka.bootstrap-servers")
-```
-
-- 在配置属性中使用占位符：
-
-```properties
-spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}
-```
+> `RestTemplateBuilder` 包含大量有用的方法，可以用来快速配置 `RestTemplate` 实例。比如，要添加 BASIC 身份认证支持，你可以使用 `builder.basicAuthentication("user", "password").build()`。
 
