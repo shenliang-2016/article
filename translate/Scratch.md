@@ -1,18 +1,24 @@
-### 4.16. 验证
+### 4.17. 发送邮件
 
-只要 JSR-303 实现（例如 Hibernate 验证器）位于类路径上，就会自动启用 Bean 验证 1.1 支持的方法验证功能。这样就可以在 bean 方法的参数和/或返回值上使用 `javax.validation` 约束对它们进行注解。具有此类注解方法的目标类需要在类型级别使用 `@Validated` 注解进行修饰，以便在其方法中搜索内联约束注解。
+Spring 框架通过使用 `JavaMailSender` 接口提供了用于发送电子邮件的简单抽象，Spring Boot 为它提供了自动配置以及启动程序模块。
 
-例如，以下服务触发第一个参数的验证，确保其大小在 8 到 10 之间：
+> 参考 [reference documentation](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#mail) 了解 `JavaMailSender` 使用方法的详细介绍。
 
-```java
-@Service
-@Validated
-public class MyBean {
+如果有 `spring.mail.host` 和相关的库（由 `spring-boot-starter-mail` 定义）可用，则如果不存在默认的 `JavaMailSender`，则会创建该库。可以通过 `spring.mail` 命名空间中的配置项进一步定制发送者。参见 [`MailProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/mail/MailProperties.java) 以获取更多详细信息。
 
-    public Archive findByCodeAndAuthor(@Size(min = 8, max = 10) String code,
-            Author author) {
-        ...
-    }
+特别是，某些默认超时值是无限的，您可能需要更改该值，以避免线程被无响应的邮件服务器阻止，如以下示例所示：
 
-}
+```properties
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=3000
+spring.mail.properties.mail.smtp.writetimeout=5000
 ```
+
+也可以使用来自 JNDI 的现有 `Session` 来配置 `JavaMailSender`：
+
+```properties
+spring.mail.jndi-name=mail/Session
+```
+
+设置 `jndi-name` 时，它优先于所有其他与 `Session` 相关的设置。
+
