@@ -5583,7 +5583,7 @@ public class MyService {
 }
 ```
 
-> `RestTemplateBuilder` 包含大量有用的方法，可以用来快速配置 `RestTemplate` 实例。比如，要添加 BASIC 身份认证支持，你可以使用 `builder.basicAuthentication("user", "password").build()`。
+>`RestTemplateBuilder` 包含大量有用的方法，可以用来快速配置 `RestTemplate` 实例。比如，要添加 BASIC 身份认证支持，你可以使用 `builder.basicAuthentication("user", "password").build()`。
 
 #### 4.14.1. RestTemplate 定制
 
@@ -5692,7 +5692,7 @@ public class MyBean {
 
 Spring 框架通过使用 `JavaMailSender` 接口提供了用于发送电子邮件的简单抽象，Spring Boot 为它提供了自动配置以及启动程序模块。
 
-> 参考 [reference documentation](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#mail) 了解 `JavaMailSender` 使用方法的详细介绍。
+>参考 [reference documentation](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/integration.html#mail) 了解 `JavaMailSender` 使用方法的详细介绍。
 
 如果有 `spring.mail.host` 和相关的库（由 `spring-boot-starter-mail` 定义）可用，则如果不存在默认的 `JavaMailSender`，则会创建该库。可以通过 `spring.mail` 命名空间中的配置项进一步定制发送者。参见 [`MailProperties`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/mail/MailProperties.java) 以获取更多详细信息。
 
@@ -5717,4 +5717,12 @@ spring.mail.jndi-name=mail/Session
 Spring Boot 通过使用 [Atomikos](https://www.atomikos.com/) 或 [Bitronix](https://github.com/bitronix/btm) 嵌入式事务管理器，支持跨多个 XA 资源的分布式 JTA 事务。部署到合适的 Java EE 应用程序服务器时，还支持 JTA 事务。
 
 检测到 JTA 环境后，将使用 Spring 的 `JtaTransactionManager` 来管理事务。自动配置的 JMS，DataSource 和 JPA Bean 已升级为支持 XA 事务。您可以使用标准的 Spring 习语（例如 `@Transactional`）来参与分布式事务。如果您在 JTA 环境中，但仍要使用本地事务，则可以将 `spring.jta.enabled` 属性设置为 `false`，以禁用 JTA 自动配置。
+
+#### 4.18.1. 使用 Atomikos 事务管理器
+
+[Atomikos](https://www.atomikos.com/) 是一种流行的开源事务管理器，可以嵌入到您的 Spring Boot 应用程序中。您可以使用 `spring-boot-starter-jta-atomikos` 启动器引入相应的 Atomikos 库。Spring Boot 自动配置 Atomikos，并确保将适当的 `depends-on` 设置应用于您的 Spring bean，以保证正确的启动和关闭顺序。
+
+默认情况下，Atomikos 事务日志将写入应用程序主目录（应用程序 jar 文件所在的目录）中的 `transaction-logs` 目录。您可以通过在 `application.properties` 文件中设置一个 `spring.jta.log-dir` 属性来定制该目录的位置。以 `spring.jta.atomikos.properties` 开头的属性也可以用于自定义 Atomikos 的 `UserTransactionServiceImp`。请参阅 [`AtomikosProperties` Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/jta/atomikos/AtomikosProperties.html) 了解更多细节。
+
+>为了确保多个事务管理器可以安全地协调同一资源管理器，必须为每个 Atomikos 实例配置一个唯一的 ID。默认情况下，此 ID 是运行 Atomikos 的计算机的 IP 地址。为了确保生产中的唯一性，应为应用程序的每个实例将 `spring.jta.transaction-manager-id` 属性配置为不同的值。
 
