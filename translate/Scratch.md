@@ -21,3 +21,4 @@ spring.hazelcast.config=classpath:config/my-hazelcast.xml
 * 工作目录中或类路径根目录中的 `hazelcast-client.yaml`。
 
 > Spring Boot 还具有 [对 Hazelcast 的显式缓存支持](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)。 如果启用了缓存，则 `HazelcastInstance` 将自动包装在 `CacheManager` 实现中。
+
