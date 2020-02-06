@@ -1,30 +1,23 @@
-#### 4.18.4. 混合 XA 和非 XA JMS 连接
+### 4.19. Hazelcast
+如果 [Hazelcast](https://hazelcast.com/) 位于类路径上，并且找到了合适的配置，则 Spring Boot 会自动配置一个 `HazelcastInstance`，您可以将其注入应用程序中。
 
-当使用 JTA 时，主要的 JMS `ConnectionFactory` bean 是 XA 感知的，并参与分布式事务。在某些情况下，您可能想通过使用非 XA `ConnectionFactory` 处理某些 JMS 消息。例如，您的 JMS 处理逻辑可能需要比 XA 超时更长的时间。
+如果定义 `com.hazelcast.config.Config` bean，Spring Boot 会使用它。如果您的配置定义了一个实例名称，Spring Boot 会尝试查找现有实例，而不是创建一个新实例。
 
-如果要使用非 XA 的 `ConnectionFactory`，则可以注入 `nonXaJmsConnectionFactory` bean 而不是 `@Primary` `jmsConnectionFactory` bean。为了保持一致性，还使用 bean 别名 `xaJmsConnectionFactory` 提供了 `jmsConnectionFactory` bean。
+您还可以指定通过配置使用的 Hazelcast 配置文件，如以下示例所示：
+````
+spring.hazelcast.config=classpath:config/my-hazelcast.xml
+````
+否则，Spring Boot 会尝试从默认位置查找 Hazelcast 配置：工作目录中或类路径根目录中的 `hazelcast.xml`，或相同位置中的 `.yaml` 副本。我们还将检查 `hazelcast.config` 系统属性是否已设置。有关更多详细信息，请参见 [Hazelcast文档](https://docs.hazelcast.org/docs/latest/manual/html-single/)。
 
-以下示例显示了如何注入 `ConnectionFactory` 实例：
+如果在类路径中存在 `hazelcast-client`，Spring Boot 首先尝试通过检查以下配置选项来创建客户端：
+* `com.hazelcast.client.config.ClientConfig` bean的存在。
 
-```java
-// Inject the primary (XA aware) ConnectionFactory
-@Autowired
-private ConnectionFactory defaultConnectionFactory;
+* 由 `spring.hazelcast.config` 属性定义的配置文件。
 
-// Inject the XA aware ConnectionFactory (uses the alias and injects the same as above)
-@Autowired
-@Qualifier("xaJmsConnectionFactory")
-private ConnectionFactory xaConnectionFactory;
+* `hazelcast.client.config` 系统属性的存在。
 
-// Inject the non-XA aware ConnectionFactory
-@Autowired
-@Qualifier("nonXaJmsConnectionFactory")
-private ConnectionFactory nonXaConnectionFactory;
-```
+* 工作目录中或类路径根目录中的 `hazelcast-client.xml`。
 
-#### 4.18.5. 支持替代嵌入式事务管理器
+* 工作目录中或类路径根目录中的 `hazelcast-client.yaml`。
 
-[`XAConnectionFactoryWrapper`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/jms/XAConnectionFactoryWrapper.java) 和 [`XADataSourceWrapper`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/jdbc/XADataSourceWrapper.java) 接口可用于支持其他嵌入式事务管理器。这些接口负责包装 `XAConnectionFactory` 和 `XADataSource` bean，并将它们作为常规的 `ConnectionFactory` 和 `DataSource` bean公开，它们透明地注册在分布式事务中。数据源和 JMS 自动配置使用 JTA 变体，前提是您具有 `JtaTransactionManager` bean 和在 `ApplicationContext` 中注册的适当 XA 包装 bean。
-
-[BitronixXAConnectionFactoryWrapper](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/jta/bitronix/BitronixXAConnectionFactoryWrapper.java) 和 [BitronixXADataSourceWrapper](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/jta/bitronix/BitronixXADataSourceWrapper.java) 提供了有关如何编写 XA 包装器的良好示例。
-
+> Spring Boot 还具有 [对 Hazelcast 的显式缓存支持](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)。 如果启用了缓存，则 `HazelcastInstance` 将自动包装在 `CacheManager` 实现中。
