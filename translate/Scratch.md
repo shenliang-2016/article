@@ -1,14 +1,10 @@
-#### 4.25.1. 测试范围依赖
+#### 4.25.2. 测试 Spring 应用
 
-`spring-boot-starter-test` “Starter” (处于 `test` `scope` 中) 提供了下列类库：
+依赖注入的主要优点之一是，它应该使您的代码更易于进行单元测试。您可以使用 `new` 运算符实例化对象，甚至不需要使用 Spring。您也可以使用 *mock objects* 代替真正的依赖。
 
-- [JUnit 5](https://junit.org/junit5)（包括用于与 JUnit 4 向后兼容的老式引擎）：用于 Java 应用程序单元测试的事实上的标准。
-- [Spring Test](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#integration-testing) & Spring Boot Test: 对 Spring Boot 应用程序的实用程序和集成测试支持。
-- [AssertJ](https://joel-costigliola.github.io/assertj/): 流利的断言库。
-- [Hamcrest](https://github.com/hamcrest/JavaHamcrest): 匹配器对象（也称为约束或谓词）库。
-- [Mockito](https://mockito.github.io/): Java 模拟框架。
-- [JSONassert](https://github.com/skyscreamer/JSONassert): JSON 的断言库。
-- [JsonPath](https://github.com/jayway/JsonPath): JSON 的 XPath。
+通常，您需要超越单元测试并开始集成测试（使用 Spring `ApplicationContext`）。能够进行集成测试而无需部署应用程序或连接到其他基础结构是很有用的。
 
-通常，我们发现这些通用库在编写测试时很有用。如果这些库不满足您的需求，则可以添加自己的其他测试依赖项。
+Spring 框架包括用于此类集成测试的专用测试模块。您可以直接向 `org.springframework:spring-test` 声明一个依赖项，也可以使用 `spring-boot-starter-test` “Starter”将其引入。
+
+如果您以前没有使用过 `spring-test` 模块，则应先阅读 [相关部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testing) 。
 
