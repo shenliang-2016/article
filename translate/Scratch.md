@@ -1,20 +1,21 @@
-#### 4.25.3. Testing Spring Boot Applications
+#### 4.25.3. 测试 Spring Boot 应用
 
-A Spring Boot application is a Spring `ApplicationContext`, so nothing very special has to be done to test it beyond what you would normally do with a vanilla Spring context.
+一个 Spring Boot 应用就是一个 Spring `ApplicationContext`，因此，相比于传统的 Spring context 的测试，测试 Spring Boot 应用时，你不需要做任何特殊的额外操作。
 
-> External properties, logging, and other features of Spring Boot are installed in the context by default only if you use `SpringApplication` to create it.
+> 默认情况下，仅当使用 `SpringApplication` 创建 Spring Boot 的外部属性，日志记录和其他功能时，才将其安装在上下文中。
 
-Spring Boot provides a `@SpringBootTest` annotation, which can be used as an alternative to the standard `spring-test` `@ContextConfiguration` annotation when you need Spring Boot features. The annotation works by [creating the `ApplicationContext` used in your tests through `SpringApplication`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-detecting-config). In addition to `@SpringBootTest` a number of other annotations are also provided for [testing more specific slices](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) of an application.
+Spring Boot 提供了一个 `@SpringBootTest` 注解，当你需要使用 Spring Boot 特性时，该注解可以替代标准的 `spring-test` `@ContextConfiguration` 注解用于测试。该注解通过 [creating the `ApplicationContext` used in your tests through `SpringApplication`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-detecting-config) 工作。除了 `@SpringBootTest` 之外，还提供了许多其他注解来 [测试更具体的切片](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) 。
 
-> If you are using JUnit 4, don’t forget to also add `@RunWith(SpringRunner.class)` to your test, otherwise the annotations will be ignored. If you are using JUnit 5, there’s no need to add the equivalent `@ExtendWith(SpringExtension.class)` as `@SpringBootTest` and the other `@…Test` annotations are already annotated with it.
+> 如果您使用的是 JUnit 4，请不要忘记在测试中也添加 `@RunWith(SpringRunner.class)`，否则注解将被忽略。如果您使用的是 JUnit 5，则无需在 `@SpringBootTest` 中添加等效的 `@ExtendWith(SpringExtension.class)` 和其他 `@…Test` 注解。
 
-By default, `@SpringBootTest` will not start a server. You can use the `webEnvironment` attribute of `@SpringBootTest` to further refine how your tests run:
+默认情况下，`@SpringBootTest` 将不会启动服务器。您可以使用 `@SpringBootTest` 的 `webEnvironment` 属性来进一步完善测试的运行方式：
 
-- `MOCK`(Default) : Loads a web `ApplicationContext` and provides a mock web environment. Embedded servers are not started when using this annotation. If a web environment is not available on your classpath, this mode transparently falls back to creating a regular non-web `ApplicationContext`. It can be used in conjunction with [`@AutoConfigureMockMvc` or `@AutoConfigureWebTestClient`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-mock-environment) for mock-based testing of your web application.
-- `RANDOM_PORT`: Loads a `WebServerApplicationContext` and provides a real web environment. Embedded servers are started and listen on a random port.
-- `DEFINED_PORT`: Loads a `WebServerApplicationContext` and provides a real web environment. Embedded servers are started and listen on a defined port (from your `application.properties`) or on the default port of `8080`.
-- `NONE`: Loads an `ApplicationContext` by using `SpringApplication` but does not provide *any* web environment (mock or otherwise).
+- `MOCK`(默认) : 加载 Web `ApplicationContext` 并提供模拟 Web 环境。使用此注解时，不会启动嵌入式服务器。如果您的类路径中没有 Web 环境，则此模式将透明地降级到创建常规的非 Web `ApplicationContext`。它可以与 [`@AutoConfigureMockMvc` 或 `@AutoConfigureWebTestClient`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-mock-environment)结合使用，用于对 Web 应用程序进行基于模拟的测试。
+- `RANDOM_PORT`: 加载一个 `WebServerApplicationContext` 并提供一个真实的 Web 环境。嵌入式服务器将启动并在随机端口上侦听。
+- `DEFINED_PORT`: 加载一个 `WebServerApplicationContext` 并提供一个真实的 Web 环境。嵌入式服务器启动并在定义的端口（来自 `application.properties` ）或默认端口 `8080` 上侦听。
+- `NONE`: 使用 `SpringApplication` 加载 `ApplicationContext`，但不提供任何 Web 环境（模拟或其他方式）。
 
-> If your test is `@Transactional`, it rolls back the transaction at the end of each test method by default. However, as using this arrangement with either `RANDOM_PORT` or `DEFINED_PORT` implicitly provides a real servlet environment, the HTTP client and server run in separate threads and, thus, in separate transactions. Any transaction initiated on the server does not roll back in this case.
+> 如果您的测试是 `@Transactional`，则默认情况下它将在每个测试方法的末尾回滚事务。但是，由于将这种安排与 `RANDOM_PORT` 或 `DEFINED_PORT` 一起使用隐式提供了一个真实的 Servlet 环境，因此 HTTP 客户端和服务器在单独的线程中运行，因此在单独的事务中运行。在这种情况下，服务器上启动的任何事务都不会回滚。
 
-> `@SpringBootTest` with `webEnvironment = WebEnvironment.RANDOM_PORT` will also start the management server on a separate random port if your application uses a different port for the management server.
+> 如果您的应用程序对管理服务器使用不同的端口，则将带有 `WebEnvironment = WebEnvironment.RANDOM_PORT` 的 `@SpringBootTest` 还将在单独的随机端口上启动管理服务器。
+
