@@ -5784,13 +5784,13 @@ spring.hazelcast.config=classpath:config/my-hazelcast.xml
 
 如果在类路径中存在 `hazelcast-client`，Spring Boot 首先尝试通过检查以下配置选项来创建客户端：
 
--`com.hazelcast.client.config.ClientConfig` bean的存在。
--由 `spring.hazelcast.config` 属性定义的配置文件。
--`hazelcast.client.config` 系统属性的存在。
--工作目录中或类路径根目录中的 `hazelcast-client.xml`。
--工作目录中或类路径根目录中的 `hazelcast-client.yaml`。
+- `com.hazelcast.client.config.ClientConfig` bean的存在。
+- 由 `spring.hazelcast.config` 属性定义的配置文件。
+- `hazelcast.client.config` 系统属性的存在。
+- 工作目录中或类路径根目录中的 `hazelcast-client.xml`。
+- 工作目录中或类路径根目录中的 `hazelcast-client.yaml`。
 
->Spring Boot 还具有 [对 Hazelcast 的显式缓存支持](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)。 如果启用了缓存，则 `HazelcastInstance` 将自动包装在 `CacheManager` 实现中。
+> Spring Boot 还具有 [对 Hazelcast 的显式缓存支持](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#boot-features-caching-provider-hazelcast)。 如果启用了缓存，则 `HazelcastInstance` 将自动包装在 `CacheManager` 实现中。
 
 ### 4.20. Quartz 调度器
 
@@ -5798,9 +5798,9 @@ Spring Boot 为使用 [Quartz Scheduler](https://www.quartz-scheduler.org/) 提�
 
 以下类型的 Bean 将自动被拾取并与 `Scheduler` 相关联：
 
--`JobDetail` ：定义特定工作。 `JobDetail` 实例可以使用 `JobBuilder` API 构建。
--`Calendar`。
--`Trigger` ：定义特定工作何时被激活。
+- `JobDetail` ：定义特定工作。 `JobDetail` 实例可以使用 `JobBuilder` API 构建。
+- `Calendar`。
+- `Trigger` ：定义特定工作何时被激活。
 
 默认情况下，使用内存中的 `JobStore`。但是，如果应用程序中有可用的 `DataSource` bean，并且如果相应地配置了 `spring.quartz.job-store-type` 属性，则可以配置基于 JDBC 的存储，如以下示例所示：
 
@@ -5814,7 +5814,7 @@ spring.quartz.job-store-type=jdbc
 spring.quartz.jdbc.initialize-schema=always
 ```
 
->默认情况下，使用 Quartz 库随附的标准脚本检测并初始化数据库。这些脚本删除现有表，并在每次重新启动时删除所有触发器。也可以通过设置 `spring.quartz.jdbc.schema` 属性来提供自定义脚本。
+> 默认情况下，使用 Quartz 库随附的标准脚本检测并初始化数据库。这些脚本删除现有表，并在每次重新启动时删除所有触发器。也可以通过设置 `spring.quartz.jdbc.schema` 属性来提供自定义脚本。
 
 为了让 Quartz 使用应用程序的主 `DataSource` 之外的 `DataSource`，声明一个 `DataSource` bean，并用 `@QuartzDataSource` 标注其 `@Bean` 方法。这样可以确保 `SchedulerFactoryBean` 和 `Schema` 初始化都使用特定于 Quartz 的 `DataSource`。
 
@@ -5822,7 +5822,7 @@ spring.quartz.jdbc.initialize-schema=always
 
 可以使用 `spring.quartz` 属性和 `SchedulerFactoryBeanCustomizer` bean来定制 Quartz Scheduler 配置，这允许以编程方式自定义 `SchedulerFactoryBean`。可以使用 `spring.quartz.properties.*` 自定义高级 Quartz 配置属性。
 
->特别是，`Executor` bean 与调度程序没有关联，因为 Quartz 通过 `spring.quartz.properties` 提供了一种配置调度程序的方法。如果您需要自定义任务执行器，请考虑实现 `SchedulerFactoryBeanCustomizer`。
+> 特别是，`Executor` bean 与调度程序没有关联，因为 Quartz 通过 `spring.quartz.properties` 提供了一种配置调度程序的方法。如果您需要自定义任务执行器，请考虑实现 `SchedulerFactoryBeanCustomizer`。
 
 作业可以定义设置器以注入数据映射属性。常规 bean 也可以类似的方式注入，如以下示例所示：
 
@@ -5852,7 +5852,7 @@ public class SampleJob extends QuartzJobBean {
 
 在上下文中没有 `Executor` bean 的情况下，Spring Boot 会自动配置具有合理默认值的 `ThreadPoolTaskExecutor`，这些默认值可以自动与异步任务执行（`@EnableAsync`）和 Spring MVC 异步请求处理相关联。
 
->如果您在上下文中定义了一个自定义的 `Executor`，则常规任务执行（即 `@ EnableAsync`）将透明地使用它，但由于需要 `AsyncTaskExecutor` 实现（名为 `applicationTaskExecutor`），因此不会配置 Spring MVC 支持。根据您的目标安排，您可以将 `Executor` 更改为 `ThreadPoolTaskExecutor` 或定义包装自定义 `Executor` 的 `ThreadPoolTaskExecutor` 和 `AsyncConfigurer` 自动配置的 `TaskExecutorBuilder` 可以轻松创建实例，复制默认情况下自动配置的功能。
+> 如果您在上下文中定义了一个自定义的 `Executor`，则常规任务执行（即 `@ EnableAsync`）将透明地使用它，但由于需要 `AsyncTaskExecutor` 实现（名为 `applicationTaskExecutor`），因此不会配置 Spring MVC 支持。根据您的目标安排，您可以将 `Executor` 更改为 `ThreadPoolTaskExecutor` 或定义包装自定义 `Executor` 的 `ThreadPoolTaskExecutor` 和 `AsyncConfigurer` 自动配置的 `TaskExecutorBuilder` 可以轻松创建实例，复制默认情况下自动配置的功能。
 
 线程池使用 8 个核心线程，这些线程可以根据负载增长和收缩。可以使用 `spring.task.execution` 名称空间对这些默认设置进行微调，如以下示例所示：
 
@@ -5882,3 +5882,32 @@ spring.integration.jdbc.initialize-schema=always
 
 默认情况下，如果存在 Micrometer `meterRegistry` bean，那么 Spring Integration 指标将由 Micrometer 管理。如果您希望使用传统的 Spring Integration 指标，请向应用程序上下文中添加一个 `DefaultMetricsFactory` bean。
 
+### 4.23. Spring Session
+
+Spring Boot 提供了 [Spring Session](https://spring.io/projects/spring-session) 使用大部分种类的数据存储技术的自动配置。当构建 Servlet web 应用时，下面的数据存储会被自动配置：
+
+- JDBC
+- Redis
+- Hazelcast
+- MongoDB
+
+当创建反应式 web 应用时，下面的数据存储能够被自动配置：
+
+- Redis
+- MongoDB
+
+如果类路径上存在单个 Spring Session 模块，则 Spring Boot 会自动使用该存储实现。如果您有多个实现，则必须选择您希望用来存储会话的 [`StoreType`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/session/StoreType.java) 。例如，要将 JDBC 用作后端存储，可以按以下方式配置应用程序：
+
+```properties
+spring.session.store-type=jdbc
+```
+
+> 你可以通过将 `store-type` 设定为 `none` 来禁用 Spring Session。
+
+每种存储都有特定的其他设置。例如，可以为 JDBC 存储定制表的名称，如以下示例所示：
+
+```properties
+spring.session.jdbc.table-name=SESSIONS
+```
+
+为了设置会话超时，您可以使用 `spring.session.timeout` 属性。如果未设置该属性，则自动配置将降级到使用 `server.servlet.session.timeout` 的值。
