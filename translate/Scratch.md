@@ -1,22 +1,14 @@
-### 4.25. 测试
+#### 4.25.1. 测试范围依赖
 
-Spring Boot 提供了许多实用程序和注解，可以在测试应用程序时提供帮助。测试支持由两个模块提供：`spring-boot-test` 包含核心项，`spring-boot-test-autoconfigure` 支持测试的自动配置。
+`spring-boot-starter-test` “Starter” (处于 `test` `scope` 中) 提供了下列类库：
 
-大多数开发人员使用 `spring-boot-starter-test` “Starter”，它会导入 Spring Boot 测试模块以及 JUnit Jupiter，AssertJ，Hamcrest 和许多其他有用的库。
+- [JUnit 5](https://junit.org/junit5)（包括用于与 JUnit 4 向后兼容的老式引擎）：用于 Java 应用程序单元测试的事实上的标准。
+- [Spring Test](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#integration-testing) & Spring Boot Test: 对 Spring Boot 应用程序的实用程序和集成测试支持。
+- [AssertJ](https://joel-costigliola.github.io/assertj/): 流利的断言库。
+- [Hamcrest](https://github.com/hamcrest/JavaHamcrest): 匹配器对象（也称为约束或谓词）库。
+- [Mockito](https://mockito.github.io/): Java 模拟框架。
+- [JSONassert](https://github.com/skyscreamer/JSONassert): JSON 的断言库。
+- [JsonPath](https://github.com/jayway/JsonPath): JSON 的 XPath。
 
-> 启动程序还带来了老式引擎，因此您可以运行 JUnit 4 和 JUnit 5 测试。如果已将测试迁移到 JUnit 5，则应排除对 JUnit 4 的支持，如以下示例所示：
->
-> ````
-> <dependency>
->     <groupId>org.springframework.boot</groupId>
->     <artifactId>spring-boot-starter-test</artifactId>
->     <scope>test</scope>
->     <exclusions>
->         <exclusion>
->             <groupId>org.junit.vintage</groupId>
->             <artifactId>junit-vintage-engine</artifactId>
->         </exclusion>
->     </exclusions>
-> </dependency>
-> ````
+通常，我们发现这些通用库在编写测试时很有用。如果这些库不满足您的需求，则可以添加自己的其他测试依赖项。
 
