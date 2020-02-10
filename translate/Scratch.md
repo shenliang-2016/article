@@ -1,46 +1,19 @@
-##### 使用模拟环境测试
+##### 使用运行服务器测试
 
-默认情况下， `@SpringBootTest` 不会启动服务器。如果你希望在模拟环境中测试你的 web 服务端点，你可以如下面例子所示配置 [`MockMvc`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference//testing.html#spring-mvc-test-framework) ：
+如果需要启动完全运行的服务器，建议您使用随机端口。如果使用 `@SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)`，则每次运行测试时都会随机选择一个可用端口。
 
-```java
-import org.junit.jupiter.api.Test;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
-@AutoConfigureMockMvc
-class MockMvcExampleTests {
-
-    @Test
-    void exampleTest(@Autowired MockMvc mvc) throws Exception {
-        mvc.perform(get("/")).andExpect(status().isOk()).andExpect(content().string("Hello World"));
-    }
-
-}
-```
-
-> 如果你希望聚焦于 web 层，并不需要启动一个完整的 `ApplicationContext`，考虑 [使用 `@WebMvcTest` 代替](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-mvc-tests)。
-
-另外，你可以配置 [`WebTestClient`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#webtestclient-tests) ，如下面例子所示：
+`@LocalServerPort` 注解可用于 [注入使用的实际端口](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-discover-the-http-port-at-runtime) 进入测试。为了方便起见，需要对启动的服务器进行 REST 调用的测试可以另外使用 `@Autowire` 一个 [`WebTestClient`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#webtestclient-tests)，它解析到正在运行的服务器的相对链接，并带有用于验证响应的专用 API，如以下示例所示：
 
 ```java
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@SpringBootTest
-@AutoConfigureWebTestClient
-class MockWebTestClientExampleTests {
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class RandomPortWebTestClientExampleTests {
 
     @Test
     void exampleTest(@Autowired WebTestClient webClient) {
@@ -50,5 +23,26 @@ class MockWebTestClientExampleTests {
 }
 ```
 
-> 在模拟环境中进行测试通常比在完整的 Servlet 容器中运行更快。但是，由于模拟是在 Spring MVC 层进行的，因此无法直接使用 MockMvc 来测试依赖于较低级别 Servlet 容器行为的代码。例如，Spring Boot 的错误处理基于 Servlet 容器提供的“错误页面”支持。这意味着，尽管您可以按预期测试 MVC 层引发和处理异常，但是您无法直接测试特定的 [自定义错误页面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling-custom-error-pages) 呈现。如果您需要测试这些较低级别的问题，则可以按照下一节中的描述启动一个完全运行的服务器。
+这种设置需要在类路径上使用 `spring-webflux`。如果您无法或不会添加 webflux，则 Spring Boot 还提供了 `TestRestTemplate` 工具：
 
+```java
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class RandomPortTestRestTemplateExampleTests {
+
+    @Test
+    void exampleTest(@Autowired TestRestTemplate restTemplate) {
+        String body = restTemplate.getForObject("/", String.class);
+        assertThat(body).isEqualTo("Hello World");
+    }
+
+}
+```
