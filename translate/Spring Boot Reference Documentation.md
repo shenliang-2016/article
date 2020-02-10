@@ -6006,11 +6006,11 @@ class MyWebFluxTests { ... }
 
 搜索算法从包含测试的程序包开始工作，直到找到带有 `@SpringBootApplication` 或 `@SpringBootConfiguration` 注解的类。只要您以明智的方式 [结构化代码](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-structuring-your-code)，通常可以找到您的主要配置。
 
->如果您使用 [测试注解来测试应用程序的特定部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) ，则应避免在 [包含 main 方法的应用类](https://docs.spring.io/spring-boot/) 上添加特定于特定区域的配置设置。`@SpringBootApplication` 的底层组件扫描配置定义了排除过滤器，这些过滤器用于确保切片效果符合预期。如果在 `@SpringBootApplication` 注解的类上使用显式的 `@ComponentScan` 指令，请注意那些过滤器将被禁用。如果使用切片，则应重新定义它们。
+> 如果您使用 [测试注解来测试应用程序的特定部分](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-tests) ，则应避免在 [包含 main 方法的应用类](https://docs.spring.io/spring-boot/) 上添加特定于特定区域的配置设置。`@SpringBootApplication` 的底层组件扫描配置定义了排除过滤器，这些过滤器用于确保切片效果符合预期。如果在 `@SpringBootApplication` 注解的类上使用显式的 `@ComponentScan` 指令，请注意那些过滤器将被禁用。如果使用切片，则应重新定义它们。
 
 如果要自定义主要配置，则可以使用嵌套的 `@TestConfiguration` 类。与将使用嵌套的 `@Configuration` 类而不是应用程序的主要配置不同的是，除了使用应用程序的主要配置之外，还使用嵌套的 `@TestConfiguration` 类。
 
->Spring 的测试框架会在测试之间缓存应用程序上下文。因此，只要您的测试共享相同的配置（无论如何发现），加载上下文的潜在耗时过程就只会发生一次。
+> Spring 的测试框架会在测试之间缓存应用程序上下文。因此，只要您的测试共享相同的配置（无论如何发现），加载上下文的潜在耗时过程就只会发生一次。
 
 ##### 排除测试配置
 
@@ -6031,7 +6031,7 @@ class MyTests {
 }
 ```
 
->如果您直接使用 `@ComponentScan`（即不是通过 `@SpringBootApplication`），则需要向其中注册 `TypeExcludeFilter`。有关详细信息，请参见 [Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/context/TypeExcludeFilter.html)。
+> 如果您直接使用 `@ComponentScan`（即不是通过 `@SpringBootApplication`），则需要向其中注册 `TypeExcludeFilter`。有关详细信息，请参见 [Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/context/TypeExcludeFilter.html)。
 
 ##### 使用应用参数
 
@@ -6049,4 +6049,58 @@ class ApplicationArgumentsExampleTests {
 
 }
 ```
+
+##### 使用模拟环境测试
+
+默认情况下， `@SpringBootTest` 不会启动服务器。如果你希望在模拟环境中测试你的 web 服务端点，你可以如下面例子所示配置 [`MockMvc`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference//testing.html#spring-mvc-test-framework) ：
+
+```java
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class MockMvcExampleTests {
+
+    @Test
+    void exampleTest(@Autowired MockMvc mvc) throws Exception {
+        mvc.perform(get("/")).andExpect(status().isOk()).andExpect(content().string("Hello World"));
+    }
+
+}
+```
+
+> 如果你希望聚焦于 web 层，并不需要启动一个完整的 `ApplicationContext`，考虑 [使用 `@WebMvcTest` 代替](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-mvc-tests)。
+
+另外，你可以配置 [`WebTestClient`](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#webtestclient-tests) ，如下面例子所示：
+
+```java
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+@SpringBootTest
+@AutoConfigureWebTestClient
+class MockWebTestClientExampleTests {
+
+    @Test
+    void exampleTest(@Autowired WebTestClient webClient) {
+        webClient.get().uri("/").exchange().expectStatus().isOk().expectBody(String.class).isEqualTo("Hello World");
+    }
+
+}
+```
+
+> 在模拟环境中进行测试通常比在完整的 Servlet 容器中运行更快。但是，由于模拟是在 Spring MVC 层进行的，因此无法直接使用 MockMvc 来测试依赖于较低级别 Servlet 容器行为的代码。例如，Spring Boot 的错误处理基于 Servlet 容器提供的“错误页面”支持。这意味着，尽管您可以按预期测试 MVC 层引发和处理异常，但是您无法直接测试特定的 [自定义错误页面](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-error-handling-custom-error-pages) 呈现。如果您需要测试这些较低级别的问题，则可以按照下一节中的描述启动一个完全运行的服务器。
 
