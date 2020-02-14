@@ -1,13 +1,62 @@
-##### 自动配置的测试
+##### 自动配置的 JSON 测试
 
-Spring Boot 的自动配置系统适用于应用程序，但有时对于测试来说可能有点过多。它通常仅有助于加载测试应用程序“切片”所需的配置部分。例如，您可能想测试 Spring MVC 控制器是否正确映射了 URL，并且不想在这些测试中涉及数据库调用，或者您想测试 JPA 实体，并且当您使用 JPA 实体时，您对 Web 层不感兴趣。
+要测试对象 JSON 序列化和反序列化是否按预期工作，可以使用 `@JsonTest` 注解。`@JsonTest` 自动配置可用的受支持的 JSON 映射器，可以是以下库之一：
 
-`spring-boot-test-autoconfigure` 模块包含许多注解，可用于自动配置此类“切片”。它们中的每一个都以类似的方式工作，提供了一个可加载 `ApplicationContext` 的 `@…Test` 注解和一个或多个可用于自定义自动配置设置的 `@AutoConfigure…` 注解。
+- Jackson `ObjectMapper`, 所有 `@JsonComponent` beans 和所有 Jackson `Module`s
+- `Gson`
+- `Jsonb`
 
-> 每个切片将组件扫描范围限制为适当的组件，并加载一组非常受限制的自动配置类。如果您需要排除其中之一，则大多数 `@…Test` 注解都提供了 `excludeAutoConfiguration` 属性。或者，您可以使用 `@ImportAutoConfiguration#exclude`。
->
+> 可以通过 `@JsonTest` 启用的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
-> 不支持在一个测试中使用多个 `@…Test` 注解来包含多个“切片”。如果需要多个“切片”，请选择一个 `@…Test` 注解，并手动添加其他“切片”的 `@AutoConfigure…` 注解。
+如果您需要配置自动配置的元素，则可以使用 `@AutoConfigureJsonTesters` 注解。
 
-> 也可以将 `@AutoConfigure…` 注解与标准的 `@SpringBootTest` 注解一起使用。如果您对“切片”应用程序不感兴趣，但需要一些自动配置的测试 bean，则可以使用此组合。
+Spring Boot 包括基于 AssertJ 的助手，这些助手与 JSONAssert 和 JsonPath 库一起使用，以检查 JSON 是否按预期方式显示。`JacksonTester`，`GsonTester`，`JsonbTester` 和 `BasicJsonTester` 类可分别用于 Jackson，Gson，Jsonb 和 Strings。使用 `@JsonTest` 时，测试类上的任何帮助程序字段都可以为 `@Autowired`。以下示例显示了 Jackson 的测试类：
 
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.boot.test.autoconfigure.json.*;
+import org.springframework.boot.test.context.*;
+import org.springframework.boot.test.json.*;
+
+import static org.assertj.core.api.Assertions.*;
+
+@JsonTest
+class MyJsonTests {
+
+    @Autowired
+    private JacksonTester<VehicleDetails> json;
+
+    @Test
+    void testSerialize() throws Exception {
+        VehicleDetails details = new VehicleDetails("Honda", "Civic");
+        // Assert against a `.json` file in the same package as the test
+        assertThat(this.json.write(details)).isEqualToJson("expected.json");
+        // Or use JSON path based assertions
+        assertThat(this.json.write(details)).hasJsonPathStringValue("@.make");
+        assertThat(this.json.write(details)).extractingJsonPathStringValue("@.make")
+                .isEqualTo("Honda");
+    }
+
+    @Test
+    void testDeserialize() throws Exception {
+        String content = "{\"make\":\"Ford\",\"model\":\"Focus\"}";
+        assertThat(this.json.parse(content))
+                .isEqualTo(new VehicleDetails("Ford", "Focus"));
+        assertThat(this.json.parseObject(content).getMake()).isEqualTo("Ford");
+    }
+
+}
+```
+
+> JSON 帮助程序类也可以直接在标准单元测试中使用。为此，如果不使用 `@JsonTest`，请在 `@Before` 方法中调用帮助程序的 `initFields` 方法。
+
+如果您使用的是 Spring Boot 基于 AssertJ 的帮助器，以给定的 JSON 路径声明数字值，则可能无法使用 `isEqualTo`，具体取决于类型。相反，您可以使用 AssertJ 的 `satisfies` 来断言该值符合给定条件。例如，以下示例断言实际数字是在 `0.01` 偏移量内接近 `0.15` 的浮点值。
+
+If you’re using Spring Boot’s AssertJ-based helpers to assert on a number value at a given JSON path, you might not be able to use `isEqualTo` depending on the type. Instead, you can use AssertJ’s `satisfies` to assert that the value matches the given condition. For instance, the following example asserts that the actual number is a float value close to `0.15` within an offset of `0.01`.
+
+```java
+assertThat(json.write(message))
+    .extractingJsonPathNumberValue("@.test.numberValue")
+    .satisfies((number) -> assertThat(number.floatValue()).isCloseTo(0.15f, within(0.01f)));
+```
