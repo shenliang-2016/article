@@ -4,13 +4,13 @@
 
 Spring Boot 包含一个 `@MockBean` 注解，可用于为 `ApplicationContext` 内部的 bean 定义一个 Mockito 模拟。您可以使用注解添加新的 bean 或替换单个现有的 bean 定义。注解可以直接用于测试类，测试中的字段或 `@Configuration` 类和字段。在字段上使用时，还将注入创建的模拟的实例。每种测试方法后，模拟 beans 都会自动重置。
 
-> If your test uses one of Spring Boot’s test annotations (such as `@SpringBootTest`), this feature is automatically enabled. To use this feature with a different arrangement, a listener must be explicitly added, as shown in the following example:
+> 如果您的测试使用 Spring Boot 的测试注解之一（例如 `@SpringBootTest` ），则会自动启用此功能。要以其他方式使用此功能，必须明确添加侦听器，如以下示例所示：
 >
 > ````java
 > @TestExecutionListeners(MockitoTestExecutionListener.class)
 > ````
 
-The following example replaces an existing `RemoteService` bean with a mock implementation:
+以下示例使用模拟实现替换了现有的 `RemoteService` bean：
 
 ```java
 import org.junit.jupiter.api.Test;
@@ -41,12 +41,13 @@ class MyTests {
 }
 ```
 
-> `@MockBean` cannot be used to mock the behavior of a bean that’s exercised during application context refresh. By the time the test is executed, the application context refresh has completed and it is too late to configure the mocked behavior. We recommend using a `@Bean` method to create and configure the mock in this situation.
+> `@MockBean` 不能用于模拟应用程序上下文刷新期间执行的 bean 的行为。到执行测试时，应用程序上下文刷新已完成，并且配置模拟行为为时已晚。我们建议在这种情况下使用 `@Bean` 方法创建和配置模拟。
 
-Additionally, you can use `@SpyBean` to wrap any existing bean with a Mockito `spy`. See the [Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/test/mock/mockito/SpyBean.html) for full details.
+另外，您可以使用 `@SpyBean` 来将任何现有的 bean 与 Mockito 的 `spy` 一起包装。有关完整的详细信息，请参见 [Javadoc](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/test/mock/mockito/SpyBean.html)。
 
-> CGLib proxies, such as those created for scoped beans, declare the proxied methods as `final`. This stops Mockito from functioning correctly as it cannot mock or spy on `final` methods in its default configuration. If you want to mock or spy on such a bean, configure Mockito to use its inline mock maker by adding `org.mockito:mockito-inline` to your application’s test dependencies. This allows Mockito to mock and spy on `final` methods.
+> CGLib 代理（例如为作用域范围内的 bean 创建的代理）将代理的方法声明为 `final`。这会阻止 Mockito 正常运行，因为它无法在其默认配置中模拟或监视 `final` 方法。如果您想对这样的 bean 进行模拟或监视，请通过在应用程序的测试依赖项中添加 `org.mockito:mockito-inline` 来将 Mockito 配置为使用其内联模拟程序。这使 Mockito 可以模拟并监视 `final` 方法。
 
-> While Spring’s test framework caches application contexts between tests and reuses a context for tests sharing the same configuration, the use of `@MockBean` or `@SpyBean` influences the cache key, which will most likely increase the number of contexts.
+> Spring 的测试框架在测试之间缓存应用程序上下文，并为共享相同配置的测试重用上下文，而 `@MockBean` 或 `@SpyBean` 的使用会影响缓存键，这很可能会增加上下文数量。
 
-> If you are using `@SpyBean` to spy on a bean with `@Cacheable` methods that refer to parameters by name, your application must be compiled with `-parameters`. This ensures that the parameter names are available to the caching infrastructure once the bean has been spied upon.
+> 如果您使用 `@SpyBean` 来监视通过名称引用参数的 `@Cacheable` 方法，则您的应用程序必须使用 `-parameters` 进行编译。这样可以确保一旦侦察到 bean，就可以将参数名称用于缓存基础结构。
+
