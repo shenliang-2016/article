@@ -51,9 +51,7 @@ class MyJsonTests {
 
 > JSON 帮助程序类也可以直接在标准单元测试中使用。为此，如果不使用 `@JsonTest`，请在 `@Before` 方法中调用帮助程序的 `initFields` 方法。
 
-如果您使用的是 Spring Boot 基于 AssertJ 的帮助器，以给定的 JSON 路径声明数字值，则可能无法使用 `isEqualTo`，具体取决于类型。相反，您可以使用 AssertJ 的 `satisfies` 来断言该值符合给定条件。例如，以下示例断言实际数字是在 `0.01` 偏移量内接近 `0.15` 的浮点值。
-
-If you’re using Spring Boot’s AssertJ-based helpers to assert on a number value at a given JSON path, you might not be able to use `isEqualTo` depending on the type. Instead, you can use AssertJ’s `satisfies` to assert that the value matches the given condition. For instance, the following example asserts that the actual number is a float value close to `0.15` within an offset of `0.01`.
+如果您使用的是 Spring Boot 基于 AssertJ 的帮助器，以给定的 JSON 路径声明数字值，则可能无法使用 `isEqualTo`，具体取决于类型。相反，您可以使用 AssertJ 的 `satisfies` 来断言该值符合给定条件。例如，以下示例断言实际数字是与 `0.15` 差距不超过 `0.01` 的浮点值。
 
 ```java
 assertThat(json.write(message))
