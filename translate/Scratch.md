@@ -1,60 +1,87 @@
-##### 自动配置的 JSON 测试
+##### Auto-configured Spring MVC Tests
 
-要测试对象 JSON 序列化和反序列化是否按预期工作，可以使用 `@JsonTest` 注解。`@JsonTest` 自动配置可用的受支持的 JSON 映射器，可以是以下库之一：
+To test whether Spring MVC controllers are working as expected, use the `@WebMvcTest` annotation. `@WebMvcTest` auto-configures the Spring MVC infrastructure and limits scanned beans to `@Controller`, `@ControllerAdvice`, `@JsonComponent`, `Converter`, `GenericConverter`, `Filter`, `HandlerInterceptor`, `WebMvcConfigurer`, and `HandlerMethodArgumentResolver`. Regular `@Component` beans are not scanned when using this annotation.
 
-- Jackson `ObjectMapper`, 所有 `@JsonComponent` beans 和所有 Jackson `Module`s
-- `Gson`
-- `Jsonb`
+> A list of the auto-configuration settings that are enabled by `@WebMvcTest` can be [found in the appendix](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration).
 
-> 可以通过 `@JsonTest` 启用的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+> If you need to register extra components, such as the Jackson `Module`, you can import additional configuration classes by using `@Import` on your test.
 
-如果您需要配置自动配置的元素，则可以使用 `@AutoConfigureJsonTesters` 注解。
+Often, `@WebMvcTest` is limited to a single controller and is used in combination with `@MockBean` to provide mock implementations for required collaborators.
 
-Spring Boot 包括基于 AssertJ 的助手，这些助手与 JSONAssert 和 JsonPath 库一起使用，以检查 JSON 是否按预期方式显示。`JacksonTester`，`GsonTester`，`JsonbTester` 和 `BasicJsonTester` 类可分别用于 Jackson，Gson，Jsonb 和 Strings。使用 `@JsonTest` 时，测试类上的任何帮助程序字段都可以为 `@Autowired`。以下示例显示了 Jackson 的测试类：
+`@WebMvcTest` also auto-configures `MockMvc`. Mock MVC offers a powerful way to quickly test MVC controllers without needing to start a full HTTP server.
+
+> You can also auto-configure `MockMvc` in a non-`@WebMvcTest` (such as `@SpringBootTest`) by annotating it with `@AutoConfigureMockMvc`. The following example uses `MockMvc`:
 
 ```java
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.*;
-import org.springframework.boot.test.autoconfigure.json.*;
-import org.springframework.boot.test.context.*;
-import org.springframework.boot.test.json.*;
+import org.springframework.boot.test.autoconfigure.web.servlet.*;
+import org.springframework.boot.test.mock.mockito.*;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@JsonTest
-class MyJsonTests {
+@WebMvcTest(UserVehicleController.class)
+class MyControllerTests {
 
     @Autowired
-    private JacksonTester<VehicleDetails> json;
+    private MockMvc mvc;
+
+    @MockBean
+    private UserVehicleService userVehicleService;
 
     @Test
-    void testSerialize() throws Exception {
-        VehicleDetails details = new VehicleDetails("Honda", "Civic");
-        // Assert against a `.json` file in the same package as the test
-        assertThat(this.json.write(details)).isEqualToJson("expected.json");
-        // Or use JSON path based assertions
-        assertThat(this.json.write(details)).hasJsonPathStringValue("@.make");
-        assertThat(this.json.write(details)).extractingJsonPathStringValue("@.make")
-                .isEqualTo("Honda");
-    }
-
-    @Test
-    void testDeserialize() throws Exception {
-        String content = "{\"make\":\"Ford\",\"model\":\"Focus\"}";
-        assertThat(this.json.parse(content))
-                .isEqualTo(new VehicleDetails("Ford", "Focus"));
-        assertThat(this.json.parseObject(content).getMake()).isEqualTo("Ford");
+    void testExample() throws Exception {
+        given(this.userVehicleService.getVehicleDetails("sboot"))
+                .willReturn(new VehicleDetails("Honda", "Civic"));
+        this.mvc.perform(get("/sboot/vehicle").accept(MediaType.TEXT_PLAIN))
+                .andExpect(status().isOk()).andExpect(content().string("Honda Civic"));
     }
 
 }
 ```
 
-> JSON 帮助程序类也可以直接在标准单元测试中使用。为此，如果不使用 `@JsonTest`，请在 `@Before` 方法中调用帮助程序的 `initFields` 方法。
+> If you need to configure elements of the auto-configuration (for example, when servlet filters should be applied) you can use attributes in the `@AutoConfigureMockMvc` annotation.
 
-如果您使用的是 Spring Boot 基于 AssertJ 的帮助器，以给定的 JSON 路径声明数字值，则可能无法使用 `isEqualTo`，具体取决于类型。相反，您可以使用 AssertJ 的 `satisfies` 来断言该值符合给定条件。例如，以下示例断言实际数字是与 `0.15` 差距不超过 `0.01` 的浮点值。
+If you use HtmlUnit or Selenium, auto-configuration also provides an HtmlUnit `WebClient` bean and/or a Selenium `WebDriver` bean. The following example uses HtmlUnit:
 
 ```java
-assertThat(json.write(message))
-    .extractingJsonPathNumberValue("@.test.numberValue")
-    .satisfies((number) -> assertThat(number.floatValue()).isCloseTo(0.15f, within(0.01f)));
+import com.gargoylesoftware.htmlunit.*;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.boot.test.autoconfigure.web.servlet.*;
+import org.springframework.boot.test.mock.mockito.*;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+@WebMvcTest(UserVehicleController.class)
+class MyHtmlUnitTests {
+
+    @Autowired
+    private WebClient webClient;
+
+    @MockBean
+    private UserVehicleService userVehicleService;
+
+    @Test
+    void testExample() throws Exception {
+        given(this.userVehicleService.getVehicleDetails("sboot"))
+                .willReturn(new VehicleDetails("Honda", "Civic"));
+        HtmlPage page = this.webClient.getPage("/sboot/vehicle.html");
+        assertThat(page.getBody().getTextContent()).isEqualTo("Honda Civic");
+    }
+
+}
 ```
+
+> By default, Spring Boot puts `WebDriver` beans in a special “scope” to ensure that the driver exits after each test and that a new instance is injected. If you do not want this behavior, you can add `@Scope("singleton")` to your `WebDriver` `@Bean` definition.
+
+> The `webDriver` scope created by Spring Boot will replace any user defined scope of the same name. If you define your own `webDriver` scope you may find it stops working when you use `@WebMvcTest`.
+
+If you have Spring Security on the classpath, `@WebMvcTest` will also scan `WebSecurityConfigurer` beans. Instead of disabling security completely for such tests, you can use Spring Security’s test support. More details on how to use Spring Security’s `MockMvc` support can be found in this *Testing With Spring Security* how-to section.
+
+> Sometimes writing Spring MVC tests is not enough; Spring Boot can help you run [full end-to-end tests with an actual server](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-running-server).
+
