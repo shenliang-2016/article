@@ -1,6 +1,6 @@
-##### Auto-configured Spring MVC Tests
+##### 自动配置的 Spring MVC 测试
 
-To test whether Spring MVC controllers are working as expected, use the `@WebMvcTest` annotation. `@WebMvcTest` auto-configures the Spring MVC infrastructure and limits scanned beans to `@Controller`, `@ControllerAdvice`, `@JsonComponent`, `Converter`, `GenericConverter`, `Filter`, `HandlerInterceptor`, `WebMvcConfigurer`, and `HandlerMethodArgumentResolver`. Regular `@Component` beans are not scanned when using this annotation.
+要测试 Spring MVC 控制器是否按预期工作，请使用 `@WebMvcTest` 注解。`@WebMvcTest` 自动配置 Spring MVC 基础结构并将扫描的 bean 限制为 `@Controller`，`@ControllerAdvice`，`@JsonComponent`，`Converter`，`GenericConverter`，`Filter`，`HandlerInterceptor`，`WebMvcConfigurer` 和 `HandlerMethodArgumentResolver`。使用此注解时，不会扫描常规的 `@Component` Bean。
 
 > A list of the auto-configuration settings that are enabled by `@WebMvcTest` can be [found in the appendix](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration).
 
@@ -84,4 +84,3 @@ class MyHtmlUnitTests {
 If you have Spring Security on the classpath, `@WebMvcTest` will also scan `WebSecurityConfigurer` beans. Instead of disabling security completely for such tests, you can use Spring Security’s test support. More details on how to use Spring Security’s `MockMvc` support can be found in this *Testing With Spring Security* how-to section.
 
 > Sometimes writing Spring MVC tests is not enough; Spring Boot can help you run [full end-to-end tests with an actual server](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-running-server).
-
