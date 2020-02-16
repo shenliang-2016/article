@@ -1,10 +1,10 @@
-##### Auto-configured Data JPA Tests
+##### 自动配置的 Data JPA 测试
 
-You can use the `@DataJpaTest` annotation to test JPA applications. By default, it scans for `@Entity` classes and configures Spring Data JPA repositories. If an embedded database is available on the classpath, it configures one as well. Regular `@Component` beans are not loaded into the `ApplicationContext`.
+您可以使用 `@DataJpaTest` 注解来测试 JPA 应用程序。默认情况下，它扫描 `@Entity` 类并配置 Spring Data JPA 存储库。如果在类路径上有嵌入式数据库，它也会配置一个。常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。
 
-> A list of the auto-configuration settings that are enabled by `@DataJpaTest` can be [found in the appendix](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration).
+> `@DataJpaTest` 能够开启的自动配置设定列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
-By default, data JPA tests are transactional and roll back at the end of each test. See the [relevant section](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testcontext-tx-enabling-transactions) in the Spring Framework Reference Documentation for more details. If that is not what you want, you can disable transaction management for a test or for the whole class as follows:
+默认情况下，数据 JPA 测试是事务性的，并在每次测试结束时回滚。请参阅 Spring Framework 参考文档中的 [相关部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testcontext-tx-enabling-transactions) 了解更多详细信息。如果这不是您想要的，则可以按以下方式禁用测试或整个类的事务管理：
 
 ```java
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class ExampleNonTransactionalTests {
 }
 ```
 
-Data JPA tests may also inject a [`TestEntityManager`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-test-autoconfigure/src/main/java/org/springframework/boot/test/autoconfigure/orm/jpa/TestEntityManager.java) bean, which provides an alternative to the standard JPA `EntityManager` that is specifically designed for tests. If you want to use `TestEntityManager` outside of `@DataJpaTest` instances, you can also use the `@AutoConfigureTestEntityManager` annotation. A `JdbcTemplate` is also available if you need that. The following example shows the `@DataJpaTest` annotation in use:
+数据 JPA 测试也可以注入 [`TestEntityManager`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-test-autoconfigure/src/main/java/org/springframework/boot/test/autoconfigure/orm/jpa/TestEntityManager.java) bean，它提供了专门为测试设计的标准 JPA `EntityManager` 的替代方案。如果您要在 `@DataJpaTest` 实例之外使用 `TestEntityManager`，则还可以使用 `@AutoConfigureTestEntityManager` 注解。如果需要，也可以使用 `JdbcTemplate`。以下示例显示了使用中的 `@DataJpaTest` 注解：
 
 ```java
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class ExampleRepositoryTests {
 }
 ```
 
-In-memory embedded databases generally work well for tests, since they are fast and do not require any installation. If, however, you prefer to run tests against a real database you can use the `@AutoConfigureTestDatabase` annotation, as shown in the following example:
+内存嵌入式数据库通常运行良好，不需要任何安装，因此通常可以很好地进行测试。但是，如果您希望对真实数据库运行测试，则可以使用 `@AutoConfigureTestDatabase` 注解，如以下示例所示：
 
 ```java
 @DataJpaTest
