@@ -1,10 +1,23 @@
-##### 自动配置的 Data JDBC 测试
+##### 自动配置的 jOOQ 测试
 
-`@DataJdbcTest` 类似于 `@JdbcTest` ，不过是用于使用 Spring Data JDBC 存储仓库的测试。默认情况下，它配置一个内存嵌入式数据库，一个 `JdbcTemplate`，以及 Spring Data JDBC 存储仓库。普通的 `@Component` beans 不会被加载进入 `ApplicationContext`。
+您可以使用与 `@JdbcTest` 类似的方式来使用 `@JooqTest`，但是可以进行与 jOOQ 相关的测试。由于 jOOQ 严重依赖与数据库模式相对应的基于 Java 的模式，因此将使用现有的 `DataSource`。如果要用内存数据库替换它，则可以使用 `@AutoConfigureTestDatabase` 覆盖那些设置。（有关将 jOOQ 与 Spring Boot 结合使用的更多信息，请参阅本章的前面的 “ [使用jOOQ](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jooq) “。）常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。
 
-> 由 `@DataJdbcTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+> 由 `@JooqTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
-默认地，Data JDBC 测试是事务性的，会在每个测试结束之后回滚。参考 Spring Framework 参考文档的 [相关章节](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testcontext-tx-enabling-transactions) 获取更多细节。如果这不是你希望的，你可以为单个测试用例或者整个测试类关闭事务管理，如 [JDBC 示例](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-jdbc-test) 中所示。
+`@JooqTest` 配置一个 `DSLContext`。普通的 `@Component` beans 不会被加载进入 `ApplicationContext`。下面的例子展示了 `@JooqTest` 注解使用：
 
-如果你想要你的测试运行在真实的数据库上，你可以使用 `@AutoConfigureTestDatabase` 注解，以与 `DataJpaTest` 相同的方式。 (参考 "[自动配置的 Data JPA 测试](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-jpa-test)".)
+```java
+import org.jooq.DSLContext;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
+
+@JooqTest
+class ExampleJooqTests {
+
+    @Autowired
+    private DSLContext dslContext;
+}
+```
+
+JOOQ 测试是事务性的，每个测试结束之后就会回滚。如果这不是你想要的，可以为单个测试用例或者整个测试类关闭事务管理，如 [JDBC 示例](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-jdbc-test) 中所示。
 
