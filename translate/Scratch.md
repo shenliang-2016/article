@@ -1,23 +1,34 @@
-##### 自动配置的 jOOQ 测试
+##### 自动配置的 Data MongoDB 测试
 
-您可以使用与 `@JdbcTest` 类似的方式来使用 `@JooqTest`，但是可以进行与 jOOQ 相关的测试。由于 jOOQ 严重依赖与数据库模式相对应的基于 Java 的模式，因此将使用现有的 `DataSource`。如果要用内存数据库替换它，则可以使用 `@AutoConfigureTestDatabase` 覆盖那些设置。（有关将 jOOQ 与 Spring Boot 结合使用的更多信息，请参阅本章的前面的 “ [使用jOOQ](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jooq) “。）常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。
+您可以使用 `@DataMongoTest` 来测试 MongoDB 应用程序。默认情况下，它配置内存嵌入式 MongoDB（如果可用），配置 `MongoTemplate`，扫描 `@Document` 类，并配置 Spring Data MongoDB 存储库。常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。（有关将 MongoDB 与 Spring Boot 结合使用的更多信息，参见在本章前面的 [MongoDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-mongodb) ）
 
-> 由 `@JooqTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+> 由 `@DataMongoTest` 开启的自动配置设定列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
-`@JooqTest` 配置一个 `DSLContext`。普通的 `@Component` beans 不会被加载进入 `ApplicationContext`。下面的例子展示了 `@JooqTest` 注解使用：
+下面的类展示了 `@DataMongoTest` 注解的使用：
 
 ```java
-import org.jooq.DSLContext;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
-@JooqTest
-class ExampleJooqTests {
+@DataMongoTest
+class ExampleDataMongoTests {
 
     @Autowired
-    private DSLContext dslContext;
+    private MongoTemplate mongoTemplate;
+
+    //
 }
 ```
 
-JOOQ 测试是事务性的，每个测试结束之后就会回滚。如果这不是你想要的，可以为单个测试用例或者整个测试类关闭事务管理，如 [JDBC 示例](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-jdbc-test) 中所示。
+内存嵌入式 MongoDB 通常运行良好，不需要任何开发人员安装，因此通常可以很好地用于测试。但是，如果您希望对真实的 MongoDB 服务器运行测试，则应排除嵌入式 MongoDB 自动配置，如以下示例所示：
 
+```java
+import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+
+@DataMongoTest(excludeAutoConfiguration = EmbeddedMongoAutoConfiguration.class)
+class ExampleDataMongoNonEmbeddedTests {
+
+}
+```
