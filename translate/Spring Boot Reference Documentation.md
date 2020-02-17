@@ -6531,7 +6531,7 @@ class ExampleNonTransactionalTests {
 
 `@DataJdbcTest` 类似于 `@JdbcTest` ，不过是用于使用 Spring Data JDBC 存储仓库的测试。默认情况下，它配置一个内存嵌入式数据库，一个 `JdbcTemplate`，以及 Spring Data JDBC 存储仓库。普通的 `@Component` beans 不会被加载进入 `ApplicationContext`。
 
-> 由 `@DataJdbcTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+>由 `@DataJdbcTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
 默认地，Data JDBC 测试是事务性的，会在每个测试结束之后回滚。参考 Spring Framework 参考文档的 [相关章节](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testcontext-tx-enabling-transactions) 获取更多细节。如果这不是你希望的，你可以为单个测试用例或者整个测试类关闭事务管理，如 [JDBC 示例](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-jdbc-test) 中所示。
 
@@ -6541,7 +6541,7 @@ class ExampleNonTransactionalTests {
 
 您可以使用与 `@JdbcTest` 类似的方式来使用 `@JooqTest`，但是可以进行与 jOOQ 相关的测试。由于 jOOQ 严重依赖与数据库模式相对应的基于 Java 的模式，因此将使用现有的 `DataSource`。如果要用内存数据库替换它，则可以使用 `@AutoConfigureTestDatabase` 覆盖那些设置。（有关将 jOOQ 与 Spring Boot 结合使用的更多信息，请参阅本章的前面的 “ [使用jOOQ](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-jooq) “。）常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。
 
-> 由 `@JooqTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+>由 `@JooqTest` 开启的自动配置列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
 `@JooqTest` 配置一个 `DSLContext`。普通的 `@Component` beans 不会被加载进入 `ApplicationContext`。下面的例子展示了 `@JooqTest` 注解使用：
 
@@ -6564,7 +6564,7 @@ JOOQ 测试是事务性的，每个测试结束之后就会回滚。如果这不
 
 您可以使用 `@DataMongoTest` 来测试 MongoDB 应用程序。默认情况下，它配置内存嵌入式 MongoDB（如果可用），配置 `MongoTemplate`，扫描 `@Document` 类，并配置 Spring Data MongoDB 存储库。常规的 `@Component` Bean不会加载到 `ApplicationContext` 中。（有关将 MongoDB 与 Spring Boot 结合使用的更多信息，参见在本章前面的 [MongoDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-mongodb) ）
 
-> 由 `@DataMongoTest` 开启的自动配置设定列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+>由 `@DataMongoTest` 开启的自动配置设定列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
 
 下面的类展示了 `@DataMongoTest` 注解的使用：
 
@@ -6591,6 +6591,42 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 
 @DataMongoTest(excludeAutoConfiguration = EmbeddedMongoAutoConfiguration.class)
 class ExampleDataMongoNonEmbeddedTests {
+
+}
+```
+
+##### 自动配置的 Data Neo4j 测试
+
+您可以使用 `@DataNeo4jTest` 来测试 Neo4j 应用程序。默认情况下，它使用内存中嵌入式 Neo4j（如果有嵌入式驱动程序可用），扫描 `@NodeEntity` 类，并配置 Spring Data Neo4j 存储库。常规的 `@Component` Bean 不会加载到 `ApplicationContext` 中。（有关将 Neo4J 与 Spring Boot 结合使用的更多信息，请参阅在本章前面的 [Neo4j](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#boot-features-neo4j)）
+
+>由 `@DataNeo4jTest` 开启的自动配置设定列表放在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#test-auto-configuration) 中。
+
+下面的例子展示了在 Spring Boot 中使用 Neo4J 测试的典型设定：
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.neo4j.DataNeo4jTest;
+
+@DataNeo4jTest
+class ExampleDataNeo4jTests {
+
+    @Autowired
+    private YourRepository repository;
+
+    //
+}
+```
+
+默认情况下，Data Neo4j 测试是事务性的，并在每次测试结束时回滚。请参阅 Spring Framework 参考文档中的 [相关部分](https://docs.spring.io/spring/docs/5.2.2.RELEASE/spring-framework-reference/testing.html#testcontext-tx-enabling-transactions) 有关更多详细信息。如果这不是您想要的，则可以为测试或整个类禁用事务管理，如下所示：
+
+```java
+import org.springframework.boot.test.autoconfigure.data.neo4j.DataNeo4jTest;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+@DataNeo4jTest
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
+class ExampleNonTransactionalTests {
 
 }
 ```
