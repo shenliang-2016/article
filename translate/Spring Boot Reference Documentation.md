@@ -6724,7 +6724,7 @@ class ExampleRestClientTest {
 
 可以使用 `@AutoConfigureRestDocs` 覆盖默认输出目录（如果使用 Maven，则使用 `target/generated-snippets`；如果使用 Gradle，则使用 `build/generated-snippets`）。它也可以用于配置出现在任何记录的 URI 中的主机，模式和端口。
 
-##### 自动配置的 Spring REST Docs 测试使用 Mock MVC
+###### 自动配置的 Spring REST Docs 测试使用 Mock MVC
 
 `@AutoConfigureRestDocs` 定制 `MockMvc` bean 使用 Spring REST Docs。您可以使用 `@Autowired` 注入它，并像通常使用 Mock MVC 和 Spring REST Docs 一样在测试中使用它。如下面例子所示：
 
@@ -6786,3 +6786,46 @@ static class ResultHandlerConfiguration {
 }
 ```
 
+###### 自动配置的 Spring REST Docs 测试使用 WebTestClient
+
+`@AutoConfigureRestDocs` 还可以用于 `WebTestClient`。你可以使用 `@Autowired` 注入它在你的测试中，如同通常使用 `@WebFluxTest` 和 Spring REST Docs 那样，如下面例子所示：
+
+```java
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+import static org.springframework.restdocs.webtestclient.WebTestClientRestDocumentation.document;
+
+@WebFluxTest
+@AutoConfigureRestDocs
+class UsersDocumentationTests {
+
+    @Autowired
+    private WebTestClient webTestClient;
+
+    @Test
+    void listUsers() {
+        this.webTestClient.get().uri("/").exchange().expectStatus().isOk().expectBody()
+                .consumeWith(document("list-users"));
+    }
+
+}
+```
+
+如果您需要对 Spring REST Docs 配置进行更多控制，而不是 `@AutoConfigureRestDocs` 属性提供的控制，则可以使用 `RestDocsWebTestClientConfigurationCustomizer` bean，如以下示例所示：
+
+```java
+@TestConfiguration(proxyBeanMethods = false)
+public static class CustomizationConfiguration implements RestDocsWebTestClientConfigurationCustomizer {
+
+    @Override
+    public void customize(WebTestClientRestDocumentationConfigurer configurer) {
+        configurer.snippets().withEncoding("UTF-8");
+    }
+
+}
+```
