@@ -1,76 +1,96 @@
-##### 附加自动配置和切片
+#### 4.25.4. 测试工具
 
-每个切片提供一个或多个 `@ AutoConfigure…` 注解，即定义应包含在切片中的自动配置。可以通过创建自定义的 `@AutoConfigure…` 注解来添加其他自动配置，也可以简单地通过向测试中添加 `@ImportAutoConfiguration` 来添加其他自动配置，如以下示例所示：
+一些通用的测试工具类作为其一部分打包在 `spring-boot` 中。
+
+##### ConfigFileApplicationContextInitializer
+
+`ConfigFileApplicationContextInitializer` 是一个 `ApplicationContextInitializer` ，你可以用在你的测试中用来加载 Spring Boot `application.properties` 文件。当你不需要使用 `@SpringBootTest` 提供的完整的特性集合的情况下可以使用它，如下面例子所示：
 
 ```java
-@JdbcTest
-@ImportAutoConfiguration(IntegrationAutoConfiguration.class)
-class ExampleJdbcTests {
-
-}
+@ContextConfiguration(classes = Config.class,
+    initializers = ConfigFileApplicationContextInitializer.class)
 ```
 
-> 确保不要使用常规的 `@Import` 注解来引入自动配置，因为自动配置类由 Spring Boot 通过特殊的方式处理。
+> 单独使用 `ConfigFileApplicationContextInitializer` 不会提供对 `@Value("${…}")` 注入的支持。它仅仅保证 `application.properties` 文件被加载进入 Spring’s `Environment`。为了 `@Value` 支持，你需要要么额外配置一个 `PropertySourcesPlaceholderConfigurer` 或者使用 `@SpringBootTest`，它会自动为你配置一个。
 
-##### 用户配置和切片
+##### TestPropertyValues
 
-如果你以明智的方式 [结构化你的代码](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#using-boot-structuring-your-code)，则你的 `@SpringBootApplication` 类就会 [默认被用作](https://docs.spring.io/spring-boot/docs/2.2.4.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-detecting-config) 你的测试的配置类。
-
-因此，变得不重要的是，不要使用特定于其功能特定区域的配置设置来丢弃应用程序的主类。
-
-假设您正在使用 Spring Batch，并且依赖于它的自动配置，您可以如下定义您的 `@SpringBootApplication`：
+`TestPropertyValues` 帮助你快速地添加属性到 `ConfigurableEnvironment` 或者 `ConfigurableApplicationContext`。你可以通过 `key=value` 字符串调用它，如下：
 
 ```java
-@SpringBootApplication
-@EnableBatchProcessing
-public class SampleApplication { ... }
+TestPropertyValues.of("org=Spring", "name=Boot").applyTo(env);
 ```
 
-因为此类是测试的源配置，所以任何切片测试实际上都尝试启动 Spring Batch，这绝对不是您想要执行的操作。推荐的方法是将特定于区域的配置移到与您的应用程序相同级别的单独的 `@Configuration` 类，如以下示例所示：
+##### OutputCapture
+
+`OutputCapture` 是一个 JUnit `Extension` ，可以用来捕获 `System.out` 和 `System.err` 输出。为你的测试类的构造函数添加 `@ExtendWith(OutputCaptureExtension.class)` 并注入 `CapturedOutput` 作为构造函数或者测试方法的一个参数，如下所示：
 
 ```java
-@Configuration(proxyBeanMethods = false)
-@EnableBatchProcessing
-public class BatchConfiguration { ... }
-```
+@ExtendWith(OutputCaptureExtension.class)
+class OutputCaptureTests {
 
-> 根据您应用程序的复杂性，您可以为自定义设置一个单独的 `@Configuration` 类，也可以为每个域指定一个类。后一种方法使您可以在其中的一个测试中启用它，并在必要时使用 `@Import` 注解。
-
-测试切片从扫描中排除了 `@Configuration` 类。例如，对于一个 `@WebMvcTest`，以下配置将在测试切片加载的应用程序上下文中不包含给定的 `WebMvcConfigurer` Bean：
-
-```java
-@Configuration
-public class WebConfiguration {
-    @Bean
-    public WebMvcConfigurer testConfigurer() {
-        return new WebMvcConfigurer() {
-            ...
-        };
+    @Test
+    void testName(CapturedOutput output) {
+        System.out.println("Hello World!");
+        assertThat(output).contains("World");
     }
+
 }
 ```
 
-但是，以下配置将导致测试切片加载自定义的 `WebMvcConfigurer`。
+##### TestRestTemplate
+
+`TestRestTemplate` 是 Spring’s `RestTemplate` 的方便的替代品，在集成测试中非常有用。你可以获得一个普通的模板或者发送 Basic HTTP 认证 (使用用户名和密码) 的模板。无论哪种情况，该模板都会以测试友好的方式工作，而不会抛出服务端错误异常。
+
+> Spring Framework 5.0 提供了一个新的 `WebTestClient` 用于 [WebFlux 集成测试](https://docs.spring.io/spring-boot/docs/2.2.5.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-autoconfigured-webflux-tests) 和 [WebFlux 和 MVC 端到端测试](https://docs.spring.io/spring-boot/docs/2.2.5.RELEASE/reference/htmlsingle/#boot-features-testing-spring-boot-applications-testing-with-running-server)。它提供了链式的 API 用于断言，这一点不同于 `TestRestTemplate`。
+
+推荐。而非强制要求，使用 Apache HTTP Client (version 4.3.2 或更高)。如果你的类路径上存在，则 `TestRestTemplate` 就会作为你合理配置客户端的响应。如果你没有使用 Apache’s HTTP client，则有其它测试友好的特性可用：
+
+- Redirects 不被允许 (因此你可以断言相应位置)。
+- Cookies 被忽略 (因此该模板是无状态的)。
+
+`TestRestTemplate` 可以在你的集成测试中直接被实例化，如下面例子所示：
 
 ```java
-@Component
-public class TestWebMvcConfigurer implements WebMvcConfigurer {
-    ...
+public class MyTest {
+
+    private TestRestTemplate template = new TestRestTemplate();
+
+    @Test
+    public void testRequest() throws Exception {
+        HttpHeaders headers = this.template.getForEntity(
+                "https://myhost.example.com/example", String.class).getHeaders();
+        assertThat(headers.getLocation()).hasHost("other.example.com");
+    }
+
 }
 ```
 
-混乱的另一个来源是类路径扫描。假定在以合理的方式构造代码时，您需要扫描其他程序包。您的应用程序可能类似于以下代码：
+另外，如果您结合 `WebEnvironment.RANDOM_PORT` 或 `WebEnvironment.DEFINED_PORT` 使用 `@SpringBootTest` 注解，则可以注入完全配置的 `TestRestTemplate` 并开始使用它。如有必要，可以通过 `RestTemplateBuilder` bean 来应用其他定制。未指定主机和端口的所有 URL 都会自动连接到嵌入式服务器，如以下示例所示：
 
 ```java
-@SpringBootApplication
-@ComponentScan({ "com.example.app", "org.acme.another" })
-public class SampleApplication { ... }
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class SampleWebClientTests {
+
+    @Autowired
+    private TestRestTemplate template;
+
+    @Test
+    void testRequest() {
+        HttpHeaders headers = this.template.getForEntity("/example", String.class).getHeaders();
+        assertThat(headers.getLocation()).hasHost("other.example.com");
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class Config {
+
+        @Bean
+        RestTemplateBuilder restTemplateBuilder() {
+            return new RestTemplateBuilder().setConnectTimeout(Duration.ofSeconds(1))
+                    .setReadTimeout(Duration.ofSeconds(1));
+        }
+
+    }
+
+}
 ```
-
-这样做有效地覆盖了默认的组件扫描指令，并且具有扫描这两个软件包的副作用，而与您选择的切片无关。例如，一个 `@DataJpaTest` 似乎突然扫描了应用程序的组件和用户配置。同样，将自定义指令移至单独的类是解决此问题的好方法。
-
-> 如果这不是您的选择，则可以在测试层次结构中的某个位置创建一个 `@SpringBootConfiguration`，以便使用它。或者，您可以为测试指定一个源，从而禁用查找默认源的行为。
-
-##### 使用 Spock 测试 Spring Boot 应用
-
-如果您希望使用 Spock 测试 Spring Boot 应用程序，则应在应用程序的构建中添加对 Spock 的 `spock-spring` 模块的依赖。`spock-spring` 将 Spring 的测试框架集成到了 Spock 中。建议您使用 Spock 1.2 或更高版本，以受益于 Spock 的 Spring Framework 和 Spring Boot 集成的许多改进。有关更多详细信息，请参见 [Spock 的 Spring 模块的文档](http://spockframework.org/spock/docs/1.2/modules.html#_spring_module)。
