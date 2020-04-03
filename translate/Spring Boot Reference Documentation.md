@@ -7598,3 +7598,8 @@ public class ActuatorSecurity extends WebSecurityConfigurerAdapter {
 }
 ```
 
+#### 5.2.5. 用于执行器 Web 端点的超媒体
+
+添加了一个“发现页面”，其中包含指向所有端点的链接。默认情况下， `/actuator` 上提供“发现页面”。
+
+配置了自定义管理上下文路径后，“发现页面”会自动从 `/actuator` 移动到管理上下文的根目录。例如，如果管理上下文路径为 `/management`，则发现页面可从 `/management` 访问。当管理上下文路径设置为`/`时，发现页面将被禁用，以防止与其他映射发生冲突的可能性。
