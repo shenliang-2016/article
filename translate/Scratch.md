@@ -1,10 +1,10 @@
-##### `autoconfigure` Module
+##### `autoconfigure` 模块
 
-The `autoconfigure` module contains everything that is necessary to get started with the library. It may also contain configuration key definitions (such as `@ConfigurationProperties`) and any callback interface that can be used to further customize how the components are initialized.
+ `autoconfigure` 模块包含了开始使用类库所需要的一切。它还可以包含配置键定义 (比如 `@ConfigurationProperties`) 以及所有回调接口，这些回调接口可以用来进一步自定义组件的初始化。
 
->  You should mark the dependencies to the library as optional so that you can include the `autoconfigure` module in your projects more easily. If you do it that way, the library is not provided and, by default, Spring Boot backs off.
+> 您应该将对库的依赖项标记为可选，以便可以更轻松地在项目中包含`autoconfigure`模块。如果这样做，将不提供该库，并且默认情况下，Spring Boot 将退出。
 
-Spring Boot uses an annotation processor to collect the conditions on auto-configurations in a metadata file (`META-INF/spring-autoconfigure-metadata.properties`). If that file is present, it is used to eagerly filter auto-configurations that do not match, which will improve startup time. It is recommended to add the following dependency in a module that contains auto-configurations:
+Spring Boot 使用注解处理器来收集元数据文件 (`META-INF/spring-autoconfigure-metadata.properties`) 中自动配置的条件。如果存在该文件，它将用于过滤不匹配的自动配置，这将缩短启动时间。建议在包含自动配置的模块中添加以下依赖项：
 
 ```xml
 <dependency>
@@ -14,7 +14,7 @@ Spring Boot uses an annotation processor to collect the conditions on auto-confi
 </dependency>
 ```
 
-With Gradle 4.5 and earlier, the dependency should be declared in the `compileOnly` configuration, as shown in the following example:
+对 Gradle 4.5 或者更早版本，依赖项应该声明在 `compileOnly` 配置中，如下所示：
 
 ```groovy
 dependencies {
@@ -22,7 +22,7 @@ dependencies {
 }
 ```
 
-With Gradle 4.6 and later, the dependency should be declared in the `annotationProcessor` configuration, as shown in the following example:
+对 Gradle 4.6 或者更高版本，依赖项应该声明在 `annotationProcessor` 配置中，如下所示：
 
 ```groovy
 dependencies {
@@ -30,10 +30,10 @@ dependencies {
 }
 ```
 
-##### Starter Module
+##### Starter 模块
 
-The starter is really an empty jar. Its only purpose is to provide the necessary dependencies to work with the library. You can think of it as an opinionated view of what is required to get started.
+起动器确实是一个空 jar 。其唯一目的是提供必要的依赖关系以使用库。您可以将其视为对开始使用所需条件的视图。
 
-Do not make assumptions about the project in which your starter is added. If the library you are auto-configuring typically requires other starters, mention them as well. Providing a proper set of *default* dependencies may be hard if the number of optional dependencies is high, as you should avoid including dependencies that are unnecessary for a typical usage of the library. In other words, you should not include optional dependencies.
+不要对添加了启动器的项目做出假设。如果您要自动配置的库通常需要其他启动器，请也提及它们。如果可选依赖项的数量很高，那么提供一组适当的 *default* 依赖项可能会很困难，因为您应该避免包括对于库的典型用法而言不必要的依赖项。换句话说，您不应包括可选的依赖项。
 
->  Either way, your starter must reference the core Spring Boot starter (`spring-boot-starter`) directly or indirectly (i.e. no need to add it if your starter relies on another starter). If a project is created with only your custom starter, Spring Boot’s core features will be honoured by the presence of the core starter.
+> 无论哪种方式，您的启动器都必须直接或间接引用核心 Spring Boot 启动器（`spring-boot-starter`）（即，如果您的启动器依赖于另一个启动器，则无需添加它）。如果仅使用您的自定义启动器创建了一个项目，则该核心启动器的存在将兑现 Spring Boot 的核心功能。
