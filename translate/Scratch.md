@@ -1,14 +1,36 @@
-#### 4.28.5. 创建你自己的启动器
+##### 配置键
 
-一个类库的完整 Spring Boot 启动器可能包含下列组件：
+如果你的启动器提供配置键，为它们使用唯一的命名空间。特别的，切勿将你的配置键包含到 Spring Boot 使用的明明空间中（比如 `server`，`management`，`spring`  等等）。如果你使用相同的命名空间，你就可能随后意外修改这些命名空间，从而打破你的模块。根据经验，最佳实践是为你的配置键添加你所使用的命名空间前缀（比如，`acme`）。
 
-- 包含自动配置代码的 `autoconfigure` 模块。
-- `starter` 模块，提供 `autoconfigure` 模块所需的依赖、类库以及任何附加的有用以来。简而言之，添加启动器应该提供开始使用该类库所需的所有条件。
+确保所有的配置键中的每个属性都添加了 javadoc 文档说明，如下面例子所示：
 
-> 如果你不需要分开管理自动配置和依赖管理，你就可以将两者组合为一个模块。
+```java
+@ConfigurationProperties("acme")
+public class AcmeProperties {
 
-##### 命名
+    /**
+     * Whether to check the location of acme resources.
+     */
+    private boolean checkLocation = true;
 
-您应确保为启动器提供适当的名称空间。即使使用不同的 Maven`groupId`，也不要以`spring-boot`开头模块名称。将来，我们可能会为您自动配置的内容提供官方支持。
+    /**
+     * Timeout for establishing a connection to the acme server.
+     */
+    private Duration loginTimeout = Duration.ofSeconds(3);
 
-根据经验，应在启动器后命名一个组合模块。例如，假设您要为 `acme` 创建启动器，并命名自动配置模块 `acme-spring-boot-autoconfigure` 和启动器 `acme-spring-boot-starter`。如果只有一个将两者结合的模块，则将其命名为 `acme-spring-boot-starter`。
+    // getters & setters
+
+}
+```
+
+> 您应该仅将简单文本与 `@ConfigurationProperties` 字段 Javadoc 一起使用，因为在将它们添加到 JSON 之前不会对其进行处理。
+
+这里是一些我们默认遵循的规则以保持描述的一致性：
+
+- 不要用 "The" 或者 "A" 开始描述。
+- 对于 `boolean` 类型，使用 "Whether" 或者 "Enable" 开始描述。
+- 对于基于集合的类型，使用 "Comma-separated list" 开始描述。
+- 使用 `java.time.Duration` 而不是 `long` ，同时描述默认单位，如果不是毫秒。比如：如果没有使用时间间隔后缀，那么使用的就是秒。
+- 描述中不要给出默认值，除非它必须在运行时确定。
+
+确保 [触发元数据生成](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#configuration-metadata-annotation-processor) 以便 IDE 助手也能够对你的配置键产生作用。你可能希望浏览生成的元数据 (`META-INF/spring-configuration-metadata.json`) 以确保你的配置键都被准确地文档化了。在兼容的 IDE 中使用你的启动器也是检验这些元数据质量的好办法。
