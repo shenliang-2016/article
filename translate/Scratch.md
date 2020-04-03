@@ -1,36 +1,39 @@
-##### 配置键
+##### `autoconfigure` Module
 
-如果你的启动器提供配置键，为它们使用唯一的命名空间。特别的，切勿将你的配置键包含到 Spring Boot 使用的明明空间中（比如 `server`，`management`，`spring`  等等）。如果你使用相同的命名空间，你就可能随后意外修改这些命名空间，从而打破你的模块。根据经验，最佳实践是为你的配置键添加你所使用的命名空间前缀（比如，`acme`）。
+The `autoconfigure` module contains everything that is necessary to get started with the library. It may also contain configuration key definitions (such as `@ConfigurationProperties`) and any callback interface that can be used to further customize how the components are initialized.
 
-确保所有的配置键中的每个属性都添加了 javadoc 文档说明，如下面例子所示：
+>  You should mark the dependencies to the library as optional so that you can include the `autoconfigure` module in your projects more easily. If you do it that way, the library is not provided and, by default, Spring Boot backs off.
 
-```java
-@ConfigurationProperties("acme")
-public class AcmeProperties {
+Spring Boot uses an annotation processor to collect the conditions on auto-configurations in a metadata file (`META-INF/spring-autoconfigure-metadata.properties`). If that file is present, it is used to eagerly filter auto-configurations that do not match, which will improve startup time. It is recommended to add the following dependency in a module that contains auto-configurations:
 
-    /**
-     * Whether to check the location of acme resources.
-     */
-    private boolean checkLocation = true;
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-autoconfigure-processor</artifactId>
+    <optional>true</optional>
+</dependency>
+```
 
-    /**
-     * Timeout for establishing a connection to the acme server.
-     */
-    private Duration loginTimeout = Duration.ofSeconds(3);
+With Gradle 4.5 and earlier, the dependency should be declared in the `compileOnly` configuration, as shown in the following example:
 
-    // getters & setters
-
+```groovy
+dependencies {
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure-processor"
 }
 ```
 
-> 您应该仅将简单文本与 `@ConfigurationProperties` 字段 Javadoc 一起使用，因为在将它们添加到 JSON 之前不会对其进行处理。
+With Gradle 4.6 and later, the dependency should be declared in the `annotationProcessor` configuration, as shown in the following example:
 
-这里是一些我们默认遵循的规则以保持描述的一致性：
+```groovy
+dependencies {
+    annotationProcessor "org.springframework.boot:spring-boot-autoconfigure-processor"
+}
+```
 
-- 不要用 "The" 或者 "A" 开始描述。
-- 对于 `boolean` 类型，使用 "Whether" 或者 "Enable" 开始描述。
-- 对于基于集合的类型，使用 "Comma-separated list" 开始描述。
-- 使用 `java.time.Duration` 而不是 `long` ，同时描述默认单位，如果不是毫秒。比如：如果没有使用时间间隔后缀，那么使用的就是秒。
-- 描述中不要给出默认值，除非它必须在运行时确定。
+##### Starter Module
 
-确保 [触发元数据生成](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#configuration-metadata-annotation-processor) 以便 IDE 助手也能够对你的配置键产生作用。你可能希望浏览生成的元数据 (`META-INF/spring-configuration-metadata.json`) 以确保你的配置键都被准确地文档化了。在兼容的 IDE 中使用你的启动器也是检验这些元数据质量的好办法。
+The starter is really an empty jar. Its only purpose is to provide the necessary dependencies to work with the library. You can think of it as an opinionated view of what is required to get started.
+
+Do not make assumptions about the project in which your starter is added. If the library you are auto-configuring typically requires other starters, mention them as well. Providing a proper set of *default* dependencies may be hard if the number of optional dependencies is high, as you should avoid including dependencies that are unnecessary for a typical usage of the library. In other words, you should not include optional dependencies.
+
+>  Either way, your starter must reference the core Spring Boot starter (`spring-boot-starter`) directly or indirectly (i.e. no need to add it if your starter relies on another starter). If a project is created with only your custom starter, Spring Boot’s core features will be honoured by the presence of the core starter.
