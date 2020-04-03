@@ -1,67 +1,44 @@
-#### 5.2.2. 暴露端点
+#### 5.2.3. 保护 HTTP 端点
 
-由于端点可能包含敏感信息，谨慎考虑何时暴露它们。下表展示了内建端点的默认暴露情况：
+您应该像对待其他任何敏感 URL 一样，小心保护 HTTP 端点的安全。如果存在 Spring Security，则默认情况下将使用 Spring Security 的内容协商策略保护端点的安全。例如，如果您希望为 HTTP 端点配置自定义安全性，只允许具有特定角色的用户访问它们，Spring Boot 提供了一些方便的 `RequestMatcher` 对象，可以将它们与 Spring Security 结合使用。
 
-| ID                 | JMX  | Web  |
-| :----------------- | :--- | :--- |
-| `auditevents`      | Yes  | No   |
-| `beans`            | Yes  | No   |
-| `caches`           | Yes  | No   |
-| `conditions`       | Yes  | No   |
-| `configprops`      | Yes  | No   |
-| `env`              | Yes  | No   |
-| `flyway`           | Yes  | No   |
-| `health`           | Yes  | Yes  |
-| `heapdump`         | N/A  | No   |
-| `httptrace`        | Yes  | No   |
-| `info`             | Yes  | Yes  |
-| `integrationgraph` | Yes  | No   |
-| `jolokia`          | N/A  | No   |
-| `logfile`          | N/A  | No   |
-| `loggers`          | Yes  | No   |
-| `liquibase`        | Yes  | No   |
-| `metrics`          | Yes  | No   |
-| `mappings`         | Yes  | No   |
-| `prometheus`       | N/A  | No   |
-| `scheduledtasks`   | Yes  | No   |
-| `sessions`         | Yes  | No   |
-| `shutdown`         | Yes  | No   |
-| `threaddump`       | Yes  | No   |
+典型的 Spring Security 配置看起来类似下面这样：
 
-为了修改端点的暴露情况，使用下面的特定于技术的 `include` 和 `exclude` 属性：
+```java
+@Configuration(proxyBeanMethods = false)
+public class ActuatorSecurity extends WebSecurityConfigurerAdapter {
 
-| Property                                    | Default        |
-| :------------------------------------------ | :------------- |
-| `management.endpoints.jmx.exposure.exclude` |                |
-| `management.endpoints.jmx.exposure.include` | `*`            |
-| `management.endpoints.web.exposure.exclude` |                |
-| `management.endpoints.web.exposure.include` | `info, health` |
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.requestMatcher(EndpointRequest.toAnyEndpoint()).authorizeRequests((requests) ->
+                requests.anyRequest().hasRole("ENDPOINT_ADMIN"));
+        http.httpBasic();
+    }
 
-`include` 属性列出了暴露的端点的 IDs。`exclude` 属性列出了不应该暴露的端点。后者的优先级高于前者。两者都可以配置为端点 IDs 列表。
-
-比如，为了停止所有通过 JMX 暴露的端点，仅仅暴露 `health` 和 `info` 端点，使用下面的属性：
-
-```properties
-management.endpoints.jmx.exposure.include=health,info
+}
 ```
 
-`*` 可以用于选择所有端点。比如，为了通过 HTTP 暴露所有端点，除了 `env` 和 `beans` 端点，使用下面的属性：
+上面的例子使用 `EndpointRequest.toAnyEndpoint()` 来匹配发往任何端点的请求以确保它们都具有 `ENDPOINT_ADMIN` 角色。 `EndpointRequest` 上还具有若干其他匹配方法可用。参考 API 文档 ([HTML](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/actuator-api//html) 或者 [PDF](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/actuator-api//pdf/spring-boot-actuator-web-api.pdf)) 获取更多细节。
+
+如果你的应用部署在防火墙之后，你可能更倾向于你的执行器端点可以不需要强制身份认证。你可以通过修改 `management.endpoints.web.exposure.include` 属性来做到这一点，如下所示：
+
+**application.properties**
 
 ```properties
 management.endpoints.web.exposure.include=*
-management.endpoints.web.exposure.exclude=env,beans
 ```
 
-> `*` 在 YMAL 中有特殊含义，因此需要用双引号标识，以表示选择或者不选所有端点。如下面例子所示：
->
-> ````
-> management:
->   endpoints:
->     web:
->       exposure:
->         include: "*"
-> ````
+另外，如果存在 Spring Security，则需要添加自定义安全配置，该配置允许未经身份认证的端点访问，如以下示例所示：
 
-> 如果你的应用暴露在公开环境中，我们强烈建议你 [为你的端点添加安全设施](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-endpoints-security)。 
+```java
+@Configuration(proxyBeanMethods = false)
+public class ActuatorSecurity extends WebSecurityConfigurerAdapter {
 
-> 如果你想要实现自己的端点暴露策略，你可以注册一个 `EndpointFilter` bean。
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.requestMatcher(EndpointRequest.toAnyEndpoint()).authorizeRequests((requests) ->
+            requests.anyRequest().permitAll());
+    }
+
+}
+```
