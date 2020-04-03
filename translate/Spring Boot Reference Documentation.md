@@ -7390,3 +7390,8 @@ dependencies {
 
 > 无论哪种方式，您的启动器都必须直接或间接引用核心 Spring Boot 启动器（`spring-boot-starter`）（即，如果您的启动器依赖于另一个启动器，则无需添加它）。如果仅使用您的自定义启动器创建了一个项目，则该核心启动器的存在将兑现 Spring Boot 的核心功能。
 
+### 4.30. 进一步学习
+
+如果你想要深入了解本章节讨论的任何类，请参考 [Spring Boot API documentation](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/api/) ，或者可以 [直接浏览源代码](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE)。如果你有任何其他问题，参考 [how-to](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#howto) 章节。
+
+如果你更感兴趣 Spring Boot 的核心特性，你可以继续阅读本文档后续的 [production-ready features](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready)。
