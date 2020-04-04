@@ -7603,3 +7603,17 @@ public class ActuatorSecurity extends WebSecurityConfigurerAdapter {
 添加了一个“发现页面”，其中包含指向所有端点的链接。默认情况下， `/actuator` 上提供“发现页面”。
 
 配置了自定义管理上下文路径后，“发现页面”会自动从 `/actuator` 移动到管理上下文的根目录。例如，如果管理上下文路径为 `/management`，则发现页面可从 `/management` 访问。当管理上下文路径设置为`/`时，发现页面将被禁用，以防止与其他映射发生冲突的可能性。
+
+#### 5.2.6. CORS 支持
+
+[跨域资源共享](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) (CORS) is a [W3C 规范](https://www.w3.org/TR/cors/) ，允许你以灵活的方式指定哪种跨域请求是被授权的。如果你使用 Spring MVC 或者 Spring WebFlux，执行器 Actuator 的 web 端点能够配置为支持这种场景。
+
+CORS 支持默认关闭，只有当 `management.endpoints.web.cors.allowed-origins` 属性被设定之后才会开启。下面的配置许可来自 `example.com` 域名的 `GET` 和 `POST` 调用：
+
+```properties
+management.endpoints.web.cors.allowed-origins=https://example.com
+management.endpoints.web.cors.allowed-methods=GET,POST
+```
+
+> 参考 [CorsEndpointProperties](https://github.com/spring-projects/spring-boot/tree/v2.2.6.RELEASE/spring-boot-project/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/endpoint/web/CorsEndpointProperties.java) 获取选项的完整列表。
+
