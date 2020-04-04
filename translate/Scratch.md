@@ -1,11 +1,11 @@
 ###### 输入类型转换
 
-The parameters passed to endpoint operation methods are, if necessary, automatically converted to the required type. Before calling an operation method, the input received via JMX or an HTTP request is converted to the required types using an instance of `ApplicationConversionService` as well as any `Converter` or `GenericConverter` beans qualified with `@EndpointConverter`.
+传递给端点操作方法的参数，如果必要，会自动被转换为需要的数据类型。在调用操作方法之前，通过 JMX 或者 HTTP 请求接收的输入被转换为需要的数据类型，使用一个  `ApplicationConversionService` 实例。或者任何由 `@EndpointConverter` 修饰的 `Converter` 或者 `GenericConverter` beans。
 
 ##### 自定义 Web 端点
 
-Operations on an `@Endpoint`, `@WebEndpoint`, or `@EndpointWebExtension` are automatically exposed over HTTP using Jersey, Spring MVC, or Spring WebFlux. If both Jersey and Spring MVC are available, Spring MVC will be used.
+一个 `@Endpoint`, `@WebEndpoint`, 或者 `@EndpointWebExtension` 上的操作会自动通过 HTTP 暴露，使用 Jersey, Spring MVC, 或者 Spring WebFlux。如果 Jersey 和 Spring MVC 都可用， Spring MVC 将被优先使用。
 
 ###### Web 端点请求谓词
 
-A request predicate is automatically generated for each operation on a web-exposed endpoint.
+请求谓词会为 web 暴露端点上的每个操作自动生成。
