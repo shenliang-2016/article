@@ -30,17 +30,17 @@ info.app.java.target=1.8
 management.info.git.mode=full
 ```
 
-##### Build Information
+##### 构建信息
 
-If a `BuildProperties` bean is available, the `info` endpoint can also publish information about your build. This happens if a `META-INF/build-info.properties` file is available in the classpath.
+如果 `BuildProperties` bean 可用， `info` 端点还能够有关构建的信息。如果 `META-INF/build-info.properties` 文件存在于类路径下时就会如此。
 
-> The Maven and Gradle plugins can both generate that file. See "[Generate build information](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-build-info)" for more details.
+> Maven 和 Gradle 插件都会生成该文件。参考 "[生成构建信息](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-build-info)" 了解更多细节。
 
-##### Writing Custom InfoContributors
+##### 编写自定义 InfoContributors
 
-To provide custom application information, you can register Spring beans that implement the [`InfoContributor`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/info/InfoContributor.java) interface.
+为了提供自定义应用信息，你可以注册实现了 [`InfoContributor`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/info/InfoContributor.java) 接口的 Spring beans。
 
-The following example contributes an `example` entry with a single value:
+下面的例子提供携带单个值的 `example` 条目：
 
 ```java
 import java.util.Collections;
@@ -61,7 +61,7 @@ public class ExampleInfoContributor implements InfoContributor {
 }
 ```
 
-If you reach the `info` endpoint, you should see a response that contains the following additional entry:
+访问 `info` 端点，你应该可以看到包含下列额外数据条目的响应：
 
 ```json
 {
