@@ -12,4 +12,5 @@
 | [`GitInfoContributor`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/info/GitInfoContributor.java) | 暴露 git 信息，如果 `git.properties` 文件可用。              |
 | [`BuildInfoContributor`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/info/BuildInfoContributor.java) | Exposes build information if a `META-INF/build-info.properties` file is available. |
 
-> It is possible to disable them all by setting the `management.info.defaults.enabled` property.
+> 可以通过设定 `management.info.defaults.enabled` 属性将它们全部关闭。
+
