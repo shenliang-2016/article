@@ -70,3 +70,4 @@ public class ExampleInfoContributor implements InfoContributor {
     }
 }
 ```
+
