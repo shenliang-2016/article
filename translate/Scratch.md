@@ -1,18 +1,18 @@
-#### 5.3.2. Customizing the Management Server Port
+#### 5.3.2. 自定义管理服务器端口
 
-Exposing management endpoints by using the default HTTP port is a sensible choice for cloud-based deployments. If, however, your application runs inside your own data center, you may prefer to expose endpoints by using a different HTTP port.
+对于基于云的部署，通过使用默认的 HTTP 端口公开管理端点是明智的选择。但是，如果您的应用程序在自己的数据中心内运行，则您可能更喜欢使用其他 HTTP 端口公开端点。
 
-You can set the `management.server.port` property to change the HTTP port, as shown in the following example:
+您可以设置 `management.server.port` 属性来更改 HTTP 端口，如以下示例所示：
 
 ```properties
 management.server.port=8081
 ```
 
-> On Cloud Foundry, applications only receive requests on port 8080 for both HTTP and TCP routing, by default. If you want to use a custom management port on Cloud Foundry, you will need to explicitly set up the application’s routes to forward traffic to the custom port.
+> 在 Cloud Foundry 上，默认情况下，应用程序仅在端口 8080 上接收 HTTP 和 TCP 路由请求。如果要在 Cloud Foundry 上使用自定义管理端口，则需要明确设置应用程序的路由，以将流量转发到该自定义端口。
 
-#### 5.3.3. Configuring Management-specific SSL
+#### 5.3.3. 配置管理专用的 SSL
 
-When configured to use a custom port, the management server can also be configured with its own SSL by using the various `management.server.ssl.*` properties. For example, doing so lets a management server be available over HTTP while the main application uses HTTPS, as shown in the following property settings:
+当配置为使用自定义端口时，还可以通过使用各种 `management.server.ssl.*` 属性为管理服务器配置其自己的 SSL。例如，这样做可以使管理服务器在主应用程序使用 HTTPS 时通过 HTTP 可用，如以下属性设置所示：
 
 ```properties
 server.port=8443
@@ -23,7 +23,7 @@ management.server.port=8080
 management.server.ssl.enabled=false
 ```
 
-Alternatively, both the main server and the management server can use SSL but with different key stores, as follows:
+或者，主服务器和管理服务器都可以使用 SSL，但具有不同的密钥库，如下所示：
 
 ```properties
 server.port=8443
@@ -35,3 +35,4 @@ management.server.ssl.enabled=true
 management.server.ssl.key-store=classpath:management.jks
 management.server.ssl.key-password=secret
 ```
+
