@@ -1,27 +1,17 @@
-#### 5.3.4.  自定义管理服务器地址
+### 5.4. 通过 JMX 监控和管理
 
-您可以通过设置 `management.server.address` 属性来定制管理端点可用的地址。如果您只想在内部或面向操作的网络上侦听或仅侦听来自 `localhost` 的连接，则这样做很有用。
+Java 管理扩展（JMX）提供了监视和管理应用程序的标准机制。默认情况下，此功能未启用，可以通过将配置属性 `spring.jmx.enabled` 设置为 `true` 来启用。默认情况下，Spring Boot 将管理端点作为 `org.springframework.boot` 域下的 JMX MBean 公开。
 
-> 仅当端口与主服务器端口不同时，您才能在其他地址上侦听。
+#### 5.4.1. 自定义 MBean 名称
 
-下面的例子 `application.properties` 不允许远程管理连接：
+MBean 的名称通常由端点的 `id` 生成。例如， `health` 端点公开为 `org.springframework.boot:type=Endpoint,name=Health`。
 
-```properties
-management.server.port=8081
-management.server.address=127.0.0.1
-```
+如果您的应用程序包含多个 Spring `ApplicationContext`，您可能会发现名称冲突。为了解决这个问题，可以将 `spring.jmx.unique-names` 属性设置为 `true`，以便 MBean 名称始终是唯一的。
 
-#### 5.3.5. 禁用 HTTP 端点
-
-如果你不希望通过 HTTP 暴露端点，你可以设定管理端口为 `-1`，如下面例子所示：
+您还可以自定义暴露端点的 JMX 域。以下设置显示了在 `application.properties` 中执行此操作的示例：
 
 ```properties
-management.server.port=-1
-```
-
-也可以使用 `management.endpoints.web.exposure.exclude` 属性来实现，如以下示例所示：
-
-```properties
-management.endpoints.web.exposure.exclude=*
+spring.jmx.unique-names=true
+management.endpoints.jmx.domain=com.example.myapp
 ```
 
