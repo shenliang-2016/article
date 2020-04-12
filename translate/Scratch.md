@@ -1,38 +1,27 @@
-#### 5.3.2. 自定义管理服务器端口
+#### 5.3.4.  自定义管理服务器地址
 
-对于基于云的部署，通过使用默认的 HTTP 端口公开管理端点是明智的选择。但是，如果您的应用程序在自己的数据中心内运行，则您可能更喜欢使用其他 HTTP 端口公开端点。
+您可以通过设置 `management.server.address` 属性来定制管理端点可用的地址。如果您只想在内部或面向操作的网络上侦听或仅侦听来自 `localhost` 的连接，则这样做很有用。
 
-您可以设置 `management.server.port` 属性来更改 HTTP 端口，如以下示例所示：
+> 仅当端口与主服务器端口不同时，您才能在其他地址上侦听。
+
+下面的例子 `application.properties` 不允许远程管理连接：
 
 ```properties
 management.server.port=8081
+management.server.address=127.0.0.1
 ```
 
-> 在 Cloud Foundry 上，默认情况下，应用程序仅在端口 8080 上接收 HTTP 和 TCP 路由请求。如果要在 Cloud Foundry 上使用自定义管理端口，则需要明确设置应用程序的路由，以将流量转发到该自定义端口。
+#### 5.3.5. 禁用 HTTP 端点
 
-#### 5.3.3. 配置管理专用的 SSL
-
-当配置为使用自定义端口时，还可以通过使用各种 `management.server.ssl.*` 属性为管理服务器配置其自己的 SSL。例如，这样做可以使管理服务器在主应用程序使用 HTTPS 时通过 HTTP 可用，如以下属性设置所示：
+如果你不希望通过 HTTP 暴露端点，你可以设定管理端口为 `-1`，如下面例子所示：
 
 ```properties
-server.port=8443
-server.ssl.enabled=true
-server.ssl.key-store=classpath:store.jks
-server.ssl.key-password=secret
-management.server.port=8080
-management.server.ssl.enabled=false
+management.server.port=-1
 ```
 
-或者，主服务器和管理服务器都可以使用 SSL，但具有不同的密钥库，如下所示：
+也可以使用 `management.endpoints.web.exposure.exclude` 属性来实现，如以下示例所示：
 
 ```properties
-server.port=8443
-server.ssl.enabled=true
-server.ssl.key-store=classpath:main.jks
-server.ssl.key-password=secret
-management.server.port=8080
-management.server.ssl.enabled=true
-management.server.ssl.key-store=classpath:management.jks
-management.server.ssl.key-password=secret
+management.endpoints.web.exposure.exclude=*
 ```
 
