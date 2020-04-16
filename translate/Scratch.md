@@ -1,6 +1,6 @@
 ### 5.5. Loggers
 
-Spring Boot Actuator includes the ability to view and configure the log levels of your application at runtime. You can view either the entire list or an individual logger’s configuration, which is made up of both the explicitly configured logging level as well as the effective logging level given to it by the logging framework. These levels can be one of:
+Spring Boot Actuator 包含在运行时查看和配置应用的日志级别的能力。你可以查看整体配置列表或者单个 logger 配置。该配置由显式配置的日志级别以及日志框架赋予的有效的日志级别组成。日志级别可以是：
 
 - `TRACE`
 - `DEBUG`
@@ -11,11 +11,11 @@ Spring Boot Actuator includes the ability to view and configure the log levels o
 - `OFF`
 - `null`
 
-`null` indicates that there is no explicit configuration.
+`null` 表示没有显式配置。
 
-#### 5.5.1. Configure a Logger
+#### 5.5.1. 配置 Logger
 
-To configure a given logger, `POST` a partial entity to the resource’s URI, as shown in the following example:
+为了配置给定的 logger，`POST` 一个部分实体到该资源 URI，如下面例子所示：
 
 ```json
 {
@@ -23,5 +23,5 @@ To configure a given logger, `POST` a partial entity to the resource’s URI, as
 }
 ```
 
-> To “reset” the specific level of the logger (and use the default configuration instead), you can pass a value of `null` as the `configuredLevel`.
+> 要“重置”记录器的特定级别（并使用默认配置），可以将传入 `null` 作为 `configuredLevel` 值。
 
