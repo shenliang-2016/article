@@ -108,15 +108,15 @@ management.metrics.export.influx.uri=https://influx.example.com:8086
 
 ##### JMX
 
-Micrometer provides a hierarchical mapping to [JMX](https://micrometer.io/docs/registry/jmx), primarily as a cheap and portable way to view metrics locally. By default, metrics are exported to the `metrics` JMX domain. The domain to use can be provided using:
+Micrometer 提供了到 [JMX](https://micrometer.io/docs/registry/jmx) 的层次结构映射，主要是作为一种便宜且可移植的方式在本地查看度量。默认情况下，指标被导出到 `metrics` JMX 域。可以使用以下方式提供要使用的域：
 
 ```properties
 management.metrics.export.jmx.domain=com.example.app.metrics
 ```
 
-Micrometer provides a default `HierarchicalNameMapper` that governs how a dimensional meter id is [mapped to flat hierarchical names](https://micrometer.io/docs/registry/jmx#_hierarchical_name_mapping).
+Micrometer 提供了一个默认的 `HierarchicalNameMapper` 负责管理将空间尺度 id [映射到平面层级名称](https://micrometer.io/docs/registry/jmx#_hierarchical_name_mapping)。
 
-> To take control over this behaviour, define your `JmxMeterRegistry` and supply your own `HierarchicalNameMapper`. An auto-configured `JmxConfig` and `Clock` beans are provided unless you define your own:
+> 为了控制这种映射行为，定义你自己的 `JmxMeterRegistry` 并提供相应的 `HierarchicalNameMapper`，一个自动配置的 `JmxConfig` 和 `Clock` beans 会被自动提供，除非你自己定义它们：
 
 ```java
 @Bean
@@ -127,7 +127,7 @@ public JmxMeterRegistry jmxMeterRegistry(JmxConfig config, Clock clock) {
 
 ##### KairosDB
 
-By default, metrics are exported to [KairosDB](https://micrometer.io/docs/registry/kairos) running on your local machine. The location of the [KairosDB server](https://kairosdb.github.io/) to use can be provided using:
+默认情况下，度量值被导出至你本地机器上运行的 [KairosDB](https://micrometer.io/docs/registry/kairos) 。要使用的 [KairosDB server](https://kairosdb.github.io/) 的地址可以通过以下方式指定：
 
 ```properties
 management.metrics.export.kairos.uri=https://kairosdb.example.com:8080/api/v1/datapoints
@@ -135,14 +135,14 @@ management.metrics.export.kairos.uri=https://kairosdb.example.com:8080/api/v1/da
 
 ##### New Relic
 
-New Relic registry pushes metrics to [New Relic](https://micrometer.io/docs/registry/new-relic) periodically. To export metrics to [New Relic](https://newrelic.com/), your API key and account id must be provided:
+New Relic 注册将度量值周期性推送至 [New Relic](https://micrometer.io/docs/registry/new-relic) 。为了导出度量值到 [New Relic](https://micrometer.io/docs/registry/new-relic) ，必需提供你的 API key 和账户 id ：
 
 ```properties
 management.metrics.export.newrelic.api-key=YOUR_KEY
 management.metrics.export.newrelic.account-id=YOUR_ACCOUNT_ID
 ```
 
-You can also change the interval at which metrics are sent to New Relic:
+你也可以修改度量值推送到 New Relic 的时间间隔：
 
 ```properties
 management.metrics.export.newrelic.step=30s
@@ -150,11 +150,11 @@ management.metrics.export.newrelic.step=30s
 
 ##### Prometheus
 
-[Prometheus](https://micrometer.io/docs/registry/prometheus) expects to scrape or poll individual app instances for metrics. Spring Boot provides an actuator endpoint available at `/actuator/prometheus` to present a [Prometheus scrape](https://prometheus.io/) with the appropriate format.
+[Prometheus](https://micrometer.io/docs/registry/prometheus) 希望抓取或轮询单个应用程序实例以获取指标。Spring Boot 在 `/actuator/prometheus` 提供了一个执行器端点，以适当格式显示 [Prometheus scrape](https://prometheus.io/)。
 
-> The endpoint is not available by default and must be exposed, see [exposing endpoints](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints-exposing-endpoints) for more details.
+> 该端点默认不可用，需要手动暴露。更多相关细节请参考 [exposing endpoints](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints-exposing-endpoints) 。
 
-Here is an example `scrape_config` to add to `prometheus.yml`:
+这里是需要添加到 `prometheus.yml` 中的 `scrape_config` 的例子：
 
 ```yaml
 scrape_configs:
@@ -164,7 +164,7 @@ scrape_configs:
       - targets: ['HOST:PORT']
 ```
 
-For ephemeral or batch jobs which may not exist long enough to be scraped, [Prometheus Pushgateway](https://github.com/prometheus/pushgateway) support can be used to expose their metrics to Prometheus. To enable Prometheus Pushgateway support, add the following dependency to your project:
+对于可能不存在足够长的时间而无法被废弃的临时或批处理作业，可以使用 [Prometheus Pushgateway](https://github.com/prometheus/pushgateway) 支持将其指标暴露给 Prometheus。要启用 Prometheus Pushgateway 支持，请将以下依赖项添加到您的项目中：
 
 ```xml
 <dependency>
@@ -173,17 +173,17 @@ For ephemeral or batch jobs which may not exist long enough to be scraped, [Prom
 </dependency>
 ```
 
-When the Prometheus Pushgateway dependency is present on the classpath, Spring Boot auto-configures a `PrometheusPushGatewayManager` bean. This manages the pushing of metrics to a Prometheus Pushgateway. The `PrometheusPushGatewayManager` can be tuned using properties under `management.metrics.export.prometheus.pushgateway`. For advanced configuration, you can also provide your own `PrometheusPushGatewayManager` bean.
+当在类路径上存在 Prometheus Pushgateway 依赖项时，Spring Boot 会自动配置一个 `PrometheusPushGatewayManager` bean。这可以管理将指标推送到 Prometheus Pushgateway。可以使用 `management.metrics.export.prometheus.pushgateway` 下的属性来调整 `PrometheusPushGatewayManager`。 对于高级配置，您还可以提供自己的 `PrometheusPushGatewayManager` bean。
 
 ##### SignalFx
 
-SignalFx registry pushes metrics to [SignalFx](https://micrometer.io/docs/registry/signalfx) periodically. To export metrics to [SignalFx](https://www.signalfx.com/), your access token must be provided:
+SignalFx 注册将度量值周期性推送至 [SignalFx](https://micrometer.io/docs/registry/signalfx) 。为了导出度量值到 [SignalFx](https://micrometer.io/docs/registry/signalfx) ，必需提供你的访问 token：
 
 ```properties
 management.metrics.export.signalfx.access-token=YOUR_ACCESS_TOKEN
 ```
 
-You can also change the interval at which metrics are sent to SignalFx:
+你也可以修改度量值推送到 SignalFx 的时间间隔：
 
 ```properties
 management.metrics.export.signalfx.step=30s
@@ -191,9 +191,9 @@ management.metrics.export.signalfx.step=30s
 
 ##### Simple
 
-Micrometer ships with a simple, in-memory backend that is automatically used as a fallback if no other registry is configured. This allows you to see what metrics are collected in the [metrics endpoint](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-endpoint).
+Micrometer 附带一个简单的内存后端，如果未配置其他注册表，该后端将自动用作后备。这使您可以查看在 [metrics endpoint](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-endpoint) 中收集了哪些指标。
 
-The in-memory backend disables itself as soon as you’re using any of the other available backend. You can also disable it explicitly:
+使用任何其他可用后端时，内存中后端都会自行禁用。您也可以显式禁用它：
 
 ```properties
 management.metrics.export.simple.enabled=false
@@ -201,14 +201,14 @@ management.metrics.export.simple.enabled=false
 
 ##### StatsD
 
-The StatsD registry pushes metrics over UDP to a StatsD agent eagerly. By default, metrics are exported to a [StatsD](https://micrometer.io/docs/registry/statsd) agent running on your local machine. The StatsD agent host and port to use can be provided using:
+StatsD 注册急切地通过 UDP 将度量推送到 StatsD 代理。默认情况下，指标会导出到本地计算机上运行的 [StatsD](https://micrometer.io/docs/registry/statsd) 代理中。可以使用以下方式提供要使用的 StatsD 代理主机和端口：
 
 ```properties
 management.metrics.export.statsd.host=statsd.example.com
 management.metrics.export.statsd.port=9125
 ```
 
-You can also change the StatsD line protocol to use (default to Datadog):
+您还可以更改要使用的 StatsD 线路协议（默认为 Datadog）：
 
 ```properties
 management.metrics.export.statsd.flavor=etsy
@@ -216,22 +216,23 @@ management.metrics.export.statsd.flavor=etsy
 
 ##### Wavefront
 
-Wavefront registry pushes metrics to [Wavefront](https://micrometer.io/docs/registry/wavefront) periodically. If you are exporting metrics to [Wavefront](https://www.wavefront.com/) directly, your API token must be provided:
+Wavefront 注册将度量值周期性推送至 [Wavefront](https://micrometer.io/docs/registry/wavefront) 。为了直接导出度量值到 [Wavefront](https://micrometer.io/docs/registry/wavefront) ，必需提供你的 API token：
 
 ```properties
 management.metrics.export.wavefront.api-token=YOUR_API_TOKEN
 ```
 
-Alternatively, you may use a Wavefront sidecar or an internal proxy set up in your environment that forwards metrics data to the Wavefront API host:
+或者，您可以使用在您的环境中设置的 Wavefront 辅助工具或内部代理，将指标数据转发到 Wavefront API 主机：
 
 ```properties
 management.metrics.export.wavefront.uri=proxy://localhost:2878
 ```
 
-> If publishing metrics to a Wavefront proxy (as described in [the documentation](https://docs.wavefront.com/proxies_installing.html)), the host must be in the `proxy://HOST:PORT` format.
+> 如果将指标发布到Wavefront代理（如 [文档](https://docs.wavefront.com/proxies_installing.html) 中所述），则主机必须为 `proxy://HOST:PORT` 格式。
 
-You can also change the interval at which metrics are sent to Wavefront:
+你也可以修改度量值推送到 Wavefront 的时间间隔：
 
 ```properties
 management.metrics.export.wavefront.step=30s
 ```
+
