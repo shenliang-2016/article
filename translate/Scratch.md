@@ -1,8 +1,8 @@
-#### 5.6.2. Supported monitoring systems
+#### 5.6.2. 支持的监控系统
 
 ##### AppOptics
 
-By default, the AppOptics registry pushes metrics to `api.appoptics.com/v1/measurements` periodically. To export metrics to SaaS [AppOptics](https://micrometer.io/docs/registry/appoptics), your API token must be provided:
+默认情况下，AppOptics 注册会将度量值周期性推送到 `api.appoptics.com/v1/measurements` 。为了将度量值导出给 SaaS [AppOptics](https://micrometer.io/docs/registry/appoptics) ，你必须提供 API token：
 
 ```properties
 management.metrics.export.appoptics.api-token=YOUR_TOKEN
@@ -10,7 +10,7 @@ management.metrics.export.appoptics.api-token=YOUR_TOKEN
 
 ##### Atlas
 
-By default, metrics are exported to [Atlas](https://micrometer.io/docs/registry/atlas) running on your local machine. The location of the [Atlas server](https://github.com/Netflix/atlas) to use can be provided using:
+默认情况下，度量值被暴露给运行在你本地的 [Atlas](https://micrometer.io/docs/registry/atlas) 。要使用的 [Atlas server](https://github.com/Netflix/atlas) 的位置可以通过下面方式提供：
 
 ```properties
 management.metrics.export.atlas.uri=https://atlas.example.com:7101/api/v1/publish
@@ -18,13 +18,13 @@ management.metrics.export.atlas.uri=https://atlas.example.com:7101/api/v1/publis
 
 ##### Datadog
 
-Datadog registry pushes metrics to [datadoghq](https://www.datadoghq.com/) periodically. To export metrics to [Datadog](https://micrometer.io/docs/registry/datadog), your API key must be provided:
+Datadog 注册将度量值周期性推送至 [datadoghq](https://www.datadoghq.com/) 。为了导出度量值到 [Datadog](https://micrometer.io/docs/registry/datadog)，必需提供你的 API key：
 
 ```properties
 management.metrics.export.datadog.api-key=YOUR_KEY
 ```
 
-You can also change the interval at which metrics are sent to Datadog:
+你也可以修改度量值向 Datadog 推送的时间间隔：
 
 ```properties
 management.metrics.export.datadog.step=30s
