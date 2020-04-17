@@ -32,7 +32,7 @@ management.metrics.export.datadog.step=30s
 
 ##### Dynatrace
 
-Dynatrace registry pushes metrics to the configured URI periodically. To export metrics to [Dynatrace](https://micrometer.io/docs/registry/dynatrace), your API token, device ID, and URI must be provided:
+Dynatrace 注册周期性地将度量值推动到配置的 URI 。为了导出度量值到 [Dynatrace](https://micrometer.io/docs/registry/dynatrace) ，必需提供 API token，设备 ID，以及 URI ：
 
 ```properties
 management.metrics.export.dynatrace.api-token=YOUR_TOKEN
@@ -40,7 +40,7 @@ management.metrics.export.dynatrace.device-id=YOUR_DEVICE_ID
 management.metrics.export.dynatrace.uri=YOUR_URI
 ```
 
-You can also change the interval at which metrics are sent to Dynatrace:
+你也可以修改向 Dynatrace 推送度量值的时间间隔：
 
 ```properties
 management.metrics.export.dynatrace.step=30s
@@ -48,7 +48,7 @@ management.metrics.export.dynatrace.step=30s
 
 ##### Elastic
 
-By default, metrics are exported to [Elastic](https://micrometer.io/docs/registry/elastic) running on your local machine. The location of the Elastic server to use can be provided using the following property:
+默认情况下，度量值被导出至你本地机器上运行的 [Elastic](https://micrometer.io/docs/registry/elastic) 。要使用的 Elastic server 的地址可以通过以下方式指定：
 
 ```properties
 management.metrics.export.elastic.host=https://elastic.example.com:8086
@@ -56,7 +56,7 @@ management.metrics.export.elastic.host=https://elastic.example.com:8086
 
 ##### Ganglia
 
-By default, metrics are exported to [Ganglia](https://micrometer.io/docs/registry/ganglia) running on your local machine. The [Ganglia server](http://ganglia.sourceforge.net/) host and port to use can be provided using:
+默认情况下，度量值被导出至你本地机器上运行的 [Ganglia](https://micrometer.io/docs/registry/ganglia) 。要使用的 [Ganglia server](http://ganglia.sourceforge.net/) 的地址和端口可以通过以下方式指定：
 
 ```properties
 management.metrics.export.ganglia.host=ganglia.example.com
@@ -65,16 +65,16 @@ management.metrics.export.ganglia.port=9649
 
 ##### Graphite
 
-By default, metrics are exported to [Graphite](https://micrometer.io/docs/registry/graphite) running on your local machine. The [Graphite server](https://graphiteapp.org/) host and port to use can be provided using:
+默认情况下，度量值被导出至你本地机器上运行的 [Graphite](https://micrometer.io/docs/registry/graphite) 。要使用的 [Graphite server](https://graphiteapp.org/) 的地址和端口可以通过以下方式指定：
 
 ```properties
 management.metrics.export.graphite.host=graphite.example.com
 management.metrics.export.graphite.port=9004
 ```
 
-Micrometer provides a default `HierarchicalNameMapper` that governs how a dimensional meter id is [mapped to flat hierarchical names](https://micrometer.io/docs/registry/graphite#_hierarchical_name_mapping).
+Micrometer 提供了默认的 `HierarchicalNameMapper` 用来管理如何将空间尺度 id [映射到平面层级名称](https://micrometer.io/docs/registry/graphite#_hierarchical_name_mapping)。
 
-> To take control over this behaviour, define your `GraphiteMeterRegistry` and supply your own `HierarchicalNameMapper`. An auto-configured `GraphiteConfig` and `Clock` beans are provided unless you define your own:
+> 为了控制该映射行为，定义你自己的 `GraphiteMeterRegistry` 并提供相应的 `HierarchicalNameMapper`。一个自动配置的 `GraphiteConfig` 和 `Clock` beans 也会被提供，除非你定义自己的：
 
 ```java
 @Bean
@@ -85,13 +85,13 @@ public GraphiteMeterRegistry graphiteMeterRegistry(GraphiteConfig config, Clock 
 
 ##### Humio
 
-By default, the Humio registry pushes metrics to [cloud.humio.com](https://cloud.humio.com/) periodically. To export metrics to SaaS [Humio](https://micrometer.io/docs/registry/humio), your API token must be provided:
+默认情况下，Humio 注册会将度量值周期性推送到 [cloud.humio.com](https://cloud.humio.com/) 。为了将度量值导出给 SaaS [Humio](https://micrometer.io/docs/registry/humio)，你必须提供 API token：
 
 ```properties
 management.metrics.export.humio.api-token=YOUR_TOKEN
 ```
 
-You should also configure one or more tags to identify the data source to which metrics will be pushed:
+你还应该配置一个或者多个标签来标示将被推送的度量值的数据源：
 
 ```properties
 management.metrics.export.humio.tags.alpha=a
@@ -100,7 +100,7 @@ management.metrics.export.humio.tags.bravo=b
 
 ##### Influx
 
-By default, metrics are exported to [Influx](https://micrometer.io/docs/registry/influx) running on your local machine. The location of the [Influx server](https://www.influxdata.com/) to use can be provided using:
+默认情况下，度量值被导出至你本地机器上运行的 [Influx](https://micrometer.io/docs/registry/influx) 。要使用的 [Influx server](https://www.influxdata.com/) 的地址可以通过以下方式指定：
 
 ```properties
 management.metrics.export.influx.uri=https://influx.example.com:8086
