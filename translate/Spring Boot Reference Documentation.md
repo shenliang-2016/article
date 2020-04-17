@@ -8137,25 +8137,25 @@ Spring Boot Actuator 包含在运行时查看和配置应用的日志级别的�
 
 Spring Boot Actuator 为 [Micrometer](https://micrometer.io/) 提供了依赖管理和自动配资，一个应用度量门面，支持各种监控系统，包括：
 
-- [AppOptics](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-appoptics)
-- [Atlas](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-atlas)
-- [Datadog](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-datadog)
-- [Dynatrace](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-dynatrace)
-- [Elastic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-elastic)
-- [Ganglia](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-ganglia)
-- [Graphite](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-graphite)
-- [Humio](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-humio)
-- [Influx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-influx)
-- [JMX](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-jmx)
-- [KairosDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-kairos)
-- [New Relic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-newrelic)
-- [Prometheus](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-prometheus)
-- [SignalFx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-signalfx)
-- [Simple (in-memory)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-simple)
-- [StatsD](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-statsd)
-- [Wavefront](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-wavefront)
+-[AppOptics](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-appoptics)
+-[Atlas](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-atlas)
+-[Datadog](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-datadog)
+-[Dynatrace](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-dynatrace)
+-[Elastic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-elastic)
+-[Ganglia](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-ganglia)
+-[Graphite](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-graphite)
+-[Humio](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-humio)
+-[Influx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-influx)
+-[JMX](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-jmx)
+-[KairosDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-kairos)
+-[New Relic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-newrelic)
+-[Prometheus](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-prometheus)
+-[SignalFx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-signalfx)
+-[Simple (in-memory)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-simple)
+-[StatsD](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-statsd)
+-[Wavefront](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-wavefront)
 
-> 为了进一步了解 Micrometer’s 能力，请参考相应的 [参考文档](https://micrometer.io/docs)，特别是 [概念章节](https://micrometer.io/docs/concepts).
+>为了进一步了解 Micrometer’s 能力，请参考相应的 [参考文档](https://micrometer.io/docs)，特别是 [概念章节](https://micrometer.io/docs/concepts).
 
 #### 5.6.1. 起步
 
@@ -8289,7 +8289,7 @@ management.metrics.export.graphite.port=9004
 
 Micrometer 提供了默认的 `HierarchicalNameMapper` 用来管理如何将空间尺度 id [映射到平面层级名称](https://micrometer.io/docs/registry/graphite#_hierarchical_name_mapping)。
 
-> 为了控制该映射行为，定义你自己的 `GraphiteMeterRegistry` 并提供相应的 `HierarchicalNameMapper`。一个自动配置的 `GraphiteConfig` 和 `Clock` beans 也会被提供，除非你定义自己的：
+>为了控制该映射行为，定义你自己的 `GraphiteMeterRegistry` 并提供相应的 `HierarchicalNameMapper`。一个自动配置的 `GraphiteConfig` 和 `Clock` beans 也会被提供，除非你定义自己的：
 
 ```java
 @Bean
@@ -8331,7 +8331,7 @@ management.metrics.export.jmx.domain=com.example.app.metrics
 
 Micrometer 提供了一个默认的 `HierarchicalNameMapper` 负责管理将空间尺度 id [映射到平面层级名称](https://micrometer.io/docs/registry/jmx#_hierarchical_name_mapping)。
 
-> 为了控制这种映射行为，定义你自己的 `JmxMeterRegistry` 并提供相应的 `HierarchicalNameMapper`，一个自动配置的 `JmxConfig` 和 `Clock` beans 会被自动提供，除非你自己定义它们：
+>为了控制这种映射行为，定义你自己的 `JmxMeterRegistry` 并提供相应的 `HierarchicalNameMapper`，一个自动配置的 `JmxConfig` 和 `Clock` beans 会被自动提供，除非你自己定义它们：
 
 ```java
 @Bean
@@ -8367,7 +8367,7 @@ management.metrics.export.newrelic.step=30s
 
 [Prometheus](https://micrometer.io/docs/registry/prometheus) 希望抓取或轮询单个应用程序实例以获取指标。Spring Boot 在 `/actuator/prometheus` 提供了一个执行器端点，以适当格式显示 [Prometheus scrape](https://prometheus.io/)。
 
-> 该端点默认不可用，需要手动暴露。更多相关细节请参考 [exposing endpoints](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints-exposing-endpoints) 。
+>该端点默认不可用，需要手动暴露。更多相关细节请参考 [exposing endpoints](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-endpoints-exposing-endpoints) 。
 
 这里是需要添加到 `prometheus.yml` 中的 `scrape_config` 的例子：
 
@@ -8443,11 +8443,29 @@ management.metrics.export.wavefront.api-token=YOUR_API_TOKEN
 management.metrics.export.wavefront.uri=proxy://localhost:2878
 ```
 
-> 如果将指标发布到Wavefront代理（如 [文档](https://docs.wavefront.com/proxies_installing.html) 中所述），则主机必须为 `proxy://HOST:PORT` 格式。
+>如果将指标发布到Wavefront代理（如 [文档](https://docs.wavefront.com/proxies_installing.html) 中所述），则主机必须为 `proxy://HOST:PORT` 格式。
 
 你也可以修改度量值推送到 Wavefront 的时间间隔：
 
 ```properties
 management.metrics.export.wavefront.step=30s
 ```
+
+#### 5.6.3. 支持的 Metrics
+
+在适用情况下，Spring Boot 将注册以下核心度量指标：
+
+-JVM metrics，报告下列利用率：
+-各种内存和缓存池
+-有关垃圾收集的统计数据
+-线程利用率
+-加载/卸载的类的数量
+-CPU metrics
+-文件描述符 metrics
+-Kafka consumer metrics
+-Log4j2 metrics: 记录每个级别记录到 Log4j2 的事件数
+-Logback metrics: 记录每个级别记录到 Logback 的事件数
+-Uptime metrics: 报告正常运行时间的量度和代表应用程序绝对启动时间的固定量度
+-Tomcat metrics (`server.tomcat.mbeanregistry.enabled` 必需设定为 `true` 对所有将被注册的 Tomcat metrics)
+-[Spring Integration](https://docs.spring.io/spring-integration/docs/5.2.2.RELEASE/reference/html/system-management.html#micrometer-integration) metrics
 
