@@ -15,3 +15,4 @@
 | `uri`       | 应用变量值之前的请求的 URI 模板，如果可能的话 (比如， `/api/person/{id}`) |
 
 为了自定义标签，提供一个实现了 `WebFluxTagsProvider` 接口的 `@Bean` 类。
+
