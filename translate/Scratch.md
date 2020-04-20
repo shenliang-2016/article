@@ -1,19 +1,45 @@
-#### 5.6.4. 自定义度量注册
+#### 5.6.5. Customizing individual metrics
 
-为了注册自定义度量，将 `MeterRegistry` 注入你的组件中，如下面例子所示：
+If you need to apply customizations to specific `Meter` instances you can use the `io.micrometer.core.instrument.config.MeterFilter` interface. By default, all `MeterFilter` beans will be automatically applied to the micrometer `MeterRegistry.Config`.
+
+For example, if you want to rename the `mytag.region` tag to `mytag.area` for all meter IDs beginning with `com.example`, you can do the following:
 
 ```java
-class Dictionary {
-
-    private final List<String> words = new CopyOnWriteArrayList<>();
-
-    Dictionary(MeterRegistry registry) {
-        registry.gaugeCollectionSize("dictionary.size", Tags.empty(), this.words);
-    }
-
-    // …
-
+@Bean
+public MeterFilter renameRegionTagMeterFilter() {
+    return MeterFilter.renameTag("com.example", "mytag.region", "mytag.area");
 }
 ```
 
-如果你发现在组件或者应用中重复构建一套度量组件，就可以将整套组件封装成为 `MeterBinder` 实现。默认地，来自所有 `MeterBinder` beans 的度量都会自动绑定到 Spring 管理的 `MeterRegistry`。
+##### Common tags
+
+Common tags are generally used for dimensional drill-down on the operating environment like host, instance, region, stack, etc. Commons tags are applied to all meters and can be configured as shown in the following example:
+
+```properties
+management.metrics.tags.region=us-east-1
+management.metrics.tags.stack=prod
+```
+
+The example above adds `region` and `stack` tags to all meters with a value of `us-east-1` and `prod` respectively.
+
+> The order of common tags is important if you are using Graphite. As the order of common tags cannot be guaranteed using this approach, Graphite users are advised to define a custom `MeterFilter` instead.
+
+##### Per-meter properties
+
+In addition to `MeterFilter` beans, it’s also possible to apply a limited set of customization on a per-meter basis using properties. Per-meter customizations apply to any all meter IDs that start with the given name. For example, the following will disable any meters that have an ID starting with `example.remote`
+
+```properties
+management.metrics.enable.example.remote=false
+```
+
+The following properties allow per-meter customization:
+
+| Property                                                     | Description                                                  |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `management.metrics.enable`                                  | Whether to deny meters from emitting any metrics.            |
+| `management.metrics.distribution.percentiles-histogram`      | Whether to publish a histogram suitable for computing aggregable (across dimension) percentile approximations. |
+| `management.metrics.distribution.minimum-expected-value`, `management.metrics.distribution.maximum-expected-value` | Publish less histogram buckets by clamping the range of expected values. |
+| `management.metrics.distribution.percentiles`                | Publish percentile values computed in your application       |
+| `management.metrics.distribution.sla`                        | Publish a cumulative histogram with buckets defined by your SLAs. |
+
+For more details on concepts behind `percentiles-histogram`, `percentiles` and `sla` refer to the ["Histograms and percentiles" section](https://micrometer.io/docs/concepts#_histograms_and_percentiles) of the micrometer documentation.
