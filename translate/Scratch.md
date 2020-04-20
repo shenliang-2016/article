@@ -1,29 +1,22 @@
-##### Jersey Server Metrics
+##### HTTP Client Metrics
 
-当 Micrometer 的`micrometer-jersey2`模块位于类路径上时，自动配置将启用对 Jersey JAX-RS 实现所处理的请求的检测。当 `management.metrics.web.server.request.autotime.enabled` 为 `true` 时，将对所有请求进行检测。另外，当设置为 `false` 时，可以通过在请求处理方法中添加 `@Timed` 来启用检测：
+Spring Boot Actuator 可以管理 `RestTemplate` 和 `WebClient ` 的检测基础设施。为此，你必须注入相应的构建器并使用它创建实例：
 
-```java
-@Component
-@Path("/api/people")
-@Timed //在资源类上，以对资源中的每个请求处理程序启用计时。
-public class Endpoint {
-    @GET
-    @Timed(extraTags = { "region", "us-east-1" }) //关于启用单个端点的方法。如果您将它放在类中，则不必这样做，但是可以用于进一步为此特定端点自定义计时器。
-    @Timed(value = "all.people", longTask = true) //在 longTask = true 的方法上为该方法启用长任务计时器。长任务计时器需要单独的度量标准名称，并且可以与短任务计时器堆叠在一起。
-    public List<Person> listPeople() { ... }
-}
-```
+- `RestTemplateBuilder` 用于 `RestTemplate`
+- `WebClient.Builder` 用于 `WebClient`
 
-默认情况下，使用名称 `http.server.requests` 生成度量。可以通过设置 `management.metrics.web.server.request.metric-name` 属性来自定义名称。
+也可以手动应用负责此工具的定制程序，即 `MetricsRestTemplateCustomizer` 和 `MetricsWebClientCustomizer`。
 
-默认情况下，Jersey 服务器指标带有以下信息：
+默认情况下，使用名称 `http.client.requests` 生成度量。可以通过设置 `management.metrics.web.client.request.metric-name` 属性来自定义名称。
 
-| Tag         | Description                                                  |
-| :---------- | :----------------------------------------------------------- |
-| `exception` | 处理请求时引发的任何异常的简单类名。                         |
-| `method`    | 请求方法 (比如， `GET` 或者 `POST`)                          |
-| `outcome`   | 基于响应状态码的亲求输出。 1xx 是 `INFORMATIONAL`, 2xx 是 `SUCCESS`, 3xx 是 `REDIRECTION`, 4xx `CLIENT_ERROR`, 而 5xx 是 `SERVER_ERROR` |
-| `status`    | 响应的 HTTP 状态码 (比如， `200` 或者 `500`)                 |
-| `uri`       | 应用变量替换之前的请求 URI 模板，如果可能 (比如， `/api/person/{id}`) |
+默认情况下，通过检测的客户端生成的度量标准标记有以下信息：
 
-要自定义标签，提供一个实现了 `JerseyTagsProvider` 的 `@Bean` 。
+| Tag          | Description                                                  |
+| :----------- | :----------------------------------------------------------- |
+| `clientName` | URI 的 Host 部分                                             |
+| `method`     | 请求方法 (比如， `GET` 或者 `POST`)                          |
+| `outcome`    | 基于响应状态码的请求输出。 1xx 是 `INFORMATIONAL`, 2xx 是 `SUCCESS`, 3xx 是 `REDIRECTION`, 4xx `CLIENT_ERROR`, 而 5xx 是 `SERVER_ERROR`, 否则是 `UNKNOWN` 。 |
+| `status`     | 响应的 HTTP 状态码，如果可用 (比如， `200` 或者 `500`)，或者 `IO_ERROR` 如果出现 I/O 问题， 否则是 `CLIENT_ERROR` 。 |
+| `uri`        | 应用变量之前的请求 URI 模板，如果可能 (比如， `/api/person/{id}`) |
+
+要根据您选择的客户端自定义标签，可以提供实现 `@RestTemplateExchangeTagsProvider` 或 `WebClientExchangeTagsProvider` 的 `@Bean`。`RestTemplateExchangeTags` 和 `WebClientExchangeTags` 中有便捷的静态函数。
