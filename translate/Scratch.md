@@ -1,22 +1,40 @@
-##### HTTP Client Metrics
+##### Cache Metrics
 
-Spring Boot Actuator 可以管理 `RestTemplate` 和 `WebClient ` 的检测基础设施。为此，你必须注入相应的构建器并使用它创建实例：
+自动配置可在启动时使用前缀为 `cache` 的指标来检测所有可用的 `Cache`。高速缓存检测针对一组基本指标进行了标准化。还提供其他特定于缓存的指标。
 
-- `RestTemplateBuilder` 用于 `RestTemplate`
-- `WebClient.Builder` 用于 `WebClient`
+支持下列缓存类库：
 
-也可以手动应用负责此工具的定制程序，即 `MetricsRestTemplateCustomizer` 和 `MetricsWebClientCustomizer`。
+- Caffeine
+- EhCache 2
+- Hazelcast
+- 任何兼容 JCache (JSR-107) 实现
 
-默认情况下，使用名称 `http.client.requests` 生成度量。可以通过设置 `management.metrics.web.client.request.metric-name` 属性来自定义名称。
+Metrics 会被打上标签，该标签来自缓存的名称以及由 bean 名称派生而来的 `CacheManager` 的名称。
 
-默认情况下，通过检测的客户端生成的度量标准标记有以下信息：
+> 仅在启动时配置的缓存绑定到注册表。对于未在缓存配置中定义的缓存，例如，在启动阶段即时或以编程方式创建的高速缓存时，需要显式注册。可以使用`CacheMetricsRegistrar` bean 来简化该过程。
 
-| Tag          | Description                                                  |
-| :----------- | :----------------------------------------------------------- |
-| `clientName` | URI 的 Host 部分                                             |
-| `method`     | 请求方法 (比如， `GET` 或者 `POST`)                          |
-| `outcome`    | 基于响应状态码的请求输出。 1xx 是 `INFORMATIONAL`, 2xx 是 `SUCCESS`, 3xx 是 `REDIRECTION`, 4xx `CLIENT_ERROR`, 而 5xx 是 `SERVER_ERROR`, 否则是 `UNKNOWN` 。 |
-| `status`     | 响应的 HTTP 状态码，如果可用 (比如， `200` 或者 `500`)，或者 `IO_ERROR` 如果出现 I/O 问题， 否则是 `CLIENT_ERROR` 。 |
-| `uri`        | 应用变量之前的请求 URI 模板，如果可能 (比如， `/api/person/{id}`) |
+##### DataSource Metrics
 
-要根据您选择的客户端自定义标签，可以提供实现 `@RestTemplateExchangeTagsProvider` 或 `WebClientExchangeTagsProvider` 的 `@Bean`。`RestTemplateExchangeTags` 和 `WebClientExchangeTags` 中有便捷的静态函数。
+通过自动配置，可以使用前缀为 `jdbc.connections` 的度量来检测所有可用的 `DataSource` 对象。数据源检测产生的量规表示池中当前活动，空闲，最大允许和最小允许的连接。
+
+度量标准还标有根据 bean 名称计算的 `DataSource` 名称。
+
+> 默认情况下，Spring Boot 为所有支持的数据源提供元数据。如果不支持立即使用您喜欢的数据源，则可以添加其他`DataSourcePoolMetadataProvider` bean。有关示例，请参见 `DataSourcePoolMetadataProvidersConfiguration`。
+
+同样，使用 `hikaricp` 前缀公开特定于 Hikari 的指标。每个度量标准都以池的名称标记（可以通过 `spring.datasource.name` 进行控制）。
+
+##### Hibernate Metrics
+
+通过自动配置，可以检测所有可用的名为 `hibernate` 的统计启用的 Hibernate `EntityManagerFactory` 实例。
+
+度量标准还通过从 Bean 名称派生的 `EntityManagerFactory` 的名称进行标记。
+
+要启用统计信息，必须将标准 JPA 属性 `hibernate.generate_statistics` 设置为 `true`。您可以在自动配置的 `EntityManagerFactory` 上启用该功能，如以下示例所示：
+
+```properties
+spring.jpa.properties.hibernate.generate_statistics=true
+```
+
+##### RabbitMQ Metrics
+
+自动配置将启用所有名为 `rabbitmq` 的度量标准的 RabbitMQ 连接工厂的检测。
