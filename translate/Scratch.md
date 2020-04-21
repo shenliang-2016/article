@@ -1,8 +1,8 @@
-#### 5.6.5. Customizing individual metrics
+#### 5.6.5. 自定义单个度量
 
-If you need to apply customizations to specific `Meter` instances you can use the `io.micrometer.core.instrument.config.MeterFilter` interface. By default, all `MeterFilter` beans will be automatically applied to the micrometer `MeterRegistry.Config`.
+如果您需要对特定的 `Meter` 实例应用自定义设置，则可以使用 `io.micrometer.core.instrument.config.MeterFilter` 接口。默认情况下，所有的 `MeterFilter` bean 都将自动应用于 micrometer  `MeterRegistry.Config`。
 
-For example, if you want to rename the `mytag.region` tag to `mytag.area` for all meter IDs beginning with `com.example`, you can do the following:
+例如，如果要将所有 ID 以 `com.example` 开头的计量表的标签 `mytag.region` 重命名为 `mytag.area`，则可以执行以下操作：
 
 ```java
 @Bean
@@ -11,35 +11,35 @@ public MeterFilter renameRegionTagMeterFilter() {
 }
 ```
 
-##### Common tags
+##### 通用标签
 
-Common tags are generally used for dimensional drill-down on the operating environment like host, instance, region, stack, etc. Commons tags are applied to all meters and can be configured as shown in the following example:
+通用标签通常用于在操作环境（如主机，实例，区域，堆栈等）上进行维度深入分析。通用标签适用于所有仪表，可以按以下示例所示进行配置：
 
 ```properties
 management.metrics.tags.region=us-east-1
 management.metrics.tags.stack=prod
 ```
 
-The example above adds `region` and `stack` tags to all meters with a value of `us-east-1` and `prod` respectively.
+上面的示例在所有仪表中分别添加了 `region` 和 `stack` 标签，其值分别为 `us-east-1` 和 `prod`。
 
-> The order of common tags is important if you are using Graphite. As the order of common tags cannot be guaranteed using this approach, Graphite users are advised to define a custom `MeterFilter` instead.
+> 如果使用 Graphite，则常用标签的顺序很重要。由于使用这种方法不能保证通用标签的顺序，因此建议 Graphite 用户定义一个自定义的 `MeterFilter`。
 
-##### Per-meter properties
+##### Per-meter 属性
 
-In addition to `MeterFilter` beans, it’s also possible to apply a limited set of customization on a per-meter basis using properties. Per-meter customizations apply to any all meter IDs that start with the given name. For example, the following will disable any meters that have an ID starting with `example.remote`
+除了 `MeterFilter` bean 外，还可以使用属性在 per-meter 基础上应用一组有限的自定义设置。Per-meter 定制适用于以给定名称开头的所有所有表 ID。例如，以下将禁用任何 ID 以 `example.remote` 开头的仪表：
 
 ```properties
 management.metrics.enable.example.remote=false
 ```
 
-The following properties allow per-meter customization:
+下面的属性允许 per-meter 自定义：
 
-| Property                                                     | Description                                                  |
-| :----------------------------------------------------------- | :----------------------------------------------------------- |
-| `management.metrics.enable`                                  | Whether to deny meters from emitting any metrics.            |
-| `management.metrics.distribution.percentiles-histogram`      | Whether to publish a histogram suitable for computing aggregable (across dimension) percentile approximations. |
-| `management.metrics.distribution.minimum-expected-value`, `management.metrics.distribution.maximum-expected-value` | Publish less histogram buckets by clamping the range of expected values. |
-| `management.metrics.distribution.percentiles`                | Publish percentile values computed in your application       |
-| `management.metrics.distribution.sla`                        | Publish a cumulative histogram with buckets defined by your SLAs. |
+| Property                                                     | Description                                              |
+| :----------------------------------------------------------- | :------------------------------------------------------- |
+| `management.metrics.enable`                                  | 是否拒绝仪表发出任何指标。                               |
+| `management.metrics.distribution.percentiles-histogram`      | 是否发布适用于计算可聚集（跨维度）百分位数逼近的直方图。 |
+| `management.metrics.distribution.minimum-expected-value`, `management.metrics.distribution.maximum-expected-value` | 通过限制期望值的范围，发布较少的直方图桶。               |
+| `management.metrics.distribution.percentiles`                | 发布在应用程序中计算的百分位值。                         |
+| `management.metrics.distribution.sla`                        | 发布包含您的 SLA 定义的存储桶的累积直方图。              |
 
-For more details on concepts behind `percentiles-histogram`, `percentiles` and `sla` refer to the ["Histograms and percentiles" section](https://micrometer.io/docs/concepts#_histograms_and_percentiles) of the micrometer documentation.
+有关 `percentiles-histogram`，`percentiles` 和 `sla` 背后的概念的更多详细信息，请参见 micrometer 文档的 [“直方图和百分位数”部分](https://micrometer.io/docs/concepts#_histograms_and_percentiles) 。
