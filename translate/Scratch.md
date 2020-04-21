@@ -1,11 +1,11 @@
-#### 5.6.6. Metrics 端点
+### 5.7. 审计
 
-Spring Boot 提供了一个  `metrics`  端点，可用于诊断检查应用程序收集的指标。端点默认情况下不可用，必须手动公开，请参阅 [暴露端点](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-endpoints-exposing-endpoints) 以获取更多详细信息。
+一旦启动了 Spring Security，Spring Boot Actuator 将具有一个灵活的审计框架，该框架可以发布事件（默认情况下，“身份验证成功”，“失败”和“拒绝访问”异常）。此功能对于报告和基于身份验证失败实施锁定策略非常有用。
 
-导航至 `/actuator/metrics` 会显示可用仪表名称的列表。您可以通过提供特定的仪表名称作为选择器来深入查看其相关信息。 比如，`/actuator/metrics/jvm.memory.max`。
+可以通过在应用程序的配置中提供类型为 `AuditEventRepository` 的 Bean 来启用审计。为了方便起见，Spring Boot 提供了一个 `InMemoryAuditEventRepository`。`InMemoryAuditEventRepository` 具有有限的功能，我们建议仅将其用于开发环境。对于生产环境，请考虑创建自己的替代 `AuditEventRepository` 实现。
 
-> 您在此处使用的名称应与代码中使用的名称相匹配，而不是已针对其出厂的监视系统将其命名惯例标准化后的名称。换句话说，如果在 Prometheus 中 `jvm.memory.max` 由于其蛇形命名约定而显示为 `jvm_memory_max`，则在检查 `metrics` 端点中的仪表时，仍应使用 `jvm.memory.max` 作为选择器。
+#### 5.7.1. 自定义审计
 
-你也可以添加任意数量的 `tag=KEY:VALUE` 查询参数到 URL 的末尾来钻取某个度量，比如 `/actuator/metrics/jvm.memory.max?tag=area:nonheap`：
+要自定义已发布的安全事件，可以提供自己的 `AbstractAuthenticationAuditListener` 和 `AbstractAuthorizationAuditListener` 的实现。
 
-> 报告的测量值是与仪表名称和已应用的所有标签相匹配的所有仪表的统计信息的*和*。因此，在上面的示例中，返回的 "Value" 统计量是堆的“代码缓存”，“压缩类空间”和“元空间”区域的最大内存占用量的总和。如果您只想查看“元空间”的最大大小，则可以添加一个额外的 `tag=id:Metaspace`，即 `/actuator/metrics/jvm.memory.max?tag=area:nonheap&tag=id:Metaspace`。
+您也可以将审计服务用于自己的业务事件。为此，可以将 `AuditEventRepository` bean 注入到您自己的组件中，然后直接使用它，或者通过 Spring `ApplicationEventPublisher`（通过实现 `ApplicationEventPublisherAware`）发布 `AuditApplicationEvent`。
