@@ -8110,14 +8110,21 @@ management.endpoint.jolokia.enabled=false
 
 Spring Boot Actuator 包含在运行时查看和配置应用的日志级别的能力。你可以查看整体配置列表或者单个 logger 配置。该配置由显式配置的日志级别以及日志框架赋予的有效的日志级别组成。日志级别可以是：
 
--`TRACE`
--`DEBUG`
--`INFO`
--`WARN`
--`ERROR`
--`FATAL`
--`OFF`
--`null`
+- `TRACE`
+
+- `DEBUG`
+
+- `INFO`
+
+- `WARN`
+
+- `ERROR`
+
+- `FATAL`
+
+- `OFF`
+
+- `null`
 
 `null` 表示没有显式配置。
 
@@ -8137,23 +8144,39 @@ Spring Boot Actuator 包含在运行时查看和配置应用的日志级别的�
 
 Spring Boot Actuator 为 [Micrometer](https://micrometer.io/) 提供了依赖管理和自动配资，一个应用度量门面，支持各种监控系统，包括：
 
--[AppOptics](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-appoptics)
--[Atlas](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-atlas)
--[Datadog](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-datadog)
--[Dynatrace](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-dynatrace)
--[Elastic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-elastic)
--[Ganglia](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-ganglia)
--[Graphite](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-graphite)
--[Humio](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-humio)
--[Influx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-influx)
--[JMX](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-jmx)
--[KairosDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-kairos)
--[New Relic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-newrelic)
--[Prometheus](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-prometheus)
--[SignalFx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-signalfx)
--[Simple (in-memory)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-simple)
--[StatsD](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-statsd)
--[Wavefront](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-wavefront)
+- [AppOptics](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-appoptics)
+
+- [Atlas](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-atlas)
+
+- [Datadog](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-datadog)
+
+- [Dynatrace](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-dynatrace)
+
+- [Elastic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-elastic)
+
+- [Ganglia](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-ganglia)
+
+- [Graphite](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-graphite)
+
+- [Humio](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-humio)
+
+- [Influx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-influx)
+
+- [JMX](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-jmx)
+
+- [KairosDB](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-kairos)
+
+- [New Relic](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-newrelic)
+
+- [Prometheus](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-prometheus)
+
+- [SignalFx](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-signalfx)
+
+- [Simple (in-memory)](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-simple)
+
+- [StatsD](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-statsd)
+
+- [Wavefront](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#production-ready-metrics-export-wavefront)
 
 >为了进一步了解 Micrometer’s 能力，请参考相应的 [参考文档](https://micrometer.io/docs)，特别是 [概念章节](https://micrometer.io/docs/concepts).
 
