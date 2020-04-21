@@ -1,11 +1,9 @@
-### 5.7. 审计
+### 5.8. HTTP 跟踪
 
-一旦启动了 Spring Security，Spring Boot Actuator 将具有一个灵活的审计框架，该框架可以发布事件（默认情况下，“身份验证成功”，“失败”和“拒绝访问”异常）。此功能对于报告和基于身份验证失败实施锁定策略非常有用。
+可以通过在应用程序的配置中提供类型为 `HttpTraceRepository` 的 bean 来启用 HTTP 跟踪。为了方便起见，Spring Boot 默认提供了一个 `InMemoryHttpTraceRepository`，用于存储最近100次请求-响应交互的跟踪。与其他跟踪解决方案相比，`InMemoryHttpTraceRepository` 是受限制的，我们建议仅将其用于开发环境。对于生产环境，建议使用可用于生产的跟踪或可观察性解决方案，例如 Zipkin 或 Spring Cloud Sleuth。或者，创建自己的 `HttpTraceRepository` 来满足您的需求。
 
-可以通过在应用程序的配置中提供类型为 `AuditEventRepository` 的 Bean 来启用审计。为了方便起见，Spring Boot 提供了一个 `InMemoryAuditEventRepository`。`InMemoryAuditEventRepository` 具有有限的功能，我们建议仅将其用于开发环境。对于生产环境，请考虑创建自己的替代 `AuditEventRepository` 实现。
+`httptrace` 端点可用于获取有关存储在 `HttpTraceRepository` 中的请求-响应交换的信息。
 
-#### 5.7.1. 自定义审计
+#### 5.8.1. 自定义 HTTP 跟踪
 
-要自定义已发布的安全事件，可以提供自己的 `AbstractAuthenticationAuditListener` 和 `AbstractAuthorizationAuditListener` 的实现。
-
-您也可以将审计服务用于自己的业务事件。为此，可以将 `AuditEventRepository` bean 注入到您自己的组件中，然后直接使用它，或者通过 Spring `ApplicationEventPublisher`（通过实现 `ApplicationEventPublisherAware`）发布 `AuditApplicationEvent`。
+要自定义每个跟踪中包含的项目，请使用`management.trace.http.include`配置属性。对于高级定制，请考虑注册自己的`HttpExchangeTracer`实现。
