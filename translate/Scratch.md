@@ -1,18 +1,18 @@
-### 5.9. Process Monitoring
+### 5.9. 进程监控
 
-In the `spring-boot` module, you can find two classes to create files that are often useful for process monitoring:
+在 `spring-boot` 模块中，你可以找到两个类用来创建通常对进程监控很有用的文件：
 
-- `ApplicationPidFileWriter` creates a file containing the application PID (by default, in the application directory with a file name of `application.pid`).
-- `WebServerPortFileWriter` creates a file (or files) containing the ports of the running web server (by default, in the application directory with a file name of `application.port`).
+- `ApplicationPidFileWriter` 创建一个包含应用 PID 的文件（默认是在应用目录下，文件名是 `application.pid`）。
+- `WebServerPortFileWriter` 创建一个文件（或者多个文件）包含运行 web 服务器的端口（默认实在应用目录下，文件名是 `application.port`）。
 
-By default, these writers are not activated, but you can enable:
+默认情况下，这些写入器都没有激活，不过你可以通过一下方式手动启用：
 
-- [By Extending Configuration](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-configuration)
-- [Programmatically](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-programmatically)
+- [通过扩展配置](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-configuration)
+- [编程方式](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-programmatically)
 
-#### 5.9.1. Extending Configuration
+#### 5.9.1. 扩展配置
 
-In the `META-INF/spring.factories` file, you can activate the listener(s) that writes a PID file, as shown in the following example:
+在 `META-INF/spring.factories` 文件中，你可以激活写 PID 文件的监听器，如下面例子所示：
 
 ```
 org.springframework.context.ApplicationListener=\
@@ -20,6 +20,6 @@ org.springframework.boot.context.ApplicationPidFileWriter,\
 org.springframework.boot.web.context.WebServerPortFileWriter
 ```
 
-#### 5.9.2. Programmatically
+#### 5.9.2. 编程方式
 
-You can also activate a listener by invoking the `SpringApplication.addListeners(…)` method and passing the appropriate `Writer` object. This method also lets you customize the file name and path in the `Writer` constructor.
+你还可以通过调用 `SpringApplication.addListeners(…)` 方法并出入相应的 `Writer` 对象激活监听器。这种方式也允许你在 `Writer` 构造器中自定义文件名和路径。
