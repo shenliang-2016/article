@@ -45,3 +45,4 @@ ENTRYPOINT ["java","-cp","app:app/lib/*","com.example.MyApplication"]
 ```
 docker build --build-arg APPJAR=path/to/myapp.jar .
 ```
+
