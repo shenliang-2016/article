@@ -5118,7 +5118,7 @@ spring.cache.type=none
 
 ### 4.13. 消息
 
-Spring 框架为与消息系统的集成提供了丰富的支持，从通过使用 `JmsTemplate` 来简化 JMS API 的使用，到异步接收消息的完整机车设施。Spring AMQP 提供了类似于高级消息队列协议的特性集合。Spring Boot 也提供了 `RabbitTemplate` 和 RabbitMQ 的自动配置选项。Spring WebSocket 本身包含 STOMP 消息支持，同时 Spring Boot 通过启动器和少量的自动配置支持该消息。Spring Boot 还支持 Apache Kafka。
+Spring 框架为与消息系统的集成提供了丰富的支持，从通过使用 `JmsTemplate` 来简化 JMS API 的使用，到异步接收消息的完整基础设施。Spring AMQP 提供了类似于高级消息队列协议的特性集合。Spring Boot 也提供了 `RabbitTemplate` 和 RabbitMQ 的自动配置选项。Spring WebSocket 本身包含 STOMP 消息支持，同时 Spring Boot 通过启动器和少量的自动配置支持该消息。Spring Boot 还支持 Apache Kafka。
 
 #### 4.13.1. JMS
 
