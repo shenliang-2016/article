@@ -1,25 +1,69 @@
-### 5.9. 进程监控
+### 5.10. Cloud Foundry  支持
 
-在 `spring-boot` 模块中，你可以找到两个类用来创建通常对进程监控很有用的文件：
+Spring Boot 执行器模块包含额外的支持，当你将应用部署到兼容的 Cloud Foundry 实例中时会被激活。`/cloudfoundryapplication` 路径提供了通向所有 `@Endpoint` 的替代安全路由。
 
-- `ApplicationPidFileWriter` 创建一个包含应用 PID 的文件（默认是在应用目录下，文件名是 `application.pid`）。
-- `WebServerPortFileWriter` 创建一个文件（或者多个文件）包含运行 web 服务器的端口（默认实在应用目录下，文件名是 `application.port`）。
+扩展支持使 Cloud Foundry 管理 UI（例如可用于查看已部署的应用程序的 Web 应用程序）增加了 Spring Boot 执行器信息。例如，应用程序状态页面可能包含完整的运行状况信息，而不是典型的“正在运行”或“已停止”状态。
 
-默认情况下，这些写入器都没有激活，不过你可以通过一下方式手动启用：
+>  `/cloudfoundryapplication` 路径并不注解对普通用户开放。为了使用该端点，请求中必须携带有效的 UAA token 。
 
-- [通过扩展配置](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-configuration)
-- [编程方式](https://docs.spring.io/spring-boot/docs/2.2.6.RELEASE/reference/htmlsingle/#production-ready-process-monitoring-programmatically)
+#### 5.10.1. 禁用扩展 Cloud Foundry 执行器支持
 
-#### 5.9.1. 扩展配置
+如果你想要完全禁用 `/cloudfoundryapplication` 端点，你可以将下面的设定到你的 `application.properties` 文件中：
 
-在 `META-INF/spring.factories` 文件中，你可以激活写 PID 文件的监听器，如下面例子所示：
+**application.properties**
 
-```
-org.springframework.context.ApplicationListener=\
-org.springframework.boot.context.ApplicationPidFileWriter,\
-org.springframework.boot.web.context.WebServerPortFileWriter
+```properties
+management.cloudfoundry.enabled=false
 ```
 
-#### 5.9.2. 编程方式
+#### 5.10.2. Cloud Foundry 自签名证书
 
-你还可以通过调用 `SpringApplication.addListeners(…)` 方法并出入相应的 `Writer` 对象激活监听器。这种方式也允许你在 `Writer` 构造器中自定义文件名和路径。
+默认情况下， `/cloudfoundryapplication`  端点的安全性验证会对各种 Cloud Foundry 服务进行 SSL 调用。如果您的 Cloud Foundry UAA 或 Cloud Controller 服务使用自签名证书，则需要设置以下属性：
+
+**application.properties**
+
+```properties
+management.cloudfoundry.skip-ssl-validation=true
+```
+
+#### 5.10.3. 自定义上下文路径
+
+如果服务器的上下文路径已配置为`/`以外的任何其他值，则 Cloud Foundry 端点在应用程序的根目录将不可用。例如，如果使用 `server.servlet.context-path=/app`，则 Cloud Foundry 端点将位于 `/app/cloudfoundryapplication/*`。
+
+如果您希望 Cloud Foundry 端点始终在 `/cloudfoundryapplication/*` 处可用，而不管服务器的上下文路径如何，那么您将需要在应用程序中显式配置它。配置将根据所使用的 Web 服务器而有所不同。对于 Tomcat，可以添加以下配置：
+
+```java
+@Bean
+public TomcatServletWebServerFactory servletWebServerFactory() {
+    return new TomcatServletWebServerFactory() {
+
+        @Override
+        protected void prepareContext(Host host, ServletContextInitializer[] initializers) {
+            super.prepareContext(host, initializers);
+            StandardContext child = new StandardContext();
+            child.addLifecycleListener(new Tomcat.FixContextListener());
+            child.setPath("/cloudfoundryapplication");
+            ServletContainerInitializer initializer = getServletContextInitializer(getContextPath());
+            child.addServletContainerInitializer(initializer, Collections.emptySet());
+            child.setCrossContext(true);
+            host.addChild(child);
+        }
+
+    };
+}
+
+private ServletContainerInitializer getServletContextInitializer(String contextPath) {
+    return (c, context) -> {
+        Servlet servlet = new GenericServlet() {
+
+            @Override
+            public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+                ServletContext context = req.getServletContext().getContext(contextPath);
+                context.getRequestDispatcher("/cloudfoundryapplication").forward(req, res);
+            }
+
+        };
+        context.addServlet("cloudfoundry", servlet).addMapping("/*");
+    };
+}
+```
