@@ -1,48 +1,9 @@
-## 6. 部署 Spring Boot 应用
+### 6.2. 部署到云端
 
-在部署应用程序时，Spring Boot 的灵活打包选项提供了很多选择。您可以将 Spring Boot 应用程序部署到各种云平台，容器映像（例如 Docker）或虚拟机/真实机上。
+Spring Boot 的可执行 jar 已为大多数流行的云 PaaS（平台即服务）提供商准备。这些提供者往往要求您“自带容器”。他们管理应用进程（不是专门用于 Java 应用程序），因此他们需要一个中间层，以使您的应用程序适配运行进程的“云”概念。
 
-本节介绍一些更常见的部署方案。
+两家受欢迎的云提供商，Heroku 和 Cloud Foundry，采用了“ buildpack”方法。 buildpack 将您部署的代码包装在*启动*应用程序所需的任何内容中。它可能是一个 JDK，可能是对 Java，嵌入式 Web 服务器或成熟的应用程序服务器的调用。一个 buildpack 是可插拔的，但是理想情况下，您应该能够通过尽可能少的自定义来获得它。这减少了您无法控制的功能的占用空间。它最大程度地减少了开发和生产环境之间的差异。
 
-### 6.1. 部署到容器
+理想情况下，您的应用程序像 Spring Boot 可执行 jar 一样，具有打包运行所需的一切。
 
-如果从容器中运行应用程序，则可以使用可执行 jar，但是将其解压并以其他方式运行通常也是一个优点。某些 PaaS 实施也可能选择在运行存档之前将其解压缩。例如，Cloud Foundry 以这种方式运行。运行解压缩存档的最简单方法是启动相应的启动器，如下所示：
-
-```
-$ jar -xf myapp.jar
-$ java org.springframework.boot.loader.JarLauncher
-```
-
-实际上，这在启动时（取决于 jar 的大小）比从未解压的存档中运行要快一些。在运行时，您不应期望有任何差异。
-
-解压缩 jar 文件后，您还可以通过使用其“自然”主方法（而不是 ` JarLauncher`）运行应用程序来缩短启动时间。例如：
-
-```
-$ jar -xf myapp.jar
-$ java -cp BOOT-INF/classes:BOOT-INF/lib/* com.example.MyApplication
-```
-
-还可以通过将依赖项作为与应用程序类和资源（通常会更频繁地更改）分开的一层复制到映像中来创建更有效的容器映像。实现这一层分离的方法不止一种。例如，使用 `Dockerfile` 可以将其表示为以下形式：
-
-```
-FROM openjdk:8-jdk-alpine AS builder
-WORKDIR target/dependency
-ARG APPJAR=target/*.jar
-COPY ${APPJAR} app.jar
-RUN jar -xf ./app.jar
-
-FROM openjdk:8-jre-alpine
-VOLUME /tmp
-ARG DEPENDENCY=target/dependency
-COPY --from=builder ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY --from=builder ${DEPENDENCY}/META-INF /app/META-INF
-COPY --from=builder ${DEPENDENCY}/BOOT-INF/classes /app
-ENTRYPOINT ["java","-cp","app:app/lib/*","com.example.MyApplication"]
-```
-
-假设上面的 `Dockerfile` 是当前目录，则可以使用 `docker build .`。或可选地指定应用程序 jar 的路径来构建 docker 映像，如以下示例所示：
-
-```
-docker build --build-arg APPJAR=path/to/myapp.jar .
-```
-
+在本节中，我们研究如何获取在“入门”部分中启动并运行的 [我们开发的简单应用程序](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#getting-started-first-application) 。
