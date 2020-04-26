@@ -8917,7 +8917,7 @@ Spring Boot 的可执行 jar 已为大多数流行的云 PaaS（平台即服务�
 $ cf push acloudyspringtime -p target/demo-0.0.1-SNAPSHOT.jar
 ```
 
-> 在前面的示例中，我们用 `acloudyspringtime` 替换为 `cf` 作为应用程序名称的任何值。
+>在前面的示例中，我们用 `acloudyspringtime` 替换为 `cf` 作为应用程序名称的任何值。
 
 参考 [`cf push` 文档](https://docs.cloudfoundry.org/cf-cli/getting-started.html#push) 了解更多选项。如果该目录下存在 Cloud Foundry [`manifest.yml`](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest.html) 文件，它将会生效。
 
@@ -8988,7 +8988,7 @@ class MyBean implements EnvironmentAware {
 
 所有 Cloud Foundry 属性均以 `vcap` 为前缀。您可以使用 `vcap` 属性来访问应用程序信息（例如应用程序的公共 URL）和服务信息（例如数据库凭据）。有关完整的详细信息，请参见 [`CloudFoundryVcapEnvironmentPostProcessor`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/api//org/springframework/boot/cloud/CloudFoundryVcapEnvironmentPostProcessor.html) Javadoc。
 
->  [Java CFEnv](https://github.com/pivotal-cf/java-cfenv/) 项目更适合诸如配置数据源之类的任务。
+> [Java CFEnv](https://github.com/pivotal-cf/java-cfenv/) 项目更适合诸如配置数据源之类的任务。
 
 #### 6.2.2. Heroku
 
@@ -9054,20 +9054,20 @@ To git@heroku.com:agile-sierra-1405.git
 
 OpenShift 拥有很多描述如何部署 Spring Boot 应用的资源，包括：
 
-- [Using the S2I builder](https://blog.openshift.com/using-openshift-enterprise-grade-spring-boot-deployments/)
-- [Architecture guide](https://access.redhat.com/documentation/en-us/reference_architectures/2017/html-single/spring_boot_microservices_on_red_hat_openshift_container_platform_3/)
-- [Running as a traditional web application on Wildfly](https://blog.openshift.com/using-spring-boot-on-openshift/)
-- [OpenShift Commons Briefing](https://blog.openshift.com/openshift-commons-briefing-96-cloud-native-applications-spring-rhoar/)
+-[Using the S2I builder](https://blog.openshift.com/using-openshift-enterprise-grade-spring-boot-deployments/)
+-[Architecture guide](https://access.redhat.com/documentation/en-us/reference_architectures/2017/html-single/spring_boot_microservices_on_red_hat_openshift_container_platform_3/)
+-[Running as a traditional web application on Wildfly](https://blog.openshift.com/using-spring-boot-on-openshift/)
+-[OpenShift Commons Briefing](https://blog.openshift.com/openshift-commons-briefing-96-cloud-native-applications-spring-rhoar/)
 
 #### 6.2.4. Amazon Web Services (AWS)
 
 Amazon Web Services 提供多种方法安装 Spring Boot 应用，可以是传统 web 应用的 war 包形式，也可以是包含内置 web 服务器的可执行 jar 文件形式。选项包括：
 
-- AWS Elastic Beanstalk
-- AWS Code Deploy
-- AWS OPS Works
-- AWS Cloud Formation
-- AWS Container Registry
+-AWS Elastic Beanstalk
+-AWS Code Deploy
+-AWS OPS Works
+-AWS Cloud Formation
+-AWS Container Registry
 
 每种都有不同的特性和评价模型。本文档中，我们只描述最简单的选项： AWS Elastic Beanstalk。
 
@@ -9087,22 +9087,22 @@ Amazon Web Services 提供多种方法安装 Spring Boot 应用，可以是传�
 server.port=5000
 ```
 
-> 上传二进制文件而不是源代码
+>上传二进制文件而不是源代码
 >
-> 默认情况下，Elastic Beanstalk 上传源代码并在 AWS 中编译它们。不过，还是上传二进制文件。为了做到这一点，添加类似于下面的内容到你的 `.elasticbeanstalk/config.yml` 文件中：
+>默认情况下，Elastic Beanstalk 上传源代码并在 AWS 中编译它们。不过，还是上传二进制文件。为了做到这一点，添加类似于下面的内容到你的 `.elasticbeanstalk/config.yml` 文件中：
 >
-> ```xml
-> deploy:
->     artifact: target/demo-0.0.1-SNAPSHOT.jar
-> ```
+>```xml
+>deploy:
+>    artifact: target/demo-0.0.1-SNAPSHOT.jar
+>```
 
-> 通过设定环境类型降低资源消耗
+>通过设定环境类型降低资源消耗
 >
-> 默认情况下，Elastic Beanstalk 环境是负载均衡的。负载均衡将会带来显著的资源消耗。为了避免此类资源消耗，将环境类型设定为 “Single instance”，如 [the Amazon documentation](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-create-wizard.html#environments-create-wizard-capacity) 中所述。你也可以通过使用 CLI 命令创建单实例环境：
+>默认情况下，Elastic Beanstalk 环境是负载均衡的。负载均衡将会带来显著的资源消耗。为了避免此类资源消耗，将环境类型设定为 “Single instance”，如 [the Amazon documentation](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-create-wizard.html#environments-create-wizard-capacity) 中所述。你也可以通过使用 CLI 命令创建单实例环境：
 >
-> ```
-> eb create -s
-> ```
+>```
+>eb create -s
+>```
 
 ##### 总结
 
@@ -9120,7 +9120,7 @@ $ boxfuse run myapp-1.0.jar -env=prod
 
 参考 [`boxfuse run` documentation](https://boxfuse.com/docs/commandline/run.html) 了解更多选项。如果当前目录下存在 [`boxfuse.conf`](https://boxfuse.com/docs/commandline/#configuration) 文件，它将会生效。
 
-> 默认情况下，Boxfuse 在启动时会激活一个名为 `boxfuse` 的 Spring 配置文件。如果您的可执行 jar 或 war 文件包含 [`application-boxfuse.properties`](https://boxfuse.com/docs/payloads/springboot.html#configuration) 文件，则 Boxfuse 的配置将基于其包含的属性。
+>默认情况下，Boxfuse 在启动时会激活一个名为 `boxfuse` 的 Spring 配置文件。如果您的可执行 jar 或 war 文件包含 [`application-boxfuse.properties`](https://boxfuse.com/docs/payloads/springboot.html#configuration) 文件，则 Boxfuse 的配置将基于其包含的属性。
 
 此时，`boxfuse` 将为您的应用程序创建一个映像，然后上传该映像，并在 AWS 上配置并启动必要的资源，其输出类似于以下示例：
 
@@ -9195,3 +9195,33 @@ env_variables:
 ```
 
 然后使用 `mvn appengine:deploy` 部署(如果你需要首先进行身份认证，则构建将会失败)。
+
+### 6.3. 安装 Spring Boot 应用
+
+除了通过使用 `java -jar` 运行 Spring Boot 应用程序之外，还可以为 Unix 系统制作完全可执行的应用程序。完全可执行的 jar 可以像其他任何可执行二进制文件一样执行，也可以 [通过 `init.d` 或 `systemd` 注册](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-service)。这使得在普通生产环境中安装和管理 Spring Boot 应用程序变得非常容易。
+
+>完全可执行的 jar 通过在文件的开头嵌入一个额外的脚本来工作。当前，某些工具不接受此格式，因此您可能无法始终使用此技术。例如，`jar -xf` 可能会无声地提取无法完全执行的 jar 或 war。建议仅当您打算直接执行 jar 或 war 时才使其完全可执行，而不是使用 `java -jar` 来运行它或将其部署到 servlet 容器中。
+
+>不能使 zip64 格式的 jar 文件完全可执行。尝试这样做将导致一个 jar 文件，当直接执行该文件或使用 `java -jar` 时，该文件被报告为已损坏。包含一个或多个 zip64 格式嵌套 jar 的标准格式 jar 文件可以完全执行。
+
+要使用 Maven 创建“完全可执行”的 jar，请使用以下插件配置：
+
+```xml
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+    <configuration>
+        <executable>true</executable>
+    </configuration>
+</plugin>
+```
+
+下面的例子展示了等效的 Gradle 配置：
+
+```groovy
+bootJar {
+    launchScript()
+}
+```
+
+然后，您可以通过键入 `./my-application.jar` （其中 `my-application` 是你的组件的名称）来运行您的应用程序。包含 jar 的目录用作应用程序的工作目录。
