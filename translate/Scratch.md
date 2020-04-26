@@ -1,47 +1,29 @@
-#### 6.2.6. Google Cloud
+### 6.3. 安装 Spring Boot 应用
 
-Google Cloud 有几种可用于启动 Spring Boot 应用程序的选项。最容易上手的可能是 App Engine，但您也可以找到在 Container Engine 的容器中或 Compute Engine 的虚拟机上运行 Spring Boot 应用的方法。
+除了通过使用 `java -jar` 运行 Spring Boot 应用程序之外，还可以为 Unix 系统制作完全可执行的应用程序。完全可执行的 jar 可以像其他任何可执行二进制文件一样执行，也可以 [通过 `init.d` 或 `systemd` 注册](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-service)。这使得在普通生产环境中安装和管理 Spring Boot 应用程序变得非常容易。
 
-要在 App Engine 中运行，您可以先在用户界面中创建一个项目，该项目将为您设置一个唯一的标识符，并还设置 HTTP 路由。将 Java 应用程序添加到项目中，然后将其保留为空，然后使用 [Google Cloud SDK](https://cloud.google.com/sdk/install) 从命令行或 CI 将 Spring Boot 应用程序推送到该插槽中建立。
+> 完全可执行的 jar 通过在文件的开头嵌入一个额外的脚本来工作。当前，某些工具不接受此格式，因此您可能无法始终使用此技术。例如，`jar -xf` 可能会无声地提取无法完全执行的 jar 或 war。建议仅当您打算直接执行 jar 或 war 时才使其完全可执行，而不是使用 `java -jar` 来运行它或将其部署到 servlet 容器中。
 
-App Engine Standard 要求您使用 WAR 包装。请按照 [这些步骤](https://github.com/GoogleCloudPlatform/getting-started-java/blob/master/appengine-standard-java8/springboot-appengine-standard/README.md) 将 App Engine Standard 应用程序部署到 Google Cloud。
+> 不能使 zip64 格式的 jar 文件完全可执行。尝试这样做将导致一个 jar 文件，当直接执行该文件或使用 `java -jar` 时，该文件被报告为已损坏。包含一个或多个 zip64 格式嵌套 jar 的标准格式 jar 文件可以完全执行。
 
-另外，App Engine Flex 要求您创建一个 `app.yaml` 文件来描述您的应用程序所需的资源。通常，您将此文件放在 `src/main/appengine` 中，它应类似于以下文件：
-
-```yaml
-service: default
-
-runtime: java
-env: flex
-
-runtime_config:
-  jdk: openjdk8
-
-handlers:
-- url: /.*
-  script: this field is required, but ignored
-
-manual_scaling:
-  instances: 1
-
-health_check:
-  enable_health_check: False
-
-env_variables:
-  ENCRYPT_KEY: your_encryption_key_here
-```
-
-您可以通过将项目 ID 添加到构建配置中来部署应用程序（例如，使用 Maven 插件），如以下示例所示：
+要使用 Maven 创建“完全可执行”的 jar，请使用以下插件配置：
 
 ```xml
 <plugin>
-    <groupId>com.google.cloud.tools</groupId>
-    <artifactId>appengine-maven-plugin</artifactId>
-    <version>1.3.0</version>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
     <configuration>
-        <project>myproject</project>
+        <executable>true</executable>
     </configuration>
 </plugin>
 ```
 
-然后使用 `mvn appengine:deploy` 部署(如果你需要首先进行身份认证，则构建将会失败)。
+下面的例子展示了等效的 Gradle 配置：
+
+```groovy
+bootJar {
+    launchScript()
+}
+```
+
+然后，您可以通过键入 `./my-application.jar` （其中 `my-application` 是你的组件的名称）来运行您的应用程序。包含 jar 的目录用作应用程序的工作目录。
