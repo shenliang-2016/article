@@ -1,39 +1,47 @@
-#### 6.2.5. Boxfuse 和 Amazon Web Services
+#### 6.2.6. Google Cloud
 
-[Boxfuse](https://boxfuse.com/) 的工作原理是将您的 Spring Boot 可执行 jar 或 war 变成一个最小的 VM 映像，该映像可以在 VirtualBox 或 AWS 上不变地部署。Boxfuse 与 Spring Boot 进行了深度集成，并使用 Spring Boot 配置文件中的信息自动配置端口和运行状况检查 URL。Boxfuse 在生成的映像以及它提供的所有资源（实例，安全组，弹性负载均衡器等）中均利用此信息。
+Google Cloud 有几种可用于启动 Spring Boot 应用程序的选项。最容易上手的可能是 App Engine，但您也可以找到在 Container Engine 的容器中或 Compute Engine 的虚拟机上运行 Spring Boot 应用的方法。
 
-创建 [Boxfuse 帐户](https://console.boxfuse.com/) 后，将其连接到您的 AWS 帐户，安装最新版本的 Boxfuse Client，并确保该应用程序是由 Maven 或 Gradle 构建的 （例如，使用 `mvn clean package`），您可以使用类似于以下命令将 Spring Boot 应用程序部署到 AWS：
+要在 App Engine 中运行，您可以先在用户界面中创建一个项目，该项目将为您设置一个唯一的标识符，并还设置 HTTP 路由。将 Java 应用程序添加到项目中，然后将其保留为空，然后使用 [Google Cloud SDK](https://cloud.google.com/sdk/install) 从命令行或 CI 将 Spring Boot 应用程序推送到该插槽中建立。
 
-```
-$ boxfuse run myapp-1.0.jar -env=prod
-```
+App Engine Standard 要求您使用 WAR 包装。请按照 [这些步骤](https://github.com/GoogleCloudPlatform/getting-started-java/blob/master/appengine-standard-java8/springboot-appengine-standard/README.md) 将 App Engine Standard 应用程序部署到 Google Cloud。
 
-参考 [`boxfuse run` documentation](https://boxfuse.com/docs/commandline/run.html) 了解更多选项。如果当前目录下存在 [`boxfuse.conf`](https://boxfuse.com/docs/commandline/#configuration) 文件，它将会生效。
+另外，App Engine Flex 要求您创建一个 `app.yaml` 文件来描述您的应用程序所需的资源。通常，您将此文件放在 `src/main/appengine` 中，它应类似于以下文件：
 
-> 默认情况下，Boxfuse 在启动时会激活一个名为 `boxfuse` 的 Spring 配置文件。如果您的可执行 jar 或 war 文件包含 [`application-boxfuse.properties`](https://boxfuse.com/docs/payloads/springboot.html#configuration) 文件，则 Boxfuse 的配置将基于其包含的属性。
+```yaml
+service: default
 
-此时，`boxfuse` 将为您的应用程序创建一个映像，然后上传该映像，并在 AWS 上配置并启动必要的资源，其输出类似于以下示例：
+runtime: java
+env: flex
 
-```
-Fusing Image for myapp-1.0.jar ...
-Image fused in 00:06.838s (53937 K) -> axelfontaine/myapp:1.0
-Creating axelfontaine/myapp ...
-Pushing axelfontaine/myapp:1.0 ...
-Verifying axelfontaine/myapp:1.0 ...
-Creating Elastic IP ...
-Mapping myapp-axelfontaine.boxfuse.io to 52.28.233.167 ...
-Waiting for AWS to create an AMI for axelfontaine/myapp:1.0 in eu-central-1 (this may take up to 50 seconds) ...
-AMI created in 00:23.557s -> ami-d23f38cf
-Creating security group boxfuse-sg_axelfontaine/myapp:1.0 ...
-Launching t2.micro instance of axelfontaine/myapp:1.0 (ami-d23f38cf) in eu-central-1 ...
-Instance launched in 00:30.306s -> i-92ef9f53
-Waiting for AWS to boot Instance i-92ef9f53 and Payload to start at https://52.28.235.61/ ...
-Payload started in 00:29.266s -> https://52.28.235.61/
-Remapping Elastic IP 52.28.233.167 to i-92ef9f53 ...
-Waiting 15s for AWS to complete Elastic IP Zero Downtime transition ...
-Deployment completed successfully. axelfontaine/myapp:1.0 is up and running at https://myapp-axelfontaine.boxfuse.io/
+runtime_config:
+  jdk: openjdk8
+
+handlers:
+- url: /.*
+  script: this field is required, but ignored
+
+manual_scaling:
+  instances: 1
+
+health_check:
+  enable_health_check: False
+
+env_variables:
+  ENCRYPT_KEY: your_encryption_key_here
 ```
 
-你的应用现在已经部署并运行在 AWS 上。
+您可以通过将项目 ID 添加到构建配置中来部署应用程序（例如，使用 Maven 插件），如以下示例所示：
 
-参考 [deploying Spring Boot apps on EC2](https://boxfuse.com/blog/spring-boot-ec2.html) 以及 [documentation for the Boxfuse Spring Boot integration](https://boxfuse.com/docs/payloads/springboot.html) 开始使用 Maven 构建来运行该应用程序。
+```xml
+<plugin>
+    <groupId>com.google.cloud.tools</groupId>
+    <artifactId>appengine-maven-plugin</artifactId>
+    <version>1.3.0</version>
+    <configuration>
+        <project>myproject</project>
+    </configuration>
+</plugin>
+```
+
+然后使用 `mvn appengine:deploy` 部署(如果你需要首先进行身份认证，则构建将会失败)。
