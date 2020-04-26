@@ -9107,3 +9107,44 @@ server.port=5000
 ##### 总结
 
 这是使用 AWS 的最简单方法之一，但还有更多内容需要介绍，例如如何将 Elastic Beanstalk 集成到任何 CI / CD 工具中，如何使用 Elastic Beanstalk Maven 插件而不是 CLI 等等。有 [博客帖子](https://exampledriven.wordpress.com/2017/01/09/spring-boot-aws-elastic-beanstalk-example/) 更加详细地介绍了这些主题。
+
+#### 6.2.5. Boxfuse 和 Amazon Web Services
+
+[Boxfuse](https://boxfuse.com/) 的工作原理是将您的 Spring Boot 可执行 jar 或 war 变成一个最小的 VM 映像，该映像可以在 VirtualBox 或 AWS 上不变地部署。Boxfuse 与 Spring Boot 进行了深度集成，并使用 Spring Boot 配置文件中的信息自动配置端口和运行状况检查 URL。Boxfuse 在生成的映像以及它提供的所有资源（实例，安全组，弹性负载均衡器等）中均利用此信息。
+
+创建 [Boxfuse 帐户](https://console.boxfuse.com/) 后，将其连接到您的 AWS 帐户，安装最新版本的 Boxfuse Client，并确保该应用程序是由 Maven 或 Gradle 构建的 （例如，使用 `mvn clean package`），您可以使用类似于以下命令将 Spring Boot 应用程序部署到 AWS：
+
+```
+$ boxfuse run myapp-1.0.jar -env=prod
+```
+
+参考 [`boxfuse run` documentation](https://boxfuse.com/docs/commandline/run.html) 了解更多选项。如果当前目录下存在 [`boxfuse.conf`](https://boxfuse.com/docs/commandline/#configuration) 文件，它将会生效。
+
+> 默认情况下，Boxfuse 在启动时会激活一个名为 `boxfuse` 的 Spring 配置文件。如果您的可执行 jar 或 war 文件包含 [`application-boxfuse.properties`](https://boxfuse.com/docs/payloads/springboot.html#configuration) 文件，则 Boxfuse 的配置将基于其包含的属性。
+
+此时，`boxfuse` 将为您的应用程序创建一个映像，然后上传该映像，并在 AWS 上配置并启动必要的资源，其输出类似于以下示例：
+
+```
+Fusing Image for myapp-1.0.jar ...
+Image fused in 00:06.838s (53937 K) -> axelfontaine/myapp:1.0
+Creating axelfontaine/myapp ...
+Pushing axelfontaine/myapp:1.0 ...
+Verifying axelfontaine/myapp:1.0 ...
+Creating Elastic IP ...
+Mapping myapp-axelfontaine.boxfuse.io to 52.28.233.167 ...
+Waiting for AWS to create an AMI for axelfontaine/myapp:1.0 in eu-central-1 (this may take up to 50 seconds) ...
+AMI created in 00:23.557s -> ami-d23f38cf
+Creating security group boxfuse-sg_axelfontaine/myapp:1.0 ...
+Launching t2.micro instance of axelfontaine/myapp:1.0 (ami-d23f38cf) in eu-central-1 ...
+Instance launched in 00:30.306s -> i-92ef9f53
+Waiting for AWS to boot Instance i-92ef9f53 and Payload to start at https://52.28.235.61/ ...
+Payload started in 00:29.266s -> https://52.28.235.61/
+Remapping Elastic IP 52.28.233.167 to i-92ef9f53 ...
+Waiting 15s for AWS to complete Elastic IP Zero Downtime transition ...
+Deployment completed successfully. axelfontaine/myapp:1.0 is up and running at https://myapp-axelfontaine.boxfuse.io/
+```
+
+你的应用现在已经部署并运行在 AWS 上。
+
+参考 [deploying Spring Boot apps on EC2](https://boxfuse.com/blog/spring-boot-ec2.html) 以及 [documentation for the Boxfuse Spring Boot integration](https://boxfuse.com/docs/payloads/springboot.html) 开始使用 Maven 构建来运行该应用程序。
+
