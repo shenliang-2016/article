@@ -32,3 +32,4 @@ $ sudo chattr +i your-app.jar
 $ chmod 400 your-app.conf
 $ sudo chown root:root your-app.conf
 ```
+
