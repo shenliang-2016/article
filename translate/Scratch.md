@@ -1,29 +1,37 @@
-### 6.3. 安装 Spring Boot 应用
+#### 6.3.1. 支持的操作系统
 
-除了通过使用 `java -jar` 运行 Spring Boot 应用程序之外，还可以为 Unix 系统制作完全可执行的应用程序。完全可执行的 jar 可以像其他任何可执行二进制文件一样执行，也可以 [通过 `init.d` 或 `systemd` 注册](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-service)。这使得在普通生产环境中安装和管理 Spring Boot 应用程序变得非常容易。
+默认脚本支持大部分的 Linux 发布版，在 CentOS 和 Ubuntu 上测试过。其他平台，比如 OS X 和 FreeBSD，需要使用自定义的 `embeddedLaunchScript`。
 
-> 完全可执行的 jar 通过在文件的开头嵌入一个额外的脚本来工作。当前，某些工具不接受此格式，因此您可能无法始终使用此技术。例如，`jar -xf` 可能会无声地提取无法完全执行的 jar 或 war。建议仅当您打算直接执行 jar 或 war 时才使其完全可执行，而不是使用 `java -jar` 来运行它或将其部署到 servlet 容器中。
+#### 6.3.2. Unix/Linux 服务
 
-> 不能使 zip64 格式的 jar 文件完全可执行。尝试这样做将导致一个 jar 文件，当直接执行该文件或使用 `java -jar` 时，该文件被报告为已损坏。包含一个或多个 zip64 格式嵌套 jar 的标准格式 jar 文件可以完全执行。
+Spring Boot 应用可以很容易地作为 Unix/Linux 服务启动，通过使用 `init.d` 或者 `systemd`。
 
-要使用 Maven 创建“完全可执行”的 jar，请使用以下插件配置：
+##### 安装为 `init.d` 服务 (System V)
 
-```xml
-<plugin>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-maven-plugin</artifactId>
-    <configuration>
-        <executable>true</executable>
-    </configuration>
-</plugin>
+如果你配置 Spring Boot 的 Maven 或者 Gradle 插件来产生 [fully executable jar](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-install)，你并没有使用自定义 `embeddedLaunchScript`，你的应用就可以作为 `init.d` 服务使用。要做到这一点，链接该 jar 倒 `init.d` 以支持标准的 `start`， `stop`， `restart`， 以及 `status` 命令。
+
+脚本支持以下特性：
+
+- 以拥有 jar 文件的用户身份启动服务
+- 通过使用 `/var/run/<appname>/<appname>.pid` 跟踪应用的 PID 
+- 将控制台日志写入 `/var/log/<appname>.log`
+
+假定你的应用安装在 `/var/myapp`，为了将其作为 `init.d` 服务，创建链接，如下：
+
+```
+$ sudo ln -s /var/myapp/myapp.jar /etc/init.d/myapp
 ```
 
-下面的例子展示了等效的 Gradle 配置：
+一旦安装，你可以通过通用方式启动和关闭该服务。比如，在基于 Debian 的系统上，你可以通过下面的命令启动它：
 
-```groovy
-bootJar {
-    launchScript()
-}
+```
+$ service myapp start
 ```
 
-然后，您可以通过键入 `./my-application.jar` （其中 `my-application` 是你的组件的名称）来运行您的应用程序。包含 jar 的目录用作应用程序的工作目录。
+> 如果应用没有启动，检查写入 `/var/log/<appname>.log` 的日志。
+
+您还可以使用标准操作系统工具将应用程序标记为自动启动。例如，在 Debian 上，您可以使用以下命令：
+
+```
+$ update-rc.d myapp defaults <priority>
+```
