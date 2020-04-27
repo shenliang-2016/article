@@ -1,38 +1,35 @@
-#### 6.3.1. 支持的操作系统
+Securing an `init.d` Service
 
-默认脚本支持大部分的 Linux 发布版，在 CentOS 和 Ubuntu 上测试过。其他平台，比如 OS X 和 FreeBSD，需要使用自定义的 `embeddedLaunchScript`。
+> The following is a set of guidelines on how to secure a Spring Boot application that runs as an init.d service. It is not intended to be an exhaustive list of everything that should be done to harden an application and the environment in which it runs.
 
-#### 6.3.2. Unix/Linux 服务
-
-Spring Boot 应用可以很容易地作为 Unix/Linux 服务启动，通过使用 `init.d` 或者 `systemd`。
-
-##### 安装为 `init.d` 服务 (System V)
-
-如果你配置 Spring Boot 的 Maven 或者 Gradle 插件来产生 [fully executable jar](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-install)，你并没有使用自定义 `embeddedLaunchScript`，你的应用就可以作为 `init.d` 服务使用。要做到这一点，链接该 jar 倒 `init.d` 以支持标准的 `start`， `stop`， `restart`， 以及 `status` 命令。
-
-脚本支持以下特性：
-
-- 以拥有 jar 文件的用户身份启动服务
-- 通过使用 `/var/run/<appname>/<appname>.pid` 跟踪应用的 PID 
-- 将控制台日志写入 `/var/log/<appname>.log`
-
-假定你的应用安装在 `/var/myapp`，为了将其作为 `init.d` 服务，创建链接，如下：
+When executed as root, as is the case when root is being used to start an init.d service, the default executable script runs the application as the user specified in the `RUN_AS_USER` environment variable. When the environment variable is not set, the user who owns the jar file is used instead. You should never run a Spring Boot application as `root`, so `RUN_AS_USER` should never be root and your application’s jar file should never be owned by root. Instead, create a specific user to run your application and set the `RUN_AS_USER` environment variable or use `chown` to make it the owner of the jar file, as shown in the following example:
 
 ```
-$ sudo ln -s /var/myapp/myapp.jar /etc/init.d/myapp
+$ chown bootapp:bootapp your-app.jar
 ```
 
-一旦安装，你可以通过通用方式启动和关闭该服务。比如，在基于 Debian 的系统上，你可以通过下面的命令启动它：
+In this case, the default executable script runs the application as the `bootapp` user.
+
+> To reduce the chances of the application’s user account being compromised, you should consider preventing it from using a login shell. For example, you can set the account’s shell to `/usr/sbin/nologin`.
+
+You should also take steps to prevent the modification of your application’s jar file. Firstly, configure its permissions so that it cannot be written and can only be read or executed by its owner, as shown in the following example:
 
 ```
-$ service myapp start
+$ chmod 500 your-app.jar
 ```
 
-> 如果应用没有启动，检查写入 `/var/log/<appname>.log` 的日志。
-
-您还可以使用标准操作系统工具将应用程序标记为自动启动。例如，在 Debian 上，您可以使用以下命令：
+Second, you should also take steps to limit the damage if your application or the account that’s running it is compromised. If an attacker does gain access, they could make the jar file writable and change its contents. One way to protect against this is to make it immutable by using `chattr`, as shown in the following example:
 
 ```
-$ update-rc.d myapp defaults <priority>
+$ sudo chattr +i your-app.jar
+```
+
+This will prevent any user, including root, from modifying the jar.
+
+If root is used to control the application’s service and you [use a `.conf` file](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-script-customization-conf-file) to customize its startup, the `.conf` file is read and evaluated by the root user. It should be secured accordingly. Use `chmod` so that the file can only be read by the owner and use `chown` to make root the owner, as shown in the following example:
+
+```
+$ chmod 400 your-app.conf
+$ sudo chown root:root your-app.conf
 ```
 
