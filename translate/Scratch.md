@@ -53,29 +53,29 @@
 | `DEBUG`                 | 如果不为空，请在 shell 进程中设置 `-x` 标志，从而易于查看脚本中的逻辑。 |
 | `STOP_WAIT_TIME`        | 停止应用程序之前要强制关闭的等待时间（以秒为单位）（默认为60）。 |
 
-> The `PID_FOLDER`, `LOG_FOLDER`, and `LOG_FILENAME` variables are only valid for an `init.d` service. For `systemd`, the equivalent customizations are made by using the ‘service’ script. See the [service unit configuration man page](https://www.freedesktop.org/software/systemd/man/systemd.service.html) for more details.
+> `PID_FOLDER`，`LOG_FOLDER` 和 `LOG_FILENAME` 变量仅对 `init.d` 服务有效。对于 `systemd`，等效的自定义是通过使用 'service' 脚本进行的。有关更多详细信息，请参见 [服务单元配置手册页](https://www.freedesktop.org/software/systemd/man/systemd.service.html)。
 
-With the exception of `JARFILE` and `APP_NAME`, the settings listed in the preceding section can be configured by using a `.conf` file. The file is expected to be next to the jar file and have the same name but suffixed with `.conf` rather than `.jar`. For example, a jar named `/var/myapp/myapp.jar` uses the configuration file named `/var/myapp/myapp.conf`, as shown in the following example:
+除 `JARFILE` 和 `APP_NAME` 外，上一节中列出的设置都可以使用 `.conf` 文件进行配置。该文件应该在 jar 文件的旁边，并且具有相同的名称，但后缀为 `.conf` 而不是 `.jar`。例如，名为 `/var/myapp/myapp.jar` 的 jar 使用名为 `/var/myapp/myapp.conf` 的配置文件，如以下示例所示：
 
-myapp.conf
+**myapp.conf**
 
 ```
 JAVA_OPTS=-Xmx1024M
 LOG_FOLDER=/custom/log/folder
 ```
 
-> If you do not like having the config file next to the jar file, you can set a `CONF_FOLDER` environment variable to customize the location of the config file.
+> 如果您不喜欢在 jar 文件旁边放置配置文件，则可以设置一个 `CONF_FOLDER` 环境变量来自定义配置文件的位置。
 
-To learn about securing this file appropriately, see [the guidelines for securing an init.d service](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-initd-service-securing).
+要了解有关适当保护此文件的信息，请参阅 [保护 init.d 服务的准则](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-initd-service-securing)。
 
-#### 6.3.3. Microsoft Windows Services
+#### 6.3.3. Microsoft Windows 服务
 
-A Spring Boot application can be started as a Windows service by using [`winsw`](https://github.com/kohsuke/winsw).
+可以使用 [`winsw`](https://github.com/kohsuke/winsw) 将 Spring Boot 应用程序作为 Windows 服务启动。
 
-A ([separately maintained sample](https://github.com/snicoll-scratches/spring-boot-daemon)) describes step-by-step how you can create a Windows service for your Spring Boot application.
+[单独维护的示例](https://github.com/snicoll-scratches/spring-boot-daemon) 逐步描述了如何为 Spring Boot 应用程序创建 Windows 服务。
 
-### 6.4. What to Read Next
+### 6.4. 进一步学习
 
-Check out the [Cloud Foundry](https://www.cloudfoundry.org/), [Heroku](https://www.heroku.com/), [OpenShift](https://www.openshift.com/), and [Boxfuse](https://boxfuse.com/) web sites for more information about the kinds of features that a PaaS can offer. These are just four of the most popular Java PaaS providers. Since Spring Boot is so amenable to cloud-based deployment, you can freely consider other providers as well.
+查看 [Cloud Foundry](https://www.cloudfoundry.org/)，[Heroku](https://www.heroku.com/)，[OpenShift](https://www.openshift.com/ ) 和 [Boxfuse](https://boxfuse.com/) 网站，以获取有关 PaaS 可以提供的各种功能的更多信息。这些只是最受欢迎的 Java PaaS 提供程序中的四个。由于 Spring Boot 非常适合基于云的部署，因此您也可以自由考虑其他提供商。
 
-The next section goes on to cover the *Spring Boot CLI*, or you can jump ahead to read about *build tool plugins*.
+下一部分将继续介绍  *Spring Boot CLI*，或者您也可以直接阅读有关 *build tool plugins* 的内容。
