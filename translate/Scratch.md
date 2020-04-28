@@ -79,3 +79,4 @@ LOG_FOLDER=/custom/log/folder
 查看 [Cloud Foundry](https://www.cloudfoundry.org/)，[Heroku](https://www.heroku.com/)，[OpenShift](https://www.openshift.com/ ) 和 [Boxfuse](https://boxfuse.com/) 网站，以获取有关 PaaS 可以提供的各种功能的更多信息。这些只是最受欢迎的 Java PaaS 提供程序中的四个。由于 Spring Boot 非常适合基于云的部署，因此您也可以自由考虑其他提供商。
 
 下一部分将继续介绍  *Spring Boot CLI*，或者您也可以直接阅读有关 *build tool plugins* 的内容。
+
