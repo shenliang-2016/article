@@ -1,33 +1,81 @@
-##### 安装为 `systemd` 服务
+#####  自定义启动脚本
 
-`systemd` 是S ystem V init 系统的后继产品，现在被许多现代 Linux 发行版使用。尽管您可以继续将 `init.d` 脚本与 `systemd` 一起使用，但也可以通过使用 `systemd` “service” 脚本来启动 Spring Boot 应用程序。
+由 Maven 或 Gradle 插件编写的默认嵌入式启动脚本可以通过多种方式进行自定义。对于大多数人来说，使用默认脚本以及一些自定义设置通常就足够了。如果发现无法自定义所需的内容，请使用 `embeddedLaunchScript` 选项完全编写自己的文件。
 
-假设您在 `/var/myapp` 中安装了一个 Spring Boot 应用程序，要将 Spring Boot 应用程序作为 `systemd` 服务安装，请创建一个名为 `myapp.service` 的脚本并将其放置在 `/etc/systemd/system` 目录。以下脚本提供了一个示例：
+###### 编写时自定义启动脚本
+
+在将启动脚本写入 jar 文件时，自定义启动脚本的元素通常很有意义。例如，init.d 脚本可以提供“描述”。由于您已经预先了解了描述（并且无需更改），因此在生成 jar 时也可以提供它。
+
+要自定义编写好的元素，使用 Spring Boot Maven plugin 的 `embeddedLaunchScriptProperties` 选项或者 [Spring Boot Gradle plugin `launchScript` 的 `properties` 属性](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/gradle-plugin/reference/html//#packaging-executable-configuring-launch-script).
+
+默认脚本支持以下属性替换：
+
+| Name                       | Description                                                  | Gradle default                                               | Maven default                                                |
+| :------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `mode`                     | 脚本模式                                                     | `auto`                                                       | `auto`                                                       |
+| `initInfoProvides`         | “INIT INFO” 的 `Provides` 部分                               | `${task.baseName}`                                           | `${project.artifactId}`                                      |
+| `initInfoRequiredStart`    | “INIT INFO” 的 `Required-Start` 部分                         | `$remote_fs $syslog $network`                                | `$remote_fs $syslog $network`                                |
+| `initInfoRequiredStop`     | “INIT INFO” 的 `Required-Stop`  部分                         | `$remote_fs $syslog $network`                                | `$remote_fs $syslog $network`                                |
+| `initInfoDefaultStart`     | “INIT INFO” 的 `Default-Start` 部分                          | `2 3 4 5`                                                    | `2 3 4 5`                                                    |
+| `initInfoDefaultStop`      | “INIT INFO” 的 `Default-Stop` 部分                           | `0 1 6`                                                      | `0 1 6`                                                      |
+| `initInfoShortDescription` | “INIT INFO” 的 `Short-Description` 部分                      | Single-line version of `${project.description}` (falling back to `${task.baseName}`) | `${project.name}`                                            |
+| `initInfoDescription`      | “INIT INFO” 的 `Description` 部分                            | `${project.description}` (falling back to `${task.baseName}`) | `${project.description}` (falling back to `${project.name}`) |
+| `initInfoChkconfig`        | “INIT INFO” 的 `chkconfig` 部分                              | `2345 99 01`                                                 | `2345 99 01`                                                 |
+| `confFolder`               | `CONF_FOLDER` 的默认值                                       | Folder containing the jar                                    | Folder containing the jar                                    |
+| `inlinedConfScript`        | 引用应在默认启动脚本中内联的文件脚本。这可以用来在加载任何外部配置文件之前设置环境变量，例如 `JAVA_OPTS`。 |                                                              |                                                              |
+| `logFolder`                | `LOG_FOLDER` 的默认值，仅对 `init.d` 服务有效。              |                                                              |                                                              |
+| `logFilename`              | `LOG_FILENAME` 的默认值，仅对 `init.d` 服务有效。            |                                                              |                                                              |
+| `pidFolder`                | `PID_FOLDER` 的默认值，仅对 `init.d` 服务有效。              |                                                              |                                                              |
+| `pidFilename`              | `PID_FOLDER` 中 PID 文件名的默认值，仅对 `init.d` 服务有效。 |                                                              |                                                              |
+| `useStartStopDaemon`       | 是否可以使用 `start-stop-daemon` 命令来控制该过程            | `true`                                                       | `true`                                                       |
+| `stopWaitTime`             | `STOP_WAIT_TIME` 的默认值，单位秒，仅对 `init.d` 服务有效。  | 60                                                           | 60                                                           |
+
+###### 在运行时自定义脚本
+
+对于*编写* jar 之后需要定制的脚本项目，可以使用环境变量或 [config文件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-script-customization-conf-file)。
+
+默认脚本支持以下环境属性：
+
+| Variable                | Description                                                  |
+| :---------------------- | :----------------------------------------------------------- |
+| `MODE`                  | 操作的“模式”。默认值取决于 jar 的构建方式，但通常为 `auto`（这意味着它会通过检查它是否是目录 `init.d` 中的符号链接来尝试猜测它是否为初始化脚本）。您可以将其显式设置为`service`，以便 `stop|start|status|restart` 命令可以使用，或者如果你想要在前台执行脚本，则可以将其设置为 `run`。 |
+| `RUN_AS_USER`           | 将用于运行应用程序的用户。未设置时，将使用拥有 jar 文件的用户。 |
+| `USE_START_STOP_DAEMON` | 是否可以使用 `start-stop-daemon` 命令来控制该过程。默认为 `true`。 |
+| `PID_FOLDER`            | pid 文件夹的根名称 (默认为 `/var/run`)。                     |
+| `LOG_FOLDER`            | 放置日志文件的文件夹名称 (默认为`/var/log`)。                |
+| `CONF_FOLDER`           | 从中读取 `.conf` 文件的文件夹的名称（默认情况下与 jar 文件相同的文件夹）。 |
+| `LOG_FILENAME`          | `LOG_FOLDER` 中日志文件名称 (默认为 `<appname>.log`)。       |
+| `APP_NAME`              | 应用程序的名称。如果 jar 是从符号链接运行的，则脚本会猜测应用程序名称。如果它不是符号链接，或者您要显式设置应用程序名称，则此功能很有用。 |
+| `RUN_ARGS`              | 传递给程序（Spring Boot app）的参数。                        |
+| `JAVA_HOME`             | `java` 可执行文件的位置默认情况下是通过使用 `PATH` 找到的，但是如果在 `$JAVA_HOME/bin/java` 目录中有可执行文件，则可以显式设置它。 |
+| `JAVA_OPTS`             | JVM 启动时传递给它的选项。                                   |
+| `JARFILE`               | jar 文件的显式位置，以防脚本被用于启动实际上未嵌入的 jar。   |
+| `DEBUG`                 | 如果不为空，请在 shell 进程中设置 `-x` 标志，从而易于查看脚本中的逻辑。 |
+| `STOP_WAIT_TIME`        | 停止应用程序之前要强制关闭的等待时间（以秒为单位）（默认为60）。 |
+
+> The `PID_FOLDER`, `LOG_FOLDER`, and `LOG_FILENAME` variables are only valid for an `init.d` service. For `systemd`, the equivalent customizations are made by using the ‘service’ script. See the [service unit configuration man page](https://www.freedesktop.org/software/systemd/man/systemd.service.html) for more details.
+
+With the exception of `JARFILE` and `APP_NAME`, the settings listed in the preceding section can be configured by using a `.conf` file. The file is expected to be next to the jar file and have the same name but suffixed with `.conf` rather than `.jar`. For example, a jar named `/var/myapp/myapp.jar` uses the configuration file named `/var/myapp/myapp.conf`, as shown in the following example:
+
+myapp.conf
 
 ```
-[Unit]
-Description=myapp
-After=syslog.target
-
-[Service]
-User=myapp
-ExecStart=/var/myapp/myapp.jar
-SuccessExitStatus=143
-
-[Install]
-WantedBy=multi-user.target
+JAVA_OPTS=-Xmx1024M
+LOG_FOLDER=/custom/log/folder
 ```
 
-> 记得要修改你的应用的 `Description`， `User`，以及 `ExecStart` 字段。
+> If you do not like having the config file next to the jar file, you can set a `CONF_FOLDER` environment variable to customize the location of the config file.
 
->  `ExecStart` 字段并未声明脚本动作命令，这意味着默认使用 `run` 命令。
+To learn about securing this file appropriately, see [the guidelines for securing an init.d service](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-initd-service-securing).
 
-请注意，与作为 `init.d` 服务运行时不同，运行应用程序的用户，PID 文件和控制台日志文件均由 `systemd` 本身管理，因此必须通过使用 ‘service’ 脚本。有关更多详细信息，请查阅 [服务单元配置手册页](https://www.freedesktop.org/software/systemd/man/systemd.service.html) 。
+#### 6.3.3. Microsoft Windows Services
 
-要将应用程序标记为在系统启动时自动启动，请使用以下命令：
+A Spring Boot application can be started as a Windows service by using [`winsw`](https://github.com/kohsuke/winsw).
 
-```
-$ systemctl enable myapp.service
-```
+A ([separately maintained sample](https://github.com/snicoll-scratches/spring-boot-daemon)) describes step-by-step how you can create a Windows service for your Spring Boot application.
 
-参考 `man systemctl` 了解更多细节。
+### 6.4. What to Read Next
+
+Check out the [Cloud Foundry](https://www.cloudfoundry.org/), [Heroku](https://www.heroku.com/), [OpenShift](https://www.openshift.com/), and [Boxfuse](https://boxfuse.com/) web sites for more information about the kinds of features that a PaaS can offer. These are just four of the most popular Java PaaS providers. Since Spring Boot is so amenable to cloud-based deployment, you can freely consider other providers as well.
+
+The next section goes on to cover the *Spring Boot CLI*, or you can jump ahead to read about *build tool plugins*.
