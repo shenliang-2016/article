@@ -1,87 +1,49 @@
-#### 7.2.4. 初始化一个新项目
+### 7.3. 使用 Groovy Beans DSL 开发应用程序
 
-`init` 命令允许你通过使用 [start.spring.io](https://start.spring.io/) 创建新项目而不需要离开 shell，如下面例子所示：
+Spring Framework 4.0 has native support for a `beans{}` “DSL” (borrowed from [Grails](https://grails.org/)), and you can embed bean definitions in your Groovy application scripts by using the same format. This is sometimes a good way to include external features like middleware declarations, as shown in the following example:
 
-```
-$ spring init --dependencies=web,data-jpa my-project
-Using service at https://start.spring.io
-Project extracted to '/Users/developer/example/my-project'
-```
+```groovy
+@Configuration(proxyBeanMethods = false)
+class Application implements CommandLineRunner {
 
-前面的示例使用 `spring-boot-starter-web` 和 `spring-boot-starter-data-jpa` 的基于 Maven 的项目创建了一个 `my-project` 目录。您可以通过使用 `--list` 标志来列出服务的功能，如以下示例所示：
+    @Autowired
+    SharedService service
 
-```
-$ spring init --list
-=======================================
-Capabilities of https://start.spring.io
-=======================================
+    @Override
+    void run(String... args) {
+        println service.message
+    }
 
-Available dependencies:
------------------------
-actuator - Actuator: Production ready features to help you monitor and manage your application
-...
-web - Web: Support for full-stack web development, including Tomcat and spring-webmvc
-websocket - Websocket: Support for WebSocket development
-ws - WS: Support for Spring Web Services
+}
 
-Available project types:
-------------------------
-gradle-build -  Gradle Config [format:build, build:gradle]
-gradle-project -  Gradle Project [format:project, build:gradle]
-maven-build -  Maven POM [format:build, build:maven]
-maven-project -  Maven Project [format:project, build:maven] (default)
+import my.company.SharedService
 
-...
+beans {
+    service(SharedService) {
+        message = "Hello World"
+    }
+}
 ```
 
-`init` 命令支持许多选项。请参阅 `help` 输出以获取更多详细信息。例如，以下命令创建一个使用 Java 8 和 `war` 打包的 Gradle 项目：
+You can mix class declarations with `beans{}` in the same file as long as they stay at the top level, or, if you prefer, you can put the beans DSL in a separate file.
 
-```
-$ spring init --build=gradle --java-version=1.8 --dependencies=websocket --packaging=war sample-app.zip
-Using service at https://start.spring.io
-Content saved to 'sample-app.zip'
-```
+### 7.4. Configuring the CLI with `settings.xml`
 
-#### 7.2.5. 使用内置 Shell
+The Spring Boot CLI uses Aether, Maven’s dependency resolution engine, to resolve dependencies. The CLI makes use of the Maven configuration found in `~/.m2/settings.xml` to configure Aether. The following configuration settings are honored by the CLI:
 
-Spring Boot 包含用于 BASH 和 zsh shell 的命令行完成脚本。如果您不使用这两个 shell 程序（也许您是 Windows 用户），则可以使用 `shell` 命令启动内置集成 shell 程序，如以下示例所示：
+- Offline
+- Mirrors
+- Servers
+- Proxies
+- Profiles
+  - Activation
+  - Repositories
+- Active profiles
 
-```
-$ spring shell
-Spring Boot (v2.2.2.RELEASE)
-Hit TAB to complete. Type \'help' and hit RETURN for help, and \'exit' to quit.
-```
+See [Maven’s settings documentation](https://maven.apache.org/settings.html) for further information.
 
-从内置 shell 内部，你可以直接运行其它命令：
+### 7.5. What to Read Next
 
-```
-$ version
-Spring CLI v2.2.2.RELEASE
-```
+There are some [sample groovy scripts](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/samples) available from the GitHub repository that you can use to try out the Spring Boot CLI. There is also extensive Javadoc throughout the [source code](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli).
 
-嵌入式 shell 支持 ANSI 颜色输出以及 `tab` 补全。如果需要运行本机命令，则可以使用 `!` 前缀。要退出嵌入式外壳，请按 `ctrl-c`。
-
-#### 7.2.6. 添加扩展到 CLI
-
-您可以使用 `install` 命令将扩展添加到 CLI。该命令采用 `group:artifact:version` 格式的一组或多组工件坐标，如以下示例所示：
-
-```
-$ spring install com.example:spring-boot-cli-extension:1.0.0.RELEASE
-```
-
-除了安装由您提供的坐标标识的工件之外，还将安装所有工件的依赖项。
-
-要卸载一个依赖，使用 `uninstall` 命令。与 `install` 命令一样，它采用 `group:artifact:version` 格式的一组或多组工件坐标，如以下示例所示：
-
-```
-$ spring uninstall com.example:spring-boot-cli-extension:1.0.0.RELEASE
-```
-
-它将卸载由您提供的坐标及其依赖项标识的工件。
-
-要卸载所有其他依赖项，可以使用 `--all` 选项，如以下示例所示：
-
-```
-$ spring uninstall --all
-```
-
+If you find that you reach the limit of the CLI tool, you probably want to look at converting your application to a full Gradle or Maven built “Groovy project”. The next section covers Spring Boot’s "[Build tool plugins](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#build-tool-plugins)", which you can use with Gradle or Maven.
