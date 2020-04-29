@@ -9345,25 +9345,25 @@ $ systemctl enable myapp.service
 
 默认脚本支持以下属性替换：
 
-| Name | Description | Gradle default | Maven default |
-| : | : | : | : |
-| `mode` | 脚本模式 | `auto` | `auto` |
-| `initInfoProvides` | “INIT INFO” 的 `Provides` 部分 | `${task.baseName}` | `${project.artifactId}` |
-| `initInfoRequiredStart` | “INIT INFO” 的 `Required-Start` 部分 | `$remote_fs $syslog $network` | `$remote_fs $syslog $network` |
-| `initInfoRequiredStop` | “INIT INFO” 的 `Required-Stop`  部分 | `$remote_fs $syslog $network` | `$remote_fs $syslog $network` |
-| `initInfoDefaultStart` | “INIT INFO” 的 `Default-Start` 部分 | `2 3 4 5` | `2 3 4 5` |
-| `initInfoDefaultStop` | “INIT INFO” 的 `Default-Stop` 部分 | `0 1 6` | `0 1 6` |
-| `initInfoShortDescription` | “INIT INFO” 的 `Short-Description` 部分 | Single-line version of `${project.description}` (falling back to `${task.baseName}`) | `${project.name}` |
-| `initInfoDescription` | “INIT INFO” 的 `Description` 部分 | `${project.description}` (falling back to `${task.baseName}`) | `${project.description}` (falling back to `${project.name}`) |
-| `initInfoChkconfig` | “INIT INFO” 的 `chkconfig` 部分 | `2345 99 01` | `2345 99 01` |
-| `confFolder` | `CONF_FOLDER` 的默认值 | Folder containing the jar | Folder containing the jar |
-| `inlinedConfScript` | 引用应在默认启动脚本中内联的文件脚本。这可以用来在加载任何外部配置文件之前设置环境变量，例如 `JAVA_OPTS`。 |  |  |
-| `logFolder` | `LOG_FOLDER` 的默认值，仅对 `init.d` 服务有效。 |  |  |
-| `logFilename` | `LOG_FILENAME` 的默认值，仅对 `init.d` 服务有效。 |  |  |
-| `pidFolder` | `PID_FOLDER` 的默认值，仅对 `init.d` 服务有效。 |  |  |
-| `pidFilename` | `PID_FOLDER` 中 PID 文件名的默认值，仅对 `init.d` 服务有效。 |  |  |
-| `useStartStopDaemon` | 是否可以使用 `start-stop-daemon` 命令来控制该过程 | `true` | `true` |
-| `stopWaitTime` | `STOP_WAIT_TIME` 的默认值，单位秒，仅对 `init.d` 服务有效。 | 60 | 60 |
+| Name                       | Description                                                  | Gradle default                                               | Maven default                                                |
+| :------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `mode`                     | 脚本模式                                                     | `auto`                                                       | `auto`                                                       |
+| `initInfoProvides`         | “INIT INFO” 的 `Provides` 部分                               | `${task.baseName}`                                           | `${project.artifactId}`                                      |
+| `initInfoRequiredStart`    | “INIT INFO” 的 `Required-Start` 部分                         | `$remote_fs $syslog $network`                                | `$remote_fs $syslog $network`                                |
+| `initInfoRequiredStop`     | “INIT INFO” 的 `Required-Stop`  部分                         | `$remote_fs $syslog $network`                                | `$remote_fs $syslog $network`                                |
+| `initInfoDefaultStart`     | “INIT INFO” 的 `Default-Start` 部分                          | `2 3 4 5`                                                    | `2 3 4 5`                                                    |
+| `initInfoDefaultStop`      | “INIT INFO” 的 `Default-Stop` 部分                           | `0 1 6`                                                      | `0 1 6`                                                      |
+| `initInfoShortDescription` | “INIT INFO” 的 `Short-Description` 部分                      | Single-line version of `${project.description}` (falling back to `${task.baseName}`) | `${project.name}`                                            |
+| `initInfoDescription`      | “INIT INFO” 的 `Description` 部分                            | `${project.description}` (falling back to `${task.baseName}`) | `${project.description}` (falling back to `${project.name}`) |
+| `initInfoChkconfig`        | “INIT INFO” 的 `chkconfig` 部分                              | `2345 99 01`                                                 | `2345 99 01`                                                 |
+| `confFolder`               | `CONF_FOLDER` 的默认值                                       | Folder containing the jar                                    | Folder containing the jar                                    |
+| `inlinedConfScript`        | 引用应在默认启动脚本中内联的文件脚本。这可以用来在加载任何外部配置文件之前设置环境变量，例如 `JAVA_OPTS`。 |                                                              |                                                              |
+| `logFolder`                | `LOG_FOLDER` 的默认值，仅对 `init.d` 服务有效。              |                                                              |                                                              |
+| `logFilename`              | `LOG_FILENAME` 的默认值，仅对 `init.d` 服务有效。            |                                                              |                                                              |
+| `pidFolder`                | `PID_FOLDER` 的默认值，仅对 `init.d` 服务有效。              |                                                              |                                                              |
+| `pidFilename`              | `PID_FOLDER` 中 PID 文件名的默认值，仅对 `init.d` 服务有效。 |                                                              |                                                              |
+| `useStartStopDaemon`       | 是否可以使用 `start-stop-daemon` 命令来控制该过程            | `true`                                                       | `true`                                                       |
+| `stopWaitTime`             | `STOP_WAIT_TIME` 的默认值，单位秒，仅对 `init.d` 服务有效。  | 60                                                           | 60                                                           |
 
 ###### 在运行时自定义脚本
 
@@ -9371,24 +9371,24 @@ $ systemctl enable myapp.service
 
 默认脚本支持以下环境属性：
 
-| Variable | Description |
-| : | : |
-| `MODE` | 操作的“模式”。默认值取决于 jar 的构建方式，但通常为 `auto`（这意味着它会通过检查它是否是目录 `init.d` 中的符号链接来尝试猜测它是否为初始化脚本）。您可以将其显式设置为`service`，以便 `stop|start|status|restart` 命令可以使用，或者如果你想要在前台执行脚本，则可以将其设置为 `run`。 |
-| `RUN_AS_USER` | 将用于运行应用程序的用户。未设置时，将使用拥有 jar 文件的用户。 |
+| Variable                | Description                                                  |
+| :---------------------- | :----------------------------------------------------------- |
+| `MODE`                  | 操作的“模式”。默认值取决于 jar 的构建方式，但通常为 `auto`（这意味着它会通过检查它是否是目录 `init.d` 中的符号链接来尝试猜测它是否为初始化脚本）。您可以将其显式设置为`service`，以便 `stop|start|status|restart` 命令可以使用，或者如果你想要在前台执行脚本，则可以将其设置为 `run`。 |
+| `RUN_AS_USER`           | 将用于运行应用程序的用户。未设置时，将使用拥有 jar 文件的用户。 |
 | `USE_START_STOP_DAEMON` | 是否可以使用 `start-stop-daemon` 命令来控制该过程。默认为 `true`。 |
-| `PID_FOLDER` | pid 文件夹的根名称 (默认为 `/var/run`)。 |
-| `LOG_FOLDER` | 放置日志文件的文件夹名称 (默认为`/var/log`)。 |
-| `CONF_FOLDER` | 从中读取 `.conf` 文件的文件夹的名称（默认情况下与 jar 文件相同的文件夹）。 |
-| `LOG_FILENAME` | `LOG_FOLDER` 中日志文件名称 (默认为 `<appname>.log`)。 |
-| `APP_NAME` | 应用程序的名称。如果 jar 是从符号链接运行的，则脚本会猜测应用程序名称。如果它不是符号链接，或者您要显式设置应用程序名称，则此功能很有用。 |
-| `RUN_ARGS` | 传递给程序（Spring Boot app）的参数。 |
-| `JAVA_HOME` | `java` 可执行文件的位置默认情况下是通过使用 `PATH` 找到的，但是如果在 `$JAVA_HOME/bin/java` 目录中有可执行文件，则可以显式设置它。 |
-| `JAVA_OPTS` | JVM 启动时传递给它的选项。 |
-| `JARFILE` | jar 文件的显式位置，以防脚本被用于启动实际上未嵌入的 jar。 |
-| `DEBUG` | 如果不为空，请在 shell 进程中设置 `-x` 标志，从而易于查看脚本中的逻辑。 |
-| `STOP_WAIT_TIME` | 停止应用程序之前要强制关闭的等待时间（以秒为单位）（默认为60）。 |
+| `PID_FOLDER`            | pid 文件夹的根名称 (默认为 `/var/run`)。                     |
+| `LOG_FOLDER`            | 放置日志文件的文件夹名称 (默认为`/var/log`)。                |
+| `CONF_FOLDER`           | 从中读取 `.conf` 文件的文件夹的名称（默认情况下与 jar 文件相同的文件夹）。 |
+| `LOG_FILENAME`          | `LOG_FOLDER` 中日志文件名称 (默认为 `<appname>.log`)。       |
+| `APP_NAME`              | 应用程序的名称。如果 jar 是从符号链接运行的，则脚本会猜测应用程序名称。如果它不是符号链接，或者您要显式设置应用程序名称，则此功能很有用。 |
+| `RUN_ARGS`              | 传递给程序（Spring Boot app）的参数。                        |
+| `JAVA_HOME`             | `java` 可执行文件的位置默认情况下是通过使用 `PATH` 找到的，但是如果在 `$JAVA_HOME/bin/java` 目录中有可执行文件，则可以显式设置它。 |
+| `JAVA_OPTS`             | JVM 启动时传递给它的选项。                                   |
+| `JARFILE`               | jar 文件的显式位置，以防脚本被用于启动实际上未嵌入的 jar。   |
+| `DEBUG`                 | 如果不为空，请在 shell 进程中设置 `-x` 标志，从而易于查看脚本中的逻辑。 |
+| `STOP_WAIT_TIME`        | 停止应用程序之前要强制关闭的等待时间（以秒为单位）（默认为60）。 |
 
->`PID_FOLDER`，`LOG_FOLDER` 和 `LOG_FILENAME` 变量仅对 `init.d` 服务有效。对于 `systemd`，等效的自定义是通过使用 'service' 脚本进行的。有关更多详细信息，请参见 [服务单元配置手册页](https://www.freedesktop.org/software/systemd/man/systemd.service.html)。
+> `PID_FOLDER`，`LOG_FOLDER` 和 `LOG_FILENAME` 变量仅对 `init.d` 服务有效。对于 `systemd`，等效的自定义是通过使用 'service' 脚本进行的。有关更多详细信息，请参见 [服务单元配置手册页](https://www.freedesktop.org/software/systemd/man/systemd.service.html)。
 
 除 `JARFILE` 和 `APP_NAME` 外，上一节中列出的设置都可以使用 `.conf` 文件进行配置。该文件应该在 jar 文件的旁边，并且具有相同的名称，但后缀为 `.conf` 而不是 `.jar`。例如，名为 `/var/myapp/myapp.jar` 的 jar 使用名为 `/var/myapp/myapp.conf` 的配置文件，如以下示例所示：
 
@@ -9399,7 +9399,7 @@ JAVA_OPTS=-Xmx1024M
 LOG_FOLDER=/custom/log/folder
 ```
 
->如果您不喜欢在 jar 文件旁边放置配置文件，则可以设置一个 `CONF_FOLDER` 环境变量来自定义配置文件的位置。
+> 如果您不喜欢在 jar 文件旁边放置配置文件，则可以设置一个 `CONF_FOLDER` 环境变量来自定义配置文件的位置。
 
 要了解有关适当保护此文件的信息，请参阅 [保护 init.d 服务的准则](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#deployment-initd-service-securing)。
 
@@ -9506,7 +9506,7 @@ $ spring run hello.groovy -- --server.port=9000
 $ JAVA_OPTS=-Xmx1024m spring run hello.groovy
 ```
 
->在 Microsoft Windows 上设置 `JAVA_OPTS` 时，请确保引用整个指令，例如 `set "JAVA_OPTS=-Xms256m -Xmx2048m"` 。这样做可以确保将值正确传递到进程。
+> 在 Microsoft Windows 上设置 `JAVA_OPTS` 时，请确保引用整个指令，例如 `set "JAVA_OPTS=-Xms256m -Xmx2048m"` 。这样做可以确保将值正确传递到进程。
 
 ##### 推导的"抓取"依赖
 
@@ -9516,33 +9516,33 @@ Spring Boot 进一步扩展了该技术，并尝试根据您的代码推断出�
 
 以下各项用作 “抓取提示”：
 
-| Items | Grabs |
-| : | : |
-| `JdbcTemplate`, `NamedParameterJdbcTemplate`, `DataSource` | JDBC Application. |
-| `@EnableJms` | JMS Application. |
-| `@EnableCaching` | Caching abstraction. |
-| `@Test` | JUnit. |
-| `@EnableRabbit` | RabbitMQ. |
-| extends `Specification` | Spock test. |
-| `@EnableBatchProcessing` | Spring Batch. |
-| `@MessageEndpoint` `@EnableIntegration` | Spring Integration. |
-| `@Controller` `@RestController` `@EnableWebMvc` | Spring MVC + Embedded Tomcat. |
-| `@EnableWebSecurity` | Spring Security. |
-| `@EnableTransactionManagement` | Spring Transaction Management. |
+| Items                                                      | Grabs                          |
+| :--------------------------------------------------------- | :----------------------------- |
+| `JdbcTemplate`, `NamedParameterJdbcTemplate`, `DataSource` | JDBC Application.              |
+| `@EnableJms`                                               | JMS Application.               |
+| `@EnableCaching`                                           | Caching abstraction.           |
+| `@Test`                                                    | JUnit.                         |
+| `@EnableRabbit`                                            | RabbitMQ.                      |
+| extends `Specification`                                    | Spock test.                    |
+| `@EnableBatchProcessing`                                   | Spring Batch.                  |
+| `@MessageEndpoint` `@EnableIntegration`                    | Spring Integration.            |
+| `@Controller` `@RestController` `@EnableWebMvc`            | Spring MVC + Embedded Tomcat.  |
+| `@EnableWebSecurity`                                       | Spring Security.               |
+| `@EnableTransactionManagement`                             | Spring Transaction Management. |
 
->参考 Spring Boot CLI 源代码中 [`CompilerAutoConfiguration`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli/compiler/CompilerAutoConfiguration.java) 的子类来准确理解如何进行自定义。
+> 参考 Spring Boot CLI 源代码中 [`CompilerAutoConfiguration`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli/compiler/CompilerAutoConfiguration.java) 的子类来准确理解如何进行自定义。
 
 ##### 推导的"抓取"坐标
 
 Spring Boot 通过允许您指定没有组或版本的依赖项（例如，`@Grab('freemarker')`）来扩展 Groovy 的标准 `@Grab` 支持。这样做可以参考 Spring Boot 的默认依赖元数据来推断工件的组和版本。
 
->默认元数据与您使用的 CLI 版本相关。仅当您移至新版本的 CLI 时，它才会更改，从而使您可以控制依赖项的版本何时更改。可以在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#appendix-dependency-versions) 中找到。
+> 默认元数据与您使用的 CLI 版本相关。仅当您移至新版本的 CLI 时，它才会更改，从而使您可以控制依赖项的版本何时更改。可以在 [附录](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#appendix-dependency-versions) 中找到。
 
 ##### 默认导入语句
 
 为了帮助减少 Groovy 代码的大小，会自动包含几个 `import` 语句。注意，前面的示例如何引用 `@Component`，`@RestController` 和 `@RequestMapping`，而无需使用完全限定的名称或 `import` 语句。
 
->许多 Spring 注解无需使用 `import` 语句即可工作。在添加导入之前，请尝试运行您的应用程序以查看失败的原因。
+> 许多 Spring 注解无需使用 `import` 语句即可工作。在添加导入之前，请尝试运行您的应用程序以查看失败的原因。
 
 ##### 自动 Main 方法
 
@@ -9600,4 +9600,91 @@ public/**, resources/**, static/**, templates/**, META-INF/**, *
 ```
 
 在命令行上输入 `spring help jar` 以获得更多信息。
+
+#### 7.2.4. 初始化一个新项目
+
+`init` 命令允许你通过使用 [start.spring.io](https://start.spring.io/) 创建新项目而不需要离开 shell，如下面例子所示：
+
+```
+$ spring init --dependencies=web,data-jpa my-project
+Using service at https://start.spring.io
+Project extracted to '/Users/developer/example/my-project'
+```
+
+前面的示例使用 `spring-boot-starter-web` 和 `spring-boot-starter-data-jpa` 的基于 Maven 的项目创建了一个 `my-project` 目录。您可以通过使用 `--list` 标志来列出服务的功能，如以下示例所示：
+
+```
+$ spring init --list
+=======================================
+Capabilities of https://start.spring.io
+=======================================
+
+Available dependencies:
+-----------------------
+actuator - Actuator: Production ready features to help you monitor and manage your application
+...
+web - Web: Support for full-stack web development, including Tomcat and spring-webmvc
+websocket - Websocket: Support for WebSocket development
+ws - WS: Support for Spring Web Services
+
+Available project types:
+------------------------
+gradle-build -  Gradle Config [format:build, build:gradle]
+gradle-project -  Gradle Project [format:project, build:gradle]
+maven-build -  Maven POM [format:build, build:maven]
+maven-project -  Maven Project [format:project, build:maven] (default)
+
+...
+```
+
+`init` 命令支持许多选项。请参阅 `help` 输出以获取更多详细信息。例如，以下命令创建一个使用 Java 8 和 `war` 打包的 Gradle 项目：
+
+```
+$ spring init --build=gradle --java-version=1.8 --dependencies=websocket --packaging=war sample-app.zip
+Using service at https://start.spring.io
+Content saved to 'sample-app.zip'
+```
+
+#### 7.2.5. 使用内置 Shell
+
+Spring Boot 包含用于 BASH 和 zsh shell 的命令行完成脚本。如果您不使用这两个 shell 程序（也许您是 Windows 用户），则可以使用 `shell` 命令启动内置集成 shell 程序，如以下示例所示：
+
+```
+$ spring shell
+Spring Boot (v2.2.2.RELEASE)
+Hit TAB to complete. Type \'help' and hit RETURN for help, and \'exit' to quit.
+```
+
+从内置 shell 内部，你可以直接运行其它命令：
+
+```
+$ version
+Spring CLI v2.2.2.RELEASE
+```
+
+嵌入式 shell 支持 ANSI 颜色输出以及 `tab` 补全。如果需要运行本机命令，则可以使用 `!` 前缀。要退出嵌入式外壳，请按 `ctrl-c`。
+
+#### 7.2.6. 添加扩展到 CLI
+
+您可以使用 `install` 命令将扩展添加到 CLI。该命令采用 `group:artifact:version` 格式的一组或多组工件坐标，如以下示例所示：
+
+```
+$ spring install com.example:spring-boot-cli-extension:1.0.0.RELEASE
+```
+
+除了安装由您提供的坐标标识的工件之外，还将安装所有工件的依赖项。
+
+要卸载一个依赖，使用 `uninstall` 命令。与 `install` 命令一样，它采用 `group:artifact:version` 格式的一组或多组工件坐标，如以下示例所示：
+
+```
+$ spring uninstall com.example:spring-boot-cli-extension:1.0.0.RELEASE
+```
+
+它将卸载由您提供的坐标及其依赖项标识的工件。
+
+要卸载所有其他依赖项，可以使用 `--all` 选项，如以下示例所示：
+
+```
+$ spring uninstall --all
+```
 

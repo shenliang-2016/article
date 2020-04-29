@@ -84,3 +84,4 @@ $ spring uninstall com.example:spring-boot-cli-extension:1.0.0.RELEASE
 ```
 $ spring uninstall --all
 ```
+
