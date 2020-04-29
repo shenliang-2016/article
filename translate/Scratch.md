@@ -1,10 +1,10 @@
-##### Deduced “grab” Dependencies
+##### 推导的"抓取"依赖
 
-Standard Groovy includes a `@Grab` annotation, which lets you declare dependencies on third-party libraries. This useful technique lets Groovy download jars in the same way as Maven or Gradle would but without requiring you to use a build tool.
+标准 Groovy 包含一个 `@Grab` 注解，可让您声明对第三方库的依赖关系。Groovy 可以使用这种有用的技术以与 Maven 或 Gradle 相同的方式下载 jar，而无需使用构建工具。
 
-Spring Boot extends this technique further and tries to deduce which libraries to “grab” based on your code. For example, since the `WebApplication` code shown previously uses `@RestController` annotations, Spring Boot grabs "Tomcat" and "Spring MVC".
+Spring Boot 进一步扩展了该技术，并尝试根据您的代码推断出要“抓取”哪些库。例如，由于先前显示的 `WebApplication` 代码使用了 `@RestController` 注解，因此 Spring Boot 会获取 “Tomcat” 和 “Spring MVC”。
 
-The following items are used as “grab hints”:
+以下各项用作 “抓取提示”：
 
 | Items                                                      | Grabs                          |
 | :--------------------------------------------------------- | :----------------------------- |
@@ -20,5 +20,5 @@ The following items are used as “grab hints”:
 | `@EnableWebSecurity`                                       | Spring Security.               |
 | `@EnableTransactionManagement`                             | Spring Transaction Management. |
 
-> See subclasses of [`CompilerAutoConfiguration`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli/compiler/CompilerAutoConfiguration.java) in the Spring Boot CLI source code to understand exactly how customizations are applied.
+> 参考 Spring Boot CLI 源代码中 [`CompilerAutoConfiguration`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli/compiler/CompilerAutoConfiguration.java) 的子类来准确理解如何进行自定义。
 
