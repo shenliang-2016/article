@@ -1,6 +1,6 @@
 ### 7.3. 使用 Groovy Beans DSL 开发应用程序
 
-Spring Framework 4.0 has native support for a `beans{}` “DSL” (borrowed from [Grails](https://grails.org/)), and you can embed bean definitions in your Groovy application scripts by using the same format. This is sometimes a good way to include external features like middleware declarations, as shown in the following example:
+Spring Framework 4.0 对 `beans{}` “DSL” （从 [Grails](https://grails.org/) 借来）具有本地支持，您可以使用相同的格式将 bean 定义嵌入 Groovy 应用程序脚本中。有时，这是包括外部功能（如中间件声明）的好方法，如以下示例所示：
 
 ```groovy
 @Configuration(proxyBeanMethods = false)
@@ -25,11 +25,11 @@ beans {
 }
 ```
 
-You can mix class declarations with `beans{}` in the same file as long as they stay at the top level, or, if you prefer, you can put the beans DSL in a separate file.
+您可以将类声明与 `beans{}` 混合在同一个文件中，只要它们位于顶层即可；或者，如果愿意，可以将 bean DSL 放在单独的文件中。
 
-### 7.4. Configuring the CLI with `settings.xml`
+### 7.4. 使用 `settings.xml` 配置 CLI 
 
-The Spring Boot CLI uses Aether, Maven’s dependency resolution engine, to resolve dependencies. The CLI makes use of the Maven configuration found in `~/.m2/settings.xml` to configure Aether. The following configuration settings are honored by the CLI:
+Spring Boot CLI 使用 Maven 的依赖性解析引擎 Aether 来解决依赖性。 CLI 利用 `~/.m2/settings.xml` 中的 Maven 配置来配置 Aether。CLI 遵循以下配置设置：
 
 - Offline
 - Mirrors
@@ -40,10 +40,10 @@ The Spring Boot CLI uses Aether, Maven’s dependency resolution engine, to reso
   - Repositories
 - Active profiles
 
-See [Maven’s settings documentation](https://maven.apache.org/settings.html) for further information.
+参考 [Maven’s settings documentation](https://maven.apache.org/settings.html) 了解更多信息。
 
-### 7.5. What to Read Next
+### 7.5. 进一步阅读
 
-There are some [sample groovy scripts](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/samples) available from the GitHub repository that you can use to try out the Spring Boot CLI. There is also extensive Javadoc throughout the [source code](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli).
+您可以使用 GitHub 存储库中的一些 [示例groovy脚本](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/samples) 试用 Spring Boot CLI。 [源代码](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli) 中还包含丰富的 javadoc。
 
-If you find that you reach the limit of the CLI tool, you probably want to look at converting your application to a full Gradle or Maven built “Groovy project”. The next section covers Spring Boot’s "[Build tool plugins](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#build-tool-plugins)", which you can use with Gradle or Maven.
+如果发现达到了 CLI 工具的极限，则可能需要考虑将应用程序转换为完整的 Gradle 或 Maven 构建的 “Groovy项目”。下一节将介绍 Spring Boot 的 “[构建工具插件](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#build-tool-plugins)”  ，可以与 Gradle 或 Maven 一起使用。
