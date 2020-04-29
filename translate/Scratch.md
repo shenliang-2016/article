@@ -1,40 +1,24 @@
-#### 7.2.1. 使用 CLI 运行应用
+##### Deduced “grab” Dependencies
 
-您可以使用 `run` 命令来编译和运行 Groovy 源代码。Spring Boot CLI 是完全独立的，因此您不需要任何外部 Groovy 安装。
+Standard Groovy includes a `@Grab` annotation, which lets you declare dependencies on third-party libraries. This useful technique lets Groovy download jars in the same way as Maven or Gradle would but without requiring you to use a build tool.
 
-以下示例显示了用 Groovy 编写的“hello world”  Web 应用程序：
+Spring Boot extends this technique further and tries to deduce which libraries to “grab” based on your code. For example, since the `WebApplication` code shown previously uses `@RestController` annotations, Spring Boot grabs "Tomcat" and "Spring MVC".
 
-**hello.groovy**
+The following items are used as “grab hints”:
 
-```groovy
-@RestController
-class WebApplication {
+| Items                                                      | Grabs                          |
+| :--------------------------------------------------------- | :----------------------------- |
+| `JdbcTemplate`, `NamedParameterJdbcTemplate`, `DataSource` | JDBC Application.              |
+| `@EnableJms`                                               | JMS Application.               |
+| `@EnableCaching`                                           | Caching abstraction.           |
+| `@Test`                                                    | JUnit.                         |
+| `@EnableRabbit`                                            | RabbitMQ.                      |
+| extends `Specification`                                    | Spock test.                    |
+| `@EnableBatchProcessing`                                   | Spring Batch.                  |
+| `@MessageEndpoint` `@EnableIntegration`                    | Spring Integration.            |
+| `@Controller` `@RestController` `@EnableWebMvc`            | Spring MVC + Embedded Tomcat.  |
+| `@EnableWebSecurity`                                       | Spring Security.               |
+| `@EnableTransactionManagement`                             | Spring Transaction Management. |
 
-    @RequestMapping("/")
-    String home() {
-        "Hello World!"
-    }
-
-}
-```
-
-编译和运行应用，使用下面的命令：
-
-```
-$ spring run hello.groovy
-```
-
-要将命令行参数传递给应用程序，请使用 `--` 将命令与 “spring” 命令参数分开，如以下示例所示：
-
-```
-$ spring run hello.groovy -- --server.port=9000
-```
-
-要设置 JVM 命令行参数，可以使用 `JAVA_OPTS` 环境变量，如以下示例所示：
-
-```
-$ JAVA_OPTS=-Xmx1024m spring run hello.groovy
-```
-
-> 在 Microsoft Windows 上设置 `JAVA_OPTS` 时，请确保引用整个指令，例如 `set "JAVA_OPTS=-Xms256m -Xmx2048m"` 。这样做可以确保将值正确传递到进程。
+> See subclasses of [`CompilerAutoConfiguration`](https://github.com/spring-projects/spring-boot/tree/v2.2.2.RELEASE/spring-boot-project/spring-boot-cli/src/main/java/org/springframework/boot/cli/compiler/CompilerAutoConfiguration.java) in the Spring Boot CLI source code to understand exactly how customizations are applied.
 
