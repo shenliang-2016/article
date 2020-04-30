@@ -1,60 +1,111 @@
-#### 8.1.2. 打包可执行 jar 和 war 文件
+### 8.2. Spring Boot Gradle Plugin
 
-一旦 `spring-boot-maven-plugin` 被包含在你的 `pom.xml` 中，它将会自动尝试通过使用 `spring-boot:repackage` 目标重新打包压缩包来使得它们可执行。你应该通过使用常规的 `packaging` 元素配置你的项目打包为 jar 或者 war ，如下面例子所示：
+The Spring Boot Gradle Plugin provides Spring Boot support in Gradle, letting you package executable jar or war archives, run Spring Boot applications, and use the dependency management provided by `spring-boot-dependencies`. It requires Gradle 5.x (4.10 is also supported but this support is deprecated and will be removed in a future release). Please refer to the plugin’s documentation to learn more:
+
+- Reference ([HTML](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/gradle-plugin/reference/html/) and [PDF](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/gradle-plugin/reference/pdf/spring-boot-gradle-plugin-reference.pdf))
+- [API](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/gradle-plugin/reference/api/)
+
+### 8.3. Spring Boot AntLib Module
+
+The Spring Boot AntLib module provides basic Spring Boot support for Apache Ant. You can use the module to create executable jars. To use the module, you need to declare an additional `spring-boot` namespace in your `build.xml`, as shown in the following example:
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <!-- ... -->
-    <packaging>jar</packaging>
-    <!-- ... -->
+<project xmlns:ivy="antlib:org.apache.ivy.ant"
+    xmlns:spring-boot="antlib:org.springframework.boot.ant"
+    name="myapp" default="build">
+    ...
 </project>
 ```
 
-Spring 的 `package` 阶段会增强您现有的存档。可以通过使用配置选项来指定要启动的主类，如下所示，也可以通过向清单添加 `Main-Class` 属性来指定。如果您未指定主类，则插件会使用`public static void main(String[] args)` 方法搜索类。
+You need to remember to start Ant using the `-lib` option, as shown in the following example:
+
+```
+$ ant -lib <folder containing spring-boot-antlib-2.2.2.RELEASE.jar>
+```
+
+> The “Using Spring Boot” section includes a more complete example of [using Apache Ant with `spring-boot-antlib`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#using-boot-ant).
+
+#### 8.3.1. Spring Boot Ant Tasks
+
+Once the `spring-boot-antlib` namespace has been declared, the following additional tasks are available:
+
+- [`spring-boot:exejar`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-ant-exejar)
+- [`spring-boot:findmainclass`](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#spring-boot-ant-findmainclass)
+
+##### `spring-boot:exejar`
+
+You can use the `exejar` task to create a Spring Boot executable jar. The following attributes are supported by the task:
+
+| Attribute     | Description                            | Required                                                     |
+| :------------ | :------------------------------------- | :----------------------------------------------------------- |
+| `destfile`    | The destination jar file to create     | Yes                                                          |
+| `classes`     | The root directory of Java class files | Yes                                                          |
+| `start-class` | The main application class to run      | No *(the default is the first class found that declares a main method)* |
+
+The following nested elements can be used with the task:
+
+| Element     | Description                                                  |
+| :---------- | :----------------------------------------------------------- |
+| `resources` | One or more [Resource Collections](https://ant.apache.org/manual/Types/resources.html#collection) describing a set of [Resources](https://ant.apache.org/manual/Types/resources.html) that should be added to the content of the created jar file. |
+| `lib`       | One or more [Resource Collections](https://ant.apache.org/manual/Types/resources.html#collection) that should be added to the set of jar libraries that make up the runtime dependency classpath of the application. |
+
+##### Examples
+
+This section shows two examples of Ant tasks.
+
+Specify start-class
 
 ```xml
-<plugin>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-maven-plugin</artifactId>
-    <configuration>
-        <mainClass>com.example.app.Main</mainClass>
-    </configuration>
-</plugin>
+<spring-boot:exejar destfile="target/my-application.jar"
+        classes="target/classes" start-class="com.example.MyApplication">
+    <resources>
+        <fileset dir="src/main/resources" />
+    </resources>
+    <lib>
+        <fileset dir="lib" />
+    </lib>
+</spring-boot:exejar>
 ```
 
-为了构建并运行项目组件，使用下面的命令：
-
-```
-$ mvn package
-$ java -jar target/mymodule-0.0.1-SNAPSHOT.jar
-```
-
-要构建既可执行又可部署到外部容器的 war 文件，您需要将嵌入式容器的相关性标记为 “provided”，如以下示例所示：
+Detect start-class
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <!-- ... -->
-    <packaging>war</packaging>
-    <!-- ... -->
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!-- ... -->
-    </dependencies>
-</project>
+<exejar destfile="target/my-application.jar" classes="target/classes">
+    <lib>
+        <fileset dir="lib" />
+    </lib>
+</exejar>
 ```
 
-> 参考 “[Create a Deployable War File](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-create-a-deployable-war-file)” 部分了解创建可部署 war 文件的更多细节。
+#### 8.3.2. `spring-boot:findmainclass`
 
-高级配置选项和示例可以在 [plugin info page](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/maven-plugin/) 上找到。
+The `findmainclass` task is used internally by `exejar` to locate a class declaring a `main`. If necessary, you can also use this task directly in your build. The following attributes are supported:
+
+| Attribute     | Description                                          | Required                                    |
+| :------------ | :--------------------------------------------------- | :------------------------------------------ |
+| `classesroot` | The root directory of Java class files               | Yes *(unless mainclass is specified)*       |
+| `mainclass`   | Can be used to short-circuit the `main` class search | No                                          |
+| `property`    | The Ant property that should be set with the result  | No *(result will be logged if unspecified)* |
+
+##### Examples
+
+This section contains three examples of using `findmainclass`.
+
+Find and log
+
+```xml
+<findmainclass classesroot="target/classes" />
+```
+
+Find and set
+
+```xml
+<findmainclass classesroot="target/classes" property="main-class" />
+```
+
+Override and set
+
+```xml
+<findmainclass mainclass="com.example.MainClass" property="main-class" />
+```
+
