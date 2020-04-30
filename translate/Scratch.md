@@ -67,3 +67,4 @@ target/myproject-1.0.0.jar target/myproject-1.0.0.jar.original
     </pluginRepository>
 </pluginRepositories>
 ```
+
