@@ -1,6 +1,6 @@
-#### 8.1.2. Packaging Executable Jar and War Files
+#### 8.1.2. 打包可执行 jar 和 war 文件
 
-Once `spring-boot-maven-plugin` has been included in your `pom.xml`, it automatically tries to rewrite archives to make them executable by using the `spring-boot:repackage` goal. You should configure your project to build a jar or war (as appropriate) by using the usual `packaging` element, as shown in the following example:
+一旦 `spring-boot-maven-plugin` 被包含在你的 `pom.xml` 中，它将会自动尝试通过使用 `spring-boot:repackage` 目标重新打包压缩包来使得它们可执行。你应该通过使用常规的 `packaging` 元素配置你的项目打包为 jar 或者 war ，如下面例子所示：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -12,7 +12,7 @@ Once `spring-boot-maven-plugin` has been included in your `pom.xml`, it automati
 </project>
 ```
 
-Your existing archive is enhanced by Spring Boot during the `package` phase. The main class that you want to launch can be specified either by using a configuration option, as shown below, or by adding a `Main-Class` attribute to the manifest. If you do not specify a main class, the plugin searches for a class with a `public static void main(String[] args)` method.
+Spring 的 `package` 阶段会增强您现有的存档。可以通过使用配置选项来指定要启动的主类，如下所示，也可以通过向清单添加 `Main-Class` 属性来指定。如果您未指定主类，则插件会使用`public static void main(String[] args)` 方法搜索类。
 
 ```xml
 <plugin>
@@ -24,14 +24,14 @@ Your existing archive is enhanced by Spring Boot during the `package` phase. The
 </plugin>
 ```
 
-To build and run a project artifact, you can type the following:
+为了构建并运行项目组件，使用下面的命令：
 
 ```
 $ mvn package
 $ java -jar target/mymodule-0.0.1-SNAPSHOT.jar
 ```
 
-To build a war file that is both executable and deployable into an external container, you need to mark the embedded container dependencies as “provided”, as shown in the following example:
+要构建既可执行又可部署到外部容器的 war 文件，您需要将嵌入式容器的相关性标记为 “provided”，如以下示例所示：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -55,6 +55,6 @@ To build a war file that is both executable and deployable into an external cont
 </project>
 ```
 
-> See the “[Create a Deployable War File](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-create-a-deployable-war-file)” section for more details on how to create a deployable war file.
+> 参考 “[Create a Deployable War File](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/reference/htmlsingle/#howto-create-a-deployable-war-file)” 部分了解创建可部署 war 文件的更多细节。
 
-Advanced configuration options and examples are available in the [plugin info page](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/maven-plugin/).
+高级配置选项和示例可以在 [plugin info page](https://docs.spring.io/spring-boot/docs/2.2.2.RELEASE/maven-plugin/) 上找到。
