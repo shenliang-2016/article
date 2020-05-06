@@ -4,7 +4,7 @@ https://github.com/google/guava/wiki
 
 Joshua O'Madadhain edited this page on 25 Oct 2016 · [5 revisions](https://github.com/google/guava/wiki/Home/_history)
 
-## Introduction
+## 介绍
 
 Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目中：集合，缓存，基本数据类型支持，并发类库，通用注解，字符串处理，I/O，等等。这些工具趋势都是 Google 的开发人员每天在生产服务开发中使用的。
 
@@ -52,3 +52,19 @@ Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目
   - [HowToContribute](https://github.com/google/guava/wiki/HowToContribute), 如何为 Guava 做贡献。
 
 **注意：**要讨论此 wiki 的内容，请仅使用 Guava 讨论邮件列表。
+
+## 基础工具
+
+### 使用和避免 `null`
+
+> *"Null sucks."* -[Doug Lea](http://en.wikipedia.org/wiki/Doug_Lea)
+>
+> *"I call it my billion-dollar mistake."* - [Sir C. A. R. Hoare](http://en.wikipedia.org/wiki/C._A._R._Hoare), on his invention of the null reference
+
+Careless use of `null` can cause a staggering variety of bugs. Studying the Google code base, we found that something like 95% of collections weren't supposed to have any null values in them, and having those fail fast rather than silently accept `null` would have been helpful to developers.
+
+Additionally, `null` is unpleasantly ambiguous. It's rarely obvious what a `null` return value is supposed to mean -- for example, `Map.get(key)` can return `null` either because the value in the map is null, or the value is not in the map. Null can mean failure, can mean success, can mean almost anything. Using something other than `null` makes your meaning clear.
+
+That said, there are times when `null` is the right and correct thing to use. `null` is cheap, in terms of memory and speed, and it's unavoidable in object arrays. But in application code, as opposed to libraries, it is a major source of confusion, difficult and weird bugs, and unpleasant ambiguities -- e.g. when `Map.get` returns null, it can mean the value was absent, or the value was present and null. Most critically, null gives no indication what a null value means.
+
+For these reasons, many of Guava's utilities are designed to fail fast in the presence of null rather than allow nulls to be used, so long as there is a null-friendly workaround available. Additionally, Guava provides a number of facilities both to make using `null` easier, when you must, and to help you avoid using `null`.
