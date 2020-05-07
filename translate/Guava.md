@@ -127,7 +127,7 @@ possible.get(); // returns 5
 
 当您**返回**可能存在或可能不存在的值时，这一点尤其重要。您（和其他人）更有可能忘记 `other.method(a, b)` 可能返回空值，而您可能会忘记 `a` 在实现 `other.method` 时可能为 `null`。返回 `Optional` 使调用者无法忘记这种情况，因为调用者必须自己打开对象才能编译代码。
 
-### 便利方法
+#### 便利方法
 
 无论何时，如果你想要用某些默认值替换 `null` 值，使用 [`MoreObjects.firstNonNull(T, T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/MoreObjects.html#firstNonNull-T-T-)。正如方法名称所暗示的，如果两个输入参数都是 null，该方法将快速失败并抛出 `NullPointerException`。如果你正在使用 `Optional`，那么有个更好的替代品—比如， `first.or(second)`。
 
@@ -138,3 +138,38 @@ possible.get(); // returns 5
 - [`nullToEmpty(String)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Strings.html#nullToEmpty-java.lang.String-)
 
 我们想强调的是，这些方法主要用于与使 null 字符串和空字符串相等的令人讨厌的 API 进行接口。每次*您*编写将 null 字符串和空字符串放在一起的代码时，Guava 团队都会哭泣。（如果 null 字符串和空字符串在含义上是积极不同的，那会更好，但是将它们视为同一件事是一种令人不安的常见代码味道。）
+
+### Preconditions
+
+Guava 提供了大量的 precondition 检查工具。我们强烈推荐你静态导入它们。
+
+每个方法都有三种变体：
+
+1. 没有额外参数。所有抛出的异常都不携带错误信息。
+2. 一个额外的 `Object` 参数。所有抛出的异常都携带错误信息 `object.toString()`。
+3. 一个额外的 `String` 参数，以及任意数量的额外 `Object` 参数。此行为类似于 printf，但是为了 GWT 兼容性和执行效率，只允许 `%s` 占位符。
+   - 注意：`checkNotNull`，`checkArgument` 和 `checkState` 具有大量重载，这些重载采用基本数据类型参数和 `Object` 参数的组合，而不是 varargs 数组—在绝大多数情况下这允许上述调用避免基本数据类型装箱和 varags 数组分配。
+
+第三种变体的例子：
+
+```
+checkArgument(i >= 0, "Argument was %s but expected nonnegative", i);
+checkArgument(i < j, "Expected i < j, but %s >= %s", i, j);
+```
+
+| Signature (not including extra args)                         | Description                                                  | Exception thrown on failure |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------- |
+| [`checkArgument(boolean)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkArgument-boolean-) | Checks that the `boolean` is `true`. Use for validating arguments to methods. | `IllegalArgumentException`  |
+| [`checkNotNull(T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkNotNull-T-) | Checks that the value is not null. Returns the value directly, so you can use `checkNotNull(value)` inline. | `NullPointerException`      |
+| [`checkState(boolean)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkState-boolean-) | Checks some state of the object, not dependent on the method arguments. For example, an `Iterator` might use this to check that `next` has been called before any call to `remove`. | `IllegalStateException`     |
+| [`checkElementIndex(int index, int size)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkElementIndex-int-int-) | Checks that `index` is a valid *element* index into a list, string, or array with the specified size. An element index may range from 0 inclusive to `size` **exclusive**. You don't pass the list, string, or array directly; you just pass its size. Returns `index`. | `IndexOutOfBoundsException` |
+| [`checkPositionIndex(int index, int size)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkPositionIndex-int-int-) | Checks that `index` is a valid *position* index into a list, string, or array with the specified size. A position index may range from 0 inclusive to `size` **inclusive**. You don't pass the list, string, or array directly; you just pass its size. Returns `index`. | `IndexOutOfBoundsException` |
+| [`checkPositionIndexes(int start, int end, int size)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Preconditions.html#checkPositionIndexes-int-int-int-) | Checks that `[start, end)` is a valid sub range of a list, string, or array with the specified size. Comes with its own error message. | `IndexOutOfBoundsException` |
+
+由于某些原因，我们更倾向于使用来自 Apache Commons 类库的工具来更新上面示例中的 preconditions 检查。主要原因：
+
+- 静态导入后，Guave 方法清晰明了。 `checkNotNull` 可以清楚地说明正在执行的操作以及抛出的异常。
+- `checkNotNull` 校验之后返回它的参数，允许跟构造方法调用放在一行的写法： `this.field = checkNotNull(field);`。
+- 简单的， varargs "printf-style" 异常信息。(这个优点也是为何我们推荐继续使用 `checkNotNull` 在 [`Objects.requireNonNull`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#requireNonNull(java.lang.Object,java.lang.String)))
+
+我们建议您将  preconditions  分成不同的行，这可以帮助您确定调试时哪个前提条件失败。此外，您还应该提供有用的错误消息，当每项检查单独执行时，此消息会更容易。
