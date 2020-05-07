@@ -81,3 +81,19 @@ Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目
 
 如果您确实需要 `null` 值，并且在使用 `null` 敌对的 `collection` 实现时遇到问题，请使用其他实现。例如，使用 `Collections.unmodifiableList(Lists.newArrayList())` 而不是 `ImmmableableList`。
 
+### 可选的
+
+程序员使用 `null` 的许多情况是为了表明某种缺席：也许在有值，无值或找不到值的地方。例如，如果未找到键值，则 `Map.get` 返回 `null`。
+
+`Optional<T>` 是用非 `null` 值替换可为空的 `T` 引用的一种方法。一个 `Optional` 可能包含一个非空的 `T` 引用（在这种情况下，我们说该引用是“存在”），或者可能不包含任何内容（在这种情况下，我们说该引用是“不存在”），永远不表示“包含 null”。
+
+```java
+Optional<Integer> possible = Optional.of(5);
+possible.isPresent(); // returns true
+possible.get(); // returns 5
+```
+
+`Optional` 并不是与其他编程环境中任何现有 "option" 或 "maybe" 构造的直接类似物，尽管它可能具有某些相似之处。
+
+我们在这里列出了一些最常见的 `Optional` 操作。
+
