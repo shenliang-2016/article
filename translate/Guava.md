@@ -97,3 +97,44 @@ possible.get(); // returns 5
 
 我们在这里列出了一些最常见的 `Optional` 操作。
 
+#### 创建 Optional
+
+`Optional` 包含下表中的静态方法。
+
+| Method                                                       | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [`Optional.of(T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#of-T-) | 创建一个包含给定的非空值，或者对 null 快速失败的 Optional 。 |
+| [`Optional.absent()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#absent--) | 返回某类型的一个不存在的 Optional 。                         |
+| [`Optional.fromNullable(T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#fromNullable-T-) | 将给定的可能为 null 的引用转换为 Optional，将 non-null 视为存在，将 null 视为不存在。 |
+
+#### 查询方法
+
+这些都是基于特定 `Optional<T>` 值的非静态方法。
+
+| Method                                                       | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [`boolean isPresent()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#isPresent--) | 如果该 `Optional` 包含一个非空实例则返回 `true` 。           |
+| [`T get()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#get--) | Returns the contained `T` instance, which must be present; otherwise, throws an `IllegalStateException`. |
+| [`T or(T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#or-T-) | Returns the present value in this `Optional`, or if there is none, returns the specified default. |
+| [`T orNull()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#orNull--) | Returns the present value in this `Optional`, or if there is none, returns `null`. The inverse operation of `fromNullable`. |
+| [`Set asSet()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Optional.html#asSet--) | Returns an immutable singleton `Set` containing the instance in this `Optional`, if there is one, or otherwise an empty immutable set. |
+
+`Optional` provides several more handy utility methods besides these; consult the Javadoc for details.
+
+#### What's the point?
+
+Besides the increase in readability that comes from giving `null` a *name*, the biggest advantage of Optional is its idiot-proof-ness. It forces you to actively think about the absent case if you want your program to compile at all, since you have to actively unwrap the Optional and address that case. Null makes it disturbingly easy to simply forget things, and though FindBugs helps, we don't think it addresses the issue nearly as well.
+
+This is especially relevant when you're **returning** values that may or may not be "present." You (and others) are far more likely to forget that `other.method(a, b)` could return a null value than you're likely to forget that `a` could be null when you're implementing other.method. Returning `Optional` makes it impossible for callers to forget that case, since they have to unwrap the object themselves for their code to compile.
+
+### Convenience methods
+
+Whenever you want a `null` value to be replaced with some default value instead, use [`MoreObjects.firstNonNull(T, T)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/MoreObjects.html#firstNonNull-T-T-). As the method name suggests, if both of the inputs are null, it fails fast with a `NullPointerException`. If you are using an `Optional`, there are better alternatives -- e.g. `first.or(second)`.
+
+A couple of methods dealing with possibly-null `String` values are provided in `Strings`. Specifically, we provide the aptly named:
+
+- [`emptyToNull(String)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Strings.html#emptyToNull-java.lang.String-)
+- [`isNullOrEmpty(String)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Strings.html#isNullOrEmpty-java.lang.String-)
+- [`nullToEmpty(String)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Strings.html#nullToEmpty-java.lang.String-)
+
+We would like to emphasize that these methods are primarily for interfacing with unpleasant APIs that equate null strings and empty strings. Every time *you* write code that conflates null strings and empty strings, the Guava team weeps. (If null strings and empty strings mean actively different things, that's better, but treating them as the same thing is a disturbingly common code smell.)
