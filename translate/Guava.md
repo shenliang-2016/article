@@ -375,11 +375,11 @@ try {
 | [`void propagateIfPossible(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#propagateIfPossible-java.lang.Throwable-) | 原样抛出 `throwable` 仅当它是 `RuntimeException` 或者 `Error`。 |
 | [`void propagateIfPossible(Throwable, Class) throws X`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#propagateIfPossible-java.lang.Throwable-java.lang.Class-) | 原样抛出 `throwable` 仅当它是 `RuntimeException`,  `Error`, 或者 `X`。 |
 
-#### Uses for `Throwables.propagate`
+#### 使用 `Throwables.propagate`
 
-##### Emulating Java 7 multi-catch and rethrow
+##### 模拟 Java 7 多重捕获并重新抛出
 
-Typically, if you want to let an exception propagate up the stack, you don't need a `catch` block at all. Since you're not going to recover from the exception, you probably shouldn't be logging it or taking other action. You may want to perform some cleanup, but usually that cleanup needs to happen regardless of whether the operation succeeded, so it ends up in a `finally` block. However, a `catch` block with a rethrow is sometimes useful: Maybe you have to update a failure count before propagating an exception, or maybe you want to propagate the exception only conditionally,
+通常，如果您想让异常在堆栈中传播，则根本不需要 `catch` 块。由于您不会从异常中恢复，因此您可能不应该记录该异常或采取其他措施。您可能需要执行一些清理操作，但是通常无论清理操作是否成功，都需要进行清理操作，因此它最终以 `finally` 块结尾。但是，带重新抛出的 `catch` 块有时会很有用：也许您必须在传播异常之前更新失败计数，或者可能只想有条件地传播异常。
 
 Catching and rethrowing an exception is straightforward when dealing with only one kind of exception. Where it gets messy is when dealing with multiple kinds of exceptions:
 
