@@ -221,18 +221,18 @@ Ordering<String> byLengthOrdering = new Ordering<String>() {
 | [`lexicographical()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#lexicographical--) | 返回一个 `Ordering`，按字典顺序对可迭代对象进行排序。        |
 | [`onResultOf(Function)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#onResultOf-com.google.common.base.Function-) | 返回一个`Ordering`，该排序通过将函数应用到值上来排序，然后使用原始的`Ordering`来比较结果。 |
 
-For example, let's say you want a comparator for the class...
+比如，你想要为下面这个类设计一个比较器：
 
-```
+```java
 class Foo {
   @Nullable String sortedBy;
   int notSortedBy;
 }
 ```
 
-...that can deal with null values of `sortedBy`. Here is a solution built atop the chaining methods:
+可以处理 null 值的 `sortedBy`。下面是建立在链式方法上的解决方案：
 
-```
+```java
 Ordering<Foo> ordering = Ordering.natural().nullsFirst().onResultOf(new Function<Foo, String>() {
   public String apply(Foo foo) {
     return foo.sortedBy;
@@ -240,25 +240,26 @@ Ordering<Foo> ordering = Ordering.natural().nullsFirst().onResultOf(new Function
 });
 ```
 
-When reading a chain of `Ordering` calls, work "backward" from right to left. The example above orders `Foo` instances by looking up their `sortedBy` field values, first moving any null `sortedBy` values to the top and then sorting the remaining values by natural string ordering. This backward order arises because each chaining call is "wrapping" the previous `Ordering` into a new one.
+阅读 `Ordering` 调用链时，请从右到左“反向”进行。上面的示例通过查找 `Foo` 实例的 `sortedBy` 字段值对它们进行排序，首先将所有空的 `sortedBy` 值移到顶部，然后通过自然字符串排序对其余值进行排序。之所以会出现这种反向顺序，是因为每个链接调用都将先前的 `Ordering` “包装”为新的 `Ordering` 。
 
-(Exception to the "backwards" rule: For chains of calls to `compound`, read from left to right. To avoid confusion, avoid intermixing `compound` calls with other chained calls.)
+（“反向”规则的例外：对于 `compound` 的调用链，从左到右读取。为避免混淆，请避免将 `compound` 调用与其他链接的调用混在一起。）
 
-Chains longer than a few calls can be difficult to understand. We recommend limiting chaining to about three calls as in the example above. Even then, you may wish to simplify the code by separating out intermediate objects such as `Function` instances:
+过长的链式调用可能很难理解。我们建议将链接限制为大约三个调用，如上例所示。即使这样，您也可能希望通过分离中间对象（例如 `Function` 实例）来简化代码：
 
-```
+```java
 Ordering<Foo> ordering = Ordering.natural().nullsFirst().onResultOf(sortKeyFunction);
 ```
 
-#### Application
+#### 应用
 
-Guava provides a number of methods to manipulate or examine values or collections using the ordering. We list some of the most popular here.
+Guava 提供了许多方法来使用排序来操纵或检查值或集合。我们在这里列出了一些最受欢迎的。
 
 | Method                                                       | Description                                                  | See also                                                     |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`greatestOf(Iterable iterable, int k)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#greatestOf-java.lang.Iterable-int-) | Returns the `k` greatest elements of the specified iterable, according to this ordering, in order from greatest to least. Not necessarily stable. | [`leastOf`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#leastOf-java.lang.Iterable-int-) |
-| [`isOrdered(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#isOrdered-java.lang.Iterable-) | Tests if the specified `Iterable` is in nondecreasing order according to this ordering. | [`isStrictlyOrdered`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#isStrictlyOrdered-java.lang.Iterable-) |
-| [`sortedCopy(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#sortedCopy-java.lang.Iterable-) | Returns a sorted copy of the specified elements as a `List`. | [`immutableSortedCopy`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#immutableSortedCopy-java.lang.Iterable-) |
-| [`min(E, E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-E-E-) | Returns the minimum of its two arguments according to this ordering. If the values compare as equal, the first argument is returned. | [`max(E, E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-E-E-) |
-| [`min(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-E-E-E-E...-) | Returns the minimum of its arguments according to this ordering. If there are multiple least values, the first is returned. | [`max(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-E-E-E-E...-) |
-| [`min(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.lang.Iterable-) | Returns the minimum element of the specified `Iterable`. Throws a `NoSuchElementException` if the `Iterable` is empty. | [`max(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.lang.Iterable-), [`min(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.util.Iterator-), [`max(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.util.Iterator-) |
+| [`greatestOf(Iterable iterable, int k)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#greatestOf-java.lang.Iterable-int-) | 按照此排序规则，从最大到最小的顺序返回指定可迭代对象的 `k` 个最大元素。不一定稳定。 | [`leastOf`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#leastOf-java.lang.Iterable-int-) |
+| [`isOrdered(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#isOrdered-java.lang.Iterable-) | 测试特定的 `Iterable` 在该排序规则下是非递减顺序。           | [`isStrictlyOrdered`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#isStrictlyOrdered-java.lang.Iterable-) |
+| [`sortedCopy(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#sortedCopy-java.lang.Iterable-) | 返回特定元素 `List` 的有序副本。                             | [`immutableSortedCopy`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#immutableSortedCopy-java.lang.Iterable-) |
+| [`min(E, E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-E-E-) | 根据此排序规则返回其两个参数中的最小值。如果值比较相等，则返回第一个参数。 | [`max(E, E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-E-E-) |
+| [`min(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-E-E-E-E...-) | 根据此排序规则返回其参数的最小值。如果存在多个最小值，则返回第一个。 | [`max(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-E-E-E-E...-) |
+| [`min(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.lang.Iterable-) | 返回指定的 `Iterable` 的最小元素。如果 `Iterable` 为空，则抛出 `NoSuchElementException`。 | [`max(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.lang.Iterable-), [`min(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.util.Iterator-), [`max(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.util.Iterator-) |
+
