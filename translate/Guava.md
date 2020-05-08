@@ -421,9 +421,9 @@ Java 7 使用 [multicatch](http://docs.oracle.com/javase/7/docs/technotes/guides
 
 ##### 没必要：将 "throws Throwable" 转化为 "throws Exception"
 
-A few APIs, notably the Java reflection API and (as a result) JUnit, declare methods that throw `Throwable`. Interacting with these APIs can be a pain, as even the most general-purpose APIs typically only declare `throws Exception`. `Throwables.propagate` is used by some callers who know they have a non-`Exception`, non-`Error` `Throwable`. Here's an example of declaring a `Callable` that executes a JUnit test:
+一些 API，特别是 Java 反射 API 和（作为结果的）JUnit，声明了抛出 `Throwable` 的方法。与这些 API 进行交互可能会很痛苦，因为即使是最通用的 API 通常也只会声明 `throws Exception`。`Throwables.propagate` 被一些调用者使用，这些调用者知道他们具有非 `Exception`，非 `Error` `Throwable` 的特性。这是一个声明执行 JUnit 测试的 `Callable` 的示例：
 
-```
+```java
 public Void call() throws Exception {
   try {
     FooTest.super.runTest();
@@ -436,9 +436,9 @@ public Void call() throws Exception {
 }
 ```
 
-There's no need for `propagate()` here, as the second line is equivalent to `throw new RuntimeException(t)`. (Digression: This example also reminds me that `propagateIfPossible` is potentially confusing, since it propagates not just arguments of the given type but also `Errors` and `RuntimeExceptions`.)
+这里不需要 `propagate()`，因为第二行等效于 `throw new RuntimeException(t)`。（题外话：这个例子还提醒我，`propagateIfPossible` 可能会引起混淆，因为它不仅传播给定类型的参数，而且传播 `Errors` 和 `RuntimeExceptions`。）
 
-This pattern (or similar variants like `throw new RuntimeException(t)`) shows up ~30 times in Google's codebase. (Search for `'propagateIfPossible[^;]* Exception.class[)];'`.) A slight majority of them take the explicit `throw new RuntimeException(t)` approach. It's possible that we would want a `throwWrappingWeirdThrowable` method for `Throwable`-to-`Exception` conversions, but given the two-line alternative, there's probably not much need unless we were to also deprecate `propagateIfPossible`.
+这种模式（或类似的变体，如 `throw new RuntimeException(t)`）在 Google 的代码库中出现了约30次。 （搜索 `'propagateIfPossible[^;]* Exception.class[)];'`）。其中的大多数采用显式的 `throw new RuntimeException(t)` 方法。我们可能希望为 `Throwable` 到 `Exception` 的转换使用一个 `throwWrappingWeirdThrowable` 方法，但是考虑到两行选择，除非我们也废弃 `propagateIfPossible`，否则可能也不需要这个。
 
 #### Controversial uses for `Throwables.propagate`
 
