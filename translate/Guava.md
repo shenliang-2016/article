@@ -267,28 +267,28 @@ Guava 提供了许多方法来使用排序来操纵或检查值或集合。我�
 
 #### equals
 
-When your object fields can be `null`, implementing `Object.equals` can be a pain, because you have to check separately for `null`. Using [`Objects.equal`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#equal-java.lang.Object-java.lang.Object-) lets you perform `equals` checks in a null-sensitive way, without risking a `NullPointerException`.
+当你的对象字段可以是 `null`，实现 `Object.equals` 就非常痛苦，因为你不得不单独检查 `null`。使用 [`Objects.equal`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#equal-java.lang.Object-java.lang.Object-) 允许你以 null 敏感的方式执行 `equals` 检查，而没有 `NullPointerException` 的风险。
 
-```
+```java
 Objects.equal("a", "a"); // returns true
 Objects.equal(null, "a"); // returns false
 Objects.equal("a", null); // returns false
 Objects.equal(null, null); // returns true
 ```
 
-*Note*: The newly introduced `Objects` class in JDK 7 provides the equivalent [`Objects.equals`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#equals(java.lang.Object, java.lang.Object)) method.
+*注意*: 在 JDK 7 中新引入的 `Objects` 类提供了等效的 [`Objects.equals`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#equals(java.lang.Object, java.lang.Object)) 方法。
 
 #### hashCode
 
-Hashing all the fields of an `Object` should be simpler. Guava's [`Objects.hashCode(Object...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#hashCode-java.lang.Object...-) creates a sensible, order-sensitive hash for the specified sequence of fields. Use `Objects.hashCode(field1, field2, ..., fieldn)` instead of building the hash by hand.
+哈希 `Object` 的所有字段应该更简单。Guava 的 [`Objects.hashCode(Object...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#hashCode-java.lang.Object...-) 为字段序列创建一个明智的，顺序敏感的哈希。使用 `Objects.hashCode(field1, field2, ..., fieldn)` 而不是手动构建哈希。
 
-*Note*: The newly introduced `Objects` class in JDK 7 provides the equivalent [`Objects.hash(Object...)`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#hash(java.lang.Object...)).
+*注意*: 在 JDK 7 中新引入的 `Objects` 类提供了等效的 [`Objects.hash(Object...)`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#hash(java.lang.Object...))。
 
 #### toString
 
-A good `toString` method can be invaluable in debugging, but is a pain to write. Use [`MoreObjects.toStringHelper()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/MoreObjects.html#toStringHelper-java.lang.Object-) to easily create a useful `toString`. Some simple examples include:
+一个设计良好的 `toString` 方法应该在调试中可能是无价之宝，虽然编写会很困难。使用 [`MoreObjects.toStringHelper()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/MoreObjects.html#toStringHelper-java.lang.Object-) 来简单地创建一个有用的 `toString`。一些简单的例子包括：
 
-```
+```java
    // Returns "ClassName{x=1}"
    MoreObjects.toStringHelper(this)
        .add("x", 1)
@@ -302,9 +302,9 @@ A good `toString` method can be invaluable in debugging, but is a pain to write.
 
 #### compare/compareTo
 
-Implementing a `Comparator`, or implementing the `Comparable` interface directly, can be a pain. Consider:
+实现 `Comparator`，或者直接实现 `Comparable` 接口，都比较麻烦。考虑：
 
-```
+```java
 class Person implements Comparable<Person> {
   private String lastName;
   private String firstName;
@@ -324,13 +324,13 @@ class Person implements Comparable<Person> {
 }
 ```
 
-This code is easily messed up, tricky to scan for bugs, and unpleasantly verbose. We should be able to do better.
+这段代码很容易混乱，难以查找错误，而且冗长。我们应该能够做得更好。
 
-For this purpose, Guava provides [`ComparisonChain`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ComparisonChain.html).
+因此，Guava 提供了 [`ComparisonChain`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ComparisonChain.html)。
 
-`ComparisonChain` performs a "lazy" comparison: it only performs comparisons until it finds a nonzero result, after which it ignores further input.
+`ComparisonChain` 执行一种 "懒" 比较：它只执行比较，直到找到非零结果，之后忽略后续的输入。
 
-```
+```java
    public int compareTo(Foo that) {
      return ComparisonChain.start()
          .compare(this.aString, that.aString)
@@ -340,4 +340,4 @@ For this purpose, Guava provides [`ComparisonChain`](http://google.github.io/gua
    }
 ```
 
-This fluent idiom is much more readable, less prone to accidental typos, and smart enough not to do more work than it must. Additional comparison utilities can be found in Guava's "fluent Comparator" class [`Ordering`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html), explained [here](https://github.com/google/guava/wiki/OrderingExplained).
+这种链式习惯用法更具可读性，不容易出现偶然的拼写错误，并且足够聪明，无法做比必须的更多的工作。可以在 Guava 的“链式比较器” 类 [`Ordering`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html ) 中找到其他比较实用程序，请参考 [此处](https://github.com/google/guava/wiki/OrderingExplained) 中的解释。
