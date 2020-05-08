@@ -381,9 +381,9 @@ try {
 
 通常，如果您想让异常在堆栈中传播，则根本不需要 `catch` 块。由于您不会从异常中恢复，因此您可能不应该记录该异常或采取其他措施。您可能需要执行一些清理操作，但是通常无论清理操作是否成功，都需要进行清理操作，因此它最终以 `finally` 块结尾。但是，带重新抛出的 `catch` 块有时会很有用：也许您必须在传播异常之前更新失败计数，或者可能只想有条件地传播异常。
 
-Catching and rethrowing an exception is straightforward when dealing with only one kind of exception. Where it gets messy is when dealing with multiple kinds of exceptions:
+仅处理一种异常时，捕获和重新抛出异常就很简单。当处理多种异常时，它变得凌乱：
 
-```
+```java
 @Override public void run() {
   try {
     delegate.run();
@@ -397,29 +397,29 @@ Catching and rethrowing an exception is straightforward when dealing with only o
 }
 ```
 
-Java 7 solves this problem with [multicatch](http://docs.oracle.com/javase/7/docs/technotes/guides/language/catch-multiple.html):
+Java 7 使用 [multicatch](http://docs.oracle.com/javase/7/docs/technotes/guides/language/catch-multiple.html) 解决此问题：
 
-```
+```java
 } catch (RuntimeException | Error e) {
   failures.increment();
   throw e;
 }
 ```
 
-Non-Java 7 users are stuck. They'd like to write code like the following, but the compiler won't permit them to throw a variable of type `Throwable`:
+非 Java 7 用户被卡住了。他们想编写如下代码，但是编译器不允许他们抛出 `Throwable` 类型的变量：
 
-```
+```java
 } catch (Throwable t) {
   failures.increment();
   throw t;
 }
 ```
 
-The solution is to replace `throw t` with `throw Throwables.propagate(t)`. In this limited circumstance, `Throwables.propagate` behaves identically to the original code. However, it's easy to write code with `Throwables.propagate` that has other, hidden behavior. In particular, note that the above pattern works only with `RuntimeException` and `Error`. If the `catch` block may catch checked exceptions, you'll also need some calls to `propagateIfInstanceOf` in order to preserve behavior, as `Throwables.propagate` can't directly propagate a checked exception.
+解决的办法是用 `throw Throwables.propagate(t)` 代替 `throw t` 。在这种有限的情况下，`Throwables.propagate` 的行为与原始代码相同。但是，使用具有其他隐藏行为的 `Throwables.propagate` 编写代码很容易。 特别要注意的是，以上模式仅适用于 `RuntimeException` 和 `Error`。如果 `catch` 块可能捕获了受检查的异常，则您还需要对 `propagateIfInstanceOf` 进行一些调用以保留行为，因为 `Throwables.propagate` 不能直接传播受检查的异常。
 
-Overall, this use of `propagate` is so-so. It's unnecessary under Java 7. Under other versions, it saves a small amount of duplication, but so could a simple Extract Method refactoring. Additionally, use of `propagate` [makes it easy to accidentally wrap checked exceptions](https://github.com/google/guava/commit/287bc67cac97052b13cbbc0358aed8054b14bd4a).
+总的来说，这种 `propagate` 的用法是一般的。在 Java 7 中是不必要的。在其他版本中，它可以节省少量重复，但是简单的 Extract Method 重构也可以。另外，使用 `propagate` [可以很容易地意外包装已检查的异常](https://github.com/google/guava/commit/287bc67cac97052b13cbbc0358aed8054b14bd4a)。
 
-##### Unnecessary: Converting from "throws Throwable" to "throws Exception"
+##### 没必要：将 "throws Throwable" 转化为 "throws Exception"
 
 A few APIs, notably the Java reflection API and (as a result) JUnit, declare methods that throw `Throwable`. Interacting with these APIs can be a pain, as even the most general-purpose APIs typically only declare `throws Exception`. `Throwables.propagate` is used by some callers who know they have a non-`Exception`, non-`Error` `Throwable`. Here's an example of declaring a `Callable` that executes a JUnit test:
 
