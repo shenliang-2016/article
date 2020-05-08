@@ -15,7 +15,7 @@ Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目
 - 基础工具：使得使用 Java 语言更具乐趣。
   - [使用和避免 null](https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained): `null` 是模棱两可的，可能导致令人迷惑的错误，或者就是淡出的令人不爽。许多 Guava 的工具类拒绝接受 `null` 并对其执行快速失败，而不是默默接受。
   - [预定义条件](https://github.com/google/guava/wiki/PreconditionsExplained): 最简单的方式为你的方法测试预定义条件。
-  - [通用对象方法](https://github.com/google/guava/wiki/CommonObjectUtilitiesExplained): 简化 `Object` 方法的实现，比如 `hashCode()` 和 `toString()`。
+  - [通用 Object 方法](https://github.com/google/guava/wiki/CommonObjectUtilitiesExplained): 简化 `Object` 方法的实现，比如 `hashCode()` 和 `toString()`。
   - [排序](https://github.com/google/guava/wiki/OrderingExplained): Guava 强大的 "链式 `Comparator`" 类。
   - [Throwables](https://github.com/google/guava/wiki/ThrowablesExplained): 对异常和错误的处理和检查的简化。
 - 集合：Guava 对 JDK 集合生态系统的扩展。这是 Guava 最成熟和流行的部分。
@@ -263,3 +263,81 @@ Guava 提供了许多方法来使用排序来操纵或检查值或集合。我�
 | [`min(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-E-E-E-E...-) | 根据此排序规则返回其参数的最小值。如果存在多个最小值，则返回第一个。 | [`max(E, E, E, E...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-E-E-E-E...-) |
 | [`min(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.lang.Iterable-) | 返回指定的 `Iterable` 的最小元素。如果 `Iterable` 为空，则抛出 `NoSuchElementException`。 | [`max(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.lang.Iterable-), [`min(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#min-java.util.Iterator-), [`max(Iterator)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html#max-java.util.Iterator-) |
 
+### 通用 Object 方法
+
+#### equals
+
+When your object fields can be `null`, implementing `Object.equals` can be a pain, because you have to check separately for `null`. Using [`Objects.equal`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#equal-java.lang.Object-java.lang.Object-) lets you perform `equals` checks in a null-sensitive way, without risking a `NullPointerException`.
+
+```
+Objects.equal("a", "a"); // returns true
+Objects.equal(null, "a"); // returns false
+Objects.equal("a", null); // returns false
+Objects.equal(null, null); // returns true
+```
+
+*Note*: The newly introduced `Objects` class in JDK 7 provides the equivalent [`Objects.equals`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#equals(java.lang.Object, java.lang.Object)) method.
+
+#### hashCode
+
+Hashing all the fields of an `Object` should be simpler. Guava's [`Objects.hashCode(Object...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Objects.html#hashCode-java.lang.Object...-) creates a sensible, order-sensitive hash for the specified sequence of fields. Use `Objects.hashCode(field1, field2, ..., fieldn)` instead of building the hash by hand.
+
+*Note*: The newly introduced `Objects` class in JDK 7 provides the equivalent [`Objects.hash(Object...)`](http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html#hash(java.lang.Object...)).
+
+#### toString
+
+A good `toString` method can be invaluable in debugging, but is a pain to write. Use [`MoreObjects.toStringHelper()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/MoreObjects.html#toStringHelper-java.lang.Object-) to easily create a useful `toString`. Some simple examples include:
+
+```
+   // Returns "ClassName{x=1}"
+   MoreObjects.toStringHelper(this)
+       .add("x", 1)
+       .toString();
+
+   // Returns "MyObject{x=1}"
+   MoreObjects.toStringHelper("MyObject")
+       .add("x", 1)
+       .toString();
+```
+
+#### compare/compareTo
+
+Implementing a `Comparator`, or implementing the `Comparable` interface directly, can be a pain. Consider:
+
+```
+class Person implements Comparable<Person> {
+  private String lastName;
+  private String firstName;
+  private int zipCode;
+
+  public int compareTo(Person other) {
+    int cmp = lastName.compareTo(other.lastName);
+    if (cmp != 0) {
+      return cmp;
+    }
+    cmp = firstName.compareTo(other.firstName);
+    if (cmp != 0) {
+      return cmp;
+    }
+    return Integer.compare(zipCode, other.zipCode);
+  }
+}
+```
+
+This code is easily messed up, tricky to scan for bugs, and unpleasantly verbose. We should be able to do better.
+
+For this purpose, Guava provides [`ComparisonChain`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ComparisonChain.html).
+
+`ComparisonChain` performs a "lazy" comparison: it only performs comparisons until it finds a nonzero result, after which it ignores further input.
+
+```
+   public int compareTo(Foo that) {
+     return ComparisonChain.start()
+         .compare(this.aString, that.aString)
+         .compare(this.anInt, that.anInt)
+         .compare(this.anEnum, that.anEnum, Ordering.natural().nullsLast())
+         .result();
+   }
+```
+
+This fluent idiom is much more readable, less prone to accidental typos, and smart enough not to do more work than it must. Additional comparison utilities can be found in Guava's "fluent Comparator" class [`Ordering`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Ordering.html), explained [here](https://github.com/google/guava/wiki/OrderingExplained).
