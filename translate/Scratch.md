@@ -41,19 +41,19 @@ Guava 的 `Multiset` API 综合了两种关于 `Multiset` 的看法，如下：
   - `elementSet()` 返回一个 `Set<E>` 包含多集中的独特元素，类似于 `keySet()` 之于 `Map`。
   - `Multiset` 实现的内存假定为与其中独特元素数量为线性关系。
 
-Notably, `Multiset` is fully consistent with the contract of the `Collection` interface, save in rare cases with precedent in the JDK itself -- specifically, `TreeMultiset`, like `TreeSet`, uses comparison for equality instead of `Object.equals`. In particular, `Multiset.addAll(Collection)` adds one occurrence of each element in the `Collection` for each time it appears, which is much more convenient than the for loop required by the `Map` approach above.
+值得注意的是，`Multiset` 完全符合 `Collection` 接口的约定，在极少数情况下，JDK 本身具有先例除外——特别是，`TreeMultiset` 与 `TreeSet` 一样，使用比较替代 `Object.equals` 来判断相等。特别是， `Multiset.addAll(Collection)` 在每次出现时都会在 `Collection` 中添加每个元素一次，这比上面 `Map` 方法所需的 `for` 循环要方便得多。
 
 | Method                                                       | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`count(E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#count-java.lang.Object-) | Count the number of occurrences of an element that have been added to this multiset. |
-| [`elementSet()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#elementSet--) | View the distinct elements of a `Multiset<E>` as a `Set<E>`. |
-| [`entrySet()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#entrySet--) | Similar to `Map.entrySet()`, returns a `Set<Multiset.Entry<E>>`, containing entries supporting `getElement()` and `getCount()`. |
-| [`add(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#add-java.lang.Object-int-) | Adds the specified number of occurrences of the specified element. |
-| [`remove(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#remove-java.lang.Object-int--) | Removes the specified number of occurrences of the specified element. |
-| [`setCount(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#setCount-E-int-) | Sets the occurrence count of the specified element to the specified nonnegative value. |
-| `size()`                                                     | Returns the total number of occurrences of all elements in the `Multiset`. |
+| [`count(E)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#count-java.lang.Object-) | 计算已添加到此多集的元素的出现次数。                         |
+| [`elementSet()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#elementSet--) | 以 `Set<E>` 的形式查看 `Multiset<E>` 的不同元素。            |
+| [`entrySet()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#entrySet--) | 与 `Map.entrySet()` 类似，返回 `Set<Multiset.Entry<E>>`，其中包含支持 `getElement()` 和 `getCount()` 的条目。 |
+| [`add(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#add-java.lang.Object-int-) | 添加指定元素的指定出现次数。                                 |
+| [`remove(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#remove-java.lang.Object-int--) | 删除指定元素的指定出现次数。                                 |
+| [`setCount(E, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multiset.html#setCount-E-int-) | 将指定元素的出现次数设置为指定的非负值。                     |
+| `size()`                                                     | 返回 `Multiset` 中所有元素的出现总数。                       |
 
-### Multiset Is Not A Map
+### Multiset 不是 Map
 
 Note that `Multiset<E>` is *not* a `Map<E, Integer>`, though that might be part of a `Multiset` implementation. `Multiset` is a true `Collection` type, and satisfies all of the associated contractual obligations. Other notable differences include:
 
