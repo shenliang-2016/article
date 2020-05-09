@@ -556,3 +556,79 @@ JDK 提供了 `Collections.unmodifiableXXX` 方法，但是，这些方法在我
 
 **重要提示:** 每个 Guava 不可变集合实现都*拒绝空值*。我们对 Google 的内部代码库进行了详尽的研究，表明大约 5％ 的场景允许在集合中使用 `null` 元素，而其他 95％ 的情况通过在 `null` 上快速失败来提供服务是最好的。如果需要使用空值，请考虑在允许空值的集合实现中使用 `Collections.unmodifiableList` 及其兄弟。可以在 [这里](https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained) 找到更详细的建议。
 
+#### 实现方法
+
+有几种方法可以创建 `ImmutableXXX` 集合：
+
+- 使用 `copyOf` 方法，比如， `ImmutableSet.copyOf(set)`
+- 使用 `of` 方法，比如， `ImmutableSet.of("a", "b", "c")` 或者 `ImmutableMap.of("a", 1, "b", 2)`
+- 使用 `Builder`，比如：
+
+```java
+public static final ImmutableSet<Color> GOOGLE_COLORS =
+   ImmutableSet.<Color>builder()
+       .addAll(WEBSAFE_COLORS)
+       .add(new Color(0, 191, 255))
+       .build();
+```
+
+除了有序集合， **在构建过程中就会生成元素顺序**，比如：
+
+```java
+ImmutableSet.of("a", "b", "c", "a", "d", "b")
+```
+
+将按照 "a", "b", "c", "d" 的顺序遍历其元素。
+
+##### `copyOf` 比你想象中的要小
+
+请记住，`ImmutableXXX.copyOf `会在安全的情况下尝试避免复制数据——确切的细节未指定，但实现通常是“智能”的。例如，
+
+```java
+ImmutableSet<String> foobar = ImmutableSet.of("foo", "bar", "baz");
+thingamajig(foobar);
+
+void thingamajig(Collection<String> collection) {
+   ImmutableList<String> defensiveCopy = ImmutableList.copyOf(collection);
+   ...
+}
+```
+
+在这段代码中，`ImmutableList.copyOf(foobar)` 足够聪明，只返回 `foobar.asList()`，这是 `ImmutableSet` 的固定时间视图。
+
+作为一种一般的启发式方法，`ImmutableXXX.copyOf(ImmutableCollection)` 尽量避免线性时间复制，如果
+
+- 可以在恒定时间内使用基础数据结构。例如，`ImmutableSet.copyOf(ImmutableList)` 不能在固定时间内完成。
+
+- 这不会导致内存泄漏——例如，如果您具有 `ImmutableList <String> hugeList`，并且您做了 `ImmutableList.copyOf(hugeList.subList(0, 10))`，则执行显式复制，因此为了避免意外保留不必要的 `hugeList` 中的引用。
+
+- 它不会改变语义——因此，`ImmutableSet.copyOf(myImmutableSortedSet)` 将执行显式复制，因为 `ImmutableSet` 使用的 `hashCode()` 和 `equals` 具有与基于比较器的 `ImmutableSortedSet` de行为不同的语义 。
+
+这有助于最大程度地降低良好的防御性编程风格的性能开销。
+
+##### `asList`
+
+所有不可变的集合都通过 `asList()` 提供 `ImmutableList` 视图，因此——例如——即使您将数据存储为 `ImmutableSortedSet`，也可以通过 `sortedSet.asList().get(k)` 获得第 `k` 个最小的元素。
+
+返回的 `ImmutableList` 通常（并非总是但经常）是恒定开销的视图，而不是显式副本。就是说，它通常比普通的 `List` 要聪明——例如，它将使用后备集合的高效 `contains` 方法。
+
+#### 细节
+
+##### 在哪儿？
+
+| Interface                                                    | JDK or Guava? | Immutable Version                                            |
+| ------------------------------------------------------------ | ------------- | ------------------------------------------------------------ |
+| `Collection`                                                 | JDK           | [`ImmutableCollection`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableCollection.html) |
+| `List`                                                       | JDK           | [`ImmutableList`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableList.html) |
+| `Set`                                                        | JDK           | [`ImmutableSet`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableSet.html) |
+| `SortedSet`/`NavigableSet`                                   | JDK           | [`ImmutableSortedSet`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableSortedSet.html) |
+| `Map`                                                        | JDK           | [`ImmutableMap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableMap.html) |
+| `SortedMap`                                                  | JDK           | [`ImmutableSortedMap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableSortedMap.html) |
+| [`Multiset`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#Multiset) | Guava         | [`ImmutableMultiset`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableMultiset.html) |
+| `SortedMultiset`                                             | Guava         | [`ImmutableSortedMultiset`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/ImmutableSortedMultiset.html) |
+| [`Multimap`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#Multimap) | Guava         | [`ImmutableMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableMultimap.html) |
+| `ListMultimap`                                               | Guava         | [`ImmutableListMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableListMultimap.html) |
+| `SetMultimap`                                                | Guava         | [`ImmutableSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableSetMultimap.html) |
+| [`BiMap`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#BiMap) | Guava         | [`ImmutableBiMap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableBiMap.html) |
+| [`ClassToInstanceMap`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#ClassToInstanceMap) | Guava         | [`ImmutableClassToInstanceMap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableClassToInstanceMap.html) |
+| [`Table`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#Table) | Guava         | [`ImmutableTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableTable.html) |
