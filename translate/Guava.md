@@ -511,3 +511,48 @@ Guava 使研究异常的因果链更为简单，它提供了三种有用的方�
 - [`Throwable getRootCause(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#getRootCause-java.lang.Throwable-)
 - [`List getCausalChain(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#getCausalChain-java.lang.Throwable-)
 - [`String getStackTraceAsString(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#getStackTraceAsString-java.lang.Throwable-)
+
+## 集合
+
+### 不可变集合
+
+#### 示例
+
+```java
+public static final ImmutableSet<String> COLOR_NAMES = ImmutableSet.of(
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple");
+
+class Foo {
+  final ImmutableSet<Bar> bars;
+  Foo(Set<Bar> bars) {
+    this.bars = ImmutableSet.copyOf(bars); // defensive copy!
+  }
+}
+```
+
+#### 动机
+
+不可变对象拥有很多优点，包括：
+
+- 可以被不受信任的类库安全地使用。
+- 线程安全：可以被多个线程使用而没有产生竞争条件的风险。
+- 不需要支持修改，因而能够大量节省时间和空间。所有的不可变集合实现相比于它们的可变兄弟都要更加节省内存。([分析在此](https://github.com/DimitrisAndreou/memory-measurer/blob/master/ElementCostInDataStructures.txt))
+- 可以作为常量使用，因为可以认为它始终都是固定的。
+
+创建对象的不可变副本是一种良好的防御性编程技术。Guava 为每种标准 `Collection` 类型提供了简单易用的不可变版本，包括 Guava 自己的 `Collection` 变体。
+
+JDK 提供了 `Collections.unmodifiableXXX` 方法，但是，这些方法在我们看来：
+
+- 笨拙而冗长； 在您想制作防御性副本的任何地方都无法使用。
+- 不安全：只有在没有人拥有对原始集合的引用的情况下，返回的集合才是真正不变的。
+- 低效：数据结构仍然具有可变集合的所有开销，包括并发修改检查，哈希表中的额外空间等。
+
+**当您不希望修改集合或希望集合保持不变时，最好将其防御性地复制到不可变的集合中。**
+
+**重要提示:** 每个 Guava 不可变集合实现都*拒绝空值*。我们对 Google 的内部代码库进行了详尽的研究，表明大约 5％ 的场景允许在集合中使用 `null` 元素，而其他 95％ 的情况通过在 `null` 上快速失败来提供服务是最好的。如果需要使用空值，请考虑在允许空值的集合实现中使用 `Collections.unmodifiableList` 及其兄弟。可以在 [这里](https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained) 找到更详细的建议。
+
