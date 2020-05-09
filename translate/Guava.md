@@ -440,15 +440,15 @@ public Void call() throws Exception {
 
 这种模式（或类似的变体，如 `throw new RuntimeException(t)`）在 Google 的代码库中出现了约30次。 （搜索 `'propagateIfPossible[^;]* Exception.class[)];'`）。其中的大多数采用显式的 `throw new RuntimeException(t)` 方法。我们可能希望为 `Throwable` 到 `Exception` 的转换使用一个 `throwWrappingWeirdThrowable` 方法，但是考虑到两行选择，除非我们也废弃 `propagateIfPossible`，否则可能也不需要这个。
 
-#### Controversial uses for `Throwables.propagate`
+#### 有争议的 `Throwables.propagate`
 
-##### Controversial: Converting checked exceptions to unchecked exceptions
+##### 争议：将受检查异常转化为不受检查异常
 
-In principle, unchecked exceptions indicate bugs, and checked exceptions indicate problems outside your control. In practice, even the JDK sometimes [gets](http://docs.oracle.com/javase/6/docs/api/java/lang/Object.html#clone()) [it](http://docs.oracle.com/javase/6/docs/api/java/lang/Integer.html#parseInt(java.lang.String)) [wrong](http://docs.oracle.com/javase/6/docs/api/java/net/URI.html#URI(java.lang.String)) (or at least, for some methods, [no answer is right for everyone](http://docs.oracle.com/javase/6/docs/api/java/net/URI.html#create(java.lang.String))).
+原则上，未检查的异常表示错误，而检查的异常表示您无法控制的问题。实际上，甚至 JDK 有时也会 [gets](http://docs.oracle.com/javase/6/docs/api/java/lang/Object.html#clone()) [it](http://docs.oracle.com/javase/6/docs/api/java/lang/Integer.html#parseInt(java.lang.String)) [wrong](http://docs.oracle.com/javase/6/docs/api/java/net/URI.html#URI(java.lang.String)) （或至少对于某些方法，[没有适合所有人的答案](http://docs.oracle.com/javase/6/docs/api/java/net/URI.html#create(java.lang.String)) ）。
 
-As a result, callers occasionally have to translate between exception types:
+结果，调用者有时不得不在异常类型之间进行转换：
 
-```
+```java
 try {
   return Integer.parseInt(userInput);
 } catch (NumberFormatException e) {
@@ -461,15 +461,15 @@ try {
 }
 ```
 
-Sometimes, those callers use `Throwables.propagate`. What are the disadvantages?
+有时候，调用者使用 `Throwables.propagate`。这有什么缺陷？
 
-The main one is that the meaning of the code is less obvious. What does `throw Throwables.propagate(ioException)` do? What does `throw new RuntimeException(ioException)` do? The two do the same thing, but the latter is more straightforward. The former raises questions: "What does this do? It isn't just wrapping in `RuntimeException`, is it? If it were, why would they write a method wrapper?"
+主要的一点是代码的含义不太明显。`throw Throwables.propagate(ioException)` 有什么作用？ `throw new RuntimeException(ioException)` 有什么作用？两者的作用相同，但后者更直接。前者提出了一个问题：“这是做什么的？它不仅包装在 `RuntimeException` 中，是吗？如果是，为什么他们要编写一个方法包装器？”
 
-Part of the problem here, admittedly, is that "propagate" is a vague name. (Is it [a way of throwing undeclared exceptions](http://www.eishay.com/2011/11/throw-undeclared-checked-exception-in.html)?) Perhaps "wrapIfChecked" would have worked better. Even if the method were called that, though, there would be no advantage to calling it on a known checked exception. There may even be additional downsides: Perhaps there's a more suitable type than a plain `RuntimeException` for you to throw -- say, `IllegalArgumentException`.
+诚然，这里的部分问题是“传播”是一个模糊的名称。（这是 [抛出未声明的异常的方法](http://www.eishay.com/2011/11/throw-undeclared-checked-exception-in.html) 吗？）也许 “wrapIfChecked” 会更好。即使调用了该方法，也不会对已知的已检查异常调用它。甚至还有其他缺点：也许有比普通的 `RuntimeException` 更合适的类型供您抛出——比如说 `IllegalArgumentException`。
 
-We sometimes also see `propagate` used when the exception only *might* be a checked exception. The result is slightly smaller and slightly less straightforward than the alternative:
+当仅*可能*将异常作为检查异常时，有时我们还会看到`propagate`。结果比替代方法小一些，直接性也小一些：
 
-```
+```java
 } catch (RuntimeException e) {
   throw e;
 } catch (Exception e) {
@@ -480,15 +480,15 @@ We sometimes also see `propagate` used when the exception only *might* be a chec
 }
 ```
 
-However, the elephant in the room here is the general practice of converting checked exceptions to unchecked exceptions. It is unquestionably the right thing in some cases, but more frequently it's used to avoid dealing with a legitimate checked exception. This leads us to the debate over whether checked exceptions are bad idea in general. I don't wish to go into all that here. Suffice it to say that `Throwables.propagate` does not exist for the purpose of encouraging Java users to ignore `IOException` and the like.
+但是，这里显然的问题是将已检查的异常转换为未检查的异常的一般做法。在某些情况下，这无疑是正确的事情，但更经常地，它是用来避免处理合法的已检查异常。这导致我们开始辩论有关检查异常是否总体上是一个坏主意。 我不想在这里讨论所有内容。可以说，`Throwables.propagate` 不是为了鼓励 Java 用户忽略 `IOException` 等而存在。
 
-##### Controversial: Exception tunneling
+##### 争议：异常挖洞
 
-But what about when you're implementing a method that isn't allowed to throw exceptions? Sometimes you need to wrap your exception in an unchecked exception. This is fine, but again, `propagate` is unnecessary for simple wrapping. In fact, manual wrapping may be preferable: If you wrap *every* exception (instead of just checked exceptions), then you can unwrap every exception on the other end, making for fewer special cases. Additionally, you may wish to use a custom exception type for the wrapping.
+但是，当您实现不允许抛出异常的方法时，该怎么办？有时，您需要将异常包装在未经检查的异常中。很好，但是同样，对于简单的包装，“传播”是不必要的。实际上，手动包装可能是更可取的：如果包装*每个*异常（而不是仅检查的异常），则可以在另一端包装所有异常，从而减少特殊情况。此外，您可能希望对包装使用自定义异常类型。
 
-##### Controversial: Rethrowing exceptions from other threads
+##### 争议：从别的线程重新抛出异常
 
-```
+```java
 try {
   return future.get();
 } catch (ExecutionException e) {
@@ -496,15 +496,17 @@ try {
 }
 ```
 
-There are multiple things to consider here:
+这里有很多事情要考虑：
 
-1. The cause may be a checked exception. See "Converting checked exceptions to unchecked exceptions" above. But what if the task is known not to throw a checked exception? (Maybe it's the result of a `Runnable`.) As discussed above, you can catch the exception and throw `AssertionError`; `propagate` has little more to offer. For `Future` in particular, also consider [`Futures.get`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/util/concurrent/Futures.html#getUnchecked-java.util.concurrent.Future-).
-2. The cause may be a non-`Exception`, non-`Error` `Throwable`. (Well, it's unlikely to actually be one, but the compiler would force you to consider the possibility if you tried to rethrow it directly.) See "Converting from `throws Throwable` to `throws Exception`" above.
-3. The cause may be an unchecked exception or error. If so, it will be rethrown directly. Unfortunately, its stack trace will reflect the thread in which the exception was originally created, not the thread in which it is currently propagating. It's typically best to have include both threads' stack traces available in the exception chain, as in the `ExecutionException` thrown by `get`. (This problem isn't really about `propagate`; it's about any code that rethrows an exception in a different thread.)
+1. 原因可能是经过检查的异常。请参阅上面的“将检查的异常转换为未检查的异常”。但是，如果已知该任务不引发检查异常，该怎么办？（也许是 `Runnable` 的结果。）如上所述，您可以捕获异常并抛出 `AssertionError`。`Proagate` 的功能更多。特别是对于 `Future` ，请考虑 [`Futures.get`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/util/concurrent/Futures.html#getUnchecked-java.util.concurrent.Future-)。
 
-#### Causal Chain
+2. 原因可能是非`Exception`，非`Error` ,  `Throwable`。（嗯，实际上不可能是一个，但是如果您尝试直接将其重新抛出，编译器将迫使您考虑这种可能性。）请参见上面的 “将 `throwable Throwable` 转换为 `throws Exception`”。
 
-Guava makes it somewhat simpler to study the causal chain of an exception, providing three useful methods whose signatures are self-explanatory:
+3. 原因可能是未经检查的异常或错误。如果是这样，它将直接被重新抛出。不幸的是，其堆栈跟踪将反映最初在其中创建异常的线程，而不是当前正在其中传播的线程。通常最好在异常链中包含两个线程的堆栈跟踪，如   `get` 抛出的 `ExecutionException` 一样。（这个问题实际上与 `propagate` 无关；它与任何在另一个线程中抛出异常的代码有关。）
+
+#### 因果链
+
+Guava 使研究异常的因果链更为简单，它提供了三种有用的方法，其签名是不言自明的：
 
 - [`Throwable getRootCause(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#getRootCause-java.lang.Throwable-)
 - [`List getCausalChain(Throwable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Throwables.html#getCausalChain-java.lang.Throwable-)
