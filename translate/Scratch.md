@@ -55,17 +55,17 @@ Guava 的 `Multiset` API 综合了两种关于 `Multiset` 的看法，如下：
 
 ### Multiset 不是 Map
 
-Note that `Multiset<E>` is *not* a `Map<E, Integer>`, though that might be part of a `Multiset` implementation. `Multiset` is a true `Collection` type, and satisfies all of the associated contractual obligations. Other notable differences include:
+注意，尽管 `Multiset<E>` 可能是 `Multiset` 实现的一部分，但它不是 `Map<E, Integer>`。`Multiset` 是一种真正的 `Collection` 类型，它满足所有相关的契约义务。其他显着差异包括：
 
-- A `Multiset<E>` has elements with positive counts only. No element can have negative counts, and values with count `0` are considered to not be in the multiset. They do not appear in the `elementSet()` or `entrySet()` view.
-- `multiset.size()` returns the size of the collection, which is equal to the sum of the counts of all elements. For the number of distinct elements, use `elementSet().size()`. (So, for example, `add(E)` increases `multiset.size()` by one.)
-- `multiset.iterator()` iterates over each occurrence of each element, so the length of the iteration is equal to `multiset.size()`.
-- `Multiset<E>` supports adding elements, removing elements, or setting the count of elements directly. `setCount(elem, 0)` is equivalent to removing all occurrences of the element.
-- `multiset.count(elem)` for an element not in the multiset always returns `0`.
+-  `Multiset<E>` 具有仅具有正计数的元素。没有元素可以具有负计数，并且计数为 0 的值被认为不在多集中。它们不会出现在 `elementSet()` 或 `entrySet()` 视图中。
+-  `multiset.size()` 返回集合的大小，该大小等于所有元素的计数之和。对于不同元素的数量，使用 `elementSet().size()`。（因此，例如，`add(E)` 将`multiset.size()` 增加一。）
+- `multiset.iterator()` 遍历每个元素的每次出现，因此，迭代的长度等于 `multiset.size()`。
+- `Multiset<E>` 支持添加元素，删除元素，或者直接设定元素计数。 `setCount(elem, 0)` 等效与删除该元素的所有出现次数。
+- `multiset.count(elem)` 对没有出现在多集中的元素永远返回 `0`。
 
-### Implementations
+### 实现
 
-Guava provides many implementations of `Multiset`, which *roughly* correspond to JDK map implementations.
+Guava 提供了许多 `Multiset` 实现，大致上对应于 JDK map 实现。
 
 | Map                 | Corresponding Multiset                                       | Supports `null` elements |
 | ------------------- | ------------------------------------------------------------ | ------------------------ |
@@ -77,6 +77,6 @@ Guava provides many implementations of `Multiset`, which *roughly* correspond to
 
 ### SortedMultiset
 
-[`SortedMultiset`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/SortedMultiset.html) is a variation on the `Multiset` interface that supports efficiently taking sub-multisets on specified ranges. For example, you could use `latencies.subMultiset(0, BoundType.CLOSED, 100, BoundType.OPEN).size()` to determine how many hits to your site had under 100ms latency, and then compare that to `latencies.size()` to determine the overall proportion.
+[`SortedMultiset`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/SortedMultiset.html) 是 `Multiset` 接口的一种变体，支持在指定范围内有效地提取子多集。例如，您可以使用 `latencies.subMultiset(0, BoundType.CLOSED, 100, BoundType.OPEN).size()` 来确定您的网站在 100ms 延迟内的点击次数，然后将其与 `latencies.size()` 进行比较确定整体比例。
 
-`TreeMultiset` implements the `SortedMultiset` interface. At the time of writing, `ImmutableSortedMultiset` is still being tested for GWT compatibility.
+`TreeMultiset` 实现 `SortedMultiset` 接口。在撰写本文时，仍在测试 `ImmutableSortedMultiset` 的 GWT 兼容性。
