@@ -1,10 +1,8 @@
 ## Multimap
 
-m
+每个有经验的 Java 开发者可能都体验过实现 `Map<K, List<V>>` 或者 `Map<K, Set<V>>`，然后处理该结构的某些尴尬之处。比如， `Map<K, Set<V>>` 是表示无标签有向图的典型方式。Guava 的 [`Multimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimap.html) 框架使得处理一个键对应多个值的映射关系变得非常简单。 `Multimap` 就是处理一个键关联到任意多个值的关系的通用方法。
 
-Every experienced Java programmer has, at one point or another, implemented a `Map<K, List<V>>` or `Map<K, Set<V>>`, and dealt with the awkwardness of that structure. For example, `Map<K, Set<V>>` is a typical way to represent an unlabeled directed graph. Guava's [`Multimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimap.html) framework makes it easy to handle a mapping from keys to multiple values. A `Multimap` is a general way to associate keys with arbitrarily many values.
-
-There are two ways to think of a Multimap conceptually: as a collection of mappings from single keys to single values:
+有两种方法可以从概念上考虑 Multimap：作为从单个键到单个值的映射的集合：
 
 ```
 a -> 1
@@ -14,7 +12,7 @@ b -> 3
 c -> 5
 ```
 
-or as a mapping from unique keys to collections of values:
+或者作为从单个键到值集合的映射：
 
 ```
 a -> [1, 2, 4]
@@ -22,6 +20,7 @@ b -> [3]
 c -> [5]
 ```
 
-In general, the `Multimap` interface is best thought of in terms of the first view, but allows you to view it in either way with the `asMap()` view, which returns a `Map<K, Collection<V>>`. Most importantly, there is no such thing as a key which maps to an empty collection: a key either maps to at least one value, or it is simply not present in the `Multimap`.
+通常，最好从第一个视图的角度考虑 `Multimap` 接口，但可以通过 `asMap()` 视图以任何一种方式查看它，该视图返回一个 `Map<K, Collection<V>>`。最重要的是，不存在映射到空集合的键：键要么映射至至少一个值，要么根本不存在于 `Multimap` 中。
 
-You rarely use the `Multimap` interface directly, however; more often you'll use `ListMultimap` or `SetMultimap`, which map keys to a `List` or a `Set` respectively.
+但是，您很少直接使用 `Multimap` 接口。 通常，您会使用 `ListMultimap` 或 `SetMultimap`，它们分别将键映射到 `List` 或 `Set`。
+
