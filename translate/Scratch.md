@@ -36,3 +36,4 @@ aliceChildren.add(carol);
 | [`remove(K, V)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimap.html#remove-java.lang.Object-java.lang.Object-) | 删除一个从 `key` 到 `value` 的关联，如果 multimap 改变则返回 `true` 。 | `multimap.get(key).remove(value)`                            |
 | [`removeAll(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimap.html#removeAll-java.lang.Object-) | 删除并返回与指定键关联的所有值。返回的集合可能可以修改，也可以不可修改，但是对其进行修改不会影响 multimap。（返回适当的集合类型。） | `multimap.get(key).clear()`                                  |
 | [`replaceValues(K, Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimap.html#replaceValues-K-java.lang.Iterable-) | 清除所有与 `key` 关联的值，并将 `key` 设置为与每个`values` 关联。返回先前与该键关联的值。 | `multimap.get(key).clear(); Iterables.addAll(multimap.get(key), values)` |
+
