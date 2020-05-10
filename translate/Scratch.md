@@ -18,9 +18,9 @@
 - `Multimap.entries()` 返回 `Multimap` 中所有键的所有条目。如果需要所有键集合条目，请使用 `asMap().entrySet()`。
 - `Multimap.size()` 返回整个 multimap 中的条目数，而不是不同键的数。使用 `Multimap.keySet().size()` 来获取不同键的数量。
 
-### Implementations
+### 实现
 
-`Multimap` provides a wide variety of implementations. You can use it in most places you would have used a `Map<K, Collection<V>>`.
+`Multimap` 提供了各种实现。你可以在大部分可能使用 `Map<K, Collection<V>>` 的场景中使用它们。
 
 | Implementation                                               | Keys behave like... | Values behave like.. |
 | ------------------------------------------------------------ | ------------------- | -------------------- |
@@ -32,12 +32,12 @@
 | [`ImmutableListMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableListMultimap.html) | `ImmutableMap`      | `ImmutableList`      |
 | [`ImmutableSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableSetMultimap.html) | `ImmutableMap`      | `ImmutableSet`       |
 
-Each of these implementations, except the immutable ones, support null keys and values.
+所有这些实现，除了不可变的版本，全都支持 null 键和值。
 
-`*` `LinkedListMultimap.entries()` preserves iteration order across non-distinct key values. See the link for details.
+`*` `LinkedListMultimap.entries()` 保留不同键值之间的迭代顺序。 有关详细信息，请参见链接。
 
-`**` `LinkedHashMultimap` preserves insertion order of entries, as well as the insertion order of keys, and the set of values associated with any one key.
+`**` `LinkedHashMultimap` 保留条目的插入顺序，键的插入顺序以及与任何一个键关联的一组值。
 
-Be aware that not all implementations are actually implemented as a `Map<K, Collection<V>>` with the listed implementations! (In particular, several `Multimap` implementations use custom hash tables to minimize overhead.)
+请注意，并非所有实现都实际上与列出的实现一起被实现为 `Map<K, Collection<V>>` ！（特别是，一些 `Multimap` 实现使用自定义哈希表来最大程度地减少开销。）
 
-If you need more customization, use [`Multimaps.newMultimap(Map, Supplier)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newMultimap-java.util.Map-com.google.common.base.Supplier-) or the [list](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newListMultimap-java.util.Map-com.google.common.base.Supplier-) and [set](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newSetMultimap-java.util.Map-com.google.common.base.Supplier-) versions to use a custom collection, list, or set implementation to back your multimap.
+如果你需要更多的定制化，使用 [`Multimaps.newMultimap(Map, Supplier)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newMultimap-java.util.Map-com.google.common.base.Supplier-) 或者 [list](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newListMultimap-java.util.Map-com.google.common.base.Supplier-) 和 [set](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newSetMultimap-java.util.Map-com.google.common.base.Supplier-) 版本来使用自定义 collection, list, 或者 set 实现作为你的 multimap 的内部支撑。
