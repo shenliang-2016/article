@@ -11,24 +11,28 @@
    rangeSet.remove(Range.open(5, 10)); // splits [1, 10]; {[1, 5], [10, 10], [11, 20)}
 ```
 
-Note that to merge ranges like `Range.closed(1, 10)` and `Range.closedOpen(11, 15)`, you must first preprocess ranges with [`Range.canonical(DiscreteDomain)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Range.html#canonical-com.google.common.collect.DiscreteDomain-), e.g. with `DiscreteDomain.integers()`.
+注意，如果要合并的范围类似 `Range.closed(1, 10)` 和 `Range.closedOpen(11, 15)`，你必须首先使用 [`Range.canonical(DiscreteDomain)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Range.html#canonical-com.google.common.collect.DiscreteDomain-) 对这些范围进行预处理，比如，使用 `DiscreteDomain.integers()`。
 
-**NOTE**: `RangeSet` is not supported under GWT, nor in the JDK 1.5 backport; `RangeSet` requires full use of the `NavigableMap` features in JDK 1.6.
+**注意**： `RangeSet` 在 GWT 下不支持，也不在 JDK 1.5 反向移植中， `RangeSet` 需要完整使用  JDK 1.6 中的 `NavigableMap` 特性。
 
-### Views
+### 视图
 
-`RangeSet` implementations support an extremely wide range of views, including:
+`RangeSet` 实现支持相当宽泛的视图，包括：
 
-- `complement()`: views the complement of the `RangeSet`. `complement` is also a `RangeSet`, as it contains disconnected, nonempty ranges.
-- `subRangeSet(Range<C>)`: returns a view of the intersection of the `RangeSet` with the specified `Range`. This generalizes the `headSet`, `subSet`, and `tailSet` views of traditional sorted collections.
-- `asRanges()`: views the `RangeSet` as a `Set<Range<C>>` which can be iterated over.
-- `asSet(DiscreteDomain<C>)` (`ImmutableRangeSet` only): Views the `RangeSet<C>` as an `ImmutableSortedSet<C>`, viewing the elements in the ranges instead of the ranges themselves. (This operation is unsupported if the `DiscreteDomain` and the `RangeSet` are both unbounded above or both unbounded below.)
+- `complement()`：查看 `RangeSet` 的补集。 `complement` 也是一个 `RangeSet`，因为它也包含不连续的，非空的范围。
+- `subRangeSet(Range<C>)`：返回 `RangeSet` 和指定 `Range` 的交集。这会产生传统有序集合的 `headSet`， `subSet`，以及  `tailSet` 视图。
+- `asRanges()`：将 `RangeSet` 视作 `Set<Range<C>>` 因而可以通过迭代器遍历。
+- `asSet(DiscreteDomain<C>)` (`ImmutableRangeSet` only)：以 `ImmutableSortedSet<C>` 的形式查看 `RangeSet<C>` ，查看范围内的元素，而不是范围本身。（如果 `DiscreteDomain` 和 `RangeSet` 都无上界或无下界，则不支持此操作。）
 
-### Queries
+### 查询
 
-In addition to operations on its views, `RangeSet` supports several query operations directly, the most prominent of which are:
+除了视图上的操作外，`RangeSet` 还直接支持多种查询操作，其中最主要的是：
 
-- `contains(C)`: the most fundamental operation on a `RangeSet`, querying if any range in the `RangeSet` contains the specified element.
-- `rangeContaining(C)`: returns the `Range` which encloses the specified element, or `null` if there is none.
-- `encloses(Range<C>)`: straightforwardly enough, tests if any `Range` in the `RangeSet` encloses the specified range.
-- `span()`: returns the minimal `Range` that `encloses` every range in this `RangeSet`.
+- `contains(C)`：对 `RangeSet` 的最基本操作，查询 `RangeSet` 中的任何范围是否包含指定的元素。
+
+- `rangeContaining(C)`：返回包围指定元素的 `Range` ，如果没有则返回 `null`。
+
+- `encloses(Range<C>)`：很简单，测试 `RangeSet` 中的 `Range` 是否包含指定范围。
+
+- `span()`：返回最小的 `Range`，该 `Range` 将 `RangeSet` 中的每个范围包围起来。
+
