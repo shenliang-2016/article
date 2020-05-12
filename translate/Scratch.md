@@ -1,26 +1,27 @@
-### 通用
+### 类集合
 
-| Method                                                       | Description                                                  | See Also                                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [`concat(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#concat-java.lang.Iterable-) | 返回几个可迭代对象的串联的惰性视图。                         | [`concat(Iterable...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#concat-java.lang.Iterable...-) |
-| [`frequency(Iterable, Object)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#frequency-java.lang.Iterable-java.lang.Object-) | 返回对象的出现次数。                                         | Compare `Collections.frequency(Collection, Object)`; see [`Multiset`](https://github.com/google/guava/wiki/NewCollectionTypesExplained#Multiset) |
-| [`partition(Iterable, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#partition-java.lang.Iterable-int-) | 返回可迭代的分区的不可修改的视图，该视图分为指定大小的块。   | [`Lists.partition(List, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Lists.html#partition-java.util.List-int-), [`paddedPartition(Iterable, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#paddedPartition-java.lang.Iterable-int-) |
-| [`getFirst(Iterable, T default)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#getFirst-java.lang.Iterable-T-) | 返回 iterable 的第一个元素，如果为空，则返回默认值。         | Compare `Iterable.iterator().next()`, [`FluentIterable.first()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/FluentIterable.html#first--) |
-| [`getLast(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#getLast-java.lang.Iterable-) | 返回 iterable 的最后一个元素，如果为空则抛出 `NoSuchElementException` 快速失败。 | [`getLast(Iterable, T default)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#getLast-java.lang.Iterable-T-), [`FluentIterable.last()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/FluentIterable.html#last--) |
-| [`elementsEqual(Iterable, Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#elementsEqual-java.lang.Iterable-java.lang.Iterable-) | 如果可迭代对象具有相同顺序的相同元素，则返回 `true`。        | Compare `List.equals(Object)`                                |
-| [`unmodifiableIterable(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#unmodifiableIterable-java.lang.Iterable-) | 返回迭代的不可修改的视图。                                   | Compare `Collections.unmodifiableCollection(Collection)`     |
-| [`limit(Iterable, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#limit-java.lang.Iterable-int-) | 返回一个`Iterable`，最多返回指定数量的元素。                 | [`FluentIterable.limit(int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/FluentIterable.html#limit-int-) |
-| [`getOnlyElement(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#getOnlyElement-java.lang.Iterable-) | 返回 `Iterable` 中的唯一元素。如果 iterable 为空或具有多个元素，则快速失败。 | [`getOnlyElement(Iterable, T default)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#getOnlyElement-java.lang.Iterable-T-) |
+通常，集合在其他集合上自然支持这些操作，但对可迭代对象不提供支持。
 
-```java
-Iterable<Integer> concatenated = Iterables.concat(
-  Ints.asList(1, 2, 3),
-  Ints.asList(4, 5, 6));
-// concatenated has elements 1, 2, 3, 4, 5, 6
+*当输入实际上是一个 Collection 时，这些操作中的每一个都会委托给相应的 Collection 接口方法。*例如，如果将 `Iterables.size` 传递给 `Collection`，它将调用 `Collection.size` 方法而不是通过迭代器遍历。
 
-String lastAdded = Iterables.getLast(myLinkedHashSet);
+| Method                                                       | Analogous `Collection` method      | `FluentIterable` equivalent                                  |
+| ------------------------------------------------------------ | ---------------------------------- | ------------------------------------------------------------ |
+| [`addAll(Collection addTo, Iterable toAdd)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#addAll-java.util.Collection-java.lang.Iterable-) | `Collection.addAll(Collection)`    |                                                              |
+| [`contains(Iterable, Object)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#contains-java.lang.Iterable-java.lang.Object-) | `Collection.contains(Object)`      | [`FluentIterable.contains(Object)`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#contains-java.lang.Object-) |
+| [`removeAll(Iterable removeFrom, Collection toRemove)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#removeAll-java.lang.Iterable-java.util.Collection-) | `Collection.removeAll(Collection)` |                                                              |
+| [`retainAll(Iterable removeFrom, Collection toRetain)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#retainAll-java.lang.Iterable-java.util.Collection-) | `Collection.retainAll(Collection)` |                                                              |
+| [`size(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#size-java.lang.Iterable-) | `Collection.size()`                | [`FluentIterable.size()`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#size--) |
+| [`toArray(Iterable, Class)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#toArray-java.lang.Iterable-java.lang.Class-) | `Collection.toArray(T[])`          | [`FluentIterable.toArray(Class)`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#toArray-java.lang.Class-) |
+| [`isEmpty(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#isEmpty-java.lang.Iterable-) | `Collection.isEmpty()`             | [`FluentIterable.isEmpty()`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#isEmpty--) |
+| [`get(Iterable, int)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#get-java.lang.Iterable-int-) | `List.get(int)`                    | [`FluentIterable.get(int)`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#get-int-) |
+| [`toString(Iterable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Iterables.html#toString-java.lang.Iterable-) | `Collection.toString()`            | [`FluentIterable.toString()`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#toString--) |
 
-String theElement = Iterables.getOnlyElement(thisSetIsDefinitelyASingleton);
-  // if this set isn't a singleton, something is wrong!
-```
+### 流利的可迭代性
 
+除了上面和函数习语 [functional](https://github.com/google/guava/wiki/FunctionalExplained) 中介绍的方法外，`FluentIterable` 还有一些方便的方法可以复制到不可变的集合中：
+
+| Result Type          | Method                                                       |
+| -------------------- | ------------------------------------------------------------ |
+| `ImmutableList`      | [`toImmutableList()`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#toImmutableList--) |
+| `ImmutableSet`       | [`toImmutableSet()`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#toImmutableSet--) |
+| `ImmutableSortedSet` | [`toImmutableSortedSet(Comparator)`](http://google.github.io/guava/releases/12.0/api/docs/com/google/common/collect/FluentIterable.html#toImmutableSortedSet-java.util.Comparator-) |
