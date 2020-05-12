@@ -23,3 +23,4 @@ String lastAdded = Iterables.getLast(myLinkedHashSet);
 String theElement = Iterables.getOnlyElement(thisSetIsDefinitelyASingleton);
   // if this set isn't a singleton, something is wrong!
 ```
+
