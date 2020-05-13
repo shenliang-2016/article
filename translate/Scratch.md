@@ -1,58 +1,63 @@
-## Sets
+## Maps
 
-[`Sets`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html) 工具类包含大量有用的方法。
+[`Maps`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html) 拥有许多很棒的工具值得单独介绍。
 
-### 集合论运算
+### `uniqueIndex`
 
-我们提供了一系列标准的集合论运算，实现为参数集合的视图。这些方法返回 [`SetView`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.SetView.html)，可以被用于：
+[`Maps.uniqueIndex(Iterable, Function)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#uniqueIndex-java.lang.Iterable-com.google.common.base.Function-) 解决了这样的常见情况：一堆对象每个都有一些独特的属性，并且希望能够基于该属性查找那些对象。
 
-- 直接作为一个 `Set`，因为它实现了 `Set` 接口
-- 使用  [`copyInto(Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.SetView.html#copyInto-S-) 将其复制进入另一个可变的集合
-- 使用 [`immutableCopy()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.SetView.html#immutableCopy--) 创建一个不可变副本
-
-| Method                                                       |
-| ------------------------------------------------------------ |
-| [`union(Set, Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#union-java.util.Set-java.util.Set-) |
-| [`intersection(Set, Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#intersection-java.util.Set-java.util.Set-) |
-| [`difference(Set, Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#difference-java.util.Set-java.util.Set-) |
-| [`symmetricDifference(Set, Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#symmetricDifference-java.util.Set-java.util.Set-) |
-
-比如：
+假设我们有一堆已知长度唯一的字符串，并且希望能够查找具有特定长度的字符串。
 
 ```java
-Set<String> wordsWithPrimeLength = ImmutableSet.of("one", "two", "three", "six", "seven", "eight");
-Set<String> primes = ImmutableSet.of("two", "three", "five", "seven");
-
-SetView<String> intersection = Sets.intersection(primes, wordsWithPrimeLength); // contains "two", "three", "seven"
-// I can use intersection as a Set directly, but copying it can be more efficient if I use it a lot.
-return intersection.immutableCopy();
+ImmutableMap<Integer, String> stringsByIndex = Maps.uniqueIndex(strings, new Function<String, Integer> () {
+    public Integer apply(String string) {
+      return string.length();
+    }
+  });
 ```
 
-### 其他 Set 工具
+如果字符串长度不是唯一的，参考下面的 `Multimaps.index` 。
 
-| Method                                                       | Description                                                | See Also                                                     |
-| ------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------ |
-| [`cartesianProduct(List)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#cartesianProduct-java.util.List-) | 返回可以通过从每个集合中选择一个元素获得的每个可能的列表。 | [`cartesianProduct(Set...)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#cartesianProduct-java.util.Set...-) |
-| [`powerSet(Set)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#powerSet-java.util.Set-) | 返回指定集合的子集。                                       |                                                              |
+### `difference`
+
+[`Maps.difference(Map, Map)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#difference-java.util.Map-java.util.Map-) 可让您比较两个 maps 之间的所有差异。它返回一个 `MapDifference` 对象，该对象将维恩图分解为：
+
+| Method                                                       | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [`entriesInCommon()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/MapDifference.html#entriesInCommon--) | 同时存在于两个映射中的实体，具有同时匹配的键和值。           |
+| [`entriesDiffering()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/MapDifference.html#entriesDiffering--) | 具有相同键，但是值不同的实体。map 中的值是 [`MapDifference.ValueDifference`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/MapDifference.ValueDifference.html) 类型，你可以看到左值和右值。 |
+| [`entriesOnlyOnLeft()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/MapDifference.html#entriesOnlyOnLeft--) | 返回那些键在左 map 中存在而右 map 中不存在的实体。           |
+| [`entriesOnlyOnRight()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/MapDifference.html#entriesOnlyOnRight--) | 返回那些键在右 map 中存在而左 map 中不存在的实体。           |
 
 ```java
-Set<String> animals = ImmutableSet.of("gerbil", "hamster");
-Set<String> fruits = ImmutableSet.of("apple", "orange", "banana");
+Map<String, Integer> left = ImmutableMap.of("a", 1, "b", 2, "c", 3);
+Map<String, Integer> right = ImmutableMap.of("b", 2, "c", 4, "d", 5);
+MapDifference<String, Integer> diff = Maps.difference(left, right);
 
-Set<List<String>> product = Sets.cartesianProduct(animals, fruits);
-// {{"gerbil", "apple"}, {"gerbil", "orange"}, {"gerbil", "banana"},
-//  {"hamster", "apple"}, {"hamster", "orange"}, {"hamster", "banana"}}
-
-Set<Set<String>> animalSets = Sets.powerSet(animals);
-// {{}, {"gerbil"}, {"hamster"}, {"gerbil", "hamster"}}
+diff.entriesInCommon(); // {"b" => 2}
+diff.entriesDiffering(); // {"c" => (3, 4)}
+diff.entriesOnlyOnLeft(); // {"a" => 1}
+diff.entriesOnlyOnRight(); // {"d" => 5}
 ```
 
-### 静态工厂
+### `BiMap` 工具
 
-`Sets` 提供了下列静态工厂方法：
+`BiMap` 上的 Guava 实用程序位于 `Maps` 类中，因为 `BiMap` 也是 `Map`。
 
-| Implementation  | Factories                                                    |
-| --------------- | ------------------------------------------------------------ |
-| `HashSet`       | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newHashSet--), [with elements](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newHashSet-E...-), [from `Iterable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newHashSet-java.lang.Iterable-), [with expected size](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newHashSetWithExpectedSize-int-), [from `Iterator`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newHashSet-java.util.Iterator-) |
-| `LinkedHashSet` | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newLinkedHashSet--), [from `Iterable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newLinkedHashSet-java.lang.Iterable-), [with expected size](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newLinkedHashSetWithExpectedSize-int-) |
-| `TreeSet`       | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newTreeSet--), [with `Comparator`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newTreeSet-java.util.Comparator-), [from `Iterable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Sets.html#newTreeSet-java.lang.Iterable-) |
+| `BiMap` utility                                              | Corresponding `Map` utility        |
+| ------------------------------------------------------------ | ---------------------------------- |
+| [`synchronizedBiMap(BiMap)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#synchronizedBiMap-com.google.common.collect.BiMap-) | `Collections.synchronizedMap(Map)` |
+| [`unmodifiableBiMap(BiMap)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#unmodifiableBiMap-com.google.common.collect.BiMap-) | `Collections.unmodifiableMap(Map)` |
+
+#### 静态工厂
+
+`Maps` 提供了下列静态工厂方法。
+
+| Implementation    | Factories                                                    |
+| ----------------- | ------------------------------------------------------------ |
+| `HashMap`         | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newHashMap--), [from `Map`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newHashMap-java.util.Map-), [with expected size](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newHashMapWithExpectedSize-int-) |
+| `LinkedHashMap`   | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newLinkedHashMap--), [from `Map`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newLinkedHashMap-java.util.Map-) |
+| `TreeMap`         | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newTreeMap--), [from `Comparator`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newTreeMap-java.util.Comparator-), [from `SortedMap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newTreeMap-java.util.SortedMap-) |
+| `EnumMap`         | [from `Class`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newEnumMap-java.lang.Class-), [from `Map`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newEnumMap-java.util.Map-) |
+| `ConcurrentMap`   | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newConcurrentMap--) |
+| `IdentityHashMap` | [basic](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Maps.html#newIdentityHashMap--) |
