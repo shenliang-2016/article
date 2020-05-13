@@ -1,14 +1,14 @@
 ## Multimaps
 
-[`Multimaps`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html) provides a number of general utility operations that deserve individual explanation.
+[`Multimaps`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html) 提供了大量通用的操作值得单独介绍。
 
 ### `index`
 
-The cousin to `Maps.uniqueIndex`, [`Multimaps.index(Iterable, Function)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#index-java.lang.Iterable-com.google.common.base.Function-) answers the case when you want to be able to look up all objects with some particular attribute in common, which is not necessarily unique.
+ `Maps.uniqueIndex` 的堂兄， [`Multimaps.index(Iterable, Function)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#index-java.lang.Iterable-com.google.common.base.Function-) 可以帮助您查找具有某些共同特定属性（不一定是唯一属性）的所有对象。
 
-Let's say we want to group strings based on their length.
+假设我们要根据字符串的长度对字符串进行分组。
 
-```
+```java
 ImmutableSet<String> digits = ImmutableSet.of(
     "zero", "one", "two", "three", "four",
     "five", "six", "seven", "eight", "nine");
@@ -28,11 +28,11 @@ ImmutableListMultimap<Integer, String> digitsByLength = Multimaps.index(digits, 
 
 ### `invertFrom`
 
-Since `Multimap` can map many keys to one value, and one key to many values, it can be useful to invert a `Multimap`. Guava provides [`invertFrom(Multimap toInvert, Multimap dest)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#invertFrom-com.google.common.collect.Multimap-M-) to let you do this, without choosing an implementation for you.
+由于 `Multimap` 能够将多个键映射到同一个值，也可以将一个键映射到多个值，它对倒置 `Multimap` 操作非常有用。Guava 提供了 [`invertFrom(Multimap toInvert, Multimap dest)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#invertFrom-com.google.common.collect.Multimap-M-) 来帮助你做到这一点，而没有为你选择一个实现。
 
-*NOTE:* If you are using an `ImmutableMultimap`, consider [`ImmutableMultimap.inverse()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableMultimap.html#inverse--) instead.
+*注意*：如果你正在使用 `ImmutableMultimap`，考虑使用 [`ImmutableMultimap.inverse()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableMultimap.html#inverse--) 替代。
 
-```
+```java
 ArrayListMultimap<String, Integer> multimap = ArrayListMultimap.create();
 multimap.putAll("b", Ints.asList(2, 4, 6));
 multimap.putAll("a", Ints.asList(4, 2, 1));
@@ -53,9 +53,9 @@ TreeMultimap<Integer, String> inverse = Multimaps.invertFrom(multimap, TreeMulti
 
 ### `forMap`
 
-Need to use a `Multimap` method on a `Map`? [`forMap(Map)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#forMap-java.util.Map-) views a `Map` as a `SetMultimap`. This is particularly useful, for example, in combination with `Multimaps.invertFrom`.
+需要在 `Map` 上使用 `Multimap` 方法？[`forMap(Map)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#forMap-java.util.Map-) 将 `Map` 视作 `SetMultimap`。这非常有用，比如，与 `Multimaps.invertFrom` 结合使用：
 
-```
+```java
 Map<String, Integer> map = ImmutableMap.of("a", 1, "b", 1, "c", 2);
 SetMultimap<String, Integer> multimap = Multimaps.forMap(map);
 // multimap maps ["a" => {1}, "b" => {1}, "c" => {2}]
@@ -65,7 +65,7 @@ Multimap<Integer, String> inverse = Multimaps.invertFrom(multimap, HashMultimap.
 
 ### Wrappers
 
-`Multimaps` provides the traditional wrapper methods, as well as tools to get custom `Multimap` implementations based on `Map` and `Collection` implementations of your choice.
+`Multimaps` 提供了传统的包装器方法，以及根据您选择的 `Map` 和 `Collection` 实现获取自定义 `Multimap` 实现的工具。
 
 | Multimap type       | Unmodifiable                                                 | Synchronized                                                 | Custom                                                       |
 | ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -74,17 +74,21 @@ Multimap<Integer, String> inverse = Multimaps.invertFrom(multimap, HashMultimap.
 | `SetMultimap`       | [`unmodifiableSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#unmodifiableSetMultimap-com.google.common.collect.SetMultimap-) | [`synchronizedSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#synchronizedSetMultimap-com.google.common.collect.SetMultimap-) | [`newSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newSetMultimap-java.util.Map-com.google.common.base.Supplier-) |
 | `SortedSetMultimap` | [`unmodifiableSortedSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#unmodifiableSortedSetMultimap-com.google.common.collect.SortedSetMultimap-) | [`synchronizedSortedSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#synchronizedSortedSetMultimap-com.google.common.collect.SortedSetMultimap-) | [`newSortedSetMultimap`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Multimaps.html#newSortedSetMultimap-java.util.Map-com.google.common.base.Supplier-) |
 
-The custom `Multimap` implementations let you specify a particular implementation that should be used in the returned `Multimap`. Caveats include:
+自定义的 `Multimap` 实现可让您指定应在返回的 `Multimap` 中使用的特定实现。注意事项包括：
 
-- The multimap assumes complete ownership over of map and the lists returned by factory. Those objects should not be manually updated, they should be empty when provided, and they should not use soft, weak, or phantom references.
-- **No guarantees are made** on what the contents of the `Map` will look like after you modify the `Multimap`.
-- The multimap is not threadsafe when any concurrent operations update the multimap, even if map and the instances generated by factory are. Concurrent read operations will work correctly, though. Work around this with the `synchronized` wrappers if necessary.
-- The multimap is serializable if map, factory, the lists generated by factory, and the multimap contents are all serializable.
-- The collections returned by `Multimap.get(key)` are *not* of the same type as the collections returned by your `Supplier`, though if you supplier returns `RandomAccess` lists, the lists returned by `Multimap.get(key)` will also be random access.
+- multimap 假定对图和工厂返回的列表拥有完全所有权。这些对象不应手动更新，提供时应为空，并且不应使用软引用，弱引用或虚引用。
 
-Note that the custom `Multimap` methods expect a `Supplier` argument to generate fresh new collections. Here is an example of writing a `ListMultimap` backed by a `TreeMap` mapping to `LinkedList`.
+- **不保证**修改 `Multimap` 后 `Map` 的内容是什么样。
 
-```
+- 当任何并发操作更新 multimap 时，即使 multimap 和工厂生成的实例一样，multimap 也不是线程安全的。但是，并发读取操作将正常运行。如有必要，使用 `synchronized` 包装器解决此问题。
+
+- 如果 map，工厂，工厂生成的列表以及 multimap 内容都可序列化，则 multimap 可序列化。
+
+- `Multimap.get(key)` 返回的集合与 `Supplier` 返回的集合的类型不相同，尽管如果供应商返回 `RandomAccess` 列表，则 `Multimap.get(key)` 也将是随机访问。
+
+注意，自定义的 `Multimap` 方法期望一个 `Supplier` 参数来生成新的集合。这是一个编写由 `ListMap` 映射到 `LinkedList` 的 `ListMultimap` 的示例。
+
+```java
 ListMultimap<String, Integer> myMultimap = Multimaps.newListMultimap(
   Maps.<String, Collection<Integer>>newTreeMap(),
   new Supplier<LinkedList<Integer>>() {
@@ -96,13 +100,13 @@ ListMultimap<String, Integer> myMultimap = Multimaps.newListMultimap(
 
 ## Tables
 
-The [`Tables`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html) class provides a few handy utilities.
+ [`Tables`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html) 类提供了一些有用的工具。
 
 ### `customTable`
 
-Comparable to the `Multimaps.newXXXMultimap(Map, Supplier)` utilities, [`Tables.newCustomTable(Map, Supplier)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#newCustomTable-java.util.Map-com.google.common.base.Supplier-) allows you to specify a `Table` implementation using whatever row or column map you like.
+相比于 `Multimaps.newXXXMultimap(Map, Supplier)` 工具， [`Tables.newCustomTable(Map, Supplier)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#newCustomTable-java.util.Map-com.google.common.base.Supplier-) 允许你指定一个 `Table` 实现，可以选择使用行或者列映射。
 
-```
+```java
 // use LinkedHashMaps instead of HashMaps
 Table<String, Character, Integer> table = Tables.newCustomTable(
   Maps.<String, Map<Character, Integer>>newLinkedHashMap(),
@@ -115,12 +119,11 @@ Table<String, Character, Integer> table = Tables.newCustomTable(
 
 ### `transpose`
 
-The [`transpose(Table)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#transpose-com.google.common.collect.Table-) method allows you to view a `Table<R, C, V>` as a `Table<C, R, V>`.
+ [`transpose(Table)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#transpose-com.google.common.collect.Table-) 方法允许你将 `Table<R, C, V>` 视作 `Table<C, R, V>`。
 
 ### Wrappers
 
-These are the familiar unmodifiability wrappers you know and love. Consider, however, using [`ImmutableTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableTable.html) instead in most cases.
+这些是您熟悉和喜爱的不可修改的包装器。不过，在大多数情况下，请考虑使用 [`ImmutableTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/ImmutableTable.html)。
 
 - [`unmodifiableTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#unmodifiableTable-com.google.common.collect.Table-)
 - [`unmodifiableRowSortedTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#unmodifiableRowSortedTable-com.google.common.collect.RowSortedTable-)
-
