@@ -127,3 +127,4 @@ Table<String, Character, Integer> table = Tables.newCustomTable(
 
 - [`unmodifiableTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#unmodifiableTable-com.google.common.collect.Table-)
 - [`unmodifiableRowSortedTable`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/collect/Tables.html#unmodifiableRowSortedTable-com.google.common.collect.RowSortedTable-)
+
