@@ -1,12 +1,12 @@
-## Population
+## 填充
 
-The first question to ask yourself about your cache is: is there some *sensible default* function to load or compute a value associated with a key? If so, you should use a `CacheLoader`. If not, or if you need to override the default, but you still want atomic "get-if-absent-compute" semantics, you should pass a `Callable` into a `get` call. Elements can be inserted directly, using `Cache.put`, but automatic cache loading is preferred as it makes it easier to reason about consistency across all cached content.
+你需要问自己有关缓存的第一个问题是：是否有一些*合理的默认*函数来加载或计算与键关联的值？如果是这样，您应该使用 `CacheLoader`。如果不是这样，或者如果您需要覆盖默认值，但是仍然需要原子的 "get-if-absent-compute" 语义，则应该将 `Callable` 传递给 `get` 调用。可以使用 `Cache.put` 直接插入元素，但是首选自动加载缓存，因为这样可以更轻松地推断所有缓存内容的一致性。
 
-#### From a CacheLoader
+#### 使用 CacheLoader
 
-A `LoadingCache` is a `Cache` built with an attached [`CacheLoader`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html). Creating a `CacheLoader` is typically as easy as implementing the method `V load(K key) throws Exception`. So, for example, you could create a `LoadingCache` with the following code:
+ `LoadingCache` 是一个通过附属的 [`CacheLoader`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html) 构建的 `Cache`。创建一个 `CacheLoader` 通常与实现 `V load(K key) throws Exception` 方法一样。因此，比如，你可以使用下面的代码创建一个 `LoadingCache` ：
 
-```
+```java
 LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
        .maximumSize(1000)
        .build(
@@ -24,9 +24,9 @@ try {
 }
 ```
 
-The canonical way to query a `LoadingCache` is with the method [`get(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/LoadingCache.html#get-K-). This will either return an already cached value, or else use the cache's `CacheLoader` to atomically load a new value into the cache. Because `CacheLoader` might throw an `Exception`, `LoadingCache.get(K)` throws `ExecutionException`. (If the cache loader throws an *unchecked* exception, `get(K)` will throw an `UncheckedExecutionException` wrapping it.) You can also choose to use `getUnchecked(K)`, which wraps all exceptions in `UncheckedExecutionException`, but this may lead to surprising behavior if the underlying `CacheLoader` would normally throw checked exceptions.
+查询 `LoadingCache` 的规范方法是使用 [`get(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/LoadingCache.html#get-K-) 方法。这将返回一个已经缓存的值，或者使用缓存的 `CacheLoader` 原子地将新值加载到缓存中。由于 `CacheLoader` 可能会抛出 `Exception`，因此 `LoadingCache.get(K)` 会抛出 `ExecutionException`。（如果缓存加载器抛出 *unchecked* 异常，则`get(K)` 会引发包装了 `UncheckedExecutionException` 的异常。）您还可以选择使用 `getUnchecked(K)` 将所有异常包装在 `UncheckedExecutionException` 中， 但是如果底层的 `CacheLoader` 通常会抛出受检查异常，这可能会导致令人惊讶的行为。
 
-```
+```java
 LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
        .expireAfterAccess(10, TimeUnit.MINUTES)
        .build(
@@ -40,9 +40,9 @@ LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
 return graphs.getUnchecked(key);
 ```
 
-Bulk lookups can be performed with the method `getAll(Iterable<? extends K>)`. By default, `getAll` will issue a a separate call to `CacheLoader.load` for each key which is absent from the cache. When bulk retrieval is more efficient than many individual lookups, you can override [`CacheLoader.loadAll`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html#loadAll-java.lang.Iterable-) to exploit this. The performance of `getAll(Iterable)` will improve accordingly.
+可以使用 `getAll(Iterable<? extends K>)` 方法执行批量查找。默认情况下，`getAll` 将为缓存中不存在的每个键单独发出 `CacheLoader.load` 调用。如果批量检索比许多单个查询更有效，则可以覆盖 [`CacheLoader.loadAll`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html#loadAll-java.lang.Iterable-) 来利用这一点。 `getAll(Iterable)` 的性能将相应提高。
 
-Note that you can write a `CacheLoader.loadAll` implementation that loads values for keys that were not specifically requested. For example, if computing the value of any key from some group gives you the value for all keys in the group, `loadAll` might load the rest of the group at the same time.
+请注意，您可以编写一个 `CacheLoader.loadAll` 实现，该实现加载未明确要求的键的值。例如，如果计算某个组中任何键的值给您该组中所有键的值，则 `loadAll` 可能会同时加载其余组。
 
 #### From a Callable
 
