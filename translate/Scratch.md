@@ -44,11 +44,11 @@ return graphs.getUnchecked(key);
 
 请注意，您可以编写一个 `CacheLoader.loadAll` 实现，该实现加载未明确要求的键的值。例如，如果计算某个组中任何键的值给您该组中所有键的值，则 `loadAll` 可能会同时加载其余组。
 
-#### From a Callable
+#### 使用 Callable
 
-All Guava caches, loading or not, support the method [`get(K, Callable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#get-java.lang.Object-java.util.concurrent.Callable-). This method returns the value associated with the key in the cache, or computes it from the specified `Callable` and adds it to the cache. No observable state associated with this cache is modified until loading completes. This method provides a simple substitute for the conventional "if cached, return; otherwise create, cache and return" pattern.
+所有 Guava 缓存（无论是否加载）均支持方法 [`get(K, Callable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#get-java.lang.Object-java.util.concurrent.Callable-) 。此方法返回与缓存中的键关联的值，或从指定的 `Callable` 中计算出该值并将其添加到缓存中。在加载完成之前，不会修改与此缓存关联的可观察状态。此方法为常规的“如果已缓存，则返回；否则创建，缓存并返回”模式提供了简单的替代方法。
 
-```
+```java
 Cache<Key, Value> cache = CacheBuilder.newBuilder()
     .maximumSize(1000)
     .build(); // look Ma, no CacheLoader
@@ -67,6 +67,6 @@ try {
 }
 ```
 
-#### Inserted Directly
+#### 直接插入
 
-Values may be inserted into the cache directly with [`cache.put(key, value)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#put-K-V-). This overwrites any previous entry in the cache for the specified key. Changes can also be made to a cache using any of the `ConcurrentMap` methods exposed by the `Cache.asMap()` view. Note that no method on the `asMap` view will ever cause entries to be automatically loaded into the cache. Further, the atomic operations on that view operate outside the scope of automatic cache loading, so `Cache.get(K, Callable<V>)` should always be preferred over `Cache.asMap().putIfAbsent` in caches which load values using either `CacheLoader` or `Callable`.
+可以直接使用 [`cache.put(key, value)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#put-K-V-) 。这将覆盖高速缓存中指定键的任何先前条目。也可以使用  `Cache.asMap()` 视图公开的任何 `ConcurrentMap` 方法对缓存进行更改。注意，`asMap` 视图上的任何方法都不会导致条目自动加载到缓存中。此外，该视图上的原子操作在自动缓存加载范围之外运行，因此在使用 `CacheLoader` 或 `Callable` 加载值的缓存中，始终应优先选择 `Cache.get(K, Callable<V>)` 而不是 `Cache.asMap().putIfAbsent` 。
