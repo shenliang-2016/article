@@ -1,73 +1,38 @@
-## 填充
+## 驱逐
 
-你需要问自己有关缓存的第一个问题是：是否有一些*合理的默认*函数来加载或计算与键关联的值？如果是这样，您应该使用 `CacheLoader`。如果不是这样，或者如果您需要覆盖默认值，但是仍然需要原子的 "get-if-absent-compute" 语义，则应该将 `Callable` 传递给 `get` 调用。可以使用 `Cache.put` 直接插入元素，但是首选自动加载缓存，因为这样可以更轻松地推断所有缓存内容的一致性。
+冷酷的现实是，我们几乎*肯定*没有足够的内存来缓存我们可以缓存的所有内容。您必须决定：什么时候不值得保留缓存条目？Guava 提供三种基本的驱逐类型：基于大小的驱逐，基于时间的驱逐和基于引用的驱逐。
 
-#### 使用 CacheLoader
+### 基于大小的驱逐
 
- `LoadingCache` 是一个通过附属的 [`CacheLoader`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html) 构建的 `Cache`。创建一个 `CacheLoader` 通常与实现 `V load(K key) throws Exception` 方法一样。因此，比如，你可以使用下面的代码创建一个 `LoadingCache` ：
+如果你的缓存在达到某个大小之后就不应该继续增长，可以使用 [`CacheBuilder.maximumSize(long)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#maximumSize-long-)。缓存将会尝试驱逐最近最少使用的缓存数据实体。*警告*：缓存可能会在大小达到限制之前驱逐实体——通常是在缓存大小接近限制时。
 
-```java
-LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
-       .maximumSize(1000)
-       .build(
-           new CacheLoader<Key, Graph>() {
-             public Graph load(Key key) throws AnyException {
-               return createExpensiveGraph(key);
-             }
-           });
-
-...
-try {
-  return graphs.get(key);
-} catch (ExecutionException e) {
-  throw new OtherException(e.getCause());
-}
-```
-
-查询 `LoadingCache` 的规范方法是使用 [`get(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/LoadingCache.html#get-K-) 方法。这将返回一个已经缓存的值，或者使用缓存的 `CacheLoader` 原子地将新值加载到缓存中。由于 `CacheLoader` 可能会抛出 `Exception`，因此 `LoadingCache.get(K)` 会抛出 `ExecutionException`。（如果缓存加载器抛出 *unchecked* 异常，则`get(K)` 会引发包装了 `UncheckedExecutionException` 的异常。）您还可以选择使用 `getUnchecked(K)` 将所有异常包装在 `UncheckedExecutionException` 中， 但是如果底层的 `CacheLoader` 通常会抛出受检查异常，这可能会导致令人惊讶的行为。
+另外，如果不同的缓存实体具有不同的“权重”——比如，如果你的缓存值具有不同的内存空间占用——你可以使用 [`CacheBuilder.weigher(Weigher)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#weigher-com.google.common.cache.Weigher-) 指定权重函数，同时使用 [`CacheBuilder.maximumWeight(long)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#maximumWeight-long-) 指定最大缓存权重。除了需要与 `maximumSize` 相同的限制外，请注意，权重是在条目创建时计算的，此后是静态的。
 
 ```java
 LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
-       .expireAfterAccess(10, TimeUnit.MINUTES)
+       .maximumWeight(100000)
+       .weigher(new Weigher<Key, Graph>() {
+          public int weigh(Key k, Graph g) {
+            return g.vertices().size();
+          }
+        })
        .build(
            new CacheLoader<Key, Graph>() {
              public Graph load(Key key) { // no checked exception
                return createExpensiveGraph(key);
              }
            });
-
-...
-return graphs.getUnchecked(key);
 ```
 
-可以使用 `getAll(Iterable<? extends K>)` 方法执行批量查找。默认情况下，`getAll` 将为缓存中不存在的每个键单独发出 `CacheLoader.load` 调用。如果批量检索比许多单个查询更有效，则可以覆盖 [`CacheLoader.loadAll`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html#loadAll-java.lang.Iterable-) 来利用这一点。 `getAll(Iterable)` 的性能将相应提高。
+### 基于时间的驱逐
 
-请注意，您可以编写一个 `CacheLoader.loadAll` 实现，该实现加载未明确要求的键的值。例如，如果计算某个组中任何键的值给您该组中所有键的值，则 `loadAll` 可能会同时加载其余组。
+`CacheBuilder` 提供了两种基于时间的驱逐方法：
 
-#### 使用 Callable
+- [`expireAfterAccess(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterAccess-long-java.util.concurrent.TimeUnit-) Only expire entries after the specified duration has passed since the entry was last accessed by a read or a write. Note that the order in which entries are evicted will be similar to that of [size-based eviction](https://github.com/google/guava/wiki/CachesExplained#Size-based-Eviction).
+- [`expireAfterWrite(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterWrite-long-java.util.concurrent.TimeUnit-) Expire entries after the specified duration has passed since the entry was created, or the most recent replacement of the value. This could be desirable if cached data grows stale after a certain amount of time.
 
-所有 Guava 缓存（无论是否加载）均支持方法 [`get(K, Callable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#get-java.lang.Object-java.util.concurrent.Callable-) 。此方法返回与缓存中的键关联的值，或从指定的 `Callable` 中计算出该值并将其添加到缓存中。在加载完成之前，不会修改与此缓存关联的可观察状态。此方法为常规的“如果已缓存，则返回；否则创建，缓存并返回”模式提供了简单的替代方法。
+Timed expiration is performed with periodic maintenance during writes and occasionally during reads, as discussed below.
 
-```java
-Cache<Key, Value> cache = CacheBuilder.newBuilder()
-    .maximumSize(1000)
-    .build(); // look Ma, no CacheLoader
-...
-try {
-  // If the key wasn't in the "easy to compute" group, we need to
-  // do things the hard way.
-  cache.get(key, new Callable<Value>() {
-    @Override
-    public Value call() throws AnyException {
-      return doThingsTheHardWay(key);
-    }
-  });
-} catch (ExecutionException e) {
-  throw new OtherException(e.getCause());
-}
-```
+#### Testing Timed Eviction
 
-#### 直接插入
-
-可以直接使用 [`cache.put(key, value)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#put-K-V-) 。这将覆盖高速缓存中指定键的任何先前条目。也可以使用  `Cache.asMap()` 视图公开的任何 `ConcurrentMap` 方法对缓存进行更改。注意，`asMap` 视图上的任何方法都不会导致条目自动加载到缓存中。此外，该视图上的原子操作在自动缓存加载范围之外运行，因此在使用 `CacheLoader` 或 `Callable` 加载值的缓存中，始终应优先选择 `Cache.get(K, Callable<V>)` 而不是 `Cache.asMap().putIfAbsent` 。
-
+Testing timed eviction doesn't have to be painful...and doesn't actually have to take you two seconds to test a two-second expiration. Use the [Ticker](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Ticker.html) interface and the [`CacheBuilder.ticker(Ticker)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#ticker-com.google.common.base.Ticker-) method to specify a time source in your cache builder, rather than having to wait for the system clock.
