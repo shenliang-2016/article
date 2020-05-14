@@ -70,3 +70,4 @@ try {
 #### 直接插入
 
 可以直接使用 [`cache.put(key, value)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#put-K-V-) 。这将覆盖高速缓存中指定键的任何先前条目。也可以使用  `Cache.asMap()` 视图公开的任何 `ConcurrentMap` 方法对缓存进行更改。注意，`asMap` 视图上的任何方法都不会导致条目自动加载到缓存中。此外，该视图上的原子操作在自动缓存加载范围之外运行，因此在使用 `CacheLoader` 或 `Callable` 加载值的缓存中，始终应优先选择 `Cache.get(K, Callable<V>)` 而不是 `Cache.asMap().putIfAbsent` 。
+
