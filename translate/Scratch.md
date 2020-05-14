@@ -1,36 +1,72 @@
-# 缓存
+## Population
 
-## 示例
+The first question to ask yourself about your cache is: is there some *sensible default* function to load or compute a value associated with a key? If so, you should use a `CacheLoader`. If not, or if you need to override the default, but you still want atomic "get-if-absent-compute" semantics, you should pass a `Callable` into a `get` call. Elements can be inserted directly, using `Cache.put`, but automatic cache loading is preferred as it makes it easier to reason about consistency across all cached content.
 
-```java
+#### From a CacheLoader
+
+A `LoadingCache` is a `Cache` built with an attached [`CacheLoader`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html). Creating a `CacheLoader` is typically as easy as implementing the method `V load(K key) throws Exception`. So, for example, you could create a `LoadingCache` with the following code:
+
+```
 LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
        .maximumSize(1000)
-       .expireAfterWrite(10, TimeUnit.MINUTES)
-       .removalListener(MY_LISTENER)
        .build(
            new CacheLoader<Key, Graph>() {
-             @Override
              public Graph load(Key key) throws AnyException {
                return createExpensiveGraph(key);
              }
            });
+
+...
+try {
+  return graphs.get(key);
+} catch (ExecutionException e) {
+  throw new OtherException(e.getCause());
+}
 ```
 
-## 适用性
+The canonical way to query a `LoadingCache` is with the method [`get(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/LoadingCache.html#get-K-). This will either return an already cached value, or else use the cache's `CacheLoader` to atomically load a new value into the cache. Because `CacheLoader` might throw an `Exception`, `LoadingCache.get(K)` throws `ExecutionException`. (If the cache loader throws an *unchecked* exception, `get(K)` will throw an `UncheckedExecutionException` wrapping it.) You can also choose to use `getUnchecked(K)`, which wraps all exceptions in `UncheckedExecutionException`, but this may lead to surprising behavior if the underlying `CacheLoader` would normally throw checked exceptions.
 
-缓存有非常广泛的应用场景。比如，你应该为那些计算或者查询代价高昂的数据使用缓存，或者你需要某个输入数据很多次的场景。
+```
+LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
+       .expireAfterAccess(10, TimeUnit.MINUTES)
+       .build(
+           new CacheLoader<Key, Graph>() {
+             public Graph load(Key key) { // no checked exception
+               return createExpensiveGraph(key);
+             }
+           });
 
-一个 `Cache` 类似于 `ConcurrentMap`，不过并不完全相同。基本的差异在于， `ConcurrentMap` 持久化所有添加进来的元素直到它们被显式删除。另一方面，通常将 `Cache` 配置为自动淘汰条目，以限制其内存占用量。在某些情况下， `LoadingCache` 会很有用，虽然它不淘汰条目，但是可以自动加载缓存。
+...
+return graphs.getUnchecked(key);
+```
 
-通常，Guava 缓存工具可以适用与下列场景：
+Bulk lookups can be performed with the method `getAll(Iterable<? extends K>)`. By default, `getAll` will issue a a separate call to `CacheLoader.load` for each key which is absent from the cache. When bulk retrieval is more efficient than many individual lookups, you can override [`CacheLoader.loadAll`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html#loadAll-java.lang.Iterable-) to exploit this. The performance of `getAll(Iterable)` will improve accordingly.
 
-- 你希望使用一些内存空间来改善速度。
-- 您希望多次查询某些键。
-- 您的缓存将不需要存储超出 RAM 容量的数据。（Guava 缓存的作用范围局限于在应用程序的一次运行中。它们不将数据存储在文件中或外部服务器上。如果这不符合您的需求，请考虑使用 [Memcached](http://memcached.org/)。）
+Note that you can write a `CacheLoader.loadAll` implementation that loads values for keys that were not specifically requested. For example, if computing the value of any key from some group gives you the value for all keys in the group, `loadAll` might load the rest of the group at the same time.
 
-如果这些都适用于您的应用场景，那么 Guava 缓存实用程序将很适合您！
+#### From a Callable
 
-如上面的示例代码所示，使用 `CacheBuilder` 生成器模式可以获取 `Cache`，但是自定义缓存是有趣的部分。
+All Guava caches, loading or not, support the method [`get(K, Callable)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#get-java.lang.Object-java.util.concurrent.Callable-). This method returns the value associated with the key in the cache, or computes it from the specified `Callable` and adds it to the cache. No observable state associated with this cache is modified until loading completes. This method provides a simple substitute for the conventional "if cached, return; otherwise create, cache and return" pattern.
 
-*注意：* 如果不需要 `Cache` 的功能，则 `ConcurrentHashMap` 的内存使用效率更高——但是很难用任何旧的 `ConcurrentMap`来复制大多数 `Cache` 的功能。
+```
+Cache<Key, Value> cache = CacheBuilder.newBuilder()
+    .maximumSize(1000)
+    .build(); // look Ma, no CacheLoader
+...
+try {
+  // If the key wasn't in the "easy to compute" group, we need to
+  // do things the hard way.
+  cache.get(key, new Callable<Value>() {
+    @Override
+    public Value call() throws AnyException {
+      return doThingsTheHardWay(key);
+    }
+  });
+} catch (ExecutionException e) {
+  throw new OtherException(e.getCause());
+}
+```
 
+#### Inserted Directly
+
+Values may be inserted into the cache directly with [`cache.put(key, value)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#put-K-V-). This overwrites any previous entry in the cache for the specified key. Changes can also be made to a cache using any of the `ConcurrentMap` methods exposed by the `Cache.asMap()` view. Note that no method on the `asMap` view will ever cause entries to be automatically loaded into the cache. Further, the atomic operations on that view operate outside the scope of automatic cache loading, so `Cache.get(K, Callable<V>)` should always be preferred over `Cache.asMap().putIfAbsent` in caches which load values using either `CacheLoader` or `Callable`.
