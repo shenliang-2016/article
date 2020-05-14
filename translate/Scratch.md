@@ -28,11 +28,12 @@ LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
 
 `CacheBuilder` 提供了两种基于时间的驱逐方法：
 
-- [`expireAfterAccess(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterAccess-long-java.util.concurrent.TimeUnit-) Only expire entries after the specified duration has passed since the entry was last accessed by a read or a write. Note that the order in which entries are evicted will be similar to that of [size-based eviction](https://github.com/google/guava/wiki/CachesExplained#Size-based-Eviction).
-- [`expireAfterWrite(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterWrite-long-java.util.concurrent.TimeUnit-) Expire entries after the specified duration has passed since the entry was created, or the most recent replacement of the value. This could be desirable if cached data grows stale after a certain amount of time.
+- [`expireAfterAccess(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterAccess-long-java.util.concurrent.TimeUnit-) 仅在自从上次通过读取或写入访问条目以来经过指定的持续时间后，条目才到期。请注意，驱逐条目的顺序将类似于 [基于大小的驱逐](https://github.com/google/guava/wiki/CachesExplained#Size-based-Eviction)。
+- [`expireAfterWrite(long, TimeUnit)`](https://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#expireAfterWrite-long-java.util.concurrent.TimeUnit-) 自创建条目以来经过指定的时间或该值的最新替换之后，使条目过期。如果经过一定时间后缓存的数据持续增长，则可能需要这样做。
 
-Timed expiration is performed with periodic maintenance during writes and occasionally during reads, as discussed below.
+定时到期是在写入过程中进行定期维护的，偶尔在读取过程中进行维护，如下所述。
 
-#### Testing Timed Eviction
+#### 测试定时驱逐
 
-Testing timed eviction doesn't have to be painful...and doesn't actually have to take you two seconds to test a two-second expiration. Use the [Ticker](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Ticker.html) interface and the [`CacheBuilder.ticker(Ticker)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#ticker-com.google.common.base.Ticker-) method to specify a time source in your cache builder, rather than having to wait for the system clock.
+测试定时驱逐并不一定会很痛苦...实际上也不需要花两秒钟来测试两秒钟的到期时间。使用 [Ticker](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/base/Ticker.html) 接口和 [`CacheBuilder.ticker(Ticker)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#ticker-com.google.common.base.Ticker-) 方法来指定缓存构建器中的时间源，而不必等待系统时钟。
+
