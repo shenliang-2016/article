@@ -1,9 +1,37 @@
-### 清理何时发生？
+### 刷新
 
-用 `CacheBuilder` 构建的缓存不会“自动”或在值过期后立即执行清除和逐出值，或类似的任何操作。取而代之的是，它在写操作期间或偶尔进行的读操作（如果很少进行写操作）中执行少量维护。
+刷新与驱逐并不完全相同。如  [`LoadingCache.refresh(K)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/LoadingCache.html#refresh-K-) 所述，刷新键可能会异步加载该键的新值。与驱逐相反，旧键（如果有的话）在刷新键时仍会返回，这迫使检索要等到重新加载该值。
 
-这样做的原因如下：如果我们要连续执行 `Cache` 维护，则需要创建一个线程，并且该线程的操作将与用户操作竞争共享锁。另外，某些环境限制了线程的创建，这会使 `CacheBuilder` 在该环境中无法使用。
+如果刷新时引发异常，则将保留旧值，并记录并吞下该异常。
 
-相反，我们会将选择权交给您。如果您的缓存是高吞吐量的，那么您不必担心执行缓存维护以清理过期的条目等。 如果您的缓存确实很少写入，并且您不想清理来阻止缓存读取，则您可能希望创建自己的维护线程，该线程定期调用  [`Cache.cleanUp()`](http://google.github.io/guava/releases/11.0.1/api/docs/com/google/common/cache/Cache.html#cleanUp--) 。
+`CacheLoader` 可以通过覆盖  [`CacheLoader.reload(K, V)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheLoader.html#reload-K-V-) 指定某些将要在刷新时执行的聪明的行为，它允许您在计算新值时使用旧值。
 
-如果要为很少写入的缓存安排定期的缓存维护，只需使用 [`ScheduledExecutorService`](http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html) 调度维护操作。
+```java
+// Some keys don't need refreshing, and we want refreshes to be done asynchronously.
+LoadingCache<Key, Graph> graphs = CacheBuilder.newBuilder()
+       .maximumSize(1000)
+       .refreshAfterWrite(1, TimeUnit.MINUTES)
+       .build(
+           new CacheLoader<Key, Graph>() {
+             public Graph load(Key key) { // no checked exception
+               return getGraphFromDatabase(key);
+             }
+
+             public ListenableFuture<Graph> reload(final Key key, Graph prevGraph) {
+               if (neverNeedsRefresh(key)) {
+                 return Futures.immediateFuture(prevGraph);
+               } else {
+                 // asynchronous!
+                 ListenableFutureTask<Graph> task = ListenableFutureTask.create(new Callable<Graph>() {
+                   public Graph call() {
+                     return getGraphFromDatabase(key);
+                   }
+                 });
+                 executor.execute(task);
+                 return task;
+               }
+             }
+           });
+```
+
+可以使用  [`CacheBuilder.refreshAfterWrite(long, TimeUnit)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#refreshAfterWrite-long-java.util.concurrent.TimeUnit-) 将自动定时刷新添加到缓存中。与 `expireAfterWrite` 相比，`refreshAfterWrite` 在指定的持续时间后将使键“具有资格”进行刷新，但实际上仅在查询条目时才会启动刷新。（如果将 `CacheLoader.reload` 实现为异步，则刷新不会降低查询的速度。）因此，例如，您可以在同一缓存上同时指定 `refreshAfterWrite` 和 `expireAfterWrite`，以便只要条目符合刷新资格，就不会盲目地重置条目的过期计时器，因此，如果在符合刷新资格后不查询条目，则允许它过期。
