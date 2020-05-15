@@ -40,7 +40,7 @@ Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目
 - [Math](https://github.com/google/guava/wiki/MathExplained): JDK 未提供经过优化，经过全面测试的数学实用程序。
 - [Reflection](https://github.com/google/guava/wiki/ReflectionExplained): 用于 Java 反射功能的 Guava 实用程序。
 - 提示：使用 Guava 使您的应用程序按您希望的方式工作。
-  - [哲学Philosophy](https://github.com/google/guava/wiki/PhilosophyExplained): Guava 是什么而不是什么，以及我们的目标。
+  - [哲学](https://github.com/google/guava/wiki/PhilosophyExplained): Guava 是什么而不是什么，以及我们的目标。
   - [在构建中使用 Guava](https://github.com/google/guava/wiki/UseGuavaInYourBuild), 使用的构建系统包括 Maven, Gradle, 等等。
   - [使用 ProGuard](https://github.com/google/guava/wiki/UsingProGuardWithGuava) 避免将你不需要的 Guava 部分打包进入你的 JAR 中。
   - [Apache Commons equivalents](https://github.com/google/guava/wiki/ApacheCommonCollectionsEquivalents), 帮助您从使用 Apache Commons Collections 转换代码。
@@ -49,7 +49,7 @@ Guava 项目包含若干个 Google 核心类库，这些类库用在 Java 项目
   - [Friends](https://github.com/google/guava/wiki/FriendsOfGuava), 我们喜欢并欣赏的开源项目。
   - [HowToContribute](https://github.com/google/guava/wiki/HowToContribute), 如何为 Guava 做贡献。
 
-**注意：**要讨论此 wiki 的内容，请仅使用 Guava 讨论邮件列表。
+**注意：** 要讨论此 wiki 的内容，请仅使用 Guava 讨论邮件列表。
 
 ## 基础工具
 
