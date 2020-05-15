@@ -1,35 +1,9 @@
-### 显式删除
+### 清理何时发生？
 
-任何时刻，你都可以显式废除缓存实体，而不需要等待实体被驱逐。可以通过以下方法：
+用 `CacheBuilder` 构建的缓存不会“自动”或在值过期后立即执行清除和逐出值，或类似的任何操作。取而代之的是，它在写操作期间或偶尔进行的读操作（如果很少进行写操作）中执行少量维护。
 
-- 单个废除，使用 [`Cache.invalidate(key)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidate-java.lang.Object-)
-- 批量废除，使用 [`Cache.invalidateAll(keys)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidateAll-java.lang.Iterable-)
-- 全部废除，使用 [`Cache.invalidateAll()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidateAll--)
+这样做的原因如下：如果我们要连续执行 `Cache` 维护，则需要创建一个线程，并且该线程的操作将与用户操作竞争共享锁。另外，某些环境限制了线程的创建，这会使 `CacheBuilder` 在该环境中无法使用。
 
-### 删除监听器
+相反，我们会将选择权交给您。如果您的缓存是高吞吐量的，那么您不必担心执行缓存维护以清理过期的条目等。 如果您的缓存确实很少写入，并且您不想清理来阻止缓存读取，则您可能希望创建自己的维护线程，该线程定期调用  [`Cache.cleanUp()`](http://google.github.io/guava/releases/11.0.1/api/docs/com/google/common/cache/Cache.html#cleanUp--) 。
 
-你可以为你的缓存指定删除监听器以在实体被删除时执行一些操作，通过 [`CacheBuilder.removalListener(RemovalListener)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#removalListener-com.google.common.cache.RemovalListener-)。 [`RemovalListener`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalListener.html) 传递了一个 [`RemovalNotification`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalNotification.html)，指定了 [`RemovalCause`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalCause.html)，键，和值。
-
-注意， `RemovalListener` 抛出的所有异常都会被写入日志 (使用 `Logger`) 并被吞掉。
-
-```java
-CacheLoader<Key, DatabaseConnection> loader = new CacheLoader<Key, DatabaseConnection> () {
-  public DatabaseConnection load(Key key) throws Exception {
-    return openConnection(key);
-  }
-};
-RemovalListener<Key, DatabaseConnection> removalListener = new RemovalListener<Key, DatabaseConnection>() {
-  public void onRemoval(RemovalNotification<Key, DatabaseConnection> removal) {
-    DatabaseConnection conn = removal.getValue();
-    conn.close(); // tear down properly
-  }
-};
-
-return CacheBuilder.newBuilder()
-  .expireAfterWrite(2, TimeUnit.MINUTES)
-  .removalListener(removalListener)
-  .build(loader);
-```
-
-**警告**：默认情况下，删除侦听器操作是同步执行的，并且由于缓存维护通常是在常规缓存操作期间执行的，因此耗时的删除侦听器会降低正常的缓存功能！如果您有耗时的删除监听器，请使用 [`RemovalListeners.asynchronous(RemovalListener, Executor)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalListeners.html#asynchronous-com.google.common.cache.RemovalListener-java.util.concurrent.Executor-) 来装饰 `RemovalListener` 以进行异步操作。
-
+如果要为很少写入的缓存安排定期的缓存维护，只需使用 [`ScheduledExecutorService`](http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledExecutorService.html) 调度维护操作。
