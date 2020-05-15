@@ -1,8 +1,35 @@
-### 基于引用的驱逐
+### 显式删除
 
-Guava 允许你设置你的缓存以允许数据实体的垃圾收集，通过对键或者值使用的 [weak references](http://docs.oracle.com/javase/6/docs/api/java/lang/ref/WeakReference.html) ，或者对值使用的 [soft references](http://docs.oracle.com/javase/6/docs/api/java/lang/ref/SoftReference.html) 进行设置。
+任何时刻，你都可以显式废除缓存实体，而不需要等待实体被驱逐。可以通过以下方法：
 
-- [`CacheBuilder.weakKeys()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#weakKeys--) 使用弱引用存储键。这允许实体在没有其他引用（强引用或者软引用）指向其键时被垃圾收集。由于垃圾收集基于 id 相等规则，这就导致整个缓存多需要使用 id （`==`）相等来比较键，而不是使用 `equals()`。
-- [`CacheBuilder.weakValues()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#weakValues--) 使用弱引用存储值。这允许实体在没有其他引用（强引用或者软引用）指向其值时被垃圾收集。由于垃圾收集基于 id 相等规则，这就导致整个缓存多需要使用 id （`==`）相等来比较值，而不是使用 `equals()`。
-- [`CacheBuilder.softValues()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#softValues--) 将值包装进入软引用。软引用对象以全局最近最少使用规则进行垃圾收集，以响应内存需求。由于使用软引用可能会有些性能问题，我们通常推荐使用更加容易预测的 [maximum cache size](https://github.com/google/guava/wiki/CachesExplained#Size-based-Eviction) 替代。使用 `softValues()` 将导致值被通过 id (`==`) 相等比较，而不是使用 `equals()`。
+- 单个废除，使用 [`Cache.invalidate(key)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidate-java.lang.Object-)
+- 批量废除，使用 [`Cache.invalidateAll(keys)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidateAll-java.lang.Iterable-)
+- 全部废除，使用 [`Cache.invalidateAll()`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/Cache.html#invalidateAll--)
+
+### 删除监听器
+
+你可以为你的缓存指定删除监听器以在实体被删除时执行一些操作，通过 [`CacheBuilder.removalListener(RemovalListener)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/CacheBuilder.html#removalListener-com.google.common.cache.RemovalListener-)。 [`RemovalListener`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalListener.html) 传递了一个 [`RemovalNotification`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalNotification.html)，指定了 [`RemovalCause`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalCause.html)，键，和值。
+
+注意， `RemovalListener` 抛出的所有异常都会被写入日志 (使用 `Logger`) 并被吞掉。
+
+```java
+CacheLoader<Key, DatabaseConnection> loader = new CacheLoader<Key, DatabaseConnection> () {
+  public DatabaseConnection load(Key key) throws Exception {
+    return openConnection(key);
+  }
+};
+RemovalListener<Key, DatabaseConnection> removalListener = new RemovalListener<Key, DatabaseConnection>() {
+  public void onRemoval(RemovalNotification<Key, DatabaseConnection> removal) {
+    DatabaseConnection conn = removal.getValue();
+    conn.close(); // tear down properly
+  }
+};
+
+return CacheBuilder.newBuilder()
+  .expireAfterWrite(2, TimeUnit.MINUTES)
+  .removalListener(removalListener)
+  .build(loader);
+```
+
+**警告**：默认情况下，删除侦听器操作是同步执行的，并且由于缓存维护通常是在常规缓存操作期间执行的，因此耗时的删除侦听器会降低正常的缓存功能！如果您有耗时的删除监听器，请使用 [`RemovalListeners.asynchronous(RemovalListener, Executor)`](http://google.github.io/guava/releases/snapshot/api/docs/com/google/common/cache/RemovalListeners.html#asynchronous-com.google.common.cache.RemovalListener-java.util.concurrent.Executor-) 来装饰 `RemovalListener` 以进行异步操作。
 
