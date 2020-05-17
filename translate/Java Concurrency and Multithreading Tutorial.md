@@ -564,3 +564,306 @@ Thread Ops for Java 是一个开源工具包，旨在帮助您更轻松地实现
 
 最后，应用程序也可以是并发和并行的，因为它既可以同时处理多个任务，又可以将每个任务分解为多个子任务以并行执行。但是，在这种情况下，并发性和并行性的某些好处可能会丢失，因为计算机中的CPU已经足够合理地仅使用并发性或并行性。结合使用它可能只会导致很小的性能提升，甚至导致性能下降。在盲目采用并发并行模型之前，请确保进行分析和衡量。
 
+
+
+# 创建和启动Java线程
+
+一个*Java的* *线程*就像是可以执行Java代码的虚拟CPU —— 你的Java应用程序中。启动Java应用程序时，其`main()`方法由*主线程*执行—— *主线程*是由Java VM创建以运行您的应用程序的特殊线程。在应用程序内部，您可以创建和启动更多线程，这些线程可以与主线程并行执行应用程序代码的某些部分。
+
+Java线程是与任何其他Java对象一样的对象。线程是class的实例`java.lang.Thread`，或者此类的子类的实例。除了成为对象之外，java线程还可以执行代码。在本Java线程教程中，我将解释如何创建和启动线程。
+
+## Java线程视频教程
+
+这是此Java线程教程的视频版本。
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9y7l6QHpoQI" frameborder="0" allowfullscreen="" style="color: rgb(0, 0, 0); font-family: arial; font-size: medium; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-style: initial; text-decoration-color: initial;"></iframe>
+
+## 创建和启动线程
+
+用Java创建线程是这样完成的：
+
+```java
+Thread thread = new Thread();
+```
+
+要启动Java线程，您将调用其start（）方法，如下所示：
+
+```java
+thread.start（）;
+```
+
+本示例未指定任何代码来执行线程。因此，线程在启动后将立即再次停止。
+
+有两种方法可以指定线程应执行的代码。第一种是创建Thread的子类并覆盖该`run()`方法。第二种方法是将实现的对象`Runnable` （`java.lang.Runnable`）传递给 `Thread`构造函数。下面介绍这两种方法。
+
+## 线程子类
+
+指定线程运行什么代码的第一种方法是创建Thread的子类并重写该`run()`方法。该`run()`方法是调用后线程执行的操作`start()`。这是创建Java `Thread`子类的示例：
+
+```java
+  public class MyThread extends Thread {
+
+    public void run(){
+       System.out.println("MyThread running");
+    }
+  }
+```
+
+要创建并启动上述线程，您可以执行以下操作：
+
+```java
+  MyThread myThread = new MyThread();
+  myTread.start();
+```
+
+`start()`线程启动后 ，调用将立即返回。它不会等到`run()`方法完成。该`run()`方法将像由其他CPU执行一样执行。该`run()`方法执行时，将打印出文本“ MyThread running”。
+
+您也可以创建一个匿名子类，`Thread`如下所示：
+
+```java
+  Thread thread = new Thread(){
+    public void run(){
+      System.out.println("Thread Running");
+    }
+  }
+
+  thread.start();
+```
+
+一旦`run()`新线程执行了该方法，此示例将打印出文本“ Thread running” 。
+
+## Runnable 接口的实现
+
+指定线程应运行什么代码的第二种方法是通过创建实现该`java.lang.Runnable`接口的类。实现该`Runnable`接口的Java对象 可以由Java执行`Thread`。本教程的稍后部分将介绍如何完成此操作。
+
+该`Runnable`接口是Java平台随附的标准[Java接口](http://tutorials.jenkov.com/java/interfaces.html)。该`Runnable`接口只有一个方法`run()`。`Runnable`界面基本上是这样的：
+
+```java
+public interface Runnable() {
+
+    public void run();
+
+}
+```
+
+该`run()`方法的实现中必须包括线程在执行时应该执行的操作。有三种实现`Runnable`接口的方法：
+
+1. 创建一个实现该`Runnable`接口的Java类。
+2. 创建一个实现该`Runnable`接口的匿名类。
+3. 创建一个实现`Runnable`接口的Java Lambda 。
+
+以下各节将说明所有这三个选项。
+
+### Java类实现 Runnable
+
+实现Java `Runnable`接口的第一种方法是创建自己的实现该`Runnable`接口的Java类。这是实现`Runnable`接口的自定义Java类的示例：
+
+```java
+  public class MyRunnable implements Runnable {
+
+    public void run(){
+       System.out.println("MyRunnable running");
+    }
+  }
+```
+
+此`Runnable`实现的全部作用是打印出文本 `MyRunnable running`。打印完该文本后，该`run()`方法退出，并且运行该`run()`方法的线程将停止。
+
+### Runnable 的匿名实现
+
+您还可以创建的匿名实现`Runnable`。这是实现该`Runnable`接口的匿名Java类的示例：
+
+```java
+Runnable myRunnable =
+    new Runnable(){
+        public void run(){
+            System.out.println("Runnable running");
+        }
+    }
+```
+
+除了是一个匿名类之外，该示例与使用自定义类实现`Runnable`接口的示例非常相似。
+
+### Java Lambda 实现 Runnable
+
+实现`Runnable`接口的第三种方法是通过创建接口的 [Java Lambda](http://tutorials.jenkov.com/java/lambda-expressions.html)实现`Runnable`。这是可能的，因为该`Runnable`接口仅具有单个未实现的方法，因此实际上（尽管可能是无意地）是 [功能性Java接口](http://tutorials.jenkov.com/java-functional-programming/functional-interfaces.html)。
+
+这是实现`Runnable`接口的Java lambda表达式的示例：
+
+```java
+Runnable runnable =
+        () -> { System.out.println("Lambda Runnable running"); };
+```
+
+### 用 Runnable 启动线程
+
+要让该`run()`方法由线程执行，请在其构造函数中`Runnable`传递实现接口的类，匿名类或lambda表达式的实例`Thread`。这是完成的方式：
+
+```java
+Runnable runnable = new MyRunnable(); // or an anonymous class, or lambda...
+
+Thread thread = new Thread(runnable);
+thread.start();
+```
+
+当线程启动时，它将调用 实例的`run()`方法，`MyRunnable`而不是执行其自己的`run()`方法。上面的示例将打印出文本“ MyRunnable running”。
+
+## 选择子类还是 Runnable？
+
+对于这两种方法中哪一种最好没有任何规则。两种方法均有效。不过，就我个人而言，我更喜欢实现`Runnable`，并将实现的`Thread`实例传递给实例。当`Runnable`由[线程池](http://tutorials.jenkov.com/java-concurrency/creating-and-starting-threads.html)执行时，很容易将`Runnable` 实例排队，直到池中的线程空闲为止。`Thread`子类很难做到这一点。
+
+有时您可能必须实现`Runnable`子类`Thread`。例如，如果创建的子类`Thread`可以执行多个`Runnable`。实现线程池时通常是这种情况。
+
+## 常见陷阱：调用 run() 而不是 start()
+
+创建和启动线程时，常见的错误是调用 `Thread` 的 `run()` 而不是 `start()`方法，如下所示：
+
+```java
+  Thread newThread = new Thread(MyRunnable());
+  newThread.run();  //should be start();
+```
+
+刚开始您可能不会注意到任何事情，因为`Runnable`的`run()`方法按预期执行。但是，它不会由您刚刚创建的新线程执行。而是`run()`由创建线程的线程执行该方法。换句话说，该线程执行了以上两行代码。要使新创建的线程 `newThread` 调用 `MyRunnable` 实例的 `run()`方法，必须调用 `newThread.start()` 方法。 
+
+## 线程名称
+
+创建Java线程时，可以为其命名。该名称可以帮助您区分不同的线程。例如，如果有多个线程写入， `System.out`可以很方便地查看哪个线程写入了文本。这是一个例子：
+
+```java
+   Thread thread = new Thread("New Thread") {
+      public void run(){
+        System.out.println("run by: " + getName());
+      }
+   };
+
+
+   thread.start();
+   System.out.println(thread.getName());
+```
+
+注意作为参数传递给`Thread`构造函数的字符串“ New Thread” 。此字符串是线程的名称。可以通过`Thread`的`getName()`方法获取名称。您也可以`Thread`在使用`Runnable`实现时将名称传递给。看起来是这样的：
+
+```
+   MyRunnable runnable = new MyRunnable();
+   Thread thread = new Thread(runnable, "New Thread");
+
+   thread.start();
+   System.out.println(thread.getName());
+```
+
+但是请注意，由于`MyRunnable`该类不是的子类 `Thread`，因此它无权访问`getName()`执行它的线程的方法。
+
+## Thread.currentThread()
+
+该`Thread.currentThread()`方法返回对`Thread`执行实例 的引用`currentThread()`。这样，您可以访问`Thread`代表执行给定代码块的线程的Java 对象。这是一个使用方法的例子`Thread.currentThread()`：
+
+```
+Thread thread = Thread.currentThread();
+```
+
+一旦有了对`Thread`对象的引用，就可以在其上调用方法。例如，您可以获取当前正在执行代码的线程的名称，如下所示：
+
+```
+String threadName = Thread.currentThread().getName();
+```
+
+## Java线程示例
+
+这是一个小例子。首先，它打印出执行该`main()`方法的线程的名称。该线程由JVM分配。然后启动10个线程，并给它们一个全名（`"" + i`）。然后，每个线程将其名称打印出来，然后停止执行。
+
+```java
+public class ThreadExample {
+
+  public static void main(String[] args){
+    System.out.println(Thread.currentThread().getName());
+    for(int i=0; i<10; i++){
+      new Thread("" + i){
+        public void run(){
+          System.out.println("Thread: " + getName() + " running");
+        }
+      }.start();
+    }
+  }
+}
+```
+
+请注意，即使线程按顺序启动（1、2、3等），它们也可能不会顺序执行，这意味着线程1可能不是第一个将其名称写入的线程`System.out`。这是因为线程原则上是并行执行的，而不是顺序执行的。JVM和/或操作系统确定线程的执行顺序。此顺序不必与开始时的顺序相同。
+
+## 暂停线程
+
+线程可以通过调用static方法来暂停自身`Thread.sleep()`。在`sleep()` 需要数毫秒作为参数。该`sleep()`方法将尝试在恢复执行之前休眠该毫秒数。线程`sleep()`不是100％精确的，但还是很不错的。这是通过调用`Thread` `sleep()`方法将Java线程暂停3秒（3.000毫秒）的示例：
+
+```java
+try {
+    Thread.sleep(10L * 1000L);
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+```
+
+执行上述Java代码的线程将休眠大约10秒钟（10.000毫秒）。
+
+## 停止线程
+
+停止Java线程需要一些线程实现代码的准备。Java `Thread`类包含一个`stop()`方法，但已弃用。原始`stop()` 方法无法保证线程在什么状态下停止。这意味着，线程在执行过程中可以访问的所有Java对象将处于未知状态。如果您的应用程序中的其他线程也可以访问相同的对象，则您的应用程序可能会意外失败并且无法预期。
+
+不必调用该`stop()`方法，您必须实现线程代码，以便可以将其停止。这是一个实现的类示例，`Runnable`其中包含一个称为的额外方法`doStop()`，该方法 向`Runnable`发出停止信号。该`Runnable`会检查这个信号，并停止当它准备这样做。
+
+```java
+public class MyRunnable implements Runnable {
+
+    private boolean doStop = false;
+
+    public synchronized void doStop() {
+        this.doStop = true;
+    }
+
+    private synchronized boolean keepRunning() {
+        return this.doStop == false;
+    }
+
+    @Override
+    public void run() {
+        while(keepRunning()) {
+            // keep doing what this thread should do.
+            System.out.println("Running");
+
+            try {
+                Thread.sleep(3L * 1000L);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+}
+```
+
+注意`doStop()`和`keepRunning()`方法。在`doStop()`旨在被从另一个线程小于线程执行被调用`MyRunnable`的`run()` 方法。该`keepRunning()`方法由线程执行的内部调用 `MyRunnable`的`run()`方法。只要`doStop()`尚未调用，该`keepRunning()`方法就会返回`true`-意味着执行该`run()`方法的线程 将继续运行。
+
+这是一个启动执行上述`MyRunnable` 类的实例的Java线程，并在延迟后再次停止的示例：
+
+```java
+public class MyRunnableMain {
+
+    public static void main(String[] args) {
+        MyRunnable myRunnable = new MyRunnable();
+
+        Thread thread = new Thread(myRunnable);
+
+        thread.start();
+
+        try {
+            Thread.sleep(10L * 1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        myRunnable.doStop();
+    }
+}
+```
+
+本示例首先创建一个`MyRunnable`实例，然后将该实例传递给线程并启动该线程。然后执行该`main()`方法的线程（主线程）休眠10秒钟，然后调用实例的`doStop()`方法`MyRunnable`。这将导致执行该`MyRunnable`方法的线程停止，因为`keepRunning()`将`true`在after之后返回`doStop()`。
+
+请记住，如果您的`Runnable`实现不仅需要 `run()`方法（例如a `stop()`或`pause()`方法），那么您将无法再`Runnable`使用Java lambda表达式创建实现。Java lambda只能实现一个方法。取而代之的是，您必须使用一个自定义类，或者使用一个扩展的自定义接口， `Runnable`它具有额外的方法，并且由匿名类实现。
