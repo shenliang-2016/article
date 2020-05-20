@@ -1,12 +1,12 @@
-# Java Memory Model
+# Java 内存模型
 
-The Java memory model specifies how the Java virtual machine works with the computer's memory (RAM). The Java virtual machine is a model of a whole computer so this model naturally includes a memory model - AKA the Java memory model.
+Java 内存模型指定了 Java 虚拟机如何使用计算机的内存(RAM)。Java 虚拟机可以看作是整个计算机的模型，因而自然包含一个内存模型——也就是所谓的 Java 内存模型。
 
-It is very important to understand the Java memory model if you want to design correctly behaving concurrent programs. The Java memory model specifies how and when different threads can see values written to shared variables by other threads, and how to synchronize access to shared variables when necessary.
+如果想要设计具有精确行为的并发程序，理解 Java 内存模型是非常重要的。Java 内存模型指定了不同的线程在何时以何种方法可以看到由其他线程写入共享变量的值，以及在必要时如何同步访问共享变量。
 
-The original Java memory model was insufficient, so the Java memory model was revised in Java 1.5. This version of the Java memory model is still in use in Java 8.
+最初的 Java 内存模型性能不好，因而在 Java 1.5 中进行了改进。改进后的 Java 内存模型在 Java 1.8 中仍然使用。
 
-## The Internal Java Memory Model
+## 内部 Java 内存模型
 
 The Java memory model used internally in the JVM divides memory between thread stacks and the heap. This diagram illustrates the Java memory model from a logic perspective:
 
