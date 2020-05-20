@@ -102,25 +102,25 @@ public class MySharedObject {
 
 还要注意类型为 `long` 的 `MySharedObject` 类中的两个成员变量，这是原始类型。由于这些变量是成员变量，因此它们仍与对象一起存储在堆中。仅局部变量存储在线程堆栈上。
 
-## Hardware Memory Architecture
+## 硬件内存架构
 
-Modern hardware memory architecture is somewhat different from the internal Java memory model. It is important to understand the hardware memory architecture too, to understand how the Java memory model works with it. This section describes the common hardware memory architecture, and a later section will describe how the Java memory model works with it.
+现代硬件内存体系结构与内部 Java 内存模型有所不同。同样重要的是，还要了解硬件内存架构，并了解 Java 内存模型如何与之协同工作。本节描述了常见的硬件内存体系结构，下一节将描述 Java 内存模型如何与之协同工作。
 
-Here is a simplified diagram of modern computer hardware architecture:
+下面是最简化的现代计算机硬件架构示意图：
 
 ![](http://tutorials.jenkov.com/images/java-concurrency/java-memory-model-4.png)
 
-A modern computer often has 2 or more CPUs in it. Some of these CPUs may have multiple cores too. The point is, that on a modern computer with 2 or more CPUs it is possible to have more than one thread running simultaneously. Each CPU is capable of running one thread at any given time. That means that if your Java application is multithreaded, one thread per CPU may be running simultaneously (concurrently) inside your Java application.
+现代计算机通常其中装有2个或更多CPU。其中一些CPU也可能具有多个内核。关键是，在具有2个或更多CPU的现代计算机上，可能同时运行多个线程。每个CPU都可以在任何给定时间运行一个线程。这意味着，如果Java应用程序是多线程的，则每个CPU可能在Java应用程序中同时（并发）运行一个线程。
 
-Each CPU contains a set of registers which are essentially in-CPU memory. The CPU can perform operations much faster on these registers than it can perform on variables in main memory. That is because the CPU can access these registers much faster than it can access main memory.
+每个CPU包含一组寄存器，这些寄存器本质上是CPU内存。 CPU在这些寄存器上执行操作的速度比对主存储器中的变量执行操作的速度快得多。这是因为CPU可以比访问主存储器更快地访问这些寄存器。
 
-Each CPU may also have a CPU cache memory layer. In fact, most modern CPUs have a cache memory layer of some size. The CPU can access its cache memory much faster than main memory, but typically not as fast as it can access its internal registers. So, the CPU cache memory is somewhere in between the speed of the internal registers and main memory. Some CPUs may have multiple cache layers (Level 1 and Level 2), but this is not so important to know to understand how the Java memory model interacts with memory. What matters is to know that CPUs can have a cache memory layer of some sort.
+每个CPU可能还具有一个CPU高速缓存存储层。实际上，大多数现代CPU都具有一定大小的缓存层。 CPU可以比其主存储器更快地访问其高速缓存，但是通常不如它可以访问其内部寄存器的速度快。因此，CPU高速缓存内存介于内部寄存器和主内存的速度之间。某些CPU可能具有多个高速缓存层（第1级和第2级），但是了解Java内存模型如何与内存交互并不重要。重要的是要知道CPU可以具有某种高速缓存层。
 
-A computer also contains a main memory area (RAM). All CPUs can access the main memory. The main memory area is typically much bigger than the cache memories of the CPUs.
+计算机还包含一个主存储区（RAM）。所有CPU都可以访问主存储器。主存储区通常比CPU的缓存大得多。
 
-Typically, when a CPU needs to access main memory it will read part of main memory into its CPU cache. It may even read part of the cache into its internal registers and then perform operations on it. When the CPU needs to write the result back to main memory it will flush the value from its internal register to the cache memory, and at some point flush the value back to main memory.
+通常，当CPU需要访问主存储器时，它将部分主存储器读入其CPU缓存中。它甚至可以将缓存的一部分读入其内部寄存器，然后对其执行操作。当CPU需要将结果写回主存储器时，它将把值从其内部寄存器刷新到高速缓存，并在某个时候将值刷新回主存储器。
 
-The values stored in the cache memory is typically flushed back to main memory when the CPU needs to store something else in the cache memory. The CPU cache can have data written to part of its memory at a time, and flush part of its memory at a time. It does not have to read / write the full cache each time it is updated. Typically the cache is updated in smaller memory blocks called "cache lines". One or more cache lines may be read into the cache memory, and one or mor cache lines may be flushed back to main memory again.
+当CPU需要将其他内容存储在高速缓存中时，通常会将高速缓存中存储的值刷新回主存储器。 CPU高速缓存可以一次将数据写入其部分内存，并一次刷新其部分内存。它不必每次更新都读取/写入完整的缓存。通常，缓存在称为“缓存行”的较小存储块中更新。可以将一个或多个高速缓存行读入高速缓存存储器，并且可以将一个或多个高速缓存行再次刷新回主存储器。
 
 ## Bridging The Gap Between The Java Memory Model And The Hardware Memory Architecture
 
