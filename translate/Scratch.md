@@ -8,19 +8,19 @@ Java 内存模型指定了 Java 虚拟机如何使用计算机的内存(RAM)。J
 
 ## 内部 Java 内存模型
 
-The Java memory model used internally in the JVM divides memory between thread stacks and the heap. This diagram illustrates the Java memory model from a logic perspective:
+JVM 内部使用的 Java 内存模型将内存划分为线程栈和堆。下图展示了 Java 内存模型的逻辑表达形式：
 
 ![](http://tutorials.jenkov.com/images/java-concurrency/java-memory-model-1.png)
 
-Each thread running in the Java virtual machine has its own thread stack. The thread stack contains information about what methods the thread has called to reach the current point of execution. I will refer to this as the "call stack". As the thread executes its code, the call stack changes.
+Java 虚拟机中运行的每个线程都拥有自己的线程栈。线程栈包含线程已经调用的方法直到当前执行到的代码位置的信息。我将这种信息称为"调用栈"。随着线程执行代码，调用栈不断变化。
 
-The thread stack also contains all local variables for each method being executed (all methods on the call stack). A thread can only access it's own thread stack. Local variables created by a thread are invisible to all other threads than the thread who created it. Even if two threads are executing the exact same code, the two threads will still create the local variables of that code in each their own thread stack. Thus, each thread has its own version of each local variable.
+线程栈还包含正在执行的每个方法（调用栈上的所有方法）的所有局部变量。线程只能访问自己的线程栈。由线程创建的局部变量对除了创建它的线程之外的所有线程都是不可见的。即使两个线程正在执行完全相同的代码，两个线程仍然会在各自的线程栈中创建代码中的局部变量。因此，每个线程都拥有每个局部变量的自身版本。
 
-All local variables of primitive types ( `boolean`, `byte`, `short`, `char`, `int`, `long`, `float`, `double`) are fully stored on the thread stack and are thus not visible to other threads. One thread may pass a copy of a pritimive variable to another thread, but it cannot share the primitive local variable itself.
+所有的基本数据类型 ( `boolean`, `byte`, `short`, `char`, `int`, `long`, `float`, `double`) 的局部变量都完全存储在线程栈上，因而对其他线程不可见。线程可以将一个基本数据类型的变量传递给另一个线程，但是并不能共享自己的基本数据类型的局部变量。
 
-The heap contains all objects created in your Java application, regardless of what thread created the object. This includes the object versions of the primitive types (e.g. `Byte`, `Integer`, `Long` etc.). It does not matter if an object was created and assigned to a local variable, or created as a member variable of another object, the object is still stored on the heap.
+堆包含你的 Java 应用中创建的所有对象，不关心创建对象的线程。包括基本数据类型的对象版本 (比如， `Byte`, `Integer`, `Long` 等等)。对象被创建并分配给局部变量，或者作为另一个对象的成员变量被创建，都没关系，这些对象都存储在堆中。
 
-Here is a diagram illustrating the call stack and local variables stored on the thread stacks, and objects stored on the heap:
+下图展示了存储在线程栈中的调用栈和局部变量，以及存储在堆中的对象：
 
 ![](http://tutorials.jenkov.com/images/java-concurrency/java-memory-model-2.png)
 
