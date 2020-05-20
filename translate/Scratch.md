@@ -24,31 +24,29 @@ Java 虚拟机中运行的每个线程都拥有自己的线程栈。线程栈包
 
 ![](http://tutorials.jenkov.com/images/java-concurrency/java-memory-model-2.png)
 
-A local variable may be of a primitive type, in which case it is totally kept on the thread stack.
+局部变量也可能是基本数据类型，这种情况下完全存储在线程栈中。
 
-A local variable may also be a reference to an object. In that case the reference (the local variable) is stored on the thread stack, but the object itself if stored on the heap.
+局部变量也可以是对象的引用。这种情况下该引用(局部变量)存储在线程栈上，但是对象本身存储在堆上。
 
-An object may contain methods and these methods may contain local variables. These local variables are also stored on the thread stack, even if the object the method belongs to is stored on the heap.
+一个对象可能包含方法，而这些方法可能包含局部变量。即使这些方法所属的对象存储在堆中，这些局部变量也存储在线程栈中。
 
-An object's member variables are stored on the heap along with the object itself. That is true both when the member variable is of a primitive type, and if it is a reference to an object.
+对象的成员变量与对象本身一起存储在堆中。当成员变量是原始类型时，以及它是对对象的引用时，都是如此。静态类变量也与类定义一起存储在堆中。
 
-Static class variables are also stored on the heap along with the class definition.
+引用对象的所有线程都可以访问堆上的对象。当线程可以访问对象时，它也可以访问该对象的成员变量。如果两个线程同时在同一个对象上调用方法，则它们都将有权访问该对象的成员变量，但是每个线程将拥有自己的局部变量副本。
 
-Objects on the heap can be accessed by all threads that have a reference to the object. When a thread has access to an object, it can also get access to that object's member variables. If two threads call a method on the same object at the same time, they will both have access to the object's member variables, but each thread will have its own copy of the local variables.
-
-Here is a diagram illustrating the points above:
+下图展示了上述要点：
 
 ![](http://tutorials.jenkov.com/images/java-concurrency/java-memory-model-3.png)
 
-Two threads have a set of local variables. One of the local variables (`Local Variable 2`) point to a shared object on the heap (Object 3). The two threads each have a different reference to the same object. Their references are local variables and are thus stored in each thread's thread stack (on each). The two different references point to the same object on the heap, though.
+两个线程具有一组局部变量。局部变量之一（`Local Variable 2`）指向堆上的共享对象（对象3）。这两个线程分别具有对同一对象的不同引用。它们的引用是局部变量，因此存储在每个线程的线程栈中（在每个线程上）。但是，两个不同的引用指向堆上的同一对象。
 
-Notice how the shared object (Object 3) has a reference to Object 2 and Object 4 as member variables (illustrated by the arrows from Object 3 to Object 2 and Object 4). Via these member variable references in Object 3 the two threads can access Object 2 and Object 4.
+请注意，共享对象（对象3）如何引用对象2和对象4作为成员变量（如从对象3到对象2和对象4的箭头所示）。通过对象3中的这些成员变量引用，两个线程可以访问对象2和对象4。
 
-The diagram also shows a local variable which point to two different objects on the heap. In this case the references point to two different objects (Object 1 and Object 5), not the same object. In theory both threads could access both Object 1 and Object 5, if both threads had references to both objects. But in the diagram above each thread only has a reference to one of the two objects.
+该图还显示了一个局部变量，该局部变量指向堆上的两个不同对象。在这种情况下，引用指向两个不同的对象（对象1和对象5），而不是同一对象。理论上，如果两个线程都引用了两个对象，则两个线程都可以访问对象1和对象5。但是在上图中，每个线程仅具有对两个对象之一的引用。
 
-So, what kind of Java code could lead to the above memory graph? Well, code as simple as the code below:
+那么，什么样的 Java 代码能够产生上面的内存分布图？如下的代码即可：
 
-```
+```java
 public class MyRunnable implements Runnable() {
 
     public void run() {
@@ -90,19 +88,19 @@ public class MySharedObject {
 }
 ```
 
-If two threads were executing the `run()` method then the diagram shown earlier would be the outcome. The `run()` method calls `methodOne()` and `methodOne()` calls `methodTwo()`.
+如果两个线程都正在执行 `run()` 方法，则前面的图将会产生。`run()` 方法调用 `methodOne()` ，而 `methodOne()` 调用 `methodTwo()`。
 
-`methodOne()` declares a primitive local variable (`localVariable1` of type `int`) and an local variable which is an object reference (`localVariable2`).
+`methodOne()` 声明一个基本数据类型的局部变量 ( `int` 类型的`localVariable1` ) 和一个对象引用类型的局部变量 (`localVariable2`)。
 
-Each thread executing `methodOne()` will create its own copy of `localVariable1` and `localVariable2` on their respective thread stacks. The `localVariable1` variables will be completely separated from each other, only living on each thread's thread stack. One thread cannot see what changes another thread makes to its copy of `localVariable1`.
+每个执行 `methodOne()` 的线程都将在各自的线程栈上创建自己的 `localVariable1` 和 `localVariable2` 的副本。 `localVariable1` 变量将是彻底相互独立的，各自存活在自己的线程栈中。一个线程无法看到别的线程对它自己的 `localVariable1` 的副本所作的修改。
 
-Each thread executing `methodOne()` will also create their own copy of `localVariable2`. However, the two different copies of `localVariable2` both end up pointing to the same object on the heap. The code sets `localVariable2` to point to an object referenced by a static variable. There is only one copy of a static variable and this copy is stored on the heap. Thus, both of the two copies of `localVariable2` end up pointing to the same instance of `MySharedObject` which the static variable points to. The `MySharedObject` instance is also stored on the heap. It corresponds to Object 3 in the diagram above.
+每个执行 `methodOne()` 的线程也会创建自己的 `localVariable2` 副本。但是，`localVariable2` 的两个不同副本最终都指向堆上的同一对象。该代码将 `localVariable2` 设置为指向静态变量引用的对象。静态变量只有一个副本，并且此副本存储在堆中。因此，`localVariable2` 的两个副本最终都指向静态变量指向的 `MySharedObject` 的同一实例。`MySharedObject` 实例也存储在堆中。它对应于上图中的对象3。
 
-Notice how the `MySharedObject` class contains two member variables too. The member variables themselves are stored on the heap along with the object. The two member variables point to two other `Integer` objects. These `Integer` objects correspond to Object 2 and Object 4 in the diagram above.
+注意 `MySharedObject` 类也包含两个成员变量。成员变量本身与对象一起存储在堆中。这两个成员变量指向另外两个 `Integer` 对象。这些 `Integer` 对象对应于上图中的对象2和对象4。
 
-Notice also how `methodTwo()` creates a local variable named `localVariable1`. This local variable is an object reference to an `Integer` object. The method sets the `localVariable1` reference to point to a new `Integer` instance. The `localVariable1` reference will be stored in one copy per thread executing `methodTwo()`. The two `Integer` objects instantiated will be stored on the heap, but since the method creates a new `Integer` object every time the method is executed, two threads executing this method will create separate `Integer` instances. The `Integer` objects created inside `methodTwo()` correspond to Object 1 and Object 5 in the diagram above.
+还要注意 `methodTwo()` 如何创建一个名为 `localVariable1` 的局部变量。该局部变量是对 `Integer` 对象的对象引用。 该方法将 `localVariable1` 引用设置为指向新的 `Integer` 实例。执行 `methodTwo()` 的每个线程的 `localVariable1` 引用将存储在一个副本中。实例化的两个 `Integer` 对象将存储在堆中，但是由于该方法每次执行时都会创建一个新的 `Integer` 对象，因此执行此方法的两个线程将创建单独的 `Integer` 实例。在 `methodTwo()` 内部创建的 `Integer` 对象对应于上图中的对象1和对象5。
 
-Notice also the two member variables in the class `MySharedObject` of type `long` which is a primitive type. Since these variables are member variables, they are still stored on the heap along with the object. Only local variables are stored on the thread stack.
+还要注意类型为 `long` 的 `MySharedObject` 类中的两个成员变量，这是原始类型。由于这些变量是成员变量，因此它们仍与对象一起存储在堆中。仅局部变量存储在线程堆栈上。
 
 ## Hardware Memory Architecture
 
