@@ -218,11 +218,11 @@ public class SynchronizedExample {
 }
 ```
 
-## Java Synchronized Example
+## Java 同步示例
 
-Here is an example that starts 2 threads and have both of them call the add method on the same instance of Counter. Only one thread at a time will be able to call the add method on the same instance, because the method is synchronized on the instance it belongs to.
+这个例子启动两个线程，它们都会调用同一个计数器实例上的 `add` 方法。此时只有一个线程能够调用同一个实例上的 `add` 方法，因为该方法被同步在它所属的实例上。
 
-```
+```java
   public class Example {
 
     public static void main(String[] args){
@@ -236,9 +236,9 @@ Here is an example that starts 2 threads and have both of them call the add meth
   }
 ```
 
-Here are the two classes used in the example above, `Counter` and `CounterThread`.
+下面是例子中用到的类， `Counter` 和 `CounterThread`。
 
-```
+```java
   public class Counter{
      
      long count = 0;
@@ -263,11 +263,11 @@ Here are the two classes used in the example above, `Counter` and `CounterThread
   }
 ```
 
-Two threads are created. The same `Counter` instance is passed to both of them in their constructor. The `Counter.add()` method is synchronized on the instance, because the add method is an instance method, and marked as synchronized. Therefore only one of the threads can call the add() method at a time. The other thread will wait until the first thread leaves the add() method, before it can execute the method itself.
+两个线程被创建。同一个 `Counter` 实例通过构造器被传递给它们。`Counter.add()` 方法被同步到该实例上，因为 `add` 方法是实例方法，而且被标记为同步的。由于此时只有一个线程可以调用 `add()` 方法。另外一个线程将等待直到第一个线程退出 `add()` 方法，然后才能执行该方法。
 
-If the two threads had referenced two separate `Counter` instances, there would have been no problems calling the add() methods simultaneously. The calls would have been to different objects, so the methods called would also be synchronized on different objects (the object owning the method). Therefore the calls would not block. Here is how that could look:
+如果两个线程引用了各自独立的 `Counter` 实例，它们同时调用 `add()` 方法就没有任何问题。调用将会指向不同的对象，因此方法调用也可以在不同的对象（拥有该方法的对象）上同步。方法的调用不会被阻塞。大概是下面这样：
 
-```
+```java
 public class Example {
 
   public static void main(String[] args){
@@ -282,47 +282,47 @@ public class Example {
 }
 ```
 
-Notice how the two threads, threadA and threadB, no longer reference the same counter instance. The `add` method of `counterA` and `counterB` are synchronized on their two owning instances. Calling `add()` on `counterA` will thus not block a call to `add()` on `counterB`.
+注意，两个线程，线程 A 和线程 B，不再引用相同的 `Counter` 实例。`counterA` 和 `counterB` 上的 `add()` 方法在各自的对象实例上同步。调用 `counterA` 上的 `add()` 当然不会阻塞对 `counterB` 上的 `add()` 的调用。
 
-## Synchronized and Data Visibility
+## 同步和数据可见性
 
-Without the use of the `synchronized` keyword (or the [Java volatile](http://tutorials.jenkov.com/java-concurrency/volatile.html) keyword) there is no guarantee that when one thread changes the value of a variable shared with other threads (e.g. via an object all threads have access to), that the other threads can see the changed value. There are no guarantees about when a variable kept in a CPU register by one thread is "committed" to main memory, and there is no guarantee about when other threads "refresh" a variable kept in a CPU register from main memory.
+除了使用 `synchronized` 关键字(或者 [Java volatile](http://tutorials.jenkov.com/java-concurrency/volatile.html) 关键字)，无法保证当一个线程修改与其他线程共享的变量的值时，其他的线程能够看到这个修改的值。对于由线程读取到 CPU 寄存器中的变量何时会被"提交"到主内存中，没有任何保证。同样，别的线程何时根据主内存对自己的 CPU 寄存器中的变量进行"刷新"，也没有任何保证。
 
-The `synchronized` keyword changes that. When a thread enters a synchronized block it will refresh the values of all variables visible to the thread. When a thread exits a synchronized block all changes to variables visible to the thread will be committed to main memory. This is similar to how the [volatile keyword](http://tutorials.jenkov.com/java-concurrency/volatile.html) works.
+`synchronized` 关键字改变了这一切。当一个线程进入同步块，它将刷行所有它可见的变量的值。当一个线程退出同步块时，该线程可见的所有变量的变化都会被提交到主内存。类似于 [volatile keyword](http://tutorials.jenkov.com/java-concurrency/volatile.html) 的行为。
 
-## Synchronized and Instruction Reordering
+## 同步和指令重排序
 
-The Java compiler and Java Virtual Machine are allowed to reorder instructions in your code to make them execute faster, typically by enabling the reordered instructions to be executed in parallel by the CPU.
+Java 编译器和 Java 虚拟机被允许对你的代码进行指令重排序以使得它们执行更快，通常是通过允许重排序之后的指令被 CPU 并行执行。
 
-Instruction reordering could potentially cause problems in code that is executed by multiple threads at the same time. For instance, if a write to a variable happening inside of a synchronized block was reordered to happen outside of the synchronized block.
+对那些同时被多个线程执行的代码进行指令重排序可能会导致问题。比如，如果一个发生在同步块内部的变量写入被重排序到了同步块之外。
 
-To fix this problem the Java synchronized keyword places some restrictions on reordering of instructions before, inside and after synchronized blocks. This is similar to the restrictions placed by the [volatile keyword](http://tutorials.jenkov.com/java-concurrency/volatile.html).
+为了解决这种问题，Java `synchronized` 关键字对同步块之前、内部以及之后的指令重排序设置了一些限制。类似于 [volatile 关键字](http://tutorials.jenkov.com/java-concurrency/volatile.html) 设置的限制。
 
-The end result is, that you can be sure that your code works correctly - that no instruction reordering is taking place that ends up making the code behave differently than what was to be expected from the code you wrote.
+最终结果是，您可以确保您的代码正确运行——不会发生指令重新排序，最终导致该代码的行为不同于您编写的代码所期望的行为。
 
-## What Objects to Synchronize On
+## 在什么对象上同步
 
-As mentioned several times in this Java synchronized tutorial, a synchronized block must be synchronized on some object. You can actually choose any object to synchronize on, but it is recommended that you do not synchronize on String objects, or any primitive type wrapper objects, as the compiler might optimize those, so that you are using the same instances in different places in your code where you thought you were using different instance. Look at this example:
+如前所述，同步块必须同步在某些对象上。你可以选择几乎任何对象以同步于其上，但是建议不要在 `String` 对象上同步，或者任何其他基本数据类型的包装对象。因为编译器可能对此进行优化，导致代码中你以为使用的是不同的实例的地方，可能实际上使用的是相同的实例。分析下面的例子：
 
-```
+```java
 synchronized("Hey") {
    //do something in here.
 }
 ```
 
-If you have more than one synchronized block that is synchronized on the literal String value "Hey", then the compiler might actually use the same String object behind the scenes. The result being, that both of these two synchronized blocks are then synchronized on the same object. That might not be the behaviour you were looking for.
+如果你有多个同步块都同步在字面值"Hey"上，编译器可能在背后实际上使用同一个 `String` 对象。结果是，这些同步块就同步在同一个对象上。这可能不是你期望的行为。
 
-The same can be true for using primitive type wrapper objects. Look at this example:
+使用基本数据类型包装对象时的情况类似。如下面的例子：
 
-```
+```java
 synchronized(Integer.valueOf(1)) {
    //do something in here.
 }
 ```
 
-If you call `Integer.valueOf(1)` multiple times, it might actually return the same wrapper object instance for the same input parameter values. That means, that if you are synchronizing multiple blocks on the same primitive wrapper object (e.g. use `Integer.valueOf(1)` multiple times as monitor object), then you risk that those synchronized blocks all get synchronized on the same object. That might also not be the behaviour you were looking for.
+如果你调用 `Integer.valueOf(1)` 很多次，它可能实际上为相同的输入参数值返回同一个包装对象实例。这就意味着，如果你将多个同步块同步在相同的基本数据类型包装对象上，你可能就会面临所有同步块都同步在同一个对象上的风险。这也不是你期望的行为。
 
-To be on the safe side, synchronize on `this` - or on a `new Object()` . Those are not cached or reused internally by the Java compiler, Java VM or Java libraries.
+为了确保安全，在 `this` 上同步——或者在 `new Object()` 上同步。使用那些不会被编译器、JVM 或者 Java 类库内部缓存或者复用的对象。
 
 ## Synchronized Block Limitations and Alternatives
 
