@@ -113,15 +113,15 @@ public static MyStaticCounter{
   }
 ```
 
-This example uses the Java synchronized block construct to mark a block of code as synchronized. This code will now execute as if it was a synchronized method.
+这个例子使用 Java 同步块结构来将一个代码块标记为同步的。该代码块将类似于同步方法那样被执行。
 
-Notice how the Java synchronized block construct takes an object in parentheses. In the example "this" is used, which is the instance the add method is called on. The object taken in the parentheses by the synchronized construct is called a monitor object. The code is said to be synchronized on the monitor object. A synchronized instance method uses the object it belongs to as monitor object.
+注意，Java 同步块结构如何选择同步使用的对象。上面例子中使用了 `this` ，也就是 `add` 方法在其上被调用的那个实例。被同步结构选取放在括号中的对象被称为监视器对象。代码块被称为被同步在监视器对象上。一个同步实例方法使用它所属的对象作为监视器对象。
 
-Only one thread can execute inside a Java code block synchronized on the same monitor object.
+只有一个线程可以在同步于同一个监视器对象的 Java 同步代码块内部运行。
 
-The following two examples are both synchronized on the instance they are called on. They are therefore equivalent with respect to synchronization:
+下面两个例子都是同步在它们被调用于其上的实例上。它们在同步方面是等效的：
 
-```
+```java
   public class MyClass {
   
     public synchronized void log1(String msg1, String msg2){
@@ -139,19 +139,15 @@ The following two examples are both synchronized on the instance they are called
   }
 ```
 
-Thus only a single thread can execute inside either of the two synchronized blocks in this example.
+因此，只有一个线程能够执行在例子中的两个同步块之一内部。
 
-Had the second synchronized block been synchronized on a different object than `this`, then one thread at a time had been able to execute inside each method.
+如果第二个同步块被同步在一个不同于 `this` 的对象上，则一个线程就可以在同一时刻执行在每个方法内部。
 
+## 静态方法中的同步块
 
+同步块也可以被用在静态方法内部。这里是与前面静态方法示例相同的例子。这些方法都同步在它们所属的类的类对象上：
 
-
-
-## Synchronized Blocks in Static Methods
-
-Synchronized blocks can also be used inside of static methods. Here are the same two examples from the previous section as static methods. These methods are synchronized on the class object of the class the methods belong to:
-
-```
+```java
   public class MyClass {
 
     public static synchronized void log1(String msg1, String msg2){
@@ -169,21 +165,17 @@ Synchronized blocks can also be used inside of static methods. Here are the same
   }
 ```
 
-Only one thread can execute inside any of these two methods at the same time.
+同一时刻只有一个线程能够执行在这两个方法之一内部。
 
-Had the second synchronized block been synchronized on a different object than `MyClass.class`, then one thread could execute inside each method at the same time.
+如果第二个同步块被同步在 `MyClass.class` 之外的对象上，则同一时刻一个线程可以执行在每个方法内部。
 
+## Lambda 表达式中的同步块
 
+在 [Java Lambda Expression](http://tutorials.jenkov.com/java/lambda-expressions.html) 和匿名类内部使用同步块也是可能的。
 
+这是一个内部包含同步块的 Java lambda 表达式。注意，该同步块同步在包含该 lambda 表达式的类的类对象上。如果有必要，它也可以同步在其他对象上。不过使用类对象很适合这个例子：
 
-
-## Synchronized Blocks in Lambda Expressions
-
-It is even possible to use synchronized blocks inside a [Java Lambda Expression](http://tutorials.jenkov.com/java/lambda-expressions.html) as well as inside anonymous classes.
-
-Here is an example of a Java lambda expression with a synchronized block inside. Notice that the synchronized block is synchronized on the class object of the class containing the lambda expression. It could have been synchronized on another object too, if that would have made more sense (given a specific use case), but using the class object is fine for this example.
-
-```
+```java
 import java.util.function.Consumer;
 
 public class SynchronizedExample {
@@ -225,10 +217,6 @@ public class SynchronizedExample {
   }
 }
 ```
-
-
-
-
 
 ## Java Synchronized Example
 
@@ -296,19 +284,11 @@ public class Example {
 
 Notice how the two threads, threadA and threadB, no longer reference the same counter instance. The `add` method of `counterA` and `counterB` are synchronized on their two owning instances. Calling `add()` on `counterA` will thus not block a call to `add()` on `counterB`.
 
-
-
-
-
 ## Synchronized and Data Visibility
 
 Without the use of the `synchronized` keyword (or the [Java volatile](http://tutorials.jenkov.com/java-concurrency/volatile.html) keyword) there is no guarantee that when one thread changes the value of a variable shared with other threads (e.g. via an object all threads have access to), that the other threads can see the changed value. There are no guarantees about when a variable kept in a CPU register by one thread is "committed" to main memory, and there is no guarantee about when other threads "refresh" a variable kept in a CPU register from main memory.
 
 The `synchronized` keyword changes that. When a thread enters a synchronized block it will refresh the values of all variables visible to the thread. When a thread exits a synchronized block all changes to variables visible to the thread will be committed to main memory. This is similar to how the [volatile keyword](http://tutorials.jenkov.com/java-concurrency/volatile.html) works.
-
-
-
-
 
 ## Synchronized and Instruction Reordering
 
@@ -319,10 +299,6 @@ Instruction reordering could potentially cause problems in code that is executed
 To fix this problem the Java synchronized keyword places some restrictions on reordering of instructions before, inside and after synchronized blocks. This is similar to the restrictions placed by the [volatile keyword](http://tutorials.jenkov.com/java-concurrency/volatile.html).
 
 The end result is, that you can be sure that your code works correctly - that no instruction reordering is taking place that ends up making the code behave differently than what was to be expected from the code you wrote.
-
-
-
-
 
 ## What Objects to Synchronize On
 
@@ -348,10 +324,6 @@ If you call `Integer.valueOf(1)` multiple times, it might actually return the sa
 
 To be on the safe side, synchronize on `this` - or on a `new Object()` . Those are not cached or reused internally by the Java compiler, Java VM or Java libraries.
 
-
-
-
-
 ## Synchronized Block Limitations and Alternatives
 
 Synchronized blocks in Java have several limitations. For instance, a synchronized block in Java only allows a single thread to enter at a time. However, what if two threads just wanted to read a shared value, and not update it? That might be safe to allow. As alternative to a synchronized block you could guard the code with a [Read / Write Lock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) which as more advanced locking semantics than a synchronized block. Java actually comes with a built in [ReadWriteLock](http://tutorials.jenkov.com/java-util-concurrent/readwritelock.html) class you can use.
@@ -362,10 +334,6 @@ Synchronized blocks do not guarantee in what order threads waiting to enter them
 
 What if you just have one thread writing to a shared variable, and other threads only reading that variable? Then you might be able to just use a [volatile variable](http://tutorials.jenkov.com/java-concurrency/volatile.html) without any synchronization around.
 
-
-
-
-
 ## Synchronized Block Performance Overhead
 
 There is a small performance overhead associated with entering and exiting a synchronized block in Java. As Jave have evolved this performance overhead has gone down, but there is still a small price to pay.
@@ -373,10 +341,6 @@ There is a small performance overhead associated with entering and exiting a syn
 The performance overhead of entering and exiting a synchronized block is mostly something to worry about if you enter and exit a synchronized block lots of times within a tight loop or so.
 
 Also, try not to have larger synchronized blocks than necessary. In other words, only synchronize the operations that are really necessary to synchronize - to avoid blocking other threads from executing operations that do not have to be synchronized. Only the absolutely necessary instructions in synchronized blocks. That should increase parallelism of your code.
-
-
-
-
 
 ## Synchronized Block Reentrance
 
@@ -403,10 +367,6 @@ public class MyClass {
 Forget for a moment that the above way of counting the elements of a list makes no sense at all. Just focus on how inside the synchronized block inside the `count()` method calls the `count()` method recursively. Thus, the thread calling count() may eventually enter the same synchronized block multiple times. This is allowed. This is possible.
 
 Keep in mind though, that designs where a thread enters into multiple synchronized blocks may lead to [nested monitor lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) if you do not design your code carefully.
-
-
-
-
 
 ## Synchronized Blocks in Cluster Setups
 
