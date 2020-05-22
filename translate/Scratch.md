@@ -1,33 +1,72 @@
-# Java Volatile 关键字
+## Java volatile 可见性保证
 
-Java `volatile` 关键字用于将 Java 变量标记为"被存储在主内存中"。更精确的含义，每次都从计算机的主内存中读取 `volatile` 变量，而不是从 CPU 缓存中。同时，每次对 `volatile` 变量的写入都会直接写入主内存，而不仅仅写入 CPU 缓存。
+Java `volatile` 关键字尝试解决可见性问题。通过声明 `counter` 变量为 `volatile` ，所有 `counter` 变量的写入都会被立即写回主内存。同时，所有 `counter` 变量的读取都会直接来自主内存。
 
-实际上，Java 5 以来，`volatile` 关键字不仅仅提供了从主内存读写 `volatile` 变量的保证，接下来将详细介绍其他功能。
-
-## 变量可见性问题
-
-Java `volatile` 关键字保证对共享变量的修改在线程之间的可见性。听起来可能有点抽象，让我们来解释一下。
-
-早多线程应用中，多个线程操作非 `volatile` 变量，为了提高性能，每个线程都会从主内存将变量拷贝到自己的 CPU 缓存中。如果你的计算机有多个 CPU，每个线程可能都运行在不同的 CPU 上。这就意味着，每个线程都会将变量拷贝到各自不同的 CPU 缓存中。如下图所示：
-
-![](http://tutorials.jenkov.com/images/java-concurrency/java-volatile-1.png)
-
-使用非 `volatile` 变量，无法保证 JVM 何时会从主内存读取数据到 CPU 缓存中，何时将 CPU 缓存中的数据写回主内存。下面我将介绍这种情况可能导致的若干问题。
-
-设想这种情况，两个或者更多线程需要访问一个包含计数器变量的共享对象，声明如下：
+声明 `volatile` 变量 `counter` 如下：
 
 ```java
 public class SharedObject {
 
-    public int counter = 0;
+    public volatile int counter = 0;
 
 }
 ```
 
-同时假想，只有线程 1 增加 `counter` 变量，不过线程 1 和线程 2 可能不时读取 `counter` 变量。
+声明变量为 `volatile` 提供了该变量的写入对其他线程的可见性保证。
 
-如果 `counter` 变量没有声明为 `volatile` ，就无法保证该变量的值会被从 CPU 缓存写回主内存。这就意味着，CPU 缓存中的 `counter` 变量的值可能与主内存中的不同。如下所示：
+上面给出的场景中，一个线程(T1)修改 `counter` ，另一个线程(T2)读取 `counter` 而不修改它，声明 `counter` 为 `volatile` 足以保证 T2 对 `counter` 变量写入的可见性。
 
-![](http://tutorials.jenkov.com/images/java-concurrency/java-volatile-2.png)
+但是，如果 T1 和 T2 都在增加 `counter` 变量，那么声明 `counter` 变量 `volatile` 将是不够的。接下来解释。
 
-这种由于其他线程没有将变量的缓存写回主内存而导致的线程无法看到变量的最新值的问题，被称为"可见性"问题。一个线程的更新结果对别的线程不可见。
+### 完整 volatile 可见性保证
+
+实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
+
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+
+代码示例：
+
+```java
+public class MyClass {
+    private int years;
+    private int months
+    private volatile int days;
+
+
+    public void update(int years, int months, int days){
+        this.years  = years;
+        this.months = months;
+        this.days   = days;
+    }
+}
+```
+
+`udpate()` 方法写入三个变量，其中只有 `days` 是 `volatile` 的。
+
+完整的 `volatile` 可见性保证的含义是，当一个值被写入 `days`，所有对线程可见的变量也都会被写入主内存。也就是说，当一个值被写入 `days`， `years` 和 `months` 的值也会同时被写入主内存。
+
+当读取 `years`， `months` 和 `days` 时，可以这样做：
+
+```java
+public class MyClass {
+    private int years;
+    private int months
+    private volatile int days;
+
+    public int totalDays() {
+        int total = this.days;
+        total += months * 30;
+        total += years * 365;
+        return total;
+    }
+
+    public void update(int years, int months, int days){
+        this.years  = years;
+        this.months = months;
+        this.days   = days;
+    }
+}
+```
+
+注意，`totalDays()` 方法是通过将 `days` 的值读入 `total` 变量开始的。当读取 `days` 的值时， `months` 和 `years` 的值也被从主存储器读入。因此，可以保证按照上述读取顺序看到 `days`，`months` 和 `years` 的最新值。
