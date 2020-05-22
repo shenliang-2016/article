@@ -324,29 +324,29 @@ synchronized(Integer.valueOf(1)) {
 
 为了确保安全，在 `this` 上同步——或者在 `new Object()` 上同步。使用那些不会被编译器、JVM 或者 Java 类库内部缓存或者复用的对象。
 
-## Synchronized Block Limitations and Alternatives
+## 同步块的局限性和替代方案
 
-Synchronized blocks in Java have several limitations. For instance, a synchronized block in Java only allows a single thread to enter at a time. However, what if two threads just wanted to read a shared value, and not update it? That might be safe to allow. As alternative to a synchronized block you could guard the code with a [Read / Write Lock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) which as more advanced locking semantics than a synchronized block. Java actually comes with a built in [ReadWriteLock](http://tutorials.jenkov.com/java-util-concurrent/readwritelock.html) class you can use.
+Java 中的同步块具有一些局限性。比如，一个同步块同一时刻只允许一个线程进入。然而，如果两个线程都只是想要读取共享值，而并不会修改它呢？允许同时读取可能是安全的。作为同步块的替代方案，你可以使用一种名为 [Read / Write Lock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 的技术来保护你的代码，这是一种比同步块更加先进的锁语义。Java 实际上已经内置了一个你可以直接使用的 [ReadWriteLock](http://tutorials.jenkov.com/java-util-concurrent/readwritelock.html) 类。
 
-What if you want to allow N threads to enter a synchronized block, and not just one? You could use a [Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphore.html) to achieve that behaviour. Java actually comes with a built-in [Java Semaphore](http://tutorials.jenkov.com/java-util-concurrent/semaphore.html) class you can use.
+如果你希望若干个线程进入同步块，而不仅仅是一个，该怎么办？你可以使用 [Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphore.html) 实现这种行为。Java 内置了你可以直接使用的 [Java Semaphore](http://tutorials.jenkov.com/java-util-concurrent/semaphore.html) 类。
 
-Synchronized blocks do not guarantee in what order threads waiting to enter them are granted access to the synchronized block. What if you need to guarantee that threads trying to enter a synchronized block get access in the exact sequence they requested access to it? You need to implement [Fairness](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) yourself.
+同步块并不能保证等待进入同步块的线程最终会以何种顺序进入同步块。如果你想要保证这些等待线程能够按照它们最初请求进入同步块的顺序依次进入同步块，该怎么办？你需要实现自己的 [Fairness](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 。
 
-What if you just have one thread writing to a shared variable, and other threads only reading that variable? Then you might be able to just use a [volatile variable](http://tutorials.jenkov.com/java-concurrency/volatile.html) without any synchronization around.
+如果你希望一个线程写入共享变量的同时，别的线程还可以同时读取该变量，该如何做？可能你只需要使用 [volatile variable](http://tutorials.jenkov.com/java-concurrency/volatile.html) 而不需要任何同步逻辑。
 
-## Synchronized Block Performance Overhead
+## 同步块的性能损耗
 
-There is a small performance overhead associated with entering and exiting a synchronized block in Java. As Jave have evolved this performance overhead has gone down, but there is still a small price to pay.
+与进入和退出 Java 中的同步块相关的性能开销很小。随着 Jave 的发展，性能开销下降了，但是仍然要付出很小的代价。
 
-The performance overhead of entering and exiting a synchronized block is mostly something to worry about if you enter and exit a synchronized block lots of times within a tight loop or so.
+如果您在一个紧密的循环内多次进入和退出同步块，则通常要担心进入和退出同步块的性能开销。
 
-Also, try not to have larger synchronized blocks than necessary. In other words, only synchronize the operations that are really necessary to synchronize - to avoid blocking other threads from executing operations that do not have to be synchronized. Only the absolutely necessary instructions in synchronized blocks. That should increase parallelism of your code.
+另外，请尽量不要使同步块大于必需的块。换句话说，仅同步真正需要同步的操作——避免阻止其他线程执行不必同步的操作。同步块中只有绝对必要的指令。应该尽可能增加代码的并行性。
 
-## Synchronized Block Reentrance
+## 同步块的可重入
 
-Once a thread has entered a synchronized block the thread is said to "hold the lock" on the monitoring object the synchronized block is synchronized on. If the thread calls another method which calls back to the first method with the synchronized block inside, the thread holding the lock can reenter the synchronized block. It is not blocked just because a thread (itself) is holding the lock. Only if a differen thread is holding the lock. Look at this example:
+一旦线程已经进入同步块，则称该线程"持有了同步块同步于其上的监视器对象的锁"。如果该线程调用另外的方法，后者又反向调用同步块内部的前者方法，则持有锁的线程可以再次进入该同步块。它不会被阻塞，因为该线程本身正持有锁。除非别的线程持有了锁。分析下面的例子：
 
-```
+```java
 public class MyClass {
     
   List<String> elements = new ArrayList<String>();
@@ -364,12 +364,12 @@ public class MyClass {
 }
 ```
 
-Forget for a moment that the above way of counting the elements of a list makes no sense at all. Just focus on how inside the synchronized block inside the `count()` method calls the `count()` method recursively. Thus, the thread calling count() may eventually enter the same synchronized block multiple times. This is allowed. This is possible.
+不必在意上述计算列表元素的方法根本没有任何意义。只需关注 `count()` 方法内的同步块内部如何递归调用 `count()` 方法即可。因此，线程调用 `count()` 最终可能会多次进入同一同步块。这是允许的。
 
-Keep in mind though, that designs where a thread enters into multiple synchronized blocks may lead to [nested monitor lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) if you do not design your code carefully.
+注意：如果你不谨慎设计你的代码，允许一个线程进入多个同步块可能会导致 [嵌套监视器锁定](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html)。
 
-## Synchronized Blocks in Cluster Setups
+## 集群设置中的同步块
 
-Keep in mind that a synchronized block only blocks threads within the same Java VM from entering that code block. If you have the same Java application running on multiple Java VMs - in a cluster - then it is possible for one thread *within each Java VM* to enter that synchronized block at the same time.
+请记住，同步块仅阻止同一 Java VM 中的线程进入该代码块。如果在集群中的多个 Java VM 上运行相同的 Java 应用程序，则每个 Java VM 中的一个线程可能同时进入该同步块。
 
-If you need synchronization across all Java VMs in a cluster you will need to use other synchronization mechanisms than just a synchronized block.
+如果需要跨集群中所有 Java VM 进行同步，则将需要使用其他同步机制，而不仅仅是同步块。
