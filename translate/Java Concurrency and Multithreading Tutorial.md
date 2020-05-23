@@ -891,9 +891,9 @@ public class MyRunnableMain {
 
 设想两个线程，A 和 B，正在执行同一个 `Counter` 类实例上的 `add` 方法。没有任何办法可以确知操作系统如何调度两个线程。`add()` 方法中的代码并不会作为一个原子指令被 JVM 执行。它会作为一系列更小的指令被执行，类似于：
 
-1.从内存中读取 `this.count` 到寄存器中。
-2.增加值到寄存器。
-3.将寄存器写回内存。
+1. 从内存中读取 `this.count` 到寄存器中。
+2. 增加值到寄存器。
+3. 将寄存器写回内存。
 
 观察当 A 和 B 像下面这样交错执行时会发生什么：
 
@@ -1301,8 +1301,8 @@ public class MySharedObject {
 
 当对象和变量可以被存储在各种不同的计算机存储区域中时，可能会发生某些问题。主要的两类问题：
 
--线程对共享变量的修改（写入）的可见性。
--在读取，校验以及写入共享变量时的竞争条件。
+- 线程对共享变量的修改（写入）的可见性。
+- 在读取，校验以及写入共享变量时的竞争条件。
 
 接下来分别解释这两类问题。
 
@@ -1348,10 +1348,10 @@ Java 同步块使用 `synchronized` 关键字标记。Java 同步块被同步在
 
  `synchronized` 可以用来标记四种不同类型的代码块：
 
-1.实例方法
-2.静态方法
-3.实例方法内部的代码块
-4.静态方法内部的代码块
+1. 实例方法
+2. 静态方法
+3. 实例方法内部的代码块
+4. 静态方法内部的代码块
 
 这些代码块被同步在不同对象上。你需要何种同步块需要具体情况具体分析。接下来我们详细介绍每种类型的同步块。
 
@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
--如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
--如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1816,4 +1816,67 @@ public class MyClass {
 ```
 
 注意，`totalDays()` 方法是通过将 `days` 的值读入 `total` 变量开始的。当读取 `days` 的值时， `months` 和 `years` 的值也被从主存储器读入。因此，可以保证按照上述读取顺序看到 `days`，`months` 和 `years` 的最新值。
+
+## 指令重排序挑战
+
+为了提高程序性能，JVM 和 CPU 可以对指令进行重排序，同时保持指令的语义不变。比如，下面的指令：
+
+```java
+int a = 1;
+int b = 2;
+
+a++;
+b++;
+```
+
+这些指令可以被如下重新排序，而不会丢失程序的语义：
+
+```java
+int a = 1;
+a++;
+
+int b = 2;
+b++;
+```
+
+不过，当存在 `volatile` 变量时，指令重排序就会带来一些挑战。让我们来重新审视前面使用过的 `MyClass` 例子：
+
+```java
+public class MyClass {
+    private int years;
+    private int months
+    private volatile int days;
+
+
+    public void update(int years, int months, int days){
+        this.years  = years;
+        this.months = months;
+        this.days   = days;
+    }
+}
+```
+
+一旦 `update()` 方法将一个值写入 `days`，新的写入 `years` 和 `months` 的值也会被同时写入主内存。但是，当 JVM 对指令进行进行重排序之后：
+
+```java
+public void update(int years, int months, int days){
+    this.days   = days;
+    this.months = months;
+    this.years  = years;
+}
+```
+
+`months`  和 `years` 的值在 `days` 变量值变化的时候仍然会被写入主内存，但是此时写入动作发生在对 `months` 和 `years` 赋新值之前。因此，新的值就没有正确地对其他线程可见。也就是重排序之后的指令语义发生了变化。
+
+Java 对此问题有一套解决方案，接下来介绍。
+
+## Java volatile Happens-Before 保证
+
+为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
+
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+
+上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
