@@ -1,31 +1,26 @@
-## Java volatile 可见性保证
+## 指令重排序挑战
 
-Java `volatile` 关键字尝试解决可见性问题。通过声明 `counter` 变量为 `volatile` ，所有 `counter` 变量的写入都会被立即写回主内存。同时，所有 `counter` 变量的读取都会直接来自主内存。
-
-声明 `volatile` 变量 `counter` 如下：
+为了提高程序性能，JVM 和 CPU 可以对指令进行重排序，同时保持指令的语义不变。比如，下面的指令：
 
 ```java
-public class SharedObject {
+int a = 1;
+int b = 2;
 
-    public volatile int counter = 0;
-
-}
+a++;
+b++;
 ```
 
-声明变量为 `volatile` 提供了该变量的写入对其他线程的可见性保证。
+这些指令可以被如下重新排序，而不会丢失程序的语义：
 
-上面给出的场景中，一个线程(T1)修改 `counter` ，另一个线程(T2)读取 `counter` 而不修改它，声明 `counter` 为 `volatile` 足以保证 T2 对 `counter` 变量写入的可见性。
+```java
+int a = 1;
+a++;
 
-但是，如果 T1 和 T2 都在增加 `counter` 变量，那么声明 `counter` 变量 `volatile` 将是不够的。接下来解释。
+int b = 2;
+b++;
+```
 
-### 完整 volatile 可见性保证
-
-实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
-
-- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
-- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
-
-代码示例：
+不过，当存在 `volatile` 变量时，指令重排序就会带来一些挑战。让我们来重新审视前面使用过的 `MyClass` 例子：
 
 ```java
 public class MyClass {
@@ -42,31 +37,27 @@ public class MyClass {
 }
 ```
 
-`udpate()` 方法写入三个变量，其中只有 `days` 是 `volatile` 的。
-
-完整的 `volatile` 可见性保证的含义是，当一个值被写入 `days`，所有对线程可见的变量也都会被写入主内存。也就是说，当一个值被写入 `days`， `years` 和 `months` 的值也会同时被写入主内存。
-
-当读取 `years`， `months` 和 `days` 时，可以这样做：
+一旦 `update()` 方法将一个值写入 `days`，新的写入 `years` 和 `months` 的值也会被同时写入主内存。但是，当 JVM 对指令进行进行重排序之后：
 
 ```java
-public class MyClass {
-    private int years;
-    private int months
-    private volatile int days;
-
-    public int totalDays() {
-        int total = this.days;
-        total += months * 30;
-        total += years * 365;
-        return total;
-    }
-
-    public void update(int years, int months, int days){
-        this.years  = years;
-        this.months = months;
-        this.days   = days;
-    }
+public void update(int years, int months, int days){
+    this.days   = days;
+    this.months = months;
+    this.years  = years;
 }
 ```
 
-注意，`totalDays()` 方法是通过将 `days` 的值读入 `total` 变量开始的。当读取 `days` 的值时， `months` 和 `years` 的值也被从主存储器读入。因此，可以保证按照上述读取顺序看到 `days`，`months` 和 `years` 的最新值。
+`months`  和 `years` 的值在 `days` 变量值变化的时候仍然会被写入主内存，但是此时写入动作发生在对 `months` 和 `years` 赋新值之前。因此，新的值就没有正确地对其他线程可见。也就是重排序之后的指令语义发生了变化。
+
+Java 对此问题有一套解决方案，接下来介绍。
+
+## Java volatile Happens-Before 保证
+
+为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
+
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+
+上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
+
