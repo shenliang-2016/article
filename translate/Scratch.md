@@ -1,63 +1,33 @@
-## 指令重排序挑战
+## volatile 并不总是足够
 
-为了提高程序性能，JVM 和 CPU 可以对指令进行重排序，同时保持指令的语义不变。比如，下面的指令：
+即使 `volatle` 关键字保证直接从主内存读取所有的 `volatile` 变量，所有对 `volatile` 变量的写入都直接写入主内存，仍然存在某些情况，仅仅将变量声明为 `volatile` 是不够的。
 
-```java
-int a = 1;
-int b = 2;
+在上文中解释的情况下，只有一个线程 1 对共享变量 `counter` 进行写入，将该变量声明为 `volatile` 就足以保证线程 2 始终都能看到最新写入的值。
 
-a++;
-b++;
-```
+事实上，如果写入变量的新值不依赖于变量的先前值，多个线程甚至能够同时写入共享的 `volatile` 变量，仍然能够保证主内存中存储正确的值。
 
-这些指令可以被如下重新排序，而不会丢失程序的语义：
+In fact, multiple threads could even be writing to a shared `volatile` variable, and still have the correct value stored in main memory, if the new value written to the variable does not depend on its previous value. In other words, if a thread writing a value to the shared `volatile` variable does not first need to read its value to figure out its next value.
 
-```java
-int a = 1;
-a++;
+As soon as a thread needs to first read the value of a `volatile` variable, and based on that value generate a new value for the shared `volatile` variable, a `volatile` variable is no longer enough to guarantee correct visibility. The short time gap in between the reading of the `volatile` variable and the writing of its new value, creates an [race condition](http://tutorials.jenkov.com/java-concurrency/race-conditions-and-critical-sections.html) where multiple threads might read the same value of the `volatile` variable, generate a new value for the variable, and when writing the value back to main memory - overwrite each other's values.
 
-int b = 2;
-b++;
-```
+The situation where multiple threads are incrementing the same counter is exactly such a situation where a `volatile` variable is not enough. The following sections explain this case in more detail.
 
-不过，当存在 `volatile` 变量时，指令重排序就会带来一些挑战。让我们来重新审视前面使用过的 `MyClass` 例子：
+Imagine if Thread 1 reads a shared `counter` variable with the value 0 into its CPU cache, increment it to 1 and not write the changed value back into main memory. Thread 2 could then read the same `counter` variable from main memory where the value of the variable is still 0, into its own CPU cache. Thread 2 could then also increment the counter to 1, and also not write it back to main memory. This situation is illustrated in the diagram below:
 
-```java
-public class MyClass {
-    private int years;
-    private int months
-    private volatile int days;
+![](http://tutorials.jenkov.com/images/java-concurrency/java-volatile-3.png)
 
+Thread 1 and Thread 2 are now practically out of sync. The real value of the shared `counter` variable should have been 2, but each of the threads has the value 1 for the variable in their CPU caches, and in main memory the value is still 0. It is a mess! Even if the threads eventually write their value for the shared `counter` variable back to main memory, the value will be wrong.
 
-    public void update(int years, int months, int days){
-        this.years  = years;
-        this.months = months;
-        this.days   = days;
-    }
-}
-```
+## volatile 何时足够？
 
-一旦 `update()` 方法将一个值写入 `days`，新的写入 `years` 和 `months` 的值也会被同时写入主内存。但是，当 JVM 对指令进行进行重排序之后：
+As I have mentioned earlier, if two threads are both reading and writing to a shared variable, then using the `volatile` keyword for that is not enough. You need to use a [synchronized](http://tutorials.jenkov.com/java-concurrency/synchronized.html) in that case to guarantee that the reading and writing of the variable is atomic. Reading or writing a volatile variable does not block threads reading or writing. For this to happen you must use the `synchronized` keyword around critical sections.
 
-```java
-public void update(int years, int months, int days){
-    this.days   = days;
-    this.months = months;
-    this.years  = years;
-}
-```
+As an alternative to a `synchronized` block you could also use one of the many atomic data types found in the [`java.util.concurrent` package](http://tutorials.jenkov.com/java-util-concurrent/index.html). For instance, the [`AtomicLong`](http://tutorials.jenkov.com/java-util-concurrent/atomiclong.html) or [`AtomicReference`](http://tutorials.jenkov.com/java-util-concurrent/atomicreference.html) or one of the others.
 
-`months`  和 `years` 的值在 `days` 变量值变化的时候仍然会被写入主内存，但是此时写入动作发生在对 `months` 和 `years` 赋新值之前。因此，新的值就没有正确地对其他线程可见。也就是重排序之后的指令语义发生了变化。
+In case only one thread reads and writes the value of a volatile variable and other threads only read the variable, then the reading threads are guaranteed to see the latest value written to the volatile variable. Without making the variable volatile, this would not be guaranteed.
 
-Java 对此问题有一套解决方案，接下来介绍。
+The `volatile` keyword is guaranteed to work on 32 bit and 64 variables.
 
-## Java volatile Happens-Before 保证
+## volatile 性能分析
 
-为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
-
-- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
-
-- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
-
-上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
-
+Reading and writing of volatile variables causes the variable to be read or written to main memory. Reading from and writing to main memory is more expensive than accessing the CPU cache. Accessing volatile variables also prevent instruction reordering which is a normal performance enhancement technique. Thus, you should only use volatile variables when you really need to enforce visibility of variables.
