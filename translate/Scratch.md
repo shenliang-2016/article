@@ -1,54 +1,50 @@
-# Java ThreadLocal
+## ThreadLocal 初始值
 
- *Java* *ThreadLocal* 类使得你可以创建只允许同一个线程读写的变量。因此，即使两个线程执行相同的代码，同时该代码拥有同一个 `ThreadLocal` 变量的引用，这两个线程还是无法看到彼此的 `ThreadLocal` 变量。因此，Java   ThreadLocal 类提供了一种简单的方式保证代码的 [线程安全](http://tutorials.jenkov.com/java-concurrency/thread-safety.html) 。
+可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
-## 创建 ThreadLocal
+- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
-你可以像创建任何其他 Java 对象那样创建 `ThreadLocal` 实例——通过 `new` 操作符。示例如下：
+接下来详细介绍两种方法。
+
+### 覆写 initialValue()
+
+第一种为 Java `ThreadLocal` 变量指定初始值的方法是创建一个 `ThreadLocal` 子类并覆盖 `initialValue()` 方法。最简单的创建 `ThreadLocal` 子类的方法就是简单地创建一个匿名子类，就在你创建该 `ThreadLocal` 变量的位置。下面是创建一个 `ThreadLocal` 的匿名子类并覆盖 `initialValue()` 方法的例子：
 
 ```java
-private ThreadLocal threadLocal = new ThreadLocal();
+private ThreadLocal myThreadLocal = new ThreadLocal<String>() {
+    @Override protected String initialValue() {
+        return String.valueOf(System.currentTimeMillis());
+    }
+};    
 ```
 
-每个线程只需要这样做一次。现在多个线程可以读取和设置该 `ThreadLocal` 中的值，同时每个线程都只能看到它自己设置的值。
+注意，不同的线程会看到不同的初始值。每个线程将创建自己的初始值。只有当你从 `initialValue()` 方法返回同一个对象时，所有线程才能看到相同的对象。然而，使用 `ThreadLocal` 的根本目的就是避免不同的线程看到相同的变量对象实例。
 
-## 设置 ThreadLocal 值
+### 提供 Supplier 实现
 
-一旦 `ThreadLocal` 被创建出来你就可以设置需要存储在其中的值，使用它的 `set()` 方法。
+第二种为 Java `ThreadLocal` 变量指定初始值的方法是使用静态工厂方法 `withInitial(Supplier)` 传递一个 `Supplier` 接口实现作为参数。该 `Supplier` 实现提供 `ThreadLocal` 的初始值。示例如下：
 
-```java
-threadLocal.set("A thread local value");
+```
+ThreadLocal<String> threadLocal = ThreadLocal.withInitial(new Supplier<String>() {
+    @Override
+    public String get() {
+        return String.valueOf(System.currentTimeMillis());
+    }
+});
 ```
 
-## 获取 ThreadLocal 值
-
-你可以读取存储在 `ThreadLocal` 中的值，使用它的 `get()` 方法。如下所示：
+由于 `Supplier` 是一个 [函数式接口](http://tutorials.jenkov.com/java-functional-programming/functional-interfaces.html) ，它可以使用 [Java Lambda Expression](http://tutorials.jenkov.com/java/lambda-expressions.html) 实现。下面示例展示了如何使用 lambda 表达式提供 `Supplier` 实现给 `withInitial()` ：
 
 ```java
-String threadLocalValue = (String) threadLocal.get();
+ThreadLocal threadLocal = ThreadLocal.withInitial(
+        () -> { return String.valueOf(System.currentTimeMillis()); } );
 ```
 
-## 删除 ThreadLocal 值
-
-删除设置在 ThreadLocal 变量中的值是可能的。你可以调用 `ThreadLocal` 的 `remove()` 方法。如下所示：
+如你所见，这样会简短一些。不过还能继续变短，使用最紧凑语法的 lambada 表达式：
 
 ```java
-threadLocal.remove();
-```
-
-## 范型 ThreadLocal
-
-你可以使用范型类型创建 `ThreadLocal`。使用范型类型时，只有范型类型对象可以被设置为 `ThreadLocal` 值。另外，你必须对 `get()` 方法返回的值进行类型转换。如下面例子所示：
-
-```java
-private ThreadLocal<String> myThreadLocal = new ThreadLocal<String>();
-```
-
-现在你只能在 `ThreadLocal` 实例中存储字符串。另外，你不需要对获取自 `ThreadLocal` 的值进行类型转换：
-
-```java
-myThreadLocal.set("Hello ThreadLocal");
-
-String threadLocalValue = myThreadLocal.get();
+ThreadLocal threadLocal3 = ThreadLocal.withInitial(
+        () -> String.valueOf(System.currentTimeMillis()) );
 ```
 
