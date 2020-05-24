@@ -94,3 +94,4 @@ Transaction 2, request 2, tries to lock record 1 for update.
 ```
 
 由于锁是在不同的请求中获得的，并且无法提前知道给定事务所需的所有锁，因此很难检测或防止数据库事务中的死锁。
+
