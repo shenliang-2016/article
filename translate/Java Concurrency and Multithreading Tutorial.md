@@ -891,9 +891,9 @@ public class MyRunnableMain {
 
 设想两个线程，A 和 B，正在执行同一个 `Counter` 类实例上的 `add` 方法。没有任何办法可以确知操作系统如何调度两个线程。`add()` 方法中的代码并不会作为一个原子指令被 JVM 执行。它会作为一系列更小的指令被执行，类似于：
 
-1. 从内存中读取 `this.count` 到寄存器中。
-2. 增加值到寄存器。
-3. 将寄存器写回内存。
+1.从内存中读取 `this.count` 到寄存器中。
+2.增加值到寄存器。
+3.将寄存器写回内存。
 
 观察当 A 和 B 像下面这样交错执行时会发生什么：
 
@@ -1301,8 +1301,8 @@ public class MySharedObject {
 
 当对象和变量可以被存储在各种不同的计算机存储区域中时，可能会发生某些问题。主要的两类问题：
 
-- 线程对共享变量的修改（写入）的可见性。
-- 在读取，校验以及写入共享变量时的竞争条件。
+-线程对共享变量的修改（写入）的可见性。
+-在读取，校验以及写入共享变量时的竞争条件。
 
 接下来分别解释这两类问题。
 
@@ -1348,10 +1348,10 @@ Java 同步块使用 `synchronized` 关键字标记。Java 同步块被同步在
 
  `synchronized` 可以用来标记四种不同类型的代码块：
 
-1. 实例方法
-2. 静态方法
-3. 实例方法内部的代码块
-4. 静态方法内部的代码块
+1.实例方法
+2.静态方法
+3.实例方法内部的代码块
+4.静态方法内部的代码块
 
 这些代码块被同步在不同对象上。你需要何种同步块需要具体情况具体分析。接下来我们详细介绍每种类型的同步块。
 
@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
-- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
-- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+-如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+-如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
-- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+-对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
-- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+-对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
-- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
-- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+-创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+-使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2178,3 +2178,75 @@ public class MyWaitNotify{
 但是，这怎么可能呢？只要等待线程在同步块中执行，它就不会持有对监视器对象（`myMonitorObject`）的锁吗？等待线程是否不会阻止通知线程从 `doNotify()` 中进入同步块？答案是不会。线程调用 `wait()` 后，它将释放它持有的监视器对象的锁。这也允许其他线程调用 `wait()` 或 `notify()`，因为必须从同步块内部调用这些方法。
 
 一旦线程被唤醒，在调用 `notify()` 的线程退出同步块之前，被唤醒的线程都无法退出 `wait()` 调用。换句话说，被调用的线程在它能够退出 `wait()` 调用之前必须重新获得监视器对象的锁，因为该 `wait()` 调用包含在同步块中。如果多个线程通过 `notifyAll()` 被唤醒，则同一时刻只有其中一个线程能够退出 `wait()` 方法，因为在退出 `wait()` 调用之前，每个线程都必须依次获取监视器对象上的锁。
+
+## 丢失的信号
+
+万一调用时没有线程在等待，方法 `notify()` 和 `notifyAll()` 不会将方法调用保存到它们中。然后，通知信号就丢失了。因此，如果线程在发出信号的线程调用 `wait()` 之前调用 `notify()` ，则等待的线程将丢失该信号。这可能是问题，也可能不是问题，但是在某些情况下，这可能会导致等待线程永远等待，永远不会醒来，因为错过了唤醒信号。
+
+为了避免信号丢失，它们应该被存储在信号类内部。在 `MyWaitNotify` 示例中，唤醒信号应该存储在 `MyWaitNotify` 实例的一个成员变量中。下面是示例：
+
+```java
+public class MyWaitNotify2{
+
+  MonitorObject myMonitorObject = new MonitorObject();
+  boolean wasSignalled = false;
+
+  public void doWait(){
+    synchronized(myMonitorObject){
+      if(!wasSignalled){
+        try{
+          myMonitorObject.wait();
+         } catch(InterruptedException e){...}
+      }
+      //clear signal and continue running.
+      wasSignalled = false;
+    }
+  }
+
+  public void doNotify(){
+    synchronized(myMonitorObject){
+      wasSignalled = true;
+      myMonitorObject.notify();
+    }
+  }
+}
+```
+
+注意，在调用 `notify()` 之前，`doNotify()` 方法现在如何将 `wasSignalled` 变量设置为 `true`。另外，请注意 `doWait()` 方法现在如何在调用 `wait()` 之前检查 `wasSignalled` 变量。实际上，如果在先前的 `doWait()` 调用与本次调用之间未接收到任何信号，则仅调用 `wait()`。
+
+## 虚假唤醒
+
+由于无法解释的原因，即使未调用 `notify()` 和 `notifyAll()` ，线程也有可能被唤醒。这就是所谓的虚假唤醒。没有任何原因的唤醒。
+
+如果在 `MyWaitNofity2` 类的 `doWait()` 方法中发生了虚假唤醒，则等待线程可能会继续处理而没有收到适当的信号！这可能会在您的应用程序中引起严重的问题。
+
+为了防止虚假唤醒，请在 `while` 循环内而不是 `if` 语句内检查 `signal` 成员变量。这样的 `while` 循环也称为自旋锁。唤醒的线程一直旋转，直到旋转锁（`while` 循环）中的条件变为 `false` 为止。这是 `MyWaitNotify2` 的修改版本，展示了此内容：
+
+```java
+public class MyWaitNotify3{
+
+  MonitorObject myMonitorObject = new MonitorObject();
+  boolean wasSignalled = false;
+
+  public void doWait(){
+    synchronized(myMonitorObject){
+      while(!wasSignalled){
+        try{
+          myMonitorObject.wait();
+         } catch(InterruptedException e){...}
+      }
+      //clear signal and continue running.
+      wasSignalled = false;
+    }
+  }
+
+  public void doNotify(){
+    synchronized(myMonitorObject){
+      wasSignalled = true;
+      myMonitorObject.notify();
+    }
+  }
+}
+```
+
+请注意，`wait()` 调用现在如何嵌套在 `while` 循环而不是 `if` 语句内。如果等待线程在没有收到信号的情况下唤醒，则 `wasSignalled` 成员仍然为 `false`，而 `while` 循环将再次执行，从而使唤醒的线程返回等待状态。
