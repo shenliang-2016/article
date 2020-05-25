@@ -1,25 +1,26 @@
 # 饥饿和公平
 
-If a thread is not granted CPU time because other threads grab it all, it is called "starvation". The thread is "starved to death" because other threads are allowed the CPU time instead of it. The solution to starvation is called "fairness" - that all threads are fairly granted a chance to execute.
+如果一个线程由于其他线程占据了全部的 CPU 时间而无法得到执行机会，则被称为"饥饿"。该线程可能会被"饿死"，因为 CPU 时间都被分配给了其他线程。解决"饥饿"问题的方案被称为"公平"——所有线程都能公平地获得执行机会。
 
-## Causes of Starvation in Java
+## Java 中饥饿的原因
 
-The following three common causes can lead to starvation of threads in Java:
+下面是三种常见的导致 Java 线程饥饿的原因：
 
-1. Threads with high priority swallow all CPU time from threads with lower priority.
+1. 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-2. Threads are blocked indefinately waiting to enter a synchronized block, because other threads are constantly allowed access before it.
+2. 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-3. Threads waiting on an object (called wait() on it) remain waiting indefinitely because other threads are constantly awakened instead of it.
+3. 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
-### Threads with high priority swallow all CPU time from threads with lower priority
+### 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-You can set the thread priority of each thread individually. The higher the priority the more CPU time the thread is granted. You can set the priority of threads between 1 and 10. Exactly how this is interpreted depends on the operating system your application is running on. For most applications you are better off leaving the priority unchanged.
+你可以为每个线程单独设定线程优先级。优先级越高的线程能获得越多的 CPU 时间。你可以将线程优先级设定为 1 到 10 之间的整数。这个值如何解释取决于你的应用云心的操作系统。对大多数应用你最好不要修改线程优先级。
 
-### Threads are blocked indefinitely waiting to enter a synchronized block
+### 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-Java's synchronized code blocks can be another cause of starvation. Java's synchronized code block makes no guarantee about the sequence in which threads waiting to enter the synchronized block are allowed to enter. This means that there is a theoretical risk that a thread remains blocked forever trying to enter the block, because other threads are constantly granted access before it. This problem is called "starvation", that a thread is "starved to death" by because other threads are allowed the CPU time instead of it.
+Java 的同步代码块可能是造成饥饿的另一个原因。Java 的同步代码块不能保证允许等待进入同步块的线程进入的顺序。这意味着在理论上存在线程永远试图进入该块而始终处于阻塞状态的风险，因为其他线程在此之前一直被授予访问权限。这个问题称为“饥饿”，一个线程被“饿死”是因为其他线程被允许占用 CPU 时间而不是它。
 
-### Threads waiting on an object (called wait() on it) remain waiting indefinitely
+### 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
-The notify() method makes no guarantee about what thread is awakened if multiple thread have called wait() on the object notify() is called on. It could be any of the threads waiting. Therefore there is a risk that a thread waiting on a certain object is never awakened because other waiting threads are always awakened instead of it.
+如果多个线程在 `notify()` 于其上被调用的对象上调用了 `wait()`， 则 `notify()` 方法不能保证唤醒哪个线程。可能是任何正在等待的线程。因此，存在这样的风险，即永远不会唤醒等待在某个对象上的线程，因为总是会唤醒其他等待线程而不是某个特定线程。
+
