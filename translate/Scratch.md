@@ -1,10 +1,10 @@
-## Implementing Fairness in Java
+## 在 Java 中实现公平
 
-While it is not possible to implement 100% fairness in Java we can still implement our synchronization constructs to increase fairness between threads.
+在 Java 中做到完全的公平是不可能的，但是我们仍然可以实现对线程尽可能公平的同步结构。
 
-First lets study a simple synchronized code block:
+首先来分析一个简单的同步代码块：
 
-```
+```java
 public class Synchronizer{
 
   public synchronized void doSynchronized(){
@@ -14,13 +14,13 @@ public class Synchronizer{
 }
 ```
 
-If more than one thread call the doSynchronized() method, some of them will be blocked until the first thread granted access has left the method. If more than one thread are blocked waiting for access there is no guarantee about which thread is granted access next.
+如果超过一个线程调用 `doSynchronized()` 方法，其中一些将阻塞直到第一个获取到访问权的线程离开该方法。如果超过一个线程阻塞等待访问，下一步哪个线程将得到访问权实际上没有任何保证。
 
-### Using Locks Instead of Synchronized Blocks
+### 使用锁替代同步块
 
-To increase the fairness of waiting threads first we will change the code block to be guarded by a lock rather than a synchronized block:
+为了增加等待线程的公平性，首先我们将修改上面的代码块，使用锁替换同步块：
 
-```
+```java
 public class Synchronizer{
   Lock lock = new Lock();
 
@@ -33,11 +33,11 @@ public class Synchronizer{
 }
 ```
 
-Notice how the doSynchronized() method is no longer declared synchronized. Instead the critical section is guarded by the lock.lock() and lock.unlock() calls.
+注意，此时 `doSynchronized()` 方法没有声明为同步块。现在临界区使用 `lock.lock()` 和 `lock.unlock()` 调用守卫。
 
-A simple implementation of the Lock class could look like this:
+一个简单的 `Lock` 类实现可能是下面这个样子：
 
-```
+```java
 public class Lock{
   private boolean isLocked      = false;
   private Thread  lockingThread = null;
@@ -62,13 +62,13 @@ public class Lock{
 }
 ```
 
-If you look at the Synchronizer class above and look into this Lock implementation you will notice that threads are now blocked trying to access the lock() method, if more than one thread calls lock() simultanously. Second, if the lock is locked, the threads are blocked in the wait() call inside the while(isLocked) loop in the lock() method. Remember that a thread calling wait() releases the synchronization lock on the Lock instance, so threads waiting to enter lock() can now do so. The result is that multiple threads can end up having called wait() inside lock().
+如果您查看上面的 `Synchronizer` 类并研究此 `Lock` 实现，您将注意到，如果多个线程同时调用 `lock()`，则线程现在试图访问 `lock()` 方法时被阻塞。其次，如果锁被锁定，则线程在 `lock()` 方法的 `while(isLocked)` 循环内的 `wait()` 调用中被阻塞。请记住，调用 `wait()` 的线程会释放 `Lock` 实例上的同步锁，因此等待进入 `lock()` 的线程现在可以这样做。结果是多个线程最终可能在 `lock()` 内部调用了 `wait()`。
 
-If you look back at the doSynchronized() method you will notice that the comment between lock() and unlock() states, that the code in between these two calls take a "long" time to execute. Let us further assume that this code takes long time to execute compared to entering the lock() method and calling wait() because the lock is locked. This means that the majority of the time waited to be able to lock the lock and enter the critical section is spent waiting in the wait() call inside the lock() method, not being blocked trying to enter the lock() method.
+如果回头看 `doSynchronized()` 方法，您会注意到 `lock()` 和 `unlock()` 状态之间的注释，这两个调用之间的代码需要很长时间才能执行完成。让我们进一步假设，与进入 `lock()` 方法和调用 `wait()` 相比，此代码需要花费较长的时间执行，因为该锁已被锁定。这意味着等待锁定锁并进入临界区的大部分时间都花在了 `lock()` 方法内部的 `wait()` 调用中，而不是在尝试进入 `lock()` 方法时被阻塞。
 
-As stated earlier synchronized blocks makes no guarantees about what thread is being granted access if more than one thread is waiting to enter. Nor does wait() make any guarantees about what thread is awakened when notify() is called. So, the current version of the Lock class makes no different guarantees with respect to fairness than synchronized version of doSynchronized(). But we can change that.
+如前所述，如果有多个线程正在等待进入，则同步块不能保证首先授予哪个线程访问权限。 `wait()` 也不保证在调用 `notify()` 时唤醒了哪个线程。因此，当前的 `Lock` 类版本与 `doSynchronized()` 的同步版本在公平性方面没有不同的保证。但是我们可以改变这一点。
 
-The current version of the Lock class calls its own wait() method. If instead each thread calls wait() on a separate object, so that only one thread has called wait() on each object, the Lock class can decide which of these objects to call notify() on, thereby effectively selecting exactly what thread to awaken.
+当前版本的 `Lock` 类将调用其自己的 `wait()` 方法。相反，如果每个线程在一个单独的对象上调用 `wait()`，从而只有一个线程在每个对象上调用了 `wait()`，则 `Lock` 类可以决定在哪个对象上调用 `notify()`，从而有效地准确选择要唤醒的线程。
 
 ### A Fair Lock
 
