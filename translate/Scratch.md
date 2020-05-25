@@ -70,13 +70,13 @@ public class Lock{
 
 当前版本的 `Lock` 类将调用其自己的 `wait()` 方法。相反，如果每个线程在一个单独的对象上调用 `wait()`，从而只有一个线程在每个对象上调用了 `wait()`，则 `Lock` 类可以决定在哪个对象上调用 `notify()`，从而有效地准确选择要唤醒的线程。
 
-### A Fair Lock
+### 公平锁
 
-Below is shown the previous Lock class turned into a fair lock called FairLock. You will notice that the implementation has changed a bit with respect to synchronization and `wait()` / `notify()` compared to the Lock class shown earlier.
+下面的例子将上面的 `Lock` 类修改成了一个称为 `FairLock` 的公平锁。您会注意到，与前面所示的 `Lock` 类相比，下面的实现在同步和 `wait()`/`notify()` 方面有所变化。
 
-Exactly how I arrived at this design beginning from the previous Lock class is a longer story involving several incremental design steps, each fixing the problem of the previous step: [Nested Monitor Lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html), [Slipped Conditions](http://tutorials.jenkov.com/java-concurrency/slipped-conditions.html), and [Missed Signals](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#missedsignals). That discussion is left out of this text to keep the text short, but each of the steps are discussed in the appropriate texts on the topic ( see the links above). What is important is, that every thread calling `lock()` is now queued, and only the first thread in the queue is allowed to lock the FairLock instance, if it is unlocked. All other threads are parked waiting until they reach the top of the queue.
+确切地说，从上一个 `Lock` 类开始的，是一个较长的故事，涉及几个增量设计步骤，每个步骤都解决了上一步的问题：[嵌套监视器锁定](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html)，[Slipped Conditions](http://tutorials.jenkov.com/java-concurrency/slipped-conditions.html) 和 [Missed Signals](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#missedsignals)。为了使文本简短，该讨论被省略了，但是在该主题的相应文本中讨论了每个步骤（请参见上面的链接）。重要的是，每个调用 `lock()` 的线程现在都已排队，并且只有队列中的第一个线程才可以锁定 `FairLock` 实例（如果已解锁）。所有其他线程将被阻塞，直到它们到达队列的顶部。
 
-```
+```java
 public class FairLock {
     private boolean           isLocked       = false;
     private Thread            lockingThread  = null;
@@ -144,16 +144,17 @@ public class QueueObject {
 }
 ```
 
-First you might notice that the `lock()` method is no longer declared `synchronized`. Instead only the blocks necessary to synchronize are nested inside `synchronized` blocks.
+首先，您可能会注意到不再将 `lock()` 方法声明为 `synchronized`。取而代之的是，仅将所需同步的块嵌套在 `synchronized` 块中。
 
-FairLock creates a new instance of `QueueObject` and enqueue it for each thread calling `lock()`. The thread calling `unlock()` will take the top `QueueObject` in the queue and call `doNotify()` on it, to awaken the thread waiting on that object. This way only one waiting thread is awakened at a time, rather than all waiting threads. This part is what governs the fairness of the `FairLock`.
+`FairLock` 创建一个新的 `QueueObject` 实例，并为每个调用 `lock()` 的线程将其添加到队列中排队。调用 `unlock()` 的线程将获取队列中的顶端 `QueueObject` 并在其上调用 `doNotify()`，以唤醒在该对象上等待的线程。这样，一次仅唤醒一个等待线程，而不唤醒所有等待线程。这部分决定着 `FairLock` 的公平性。
 
-Notice how the state of the lock is still tested and set within the same synchronized block to avoid slipped conditions.
+请注意，在同一同步块内测试并设置锁的状态，以免发生 slipped conditions。
 
-Also notice that the `QueueObject` is really a semaphore. The `doWait()` and `doNotify()` methods store the signal internally in the `QueueObject`. This is done to avoid missed signals caused by a thread being preempted just before calling `queueObject.doWait()`, by another thread which calls `unlock()` and thereby `queueObject.doNotify()`. The `queueObject.doWait()` call is placed outside the synchronized(this) block to avoid nested monitor lockout, so another thread can actually call unlock() when no thread is executing inside the `synchronized(this)` block in `lock()` method.
+还要注意，`QueueObject` 实际上是一个信号量。`doWait()` 和 `doNotify()` 方法将信号内部存储在 `QueueObject` 中。这样做是为了避免由于线程在调用 `queueObject.doWait()` 之前，另一个线程调用 `unlock()` 和 `queueObject.doNotify()` 而被抢占而导致的信号丢失。`queueObject.doWait()` 调用放置在 ` synchronized(this)` 块的外部，以避免嵌套的监视器锁定。因此，当没有任何线程在锁中的 `synchronized(this)` 块内执行时，另一个线程实际上可以调用 `unlock()` 方法。
 
-Finally, notice how the `queueObject.doWait()` is called inside a `try - catch` block. In case an InterruptedException is thrown the thread leaves the lock() method, and we need to dequeue it.
+最后，请注意在 `try-catch` 块中如何调用 `queueObject.doWait()` 。如果抛出 `InterruptedException`，线程将离开 `lock()` 方法，我们需要将其出队。
 
-### A Note on Performance
+### 性能分析
 
-If you compare the `Lock` and `FairLock` classes you will notice that there is somewhat more going on inside the `lock()` and `unlock()` in the `FairLock` class. This extra code will cause the `FairLock` to be a sligtly slower synchronization mechanism than `Lock`. How much impact this will have on your application depends on how long time the code in the critical section guarded by the `FairLock` takes to execute. The longer this takes to execute, the less significant the added overhead of the synchronizer is. It does of course also depend on how often this code is called.
+如果比较 `Lock` 和 `FairLock` 类，您会注意到 `FairLock` 类中的 `lock()` 和 `unlock()` 内部还有更多操作。这个额外的代码将导致 `FairLock` 成为比 `Lock` 慢得多的同步机制。这将对您的应用程序产生多大影响，取决于执行 `FairLock` 保护的临界区中的代码需要花费多长时间。执行时间越长，同步器增加的开销就越小。当然，这也取决于此代码被调用的频率。
+
