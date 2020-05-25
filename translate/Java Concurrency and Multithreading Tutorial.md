@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
--如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
--如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
--对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
--对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
--创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
--使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2405,9 +2405,9 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
-2.[锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
-3.[死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
+1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
+3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
 ## 锁排序
 
@@ -2440,3 +2440,33 @@ Thread 3:
 比如，线程 2 和线程 3 在意境锁定 A 之前都无法锁定 C。因为线程 1 持有锁 A，线程 2 和线程 3 首先必须等待锁 A 被释放。然后它们必须成功锁定 A，然后才能尝试锁定 B 或者 C。
 
 锁排序是一种简单而有效的死锁避免机制。然而，它需要你在获取任何锁之前确知所有锁需要的锁，实际情况中这一点往往并不现实。
+
+## 锁超时
+
+另一个防止死锁的机制是对锁尝试进行超时，这意味着试图获取锁的线程只会尝试这么长时间然后就会放弃。如果线程在给定的超时时间内未成功获取所有必要的锁，它将阻塞，释放所有已获取的锁，等待随机的时间，然后重试。等待的随机时间使尝试进行相同锁定的其他线程有机会获得锁，从而使应用程序可以继续运行而不会死锁。
+
+下面的例子是两个线程以不同顺序尝试获取相同的两个锁，线程会阻塞并重试：
+
+```java
+Thread 1 locks A
+Thread 2 locks B
+
+Thread 1 attempts to lock B but is blocked
+Thread 2 attempts to lock A but is blocked
+
+Thread 1's lock attempt on B times out
+Thread 1 backs up and releases A as well
+Thread 1 waits randomly (e.g. 257 millis) before retrying.
+
+Thread 2's lock attempt on A times out
+Thread 2 backs up and releases B as well
+Thread 2 waits randomly (e.g. 43 millis) before retrying.
+```
+
+上面的例子中，线程 2 将在线程 1 之前尝试获取锁 200 毫秒，并将因此可能成功获取两个锁。线程 1 随后将等待已经在尝试获取锁 A 的线程。当线程 2 执行结束，线程 1 也将可以获取两个锁(除非线程 2 或者其他线程在此期间再次获取了锁)。
+
+要记住的一个问题是，仅仅是锁定超时，并不一定意味着线程已死锁。这也可能仅意味着持有锁的线程（导致另一个线程超时）需要很长时间才能完成其任务。
+
+此外，如果有足够的线程争用同一资源，即使超时和阻塞，它们仍然会一次又一次地冒险尝试。在重试之前，有 2 个线程在 0 到 500 毫秒之间等待，可能不会发生这种情况，但是有 10 或 20 个线程时，情况就不同了。这种情况下，两个线程在重试之前（或者足够接近以引起问题）等待相同时长的可能性要高得多。
+
+锁超时机制的问题在于，无法为 Java 中的同步块设置超时时间。您将必须创建一个自定义锁类或使用 `java.util.concurrency` 包中的 Java 5 并发构造之一。编写自定义锁并不困难，但这不在本文讨论范围之内。Java 并发教程中的后续文本将涵盖自定义锁。
