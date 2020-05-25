@@ -1,19 +1,25 @@
-## 死锁检测
+# 饥饿和公平
 
-死锁检测是一种相对重量级的死锁预防机制，用于不可能使用锁排序和锁超时的场景。
+If a thread is not granted CPU time because other threads grab it all, it is called "starvation". The thread is "starved to death" because other threads are allowed the CPU time instead of it. The solution to starvation is called "fairness" - that all threads are fairly granted a chance to execute.
 
-每当一个线程获取一个锁，它都会在一个数据结构中记录(map，graph 等等)线程本身和对应的锁。同时，一个线程请求一个锁，也会记录在这个数据结构中。
+## Causes of Starvation in Java
 
-当一个线程请求一个锁，而该请求被否决，该线程可以遍历锁图数据结构来进行死锁检测。比如，如果线程 A 请求锁 7，但是锁 7 已经被线程 B 持有，则线程 A 就可以检测是否线程 B 已经请求任何线程 A 已经持有的锁(如果存在)。如果线程 B 已经请求，死锁就发生了(线程 A 持有锁 1，请求锁 7。线程 B 持有锁 7，请求锁 1)。
+The following three common causes can lead to starvation of threads in Java:
 
-当然，真实的死锁场景可能比上面说的两个线程互相持有对方需要的锁要复杂得多。可能是线程 A 等待线程 B，线程 B 等待线程 C，线程 C 等待线程 D，线程 D 等待线程 A。线程 A 为了检测死锁，必须检查线程 B 请求的所有锁，从而找到线程 C，然后是线程 D，从线程 D 请求的锁中发现线程 A 已经持有的锁。现在线程 A 就知道思索发生了。
+1. Threads with high priority swallow all CPU time from threads with lower priority.
 
-以下是 4 个线程（A，B，C 和 D）获取和请求的锁的图。这样的数据结构可用于检测死锁。
+2. Threads are blocked indefinately waiting to enter a synchronized block, because other threads are constantly allowed access before it.
 
+3. Threads waiting on an object (called wait() on it) remain waiting indefinitely because other threads are constantly awakened instead of it.
 
+### Threads with high priority swallow all CPU time from threads with lower priority
 
-那么，如果检测到死锁，线程将如何处理？
+You can set the thread priority of each thread individually. The higher the priority the more CPU time the thread is granted. You can set the priority of threads between 1 and 10. Exactly how this is interpreted depends on the operating system your application is running on. For most applications you are better off leaving the priority unchanged.
 
-一种可能的操作是释放所有锁，阻塞，等待随机的时间，然后重试。这类似于更简单的锁超时机制，唯一不同是线程仅在实际发生死锁时才进行阻塞，而不仅仅是因为它们的锁定请求超时。但是，如果许多线程在争用相同的锁，那么即使它们阻塞并等待，它们也可能反复陷入死锁。
+### Threads are blocked indefinitely waiting to enter a synchronized block
 
-更好的选择是确定或分配线程的优先级，以便仅阻塞一个（或几个）线程。其余线程继续获取所需的锁，就好像没有发生死锁一样。如果分配给线程的优先级是固定的，则相同的线程将始终被赋予更高的优先级。为避免这种情况，您可以在检测到死锁时随机分配优先级。
+Java's synchronized code blocks can be another cause of starvation. Java's synchronized code block makes no guarantee about the sequence in which threads waiting to enter the synchronized block are allowed to enter. This means that there is a theoretical risk that a thread remains blocked forever trying to enter the block, because other threads are constantly granted access before it. This problem is called "starvation", that a thread is "starved to death" by because other threads are allowed the CPU time instead of it.
+
+### Threads waiting on an object (called wait() on it) remain waiting indefinitely
+
+The notify() method makes no guarantee about what thread is awakened if multiple thread have called wait() on the object notify() is called on. It could be any of the threads waiting. Therefore there is a risk that a thread waiting on a certain object is never awakened because other waiting threads are always awakened instead of it.
