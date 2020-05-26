@@ -2701,7 +2701,7 @@ Thread 1 remain blocked indefinately waiting for the signal from
         it possible for Thread 2 to send the signal to Thread 1, etc.
 ```
 
-听起来更像只是在理论上才会出现，但是看看下面的原生 `Lock` 实现：
+听起来更像只是在理论上才会出现，但是看看下面的简单 `Lock` 实现：
 
 ```java
 //lock implementation with nested monitor lockout problem
