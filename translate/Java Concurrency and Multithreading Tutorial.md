@@ -2405,9 +2405,9 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
-2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
-3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
+1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+2.[锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
+3.[死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
 ## 锁排序
 
@@ -2499,11 +2499,11 @@ Thread 2 waits randomly (e.g. 43 millis) before retrying.
 
 下面是三种常见的导致 Java 线程饥饿的原因：
 
-1. 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
+1.优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-2. 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
+2.线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-3. 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
+3.线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
 ### 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
@@ -3064,4 +3064,74 @@ public class FairLock {
 细心的读者会注意到，公平锁的上述实现仍然遭受信号丢失的困扰。想象一下，当线程调用 `lock()` 时，`FairLock` 实例被锁定。在第一个 `synchronized(this)` 块之后，`mustWait` 为真。然后想象一下，调用 `lock()` 的线程被抢占了，而锁定了锁的线程则调用了 `unlock()`。如果查看前面的 `unlock()` 实现，您会注意到它调用了 `queueObject.notify()`。但是，由于等待在 `lock()` 中的线程尚未调用 `queueObject.wait()`，因此对 `queueObject.notify()` 的调用被遗忘了，信号丢失。当线程在调用 `queueObject.wait()` 之后立即调用 `lock()` 时，它将保持阻塞状态，直到其他线程调用 `unlock()` ，这可能永远不会发生。
 
 遗漏的信号问题是文本 [饥饿和公平](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 中展示的 `FairLock` 实现已使用两种方法将 `QueueObject` 类转化为信号量： `doWait()` 和 `doNotify()`。这些方法在 `QueueObject` 内部存储并响应信号。这样，即使在 `doWait()` 之前调用了 `doNotify()`，也不会丢失信号。
+
+# Java 中的锁
+
+锁是类似于同步块的另外一种线程同步机制，相对于同步块，锁可以进行更加负责的同步控制。锁(以及其他更先进的同步机制)使用同步块创建，所以，我们当然无法彻底摆脱 `synchronized` 关键字。
+
+从 Java 5 开始，`java.util.concurrent.locks` 包就包含了若干锁实现，所以你不必实现自己的锁。不过，你还是需要了解如何使用它们，同时，理解这些实现背后的理论也是非常有用的。更多细节，参考 [`java.util.concurrent.locks.Lock`](http://tutorials.jenkov.com/java-util-concurrent/lock.html) 接口文档。
+
+## 简单锁
+
+让我们从分析 Java 同步代码块开始：
+
+```java
+public class Counter{
+
+  private int count = 0;
+
+  public int inc(){
+    synchronized(this){
+      return ++count;
+    }
+  }
+}
+```
+
+注意 `inc()` 方法中的 `synchronized(this)` 块。这个同步块保证同一时刻只能有一个线程执行 `return ++count`。同步块内部的代码可以更加复杂，但是这个简单的 `++count` 已经足够说明问题。
+
+`Counter` 类可以改写成下面这样，使用 `Lock` 替换同步块：
+
+```java
+public class Counter{
+
+  private Lock lock = new Lock();
+  private int count = 0;
+
+  public int inc(){
+    lock.lock();
+    int newCount = ++count;
+    lock.unlock();
+    return newCount;
+  }
+}
+```
+
+`lock()` 方法锁定 `Lock` 实例，因而所有其他调用 `lock()` 的线程都会阻塞，直到 `unlock()` 被执行。
+
+下面是一个简单的 `Lock` 实现：
+
+```java
+public class Lock{
+
+  private boolean isLocked = false;
+
+  public synchronized void lock()
+  throws InterruptedException{
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  public synchronized void unlock(){
+    isLocked = false;
+    notify();
+  }
+}
+```
+
+注意其中的 `while(isLocked)` 循环，就是所谓的"自旋锁"。自旋锁和方法 `wait()` 和 `notify()` 方法的解释详见  [Thread Signaling](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html) 章节。当 `isLocked` 为 `true`，调用 `lock()` 的线程会被阻塞等待在 `wait()` 调用中。万一线程在没有接收到 `notify()` 调用信号的时候意外从 `wait()` 调用返回(也就是所谓的 [Spurious Wakeup](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#spuriouswakeups) )，线程将会重新检查 `isLocked` 条件以确认后续执行是否安全，而不是假定只要被唤醒就意味着可以安全执行。如果 `isLocked` 是 `false` ，线程退出 `while(isLocked)` 循环，并将 `isLocked` 设置回 `true`，以为调用 `lock()` 的其他新城锁定 `Lock` 实例。
+
+当线程执行完 [critical section](http://tutorials.jenkov.com/java-concurrency/race-conditions-and-critical-sections.html) 代码(`lock()` 和 `unlock()` 之间的代码)，线程调用 `unlock()`。执行 `unlock()` 将 `isLocked` 设置回 `false`，同时通知(唤醒)等待在 `lock()` 方法中的 `wait()` 调用中的线程之一，如果存在的话。
 
