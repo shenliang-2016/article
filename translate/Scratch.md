@@ -1,72 +1,172 @@
-# Slipped Conditions
+## 更现实的例子
 
-## 什么是 Slipped Conditions？
+您可能会辩称，您将永远不会像本文中所示的第一个实现那样实现 `Lock`，因此声称滑移条件是一个相当理论上的问题。但是第一个示例是特意保持相当简单，以更好地传达滑移条件的概念。
 
-Slipped conditions 含义是，在一个线程检查某个条件到它实际操作该条件期间，该条件已经被其他线程修改了，这样实际上前一个线程的操作就是错误的。下面是个简单的例子：
+一个更现实的例子是在实施公平锁定期间，如 [饥饿和公平](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 中所述。如果我们从 [嵌套监视器锁定](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) 看简单的实现，并尝试消除嵌套监视器锁定问题， 很容易遇到滑移条件问题。下面是嵌套监视器锁定章节中的示例：
 
 ```java
-public class Lock {
+//Fair Lock implementation with nested monitor lockout problem
 
-    private boolean isLocked = true;
+public class FairLock {
+  private boolean           isLocked       = false;
+  private Thread            lockingThread  = null;
+  private List<QueueObject> waitingThreads =
+            new ArrayList<QueueObject>();
 
-    public void lock(){
-      synchronized(this){
-        while(isLocked){
+  public void lock() throws InterruptedException{
+    QueueObject queueObject = new QueueObject();
+
+    synchronized(this){
+      waitingThreads.add(queueObject);
+
+      while(isLocked || waitingThreads.get(0) != queueObject){
+
+        synchronized(queueObject){
           try{
-            this.wait();
-          } catch(InterruptedException e){
-            //do nothing, keep waiting
+            queueObject.wait();
+          }catch(InterruptedException e){
+            waitingThreads.remove(queueObject);
+            throw e;
           }
         }
       }
+      waitingThreads.remove(queueObject);
+      isLocked = true;
+      lockingThread = Thread.currentThread();
+    }
+  }
 
-      synchronized(this){
-        isLocked = true;
+  public synchronized void unlock(){
+    if(this.lockingThread != Thread.currentThread()){
+      throw new IllegalMonitorStateException(
+        "Calling thread has not locked this lock");
+    }
+    isLocked      = false;
+    lockingThread = null;
+    if(waitingThreads.size() > 0){
+      QueueObject queueObject = waitingThread.get(0);
+      synchronized(queueObject){
+        queueObject.notify();
       }
     }
-
-    public synchronized void unlock(){
-      isLocked = false;
-      this.notify();
-    }
-
+  }
 }
+public class QueueObject {}
 ```
 
-注意 `lock()` 方法包含两个同步块。第一个块等待，直到 `isLocked` 为假。第二个块将 `isLocked` 设置为 `true`，以锁定其他线程的 `Lock` 实例。
-
-假设 `isLocked` 为假，并且两个线程同时调用 `lock()`。如果进入第一个同步块的第一个线程在第一个同步块之后被抢占，则该线程将检查 `isLocked` 并指出它为假。如果现在允许第二个线程执行，从而进入第一个同步块，那么该线程也将把 `isLocked` 视为 `false`。现在，两个线程都将条件读取为 `false`。然后，两个线程将进入第二个同步块，将 `isLocked` 设置为 `true`，然后继续。
-
-这种情况是 slipped conditions 的一个例子。两个线程都测试条件，然后退出同步块，从而允许其他线程在两个线程中的任何一个更改后续线程的条件之前测试条件。换句话说，从线程检查条件开始到后续线程将其更改之前，条件一直在滑动。
-
-为了避免 slipped conditions ，必须通过执行该操作的线程来自动进行条件的测试和设置，这意味着没有其他线程可以在第一个线程进行的测试和条件设置之间检查条件。
-
-上面示例中的解决方案很简单。只需在 `while` 循环之后，将 `isLocked = true;` 行上移到第一个同步块中即可。如下所示：
+注意，`synchronized(queueObject)` 和 `queueObject.wait()` 调用嵌套在 `synchronized(this)` 同步块内部，导致嵌套监视器问题。为了避免该问题，`synchronized(queueObject)` 块必须被移出 `synchronized(this)` 同步块。如下所示：
 
 ```java
-public class Lock {
+//Fair Lock implementation with slipped conditions problem
 
-    private boolean isLocked = true;
+public class FairLock {
+  private boolean           isLocked       = false;
+  private Thread            lockingThread  = null;
+  private List<QueueObject> waitingThreads =
+            new ArrayList<QueueObject>();
 
-    public void lock(){
+  public void lock() throws InterruptedException{
+    QueueObject queueObject = new QueueObject();
+
+    synchronized(this){
+      waitingThreads.add(queueObject);
+    }
+
+    boolean mustWait = true;
+    while(mustWait){
+
       synchronized(this){
-        while(isLocked){
+        mustWait = isLocked || waitingThreads.get(0) != queueObject;
+      }
+
+      synchronized(queueObject){
+        if(mustWait){
           try{
-            this.wait();
-          } catch(InterruptedException e){
-            //do nothing, keep waiting
+            queueObject.wait();
+          }catch(InterruptedException e){
+            waitingThreads.remove(queueObject);
+            throw e;
           }
         }
-        isLocked = true;
       }
     }
 
-    public synchronized void unlock(){
-      isLocked = false;
-      this.notify();
+    synchronized(this){
+      waitingThreads.remove(queueObject);
+      isLocked = true;
+      lockingThread = Thread.currentThread();
     }
-
+  }
 }
 ```
 
-现在 `isLocked` 条件的检测和设定都在同一个同步块内部自动完成。
+注意：仅展示 `lock()` 方法，因为它是我更改过的唯一方法。
+
+注意 `lock()` 方法现在如何包含 3 个同步块。
+
+第一个 `synchronized(this)` 块通过设置`mustWait = isLocked || waitingThreads.get(0) != queueObject` 来检查条件。
+
+第二个 `synchronized（queueObject）` 块检查线程是否要等待。此时，另一个线程可能已经解除了锁定，但是暂时不需要关心。假设锁已解锁，那么线程立即退出 `synchronized(queueObject)` 块。
+
+仅在 `mustWait = false` 时才执行第三个 `synchronized(this)` 块。这会将条件 `isLocked` 设置回 `true` 等，并离开 `lock()` 方法。
+
+想象一下，如果两个线程在解锁时同时调用 `lock()` 会发生什么。第一个线程 1 将检查 `isLocked` 状态，并发现它为假。然后线程 2 将执行相同的操作。然后它们都不等待，并且都将状态 `isLocked` 设置为 `true`。这是滑倒条件的典型例子。
+
+### 解决滑动条件问题
+
+为了解决上面例子中的滑动条件问题，最后一个 `synchronized(this)` 块的内容必须被移动到第一个同步块中。代码也需要相应地微调，以适应这种移动。如下所示：
+
+```java
+//Fair Lock implementation without nested monitor lockout problem,
+//but with missed signals problem.
+
+public class FairLock {
+  private boolean           isLocked       = false;
+  private Thread            lockingThread  = null;
+  private List<QueueObject> waitingThreads =
+            new ArrayList<QueueObject>();
+
+  public void lock() throws InterruptedException{
+    QueueObject queueObject = new QueueObject();
+
+    synchronized(this){
+      waitingThreads.add(queueObject);
+    }
+
+    boolean mustWait = true;
+    while(mustWait){
+
+        
+        synchronized(this){
+            mustWait = isLocked || waitingThreads.get(0) != queueObject;
+            if(!mustWait){
+                waitingThreads.remove(queueObject);
+                isLocked = true;
+                lockingThread = Thread.currentThread();
+                return;
+            }
+        } 
+
+      synchronized(queueObject){
+        if(mustWait){
+          try{
+            queueObject.wait();
+          }catch(InterruptedException e){
+            waitingThreads.remove(queueObject);
+            throw e;
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+注意现在如何在同一个同步代码块中测试和设置局部变量 `mustWait`。还要注意，即使还在 `synchronized(this)` 代码块之外检查了 `mustWait` 局部变量，在 `while(mustWait)` 子句中，`mustWait` 变量的值也不会在 `synchronized(this)` 之外改变。一个将 `mustWait` 评估为 `false` 的线程也会自动设置内部条件（`isLocked`），以便其他任何检查条件的线程都将其评估为 `true`。
+
+不必在 `synchronized(this)` 块中使用 `return;` 语句。这只是一个小的优化。如果线程不必等待（`mustWait == false`），则没有理由进入 `synchronized(queueObject)` 块并执行 `if(mustWait)` 子句。
+
+细心的读者会注意到，公平锁的上述实现仍然遭受信号丢失的困扰。想象一下，当线程调用 `lock()` 时，`FairLock` 实例被锁定。在第一个 `synchronized(this)` 块之后，`mustWait` 为真。然后想象一下，调用 `lock()` 的线程被抢占了，而锁定了锁的线程则调用了 `unlock()`。如果查看前面的 `unlock()` 实现，您会注意到它调用了 `queueObject.notify()`。但是，由于等待在 `lock()` 中的线程尚未调用 `queueObject.wait()`，因此对 `queueObject.notify()` 的调用被遗忘了，信号丢失。当线程在调用 `queueObject.wait()` 之后立即调用 `lock()` 时，它将保持阻塞状态，直到其他线程调用 `unlock()` ，这可能永远不会发生。
+
+遗漏的信号问题是文本 [饥饿和公平](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 中展示的 `FairLock` 实现已使用两种方法将 `QueueObject` 类转化为信号量： `doWait()` 和 `doNotify()`。这些方法在 `QueueObject` 内部存储并响应信号。这样，即使在 `doWait()` 之前调用了 `doNotify()`，也不会丢失信号。
+
