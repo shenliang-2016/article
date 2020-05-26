@@ -1,51 +1,32 @@
-# 重入闭锁
+# 信号量
 
-重入闭锁是类似于 [deadlock](http://tutorials.jenkov.com/java-concurrency/deadlock.html) 和 [nested monitor lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) 的情况。重入闭锁的部分介绍已经涵盖在 [Locks](http://tutorials.jenkov.com/java-concurrency/locks.html) 和 [Read / Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 章节中。
+信号量是一种线程同步结构，可以用于在线程之间发送信号以避免 [信号丢失](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#missedsignals)，也可以类似于 [锁](http://tutorials.jenkov.com/java-concurrency/locks.html) 那样保护 [临界区](http://tutorials.jenkov.com/java-concurrency/race-conditions-and-critical-sections.html)。Java 5 在 `java.util.concurrent` 包中提供了信号量实现，你无需自己实现信号量。不过了解其背后的理论还是很有用的。
 
-重入闭锁可能发生在一个线程多次进入 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html)， [ReadWriteLock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 或者某些其他不可重入的同步器时。可重入意味着已经持有一个锁的线程可以重复持有该锁。Java 的同步块是可重入的。因此下面的代码可以正常工作：
+Java 5 提供了内建的 `Semaphore` 因此你无需自己实现。更多相关细节可以阅读我的 `java.util.concurrent` 教程中 [java.util.concurrent.Semaphore](http://tutorials.jenkov.com/java-util-concurrent/semaphore.html) 相关章节。
+
+## 简单信号量
+
+这里是一个简单的 `Semaphore` 实现：
 
 ```java
-public class Reentrant{
+public class Semaphore {
+  private boolean signal = false;
 
-  public synchronized outer(){
-    inner();
+  public synchronized void take() {
+    this.signal = true;
+    this.notify();
   }
 
-  public synchronized inner(){
-    //do something
+  public synchronized void release() throws InterruptedException{
+    while(!this.signal) wait();
+    this.signal = false;
   }
+
 }
 ```
 
-注意，`outer()` 和 `inner()` 都被声明为同步的，在 Java 中等价于 `synchronized(this)` 块。如果线程调用 `outer()`，则从 `outer()` 内部调用 `inner()` 没问题，因为两个方法（或块）都在同一个监视对象（`this`）上同步。如果线程已经拥有监视对象上的锁，则它可以访问在同一监视对象上同步的所有块。这称为重入。线程可以重新进入已经为其持有锁的任何代码块。
+`take()` 方法发送一个信号，该信号内部存储在 `Semaphore` 中。`release()` 方法等待一个信号。收到信号标志后，将再次将其清除，并退出 `release()` 方法。
 
-下面的 `Lock` 实现就不是可重入的：
+使用这样的信号量可以避免信号丢失。您将调用 `take()` 而不是 `notify()` 和 `release()` 而不是 `wait()`。如果对 `take()` 的调用发生在对 `release()` 的调用之前，则调用 `release()` 的线程仍会知道调用了 `take()`，因为该信号内部存储在变量 `signal` 中。`wait()` 和 `notify()` 并非如此。
 
-```java
-public class Lock{
-
-  private boolean isLocked = false;
-
-  public synchronized void lock()
-  throws InterruptedException{
-    while(isLocked){
-      wait();
-    }
-    isLocked = true;
-  }
-
-  public synchronized void unlock(){
-    isLocked = false;
-    notify();
-  }
-}
-```
-
-如果一个线程调用两次 `lock()`，而在两次调用之间没有调用 `unlock()`，则第二次 `lock()` 调用将会阻塞。重入闭锁就发生了。
-
-有两种选择可以避免重入闭锁：
-
-1. 避免编写重新进入锁的代码
-2. 使用可重入锁
-
-哪种选择最适合您的项目，取决于您的具体情况。可重入锁的性能通常不如不可重入锁，并且很难实现，但这在您的具体情况下可能不是问题。无论有没有重入，代码是否易于实现都必须视情况而定。
+使用信号量进行信号传递时，名称 `take()` 和 `release()` 可能看起来有些奇怪。名称源于使用信号量作为锁，如本文后面所述。在这种情况下，名称更有意义。
