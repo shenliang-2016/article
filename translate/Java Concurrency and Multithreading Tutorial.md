@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
-- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
-- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+-如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+-如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
-- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+-对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
-- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+-对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
-- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
-- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+-创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+-使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2405,9 +2405,9 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
-2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
-3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
+1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+2.[锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
+3.[死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
 ## 锁排序
 
@@ -2499,11 +2499,11 @@ Thread 2 waits randomly (e.g. 43 millis) before retrying.
 
 下面是三种常见的导致 Java 线程饥饿的原因：
 
-1. 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
+1.优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-2. 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
+2.线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-3. 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
+3.线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
 ### 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
@@ -3270,8 +3270,8 @@ Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此
 首先，我们来总结一些获取资源读权限和写权限的条件：
 
 | **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-| ---------- | ---------------------------------------------- |
-| **写访问** | **没有线程正在读取或者写入。**                 |
+|  |  |
+| **写访问** | **没有线程正在读取或者写入。** |
 
 如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
 
@@ -3655,3 +3655,56 @@ try{
 ```
 
 这个小结构确保万一临界区中的代码抛出异常，仍然可以将 `ReadWriteLock` 解锁。如果未从 `finally` 子句中调用 `unlockWrite()`，并且临界区引发了异常，则 `ReadWriteLock` 将永远保持写锁定状态，从而导致所有调用 `lockRead()` 或 `lockWrite()` 的线程在该 `ReadWriteLock` 实例上无限期阻塞。再次可以解锁 `ReadWriteLock` 的唯一可能是，如果 `ReadWriteLock` 是可重入的，并且在引发异常时锁定了它的线程，后来成功锁定了它，执行了临界区并调用了 `unlockWrite()` 之后，再次解锁 `ReadWriteLock`。但是，为什么要等到这种情况发生？如果它真的发生了呢？从 `finally` 子句中调用 `unlockWrite()` 是一种更为可靠的解决方案。
+
+# 重入闭锁
+
+重入闭锁是类似于 [deadlock](http://tutorials.jenkov.com/java-concurrency/deadlock.html) 和 [nested monitor lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) 的情况。重入闭锁的部分介绍已经涵盖在 [Locks](http://tutorials.jenkov.com/java-concurrency/locks.html) 和 [Read / Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 章节中。
+
+重入闭锁可能发生在一个线程多次进入 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html)， [ReadWriteLock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 或者某些其他不可重入的同步器时。可重入意味着已经持有一个锁的线程可以重复持有该锁。Java 的同步块是可重入的。因此下面的代码可以正常工作：
+
+```java
+public class Reentrant{
+
+  public synchronized outer(){
+    inner();
+  }
+
+  public synchronized inner(){
+    //do something
+  }
+}
+```
+
+注意，`outer()` 和 `inner()` 都被声明为同步的，在 Java 中等价于 `synchronized(this)` 块。如果线程调用 `outer()`，则从 `outer()` 内部调用 `inner()` 没问题，因为两个方法（或块）都在同一个监视对象（`this`）上同步。如果线程已经拥有监视对象上的锁，则它可以访问在同一监视对象上同步的所有块。这称为重入。线程可以重新进入已经为其持有锁的任何代码块。
+
+下面的 `Lock` 实现就不是可重入的：
+
+```java
+public class Lock{
+
+  private boolean isLocked = false;
+
+  public synchronized void lock()
+  throws InterruptedException{
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  public synchronized void unlock(){
+    isLocked = false;
+    notify();
+  }
+}
+```
+
+如果一个线程调用两次 `lock()`，而在两次调用之间没有调用 `unlock()`，则第二次 `lock()` 调用将会阻塞。重入闭锁就发生了。
+
+有两种选择可以避免重入闭锁：
+
+1.避免编写重新进入锁的代码
+2.使用可重入锁
+
+哪种选择最适合您的项目，取决于您的具体情况。可重入锁的性能通常不如不可重入锁，并且很难实现，但这在您的具体情况下可能不是问题。无论有没有重入，代码是否易于实现都必须视情况而定。
+
