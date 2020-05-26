@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
--如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
--如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
--对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
--对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
--创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
--使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2405,9 +2405,9 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
-2.[锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
-3.[死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
+1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
+3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
 ## 锁排序
 
@@ -2499,11 +2499,11 @@ Thread 2 waits randomly (e.g. 43 millis) before retrying.
 
 下面是三种常见的导致 Java 线程饥饿的原因：
 
-1.优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
+1. 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-2.线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
+2. 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-3.线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
+3. 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
 ### 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
@@ -3270,8 +3270,8 @@ Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此
 首先，我们来总结一些获取资源读权限和写权限的条件：
 
 | **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-|  |  |
-| **写访问** | **没有线程正在读取或者写入。** |
+| ---------- | ---------------------------------------------- |
+| **写访问** | **没有线程正在读取或者写入。**                 |
 
 如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
 
@@ -3528,3 +3528,130 @@ public class ReadWriteLock{
 }
 ```
 
+## 完整可重入 ReadWriteLock
+
+下面是完整可重入的 `ReadWriteLock` 实现。我对访问条件进行了一些重构，以使它们更易于阅读，从而更容易使自己确信它们是正确的。
+
+```java
+public class ReadWriteLock{
+
+  private Map<Thread, Integer> readingThreads =
+       new HashMap<Thread, Integer>();
+
+   private int writeAccesses    = 0;
+   private int writeRequests    = 0;
+   private Thread writingThread = null;
+
+
+  public synchronized void lockRead() throws InterruptedException{
+    Thread callingThread = Thread.currentThread();
+    while(! canGrantReadAccess(callingThread)){
+      wait();
+    }
+
+    readingThreads.put(callingThread,
+     (getReadAccessCount(callingThread) + 1));
+  }
+
+  private boolean canGrantReadAccess(Thread callingThread){
+    if( isWriter(callingThread) ) return true;
+    if( hasWriter()             ) return false;
+    if( isReader(callingThread) ) return true;
+    if( hasWriteRequests()      ) return false;
+    return true;
+  }
+
+
+  public synchronized void unlockRead(){
+    Thread callingThread = Thread.currentThread();
+    if(!isReader(callingThread)){
+      throw new IllegalMonitorStateException("Calling Thread does not" +
+        " hold a read lock on this ReadWriteLock");
+    }
+    int accessCount = getReadAccessCount(callingThread);
+    if(accessCount == 1){ readingThreads.remove(callingThread); }
+    else { readingThreads.put(callingThread, (accessCount -1)); }
+    notifyAll();
+  }
+
+  public synchronized void lockWrite() throws InterruptedException{
+    writeRequests++;
+    Thread callingThread = Thread.currentThread();
+    while(! canGrantWriteAccess(callingThread)){
+      wait();
+    }
+    writeRequests--;
+    writeAccesses++;
+    writingThread = callingThread;
+  }
+
+  public synchronized void unlockWrite() throws InterruptedException{
+    if(!isWriter(Thread.currentThread()){
+      throw new IllegalMonitorStateException("Calling Thread does not" +
+        " hold the write lock on this ReadWriteLock");
+    }
+    writeAccesses--;
+    if(writeAccesses == 0){
+      writingThread = null;
+    }
+    notifyAll();
+  }
+
+  private boolean canGrantWriteAccess(Thread callingThread){
+    if(isOnlyReader(callingThread))    return true;
+    if(hasReaders())                   return false;
+    if(writingThread == null)          return true;
+    if(!isWriter(callingThread))       return false;
+    return true;
+  }
+
+
+  private int getReadAccessCount(Thread callingThread){
+    Integer accessCount = readingThreads.get(callingThread);
+    if(accessCount == null) return 0;
+    return accessCount.intValue();
+  }
+
+
+  private boolean hasReaders(){
+    return readingThreads.size() > 0;
+  }
+
+  private boolean isReader(Thread callingThread){
+    return readingThreads.get(callingThread) != null;
+  }
+
+  private boolean isOnlyReader(Thread callingThread){
+    return readingThreads.size() == 1 &&
+           readingThreads.get(callingThread) != null;
+  }
+
+  private boolean hasWriter(){
+    return writingThread != null;
+  }
+
+  private boolean isWriter(Thread callingThread){
+    return writingThread == callingThread;
+  }
+
+  private boolean hasWriteRequests(){
+      return this.writeRequests > 0;
+  }
+
+}
+```
+
+## 从 finally 子句调用 unlock()
+
+当用 `ReadWriteLock` 保护临界区时，临界区可能会抛出异常，从 `finally` 子句内部调用 `readUnlock()` 和 `writeUnlock()` 方法很重要。这样做可以确保 `ReadWriteLock` 始终会被解锁，以便其他线程可以锁定它。这是一个例子：
+
+```java
+lock.lockWrite();
+try{
+  //do critical section code, which may throw exception
+} finally {
+  lock.unlockWrite();
+}
+```
+
+这个小结构确保万一临界区中的代码抛出异常，仍然可以将 `ReadWriteLock` 解锁。如果未从 `finally` 子句中调用 `unlockWrite()`，并且临界区引发了异常，则 `ReadWriteLock` 将永远保持写锁定状态，从而导致所有调用 `lockRead()` 或 `lockWrite()` 的线程在该 `ReadWriteLock` 实例上无限期阻塞。再次可以解锁 `ReadWriteLock` 的唯一可能是，如果 `ReadWriteLock` 是可重入的，并且在引发异常时锁定了它的线程，后来成功锁定了它，执行了临界区并调用了 `unlockWrite()` 之后，再次解锁 `ReadWriteLock`。但是，为什么要等到这种情况发生？如果它真的发生了呢？从 `finally` 子句中调用 `unlockWrite()` 是一种更为可靠的解决方案。
