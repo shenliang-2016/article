@@ -1,127 +1,51 @@
-## 完整可重入 ReadWriteLock
+# 重入闭锁
 
-下面是完整可重入的 `ReadWriteLock` 实现。我对访问条件进行了一些重构，以使它们更易于阅读，从而更容易使自己确信它们是正确的。
+重入闭锁是类似于 [deadlock](http://tutorials.jenkov.com/java-concurrency/deadlock.html) 和 [nested monitor lockout](http://tutorials.jenkov.com/java-concurrency/nested-monitor-lockout.html) 的情况。重入闭锁的部分介绍已经涵盖在 [Locks](http://tutorials.jenkov.com/java-concurrency/locks.html) 和 [Read / Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 章节中。
+
+重入闭锁可能发生在一个线程多次进入 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html)， [ReadWriteLock](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 或者某些其他不可重入的同步器时。可重入意味着已经持有一个锁的线程可以重复持有该锁。Java 的同步块是可重入的。因此下面的代码可以正常工作：
 
 ```java
-public class ReadWriteLock{
+public class Reentrant{
 
-  private Map<Thread, Integer> readingThreads =
-       new HashMap<Thread, Integer>();
-
-   private int writeAccesses    = 0;
-   private int writeRequests    = 0;
-   private Thread writingThread = null;
-
-
-  public synchronized void lockRead() throws InterruptedException{
-    Thread callingThread = Thread.currentThread();
-    while(! canGrantReadAccess(callingThread)){
-      wait();
-    }
-
-    readingThreads.put(callingThread,
-     (getReadAccessCount(callingThread) + 1));
+  public synchronized outer(){
+    inner();
   }
 
-  private boolean canGrantReadAccess(Thread callingThread){
-    if( isWriter(callingThread) ) return true;
-    if( hasWriter()             ) return false;
-    if( isReader(callingThread) ) return true;
-    if( hasWriteRequests()      ) return false;
-    return true;
+  public synchronized inner(){
+    //do something
   }
-
-
-  public synchronized void unlockRead(){
-    Thread callingThread = Thread.currentThread();
-    if(!isReader(callingThread)){
-      throw new IllegalMonitorStateException("Calling Thread does not" +
-        " hold a read lock on this ReadWriteLock");
-    }
-    int accessCount = getReadAccessCount(callingThread);
-    if(accessCount == 1){ readingThreads.remove(callingThread); }
-    else { readingThreads.put(callingThread, (accessCount -1)); }
-    notifyAll();
-  }
-
-  public synchronized void lockWrite() throws InterruptedException{
-    writeRequests++;
-    Thread callingThread = Thread.currentThread();
-    while(! canGrantWriteAccess(callingThread)){
-      wait();
-    }
-    writeRequests--;
-    writeAccesses++;
-    writingThread = callingThread;
-  }
-
-  public synchronized void unlockWrite() throws InterruptedException{
-    if(!isWriter(Thread.currentThread()){
-      throw new IllegalMonitorStateException("Calling Thread does not" +
-        " hold the write lock on this ReadWriteLock");
-    }
-    writeAccesses--;
-    if(writeAccesses == 0){
-      writingThread = null;
-    }
-    notifyAll();
-  }
-
-  private boolean canGrantWriteAccess(Thread callingThread){
-    if(isOnlyReader(callingThread))    return true;
-    if(hasReaders())                   return false;
-    if(writingThread == null)          return true;
-    if(!isWriter(callingThread))       return false;
-    return true;
-  }
-
-
-  private int getReadAccessCount(Thread callingThread){
-    Integer accessCount = readingThreads.get(callingThread);
-    if(accessCount == null) return 0;
-    return accessCount.intValue();
-  }
-
-
-  private boolean hasReaders(){
-    return readingThreads.size() > 0;
-  }
-
-  private boolean isReader(Thread callingThread){
-    return readingThreads.get(callingThread) != null;
-  }
-
-  private boolean isOnlyReader(Thread callingThread){
-    return readingThreads.size() == 1 &&
-           readingThreads.get(callingThread) != null;
-  }
-
-  private boolean hasWriter(){
-    return writingThread != null;
-  }
-
-  private boolean isWriter(Thread callingThread){
-    return writingThread == callingThread;
-  }
-
-  private boolean hasWriteRequests(){
-      return this.writeRequests > 0;
-  }
-
 }
 ```
 
-## 从 finally 子句调用 unlock()
+注意，`outer()` 和 `inner()` 都被声明为同步的，在 Java 中等价于 `synchronized(this)` 块。如果线程调用 `outer()`，则从 `outer()` 内部调用 `inner()` 没问题，因为两个方法（或块）都在同一个监视对象（`this`）上同步。如果线程已经拥有监视对象上的锁，则它可以访问在同一监视对象上同步的所有块。这称为重入。线程可以重新进入已经为其持有锁的任何代码块。
 
-当用 `ReadWriteLock` 保护临界区时，临界区可能会抛出异常，从 `finally` 子句内部调用 `readUnlock()` 和 `writeUnlock()` 方法很重要。这样做可以确保 `ReadWriteLock` 始终会被解锁，以便其他线程可以锁定它。这是一个例子：
+下面的 `Lock` 实现就不是可重入的：
 
 ```java
-lock.lockWrite();
-try{
-  //do critical section code, which may throw exception
-} finally {
-  lock.unlockWrite();
+public class Lock{
+
+  private boolean isLocked = false;
+
+  public synchronized void lock()
+  throws InterruptedException{
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  public synchronized void unlock(){
+    isLocked = false;
+    notify();
+  }
 }
 ```
 
-这个小结构确保万一临界区中的代码抛出异常，仍然可以将 `ReadWriteLock` 解锁。如果未从 `finally` 子句中调用 `unlockWrite()`，并且临界区引发了异常，则 `ReadWriteLock` 将永远保持写锁定状态，从而导致所有调用 `lockRead()` 或 `lockWrite()` 的线程在该 `ReadWriteLock` 实例上无限期阻塞。再次可以解锁 `ReadWriteLock` 的唯一可能是，如果 `ReadWriteLock` 是可重入的，并且在引发异常时锁定了它的线程，后来成功锁定了它，执行了临界区并调用了 `unlockWrite()` 之后，再次解锁 `ReadWriteLock`。但是，为什么要等到这种情况发生？如果它真的发生了呢？从 `finally` 子句中调用 `unlockWrite()` 是一种更为可靠的解决方案。
+如果一个线程调用两次 `lock()`，而在两次调用之间没有调用 `unlock()`，则第二次 `lock()` 调用将会阻塞。重入闭锁就发生了。
+
+有两种选择可以避免重入闭锁：
+
+1. 避免编写重新进入锁的代码
+2. 使用可重入锁
+
+哪种选择最适合您的项目，取决于您的具体情况。可重入锁的性能通常不如不可重入锁，并且很难实现，但这在您的具体情况下可能不是问题。无论有没有重入，代码是否易于实现都必须视情况而定。
