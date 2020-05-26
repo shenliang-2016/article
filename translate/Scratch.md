@@ -1,78 +1,72 @@
-## 更现实的例子
+# Slipped Conditions
 
-你可能声称你永远不会自己实现上面所说的那种锁。你也不会在内部监视器对象上调用 `wait()` 和 `notify()` ，而是在 `this` 上调用。这些都是可能的。但是，还是存在某些情况，类似于上面介绍的设计还是会出现。比如，如果你想要在一个 `Lock` 中实现 [fairness](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 。这个过程中你希望每个线程都在它们各自的排队对象上调用 `wait()`。因此，你可以一次唤醒这些线程之一。
+## 什么是 Slipped Conditions？
 
-下面是公平锁的简单实现：
+Slipped conditions 含义是，在一个线程检查某个条件到它实际操作该条件期间，该条件已经被其他线程修改了，这样实际上前一个线程的操作就是错误的。下面是个简单的例子：
 
 ```java
-//Fair Lock implementation with nested monitor lockout problem
+public class Lock {
 
-public class FairLock {
-  private boolean           isLocked       = false;
-  private Thread            lockingThread  = null;
-  private List<QueueObject> waitingThreads =
-            new ArrayList<QueueObject>();
+    private boolean isLocked = true;
 
-  public void lock() throws InterruptedException{
-    QueueObject queueObject = new QueueObject();
-
-    synchronized(this){
-      waitingThreads.add(queueObject);
-
-      while(isLocked || waitingThreads.get(0) != queueObject){
-
-        synchronized(queueObject){
+    public void lock(){
+      synchronized(this){
+        while(isLocked){
           try{
-            queueObject.wait();
-          }catch(InterruptedException e){
-            waitingThreads.remove(queueObject);
-            throw e;
+            this.wait();
+          } catch(InterruptedException e){
+            //do nothing, keep waiting
           }
         }
       }
-      waitingThreads.remove(queueObject);
-      isLocked = true;
-      lockingThread = Thread.currentThread();
-    }
-  }
 
-  public synchronized void unlock(){
-    if(this.lockingThread != Thread.currentThread()){
-      throw new IllegalMonitorStateException(
-        "Calling thread has not locked this lock");
-    }
-    isLocked      = false;
-    lockingThread = null;
-    if(waitingThreads.size() > 0){
-      QueueObject queueObject = waitingThreads.get(0);
-      synchronized(queueObject){
-        queueObject.notify();
+      synchronized(this){
+        isLocked = true;
       }
     }
-  }
+
+    public synchronized void unlock(){
+      isLocked = false;
+      this.notify();
+    }
+
 }
-public class QueueObject {}
 ```
 
-乍一看，这种实现看起来不错，但是请注意 `lock()` 方法如何从两个同步块内部调用 `queueObject.wait()`。一个在 `this` 上同步，并嵌套在 `queueObject` 局部变量上同步的一个同步块中。当线程调用 `queueObject.wait()` 时，它释放 `QueueObject` 实例上的锁，但不释放与 `this` 关联的锁。
+注意 `lock()` 方法包含两个同步块。第一个块等待，直到 `isLocked` 为假。第二个块将 `isLocked` 设置为 `true`，以锁定其他线程的 `Lock` 实例。
 
-还要注意，`unlock()` 方法被声明为 `synchronized`，它等于 `synchronized(this)` 块。这意味着，如果一个线程在 `lock()` 内部等待，则与 `this` 关联的监视器对象将被等待的线程锁定。所有调用 `unlock()` 的线程将无限期地阻塞，等待正在等待的线程释放对 `this` 的锁定。但这永远不会发生，因为只有在线程成功向等待的线程发送信号时才会发生，并且只能通过执行 `unlock()` 方法来发送。
+假设 `isLocked` 为假，并且两个线程同时调用 `lock()`。如果进入第一个同步块的第一个线程在第一个同步块之后被抢占，则该线程将检查 `isLocked` 并指出它为假。如果现在允许第二个线程执行，从而进入第一个同步块，那么该线程也将把 `isLocked` 视为 `false`。现在，两个线程都将条件读取为 `false`。然后，两个线程将进入第二个同步块，将 `isLocked` 设置为 `true`，然后继续。
 
-因此，上面的 `FairLock` 实现可能导致嵌套的监视器锁定。文本 [饥饿和公平](http://tutorials.jenkov.com/java-concurrency/starvation-and-fairness.html) 中描述了公平锁定的更好实现。
+这种情况是 slipped conditions 的一个例子。两个线程都测试条件，然后退出同步块，从而允许其他线程在两个线程中的任何一个更改后续线程的条件之前测试条件。换句话说，从线程检查条件开始到后续线程将其更改之前，条件一直在滑动。
 
-## 嵌套监视器锁定 vs. 死锁
+为了避免 slipped conditions ，必须通过执行该操作的线程来自动进行条件的测试和设置，这意味着没有其他线程可以在第一个线程进行的测试和条件设置之间检查条件。
 
-嵌套监视器锁定的结果和死锁非常像：线程陷入无止境的阻塞相互等待。
+上面示例中的解决方案很简单。只需在 `while` 循环之后，将 `isLocked = true;` 行上移到第一个同步块中即可。如下所示：
 
-但是两种情况并不完全相同。如 [Deadlock](http://tutorials.jenkov.com/java-concurrency/deadlock.html) 章节中所述，死锁发生的时机是两个线程以不同的顺序获取相同的一组锁。线程 1 锁定 A，等待 B。线程 2 锁定 B，等待 A。如 [Deadlock Prevention](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html) 章节中所述，死锁可以通过保证所有线程以相同的顺序获取同一组锁来避免。然而，嵌套监视器锁定刚好就是发生在两个线程以相同的顺序获取同一组锁的时候。线程 1 锁定 A 和 B，然后释放 B 并等待来自线程 2 的信号。线程 2 需要同时锁定 A 和 B 才能发送信号给线程 1。因此，一个线程等待信号，另一个线程等待一个锁被释放。
+```java
+public class Lock {
 
-主要的不同总结如下：
+    private boolean isLocked = true;
 
+    public void lock(){
+      synchronized(this){
+        while(isLocked){
+          try{
+            this.wait();
+          } catch(InterruptedException e){
+            //do nothing, keep waiting
+          }
+        }
+        isLocked = true;
+      }
+    }
+
+    public synchronized void unlock(){
+      isLocked = false;
+      this.notify();
+    }
+
+}
 ```
-In deadlock, two threads are waiting for each other to release locks.
 
-In nested monitor lockout, Thread 1 is holding a lock A, and waits
-for a signal from Thread 2. Thread 2 needs the lock A to send the
-signal to Thread 1.
-```
-
+现在 `isLocked` 条件的检测和设定都在同一个同步块内部自动完成。
