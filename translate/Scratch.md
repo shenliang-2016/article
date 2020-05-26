@@ -1,67 +1,124 @@
-# Java 中的读/写锁
+## 读/写锁的可重入性
 
-相对于上一章节中介绍的 `Lock` 实现，读/写锁是一种更加复杂的锁。假设你的应用读写某些资源，但是读操作显著多于写操作。两个线程同时读取相同的资源不会产生任何问题，因而多个想要读取该资源的线程可以同时获取访问权限进行重叠读取。但是，如果一个线程希望对该资源进行写入，则所有其他读取和写入线程都不能继续进行。为了解决这种只允许一个写入线程和多个读取线程的问题，你需要一个读/写锁。
+前面的 `ReadWriteLock` 类是非 [可重入的](http://tutorials.jenkov.com/java-concurrency/locks.html#reentrance)。如果一个已经拥有写访问权限的线程再次请求写访问权限，将会阻塞，因为已经存在一个写入者——它自己。进一步地，考虑下列场景：
 
-Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此，了解它们实现背后的原理仍然非常有用。
+1. 线程 1 获得读访问权限。
 
-## 读/写锁的 Java 实现
+2. 线程 2 请求写操作权限但是会被阻塞，因为已经存在一个读者。
 
-首先，我们来总结一些获取资源读权限和写权限的条件：
+3. 线程 1 重新请求读访问权限（重新进入锁），将会被阻塞，因为已经存在一个写请求。
 
-| **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-| ---------- | ---------------------------------------------- |
-| **写访问** | **没有线程正在读取或者写入。**                 |
+这种情况下，前文中所述的 `ReadWriteLock` 将会锁死——类似死锁的情况。所有线程的无论是读还是写请求都不会被满足。
 
-如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
+要将 `ReadWriteLock` 修改为可重入的，需要稍微修改一下。读者和写者的可重入将被分别处理。
 
-当没有线程在读写资源时，可以授予想要对资源进行写访问权限的线程写权限。多少个线程请求了写访问权限无关紧要，除非您想保证请求写访问的线程之间的公平性，否则无关紧要。
+## 读可重入
 
-考虑到这些简单的规则，我们可以实现一个 `ReadWriteLock`，如下所示：
+为了将 `ReadWriteLock` 改造为读者可重入的，我们需要首先建立读者可重入规则：
+
+- 如果线程可以获取读取访问权限（无写入者或写入请求），或者如果它已经具有读取访问权限（无论写入请求如何），则授予该线程读取重入权限。
+
+为了确定某个线程是否已经具有读取访问权限，将对每个授予读取访问权限的线程的引用及其已获得读取锁定的次数保留在 Map 中。在确定是否可以授予读取访问权限时，将检查此 Map 以获取对调用线程的引用。这是 `lockRead()` 和 `unlockRead()` 方法在更改后的样子：
 
 ```java
 public class ReadWriteLock{
 
-  private int readers       = 0;
-  private int writers       = 0;
-  private int writeRequests = 0;
+  private Map<Thread, Integer> readingThreads =
+      new HashMap<Thread, Integer>();
+
+  private int writers        = 0;
+  private int writeRequests  = 0;
 
   public synchronized void lockRead() throws InterruptedException{
-    while(writers > 0 || writeRequests > 0){
-      wait();
+    Thread callingThread = Thread.currentThread();
+    while(! canGrantReadAccess(callingThread)){
+      wait();                                                                   
     }
-    readers++;
+
+    readingThreads.put(callingThread,
+       (getAccessCount(callingThread) + 1));
   }
 
+
   public synchronized void unlockRead(){
-    readers--;
+    Thread callingThread = Thread.currentThread();
+    int accessCount = getAccessCount(callingThread);
+    if(accessCount == 1){ readingThreads.remove(callingThread); }
+    else { readingThreads.put(callingThread, (accessCount -1)); }
     notifyAll();
   }
+
+
+  private boolean canGrantReadAccess(Thread callingThread){
+    if(writers > 0)            return false;
+    if(isReader(callingThread) return true;
+    if(writeRequests > 0)      return false;
+    return true;
+  }
+
+  private int getReadAccessCount(Thread callingThread){
+    Integer accessCount = readingThreads.get(callingThread);
+    if(accessCount == null) return 0;
+    return accessCount.intValue();
+  }
+
+  private boolean isReader(Thread callingThread){
+    return readingThreads.get(callingThread) != null;
+  }
+
+}
+```
+
+如您所见，读重入仅在当前没有线程写入资源时才被授予。此外，如果调用线程已经具有读取访问权限，则此优先级高于所有写入请求。
+
+## 写可重入
+
+仅当线程已经具有写访问权限时，才授予写重入权限。这是 `lockWrite()` 和 `unlockWrite()` 方法在更改之后的样子：
+
+```java
+public class ReadWriteLock{
+
+    private Map<Thread, Integer> readingThreads =
+        new HashMap<Thread, Integer>();
+
+    private int writeAccesses    = 0;
+    private int writeRequests    = 0;
+    private Thread writingThread = null;
 
   public synchronized void lockWrite() throws InterruptedException{
     writeRequests++;
-
-    while(readers > 0 || writers > 0){
+    Thread callingThread = Thread.currentThread();
+    while(! canGrantWriteAccess(callingThread)){
       wait();
     }
     writeRequests--;
-    writers++;
+    writeAccesses++;
+    writingThread = callingThread;
   }
 
   public synchronized void unlockWrite() throws InterruptedException{
-    writers--;
+    writeAccesses--;
+    if(writeAccesses == 0){
+      writingThread = null;
+    }
     notifyAll();
+  }
+
+  private boolean canGrantWriteAccess(Thread callingThread){
+    if(hasReaders())             return false;
+    if(writingThread == null)    return true;
+    if(!isWriter(callingThread)) return false;
+    return true;
+  }
+
+  private boolean hasReaders(){
+    return readingThreads.size() > 0;
+  }
+
+  private boolean isWriter(Thread callingThread){
+    return writingThread == callingThread;
   }
 }
 ```
 
-`ReadWriteLock` 拥有两对 `lock` 和 `unlock` 方法，一对用于读访问，另一对用于写访问。
-
-读访问的规则实现在 `lockRead()` 方法中。所有线程都能获得读访问权限，除非存在一个线程拥有写访问权限，或者一个或者多个线程已经请求了写访问权限。
-
-写访问的规则实现在 `lockWrite()` 方法中。想要写访问权限的线程通过请求写访问权限（`writeRequests++`）开始。然后它将检查它是否实际上可以获取写访问权限。如果没有线程具有对资源的读访问权，也没有线程具有对资源的写访问权，则线程可以获得写访问权限。有多少个线程请求写访问权限无关紧要。
-
-值得注意的是，`unlockRead()` 和 `unlockWrite()` 都调用 `notifyAll()` 而不是 `notify()`。要解释原因，请想象以下情况：
-
-在 `ReadWriteLock` 内部，有等待读取访问的线程和等待写入访问的线程。如果被 `notify()` 唤醒的线程是一个读访问线程，它将被放回等待状态，因为有线程在等待写访问。但是，没有一个等待写访问的线程被唤醒，因此没有其他事情发生。没有线程获得读或写访问权限。通过调用 `noftifyAll()`，所有等待的线程被唤醒，并检查它们是否可以获得所需的访问权限。
-
-调用 `notifyAll()` 还有另一个好处。如果有多个线程正在等待读取访问，而没有一个线程在等待写入访问，并且调用了 `unlockWrite()`，则所有等待读取访问的线程都被立即授予读取访问权限——而不是一个接一个。
+注意，在确定调用线程是否可以进行写访问时，现在如何考虑当前持有写锁的线程。
