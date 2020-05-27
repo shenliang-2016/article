@@ -891,9 +891,9 @@ public class MyRunnableMain {
 
 设想两个线程，A 和 B，正在执行同一个 `Counter` 类实例上的 `add` 方法。没有任何办法可以确知操作系统如何调度两个线程。`add()` 方法中的代码并不会作为一个原子指令被 JVM 执行。它会作为一系列更小的指令被执行，类似于：
 
-1.从内存中读取 `this.count` 到寄存器中。
-2.增加值到寄存器。
-3.将寄存器写回内存。
+1. 从内存中读取 `this.count` 到寄存器中。
+2. 增加值到寄存器。
+3. 将寄存器写回内存。
 
 观察当 A 和 B 像下面这样交错执行时会发生什么：
 
@@ -1301,8 +1301,8 @@ public class MySharedObject {
 
 当对象和变量可以被存储在各种不同的计算机存储区域中时，可能会发生某些问题。主要的两类问题：
 
--线程对共享变量的修改（写入）的可见性。
--在读取，校验以及写入共享变量时的竞争条件。
+- 线程对共享变量的修改（写入）的可见性。
+- 在读取，校验以及写入共享变量时的竞争条件。
 
 接下来分别解释这两类问题。
 
@@ -1348,10 +1348,10 @@ Java 同步块使用 `synchronized` 关键字标记。Java 同步块被同步在
 
  `synchronized` 可以用来标记四种不同类型的代码块：
 
-1.实例方法
-2.静态方法
-3.实例方法内部的代码块
-4.静态方法内部的代码块
+1. 实例方法
+2. 静态方法
+3. 实例方法内部的代码块
+4. 静态方法内部的代码块
 
 这些代码块被同步在不同对象上。你需要何种同步块需要具体情况具体分析。接下来我们详细介绍每种类型的同步块。
 
@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
--如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
--如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
--对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
--对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
--创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
--使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2405,7 +2405,7 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
 2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
 3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
@@ -3270,8 +3270,8 @@ Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此
 首先，我们来总结一些获取资源读权限和写权限的条件：
 
 | **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-|  |  |
-| **写访问** | **没有线程正在读取或者写入。** |
+| ---------- | ---------------------------------------------- |
+| **写访问** | **没有线程正在读取或者写入。**                 |
 
 如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
 
@@ -3866,7 +3866,7 @@ try{
 下图展示了两个线程通过一个阻塞队列进行协作的场景：
 
 | ![A BlockingQueue with one thread putting into it, and another thread taking from it.](http://tutorials.jenkov.com/images/java-concurrency-utils/blocking-queue.png) |
-|  |
+| ------------------------------------------------------------ |
 | **一个阻塞队列，一个线程将元素放入其中，另一个线程从队列中取出元素。** |
 
 Java 5 的 `java.util.concurrent` 包中已经提供了阻塞队列实现。尽管 Java 5 提供了一种阻塞队列实现，理解它们背后的原理还是很有用的。
@@ -4094,4 +4094,93 @@ public static class MyLock {
 6. [Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#set)
 
 并不是所有同步器都包含以上所有部分，那些同步器可能不具有与此处所述完全相同的部分。通常，您总可以找到其中一个或多个部分。
+
+## 状态
+
+同步器的状态被用于访问条件以确定线程能否获得访问权限。在 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html) 中状态保存在 `boolean` 变量中，表示该 `Lock` 是否被锁定。在 [Bounded Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphores.html#bounded) 中，内部状态存储在一个计数器(`int`)和上界(`int`)中，前者表示当前调用 `takes()` 的线程数量，后者表示可以调用 `takes()` 的线程最大数量。在 [Blocking Queue](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) 中，状态保存在队列中元素的 `List` 中，如果存在队列长度限制，那么状态就还包括最大队列长度(`int`)。
+
+下面是来自 `Lock` 和 `BoundedSemaphore` 的两个代码片段，其中包含状态代码：
+
+```java
+public class Lock{
+
+  //state is kept here
+  private boolean isLocked = false; 
+
+  public synchronized void lock()
+  throws InterruptedException{
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  ...
+}
+public class BoundedSemaphore {
+
+  //state is kept here
+      private int signals = 0;
+      private int bound   = 0;
+      
+  public BoundedSemaphore(int upperBound){
+    this.bound = upperBound;
+  }
+
+  public synchronized void take() throws InterruptedException{
+    while(this.signals == bound) wait();
+    this.signal++;
+    this.notify();
+  }
+  ...
+}
+```
+
+## 访问条件
+
+访问条件是确定是否可以允许调用测试和设置状态方法的线程设置状态的条件。访问条件通常基于同步器的 [状态](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#state)。通常在 `while` 循环中检查访问条件，以防止 [Spurious Wakeups](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#spuriouswakeups)。评估访问条件时，它要么是 `true` 要么是 `false`。
+
+在 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html) 中，访问条件只是检查 `isLocked` 成员变量的值。在 [Bounded Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphores.html#bounded) 中，实际上有两种访问条件，具体取决于您是要“获取”还是“释放”该信号量。如果线程尝试获取信号量，则将对 `signals` 变量进行上限检查。如果线程试图释放信号量，则将 `signals` 变量与 0 进行比较。
+
+这是 `Lock` 和 `BoundedSemaphore` 的两个代码段，访问条件用粗体标出。注意如何在 `while` 循环中始终检查条件。
+
+```java
+public class Lock{
+
+  private boolean isLocked = false;
+
+  public synchronized void lock()
+  throws InterruptedException{
+    //access condition
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  ...
+}
+public class BoundedSemaphore {
+  private int signals = 0;
+  private int bound   = 0;
+
+  public BoundedSemaphore(int upperBound){
+    this.bound = upperBound;
+  }
+
+  public synchronized void take() throws InterruptedException{
+    //access condition
+    while(this.signals == bound) wait();
+    this.signals++;
+    this.notify();
+  }
+
+  public synchronized void release() throws InterruptedException{
+    //access condition
+    while(this.signals == 0) wait();
+    this.signals--;
+    this.notify();
+  }
+}
+```
 
