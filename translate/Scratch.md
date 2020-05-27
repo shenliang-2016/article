@@ -1,22 +1,17 @@
-## 作为原子操作的比较并交换
+# 同步器剖析
 
-现代 CPU 内置了对原子比较和交换操作的支持。在 Java 5 中，您可以通过 `java.util.concurrent.atomic` 包中的一些新的原子类访问 CPU 中的这些功能。
+即使许多同步器（锁，信号量，阻塞队列等）在功能上有所不同，它们的内部设计通常也没有太大不同。换句话说，它们在内部由相同（或相似）的基本部分组成。在设计同步器时，了解这些基本部分会很有帮助。
 
-这是一个示例，展示了如何使用 `AtomicBoolean` 类来实现前面所示的 `lock()` 方法：
+**注意：**本文内容是 Jakob Jenkov，Toke Johansen 和 LarsBjørn 于 2004 年春季在哥本哈根 IT 大学开设的一个 M.Sc. 学生项目的部分内容。在这个项目中，我们问道格·李（Doug Lea）是否知道类似的工作。有趣的是，在 Java 5 并发实用程序的开发过程中，他独立于该项目也得出了类似的结论。我相信，Doug Lea 的工作在 ["Java Concurrency in Practice"](http://www.amazon.com/Java-Concurrency-Practice-Brian-Goetz/dp/0321349601/ref=pd_bbs_sr_1?ie=UTF8&s=books&qid=1215418711&sr=8-1) 一书中进行了描述。该书包含一章，标题为“同步器解剖”，其内容与本文相似，尽管不完全相同。
 
-```java
-public static class MyLock {
-    private AtomicBoolean locked = new AtomicBoolean(false);
+大部分(可能不是全部)同步器的目的都是守卫某些代码区域(临界区)以适应多线程并发访问。为了实现这一目标，同步器通常需要下面这几部分：
 
-    public boolean lock() {
-        return locked.compareAndSet(false, true);
-    }
+1. [状态](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#state)
+2. [访问条件](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#accesscondition)
+3. [状态变化](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#statechanges)
+4. [通知策略](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#notificationstrategy)
+5. [Test 和 Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#testandset)
+6. [Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#set)
 
-}
-```
+并不是所有同步器都包含以上所有部分，那些同步器可能不具有与此处所述完全相同的部分。通常，您总可以找到其中一个或多个部分。
 
-注意，`locked` 变量不再是 `boolean` 而是 `AtomicBoolean`。此类具有 `compareAndSet()` 函数，该函数会将 `AtomicBoolean` 实例的值与期望值进行比较，如果等于期望值，则将其交换为新值。在这种情况下，它将 `locked` 的值与 `false` 进行比较，如果它是 `false` ，则将 `AtomicBoolean` 的新值设置为 `true`。
-
-如果交换了值，则 `compareAndSet()` 方法返回 `true`，否则返回 `false`。
-
-使用 Java 5+ 附带的比较和交换功能而不是自己实现的优点是，Java 5+ 内置的比较和交换功能使您可以利用应用程序所运行的 CPU 的基础比较和交换功能。这使您的比较和交换代码更快。
