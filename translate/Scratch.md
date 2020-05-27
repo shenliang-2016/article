@@ -1,53 +1,56 @@
-## 有界信号量
+# 阻塞队列
 
-上面的 `CoutingSemaphore` 没有可以存储的信号数量的上界。我们现在把它修改为规定计数上界的信号量：
+阻塞队列是一个队列，当您尝试从队列中出队并且队列为空时，或者尝试将项目入队并且队列已满时，操作将被阻塞。尝试从空队列中出队的线程将被阻止，直到其他线程将一项插入队列中为止。尝试使一个项目进入满队列的线程被阻塞，直到某个其他线程在队列中腾出空间为止，方法是使一个或多个项目出队或完全清除队列。
 
-```java
-public class BoundedSemaphore {
-  private int signals = 0;
-  private int bound   = 0;
+下图展示了两个线程通过一个阻塞队列进行协作的场景：
 
-  public BoundedSemaphore(int upperBound){
-    this.bound = upperBound;
-  }
+| ![A BlockingQueue with one thread putting into it, and another thread taking from it.](http://tutorials.jenkov.com/images/java-concurrency-utils/blocking-queue.png) |
+| ------------------------------------------------------------ |
+| **一个阻塞队列，一个线程将元素放入其中，另一个线程从队列中取出元素。** |
 
-  public synchronized void take() throws InterruptedException{
-    while(this.signals == bound) wait();
-    this.signals++;
-    this.notify();
-  }
+Java 5 的 `java.util.concurrent` 包中已经提供了阻塞队列实现。尽管 Java 5 提供了一种阻塞队列实现，理解它们背后的原理还是很有用的。
 
-  public synchronized void release() throws InterruptedException{
-    while(this.signals == 0) wait();
-    this.signals--;
-    this.notify();
-  }
-}
-```
+## 阻塞队列实现
 
-请注意，如果信号数量等于上限，那么 `take()` 方法现在将阻塞。如果 `BoundedSemaphore` 已达到其信号上限，直到线程调用 `release()` 后，才允许调用 `take()` 的线程传递其信号。
-
-## 将信号量作为锁
-
-将有界信号量用作锁是可能的。只需要将计数上界设定为 1，使用 `take()` 和 `release()` 调用首位临界区。如下所示：
+阻塞队列的实现类似于 [Bounded Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphores.html#bounded)。下面是一个简单的阻塞队列实现：
 
 ```java
-BoundedSemaphore semaphore = new BoundedSemaphore(1);
+public class BlockingQueue {
 
-...
+  private List queue = new LinkedList();
+  private int  limit = 10;
 
-semaphore.take();
+  public BlockingQueue(int limit){
+    this.limit = limit;
+  }
 
-try{
-  //critical section
-} finally {
-  semaphore.release();
+
+  public synchronized void enqueue(Object item)
+  throws InterruptedException  {
+    while(this.queue.size() == this.limit) {
+      wait();
+    }
+    this.queue.add(item);
+    if(this.queue.size() == 1) {
+      notifyAll();
+    }
+  }
+
+
+  public synchronized Object dequeue()
+  throws InterruptedException{
+    while(this.queue.size() == 0){
+      wait();
+    }
+    if(this.queue.size() == this.limit){
+      notifyAll();
+    }
+
+    return this.queue.remove(0);
+  }
+
 }
+    
 ```
 
-与信号用例相比，方法 `take()` 和 `release()` 现在由同一线程调用。因为只允许一个线程获取信号量，所以所有其他调用 `take()` 的线程都将被阻塞，直到调用 `release()` 为止。由于始终总是先调用 `take()`，因此对 `release()` 的调用将永远不会阻塞。
-
-您还可以使用有界信号量来限制代码段中允许的线程数。例如，在上面的示例中，如果将 `BoundedSemaphore` 的计数上界设置为 5，会发生什么情况？一次允许5个线程进入临界区。但是，您必须确保这 5 个线程的线程操作不会冲突，否则应用程序将失败。
-
-从 `finally` 块内部调用 `release()` 方法以确保即使从临界区抛出异常也可以调用该方法。
-
+注意，如果队列大小等于大小限制（ 0 或上限），那么仅从 `enqueue()` 和 `dequeue()` 调用 `notifyAll()`。如果在调用 `enqueue()` 或 `dequeue()` 时队列大小不等于上限，则没有线程等待入队或出队。
