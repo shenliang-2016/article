@@ -891,9 +891,9 @@ public class MyRunnableMain {
 
 设想两个线程，A 和 B，正在执行同一个 `Counter` 类实例上的 `add` 方法。没有任何办法可以确知操作系统如何调度两个线程。`add()` 方法中的代码并不会作为一个原子指令被 JVM 执行。它会作为一系列更小的指令被执行，类似于：
 
-1. 从内存中读取 `this.count` 到寄存器中。
-2. 增加值到寄存器。
-3. 将寄存器写回内存。
+1.从内存中读取 `this.count` 到寄存器中。
+2.增加值到寄存器。
+3.将寄存器写回内存。
 
 观察当 A 和 B 像下面这样交错执行时会发生什么：
 
@@ -1301,8 +1301,8 @@ public class MySharedObject {
 
 当对象和变量可以被存储在各种不同的计算机存储区域中时，可能会发生某些问题。主要的两类问题：
 
-- 线程对共享变量的修改（写入）的可见性。
-- 在读取，校验以及写入共享变量时的竞争条件。
+-线程对共享变量的修改（写入）的可见性。
+-在读取，校验以及写入共享变量时的竞争条件。
 
 接下来分别解释这两类问题。
 
@@ -1348,10 +1348,10 @@ Java 同步块使用 `synchronized` 关键字标记。Java 同步块被同步在
 
  `synchronized` 可以用来标记四种不同类型的代码块：
 
-1. 实例方法
-2. 静态方法
-3. 实例方法内部的代码块
-4. 静态方法内部的代码块
+1.实例方法
+2.静态方法
+3.实例方法内部的代码块
+4.静态方法内部的代码块
 
 这些代码块被同步在不同对象上。你需要何种同步块需要具体情况具体分析。接下来我们详细介绍每种类型的同步块。
 
@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
-- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
-- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+-如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+-如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
-- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+-对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
-- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+-对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
-- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
-- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+-创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+-使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2405,7 +2405,7 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
 2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
 3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
@@ -3270,8 +3270,8 @@ Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此
 首先，我们来总结一些获取资源读权限和写权限的条件：
 
 | **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-| ---------- | ---------------------------------------------- |
-| **写访问** | **没有线程正在读取或者写入。**                 |
+|  |  |
+| **写访问** | **没有线程正在读取或者写入。** |
 
 如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
 
@@ -3866,7 +3866,7 @@ try{
 下图展示了两个线程通过一个阻塞队列进行协作的场景：
 
 | ![A BlockingQueue with one thread putting into it, and another thread taking from it.](http://tutorials.jenkov.com/images/java-concurrency-utils/blocking-queue.png) |
-| ------------------------------------------------------------ |
+|  |
 | **一个阻塞队列，一个线程将元素放入其中，另一个线程从队列中取出元素。** |
 
 Java 5 的 `java.util.concurrent` 包中已经提供了阻塞队列实现。尽管 Java 5 提供了一种阻塞队列实现，理解它们背后的原理还是很有用的。
@@ -4077,4 +4077,21 @@ public static class MyLock {
 如果交换了值，则 `compareAndSet()` 方法返回 `true`，否则返回 `false`。
 
 使用 Java 5+ 附带的比较和交换功能而不是自己实现的优点是，Java 5+ 内置的比较和交换功能使您可以利用应用程序所运行的 CPU 的基础比较和交换功能。这使您的比较和交换代码更快。
+
+# 同步器剖析
+
+即使许多同步器（锁，信号量，阻塞队列等）在功能上有所不同，它们的内部设计通常也没有太大不同。换句话说，它们在内部由相同（或相似）的基本部分组成。在设计同步器时，了解这些基本部分会很有帮助。
+
+**注意：**本文内容是 Jakob Jenkov，Toke Johansen 和 LarsBjørn 于 2004 年春季在哥本哈根 IT 大学开设的一个 M.Sc. 学生项目的部分内容。在这个项目中，我们问道格·李（Doug Lea）是否知道类似的工作。有趣的是，在 Java 5 并发实用程序的开发过程中，他独立于该项目也得出了类似的结论。我相信，Doug Lea 的工作在 ["Java Concurrency in Practice"](http://www.amazon.com/Java-Concurrency-Practice-Brian-Goetz/dp/0321349601/ref=pd_bbs_sr_1?ie=UTF8&s=books&qid=1215418711&sr=8-1) 一书中进行了描述。该书包含一章，标题为“同步器解剖”，其内容与本文相似，尽管不完全相同。
+
+大部分(可能不是全部)同步器的目的都是守卫某些代码区域(临界区)以适应多线程并发访问。为了实现这一目标，同步器通常需要下面这几部分：
+
+1. [状态](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#state)
+2. [访问条件](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#accesscondition)
+3. [状态变化](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#statechanges)
+4. [通知策略](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#notificationstrategy)
+5. [Test 和 Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#testandset)
+6. [Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#set)
+
+并不是所有同步器都包含以上所有部分，那些同步器可能不具有与此处所述完全相同的部分。通常，您总可以找到其中一个或多个部分。
 
