@@ -891,9 +891,9 @@ public class MyRunnableMain {
 
 设想两个线程，A 和 B，正在执行同一个 `Counter` 类实例上的 `add` 方法。没有任何办法可以确知操作系统如何调度两个线程。`add()` 方法中的代码并不会作为一个原子指令被 JVM 执行。它会作为一系列更小的指令被执行，类似于：
 
-1. 从内存中读取 `this.count` 到寄存器中。
-2. 增加值到寄存器。
-3. 将寄存器写回内存。
+1.从内存中读取 `this.count` 到寄存器中。
+2.增加值到寄存器。
+3.将寄存器写回内存。
 
 观察当 A 和 B 像下面这样交错执行时会发生什么：
 
@@ -1301,8 +1301,8 @@ public class MySharedObject {
 
 当对象和变量可以被存储在各种不同的计算机存储区域中时，可能会发生某些问题。主要的两类问题：
 
-- 线程对共享变量的修改（写入）的可见性。
-- 在读取，校验以及写入共享变量时的竞争条件。
+-线程对共享变量的修改（写入）的可见性。
+-在读取，校验以及写入共享变量时的竞争条件。
 
 接下来分别解释这两类问题。
 
@@ -1348,10 +1348,10 @@ Java 同步块使用 `synchronized` 关键字标记。Java 同步块被同步在
 
  `synchronized` 可以用来标记四种不同类型的代码块：
 
-1. 实例方法
-2. 静态方法
-3. 实例方法内部的代码块
-4. 静态方法内部的代码块
+1.实例方法
+2.静态方法
+3.实例方法内部的代码块
+4.静态方法内部的代码块
 
 这些代码块被同步在不同对象上。你需要何种同步块需要具体情况具体分析。接下来我们详细介绍每种类型的同步块。
 
@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
-- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
-- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+-如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+-如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
-- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+-对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
-- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+-对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -3915,4 +3915,91 @@ public class BlockingQueue {
 ```
 
 注意，如果队列大小等于大小限制（ 0 或上限），那么仅从 `enqueue()` 和 `dequeue()` 调用 `notifyAll()`。如果在调用 `enqueue()` 或 `dequeue()` 时队列大小不等于上限，则没有线程等待入队或出队。
+
+# 线程池
+
+当你需要限制你的应用中同时运行的线程数量的时候线程池就非常有用。启动一个新线程会带来一些性能损耗，同时每个线程都会分配一些内存用于线程栈等等。
+
+将任务传递给线程池，可以避免为每个并发执行的任务都创建新的线程。只要线程池中还存在空闲的线程，就会将任务分配给空闲线程之一执行。内部机制上，任务会被插入一个阻塞队列，线程池中的线程会将任务从该队列中取出。当一个新的任务被插入队列，一个空闲线程将其从队列中取出并执行。线程池中其他的空闲线程将继续被阻塞等待任务出队。
+
+线程池通常用于多线程服务器。每个通过网络到达服务器的连接都被包装成一个任务并被传递给一个线程池。线程池中的线程将并发处理这些连接上的请求。
+
+Java 5 在 `java.util.concurrent` 包中内置了线程池，你不必实现自己的线程池。可以参考 [java.util.concurrent.ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html) 了解更多细节。了解实现背后的原理还是有用的。
+
+下面是个简单的线程池实现。注意，这个实现使用了在 [Blocking Queues](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) 章节中介绍的 `BlockingQueue` 类。在实际的实现中，你可能需要使用 Java 内建阻塞队列之一。
+
+```java
+public class ThreadPool {
+
+    private BlockingQueue taskQueue = null;
+    private List<PoolThread> threads = new ArrayList<PoolThread>();
+    private boolean isStopped = false;
+
+    public ThreadPool(int noOfThreads, int maxNoOfTasks){
+        taskQueue = new BlockingQueue(maxNoOfTasks);
+
+        for(int i=0; i<noOfThreads; i++){
+            threads.add(new PoolThread(taskQueue));
+        }
+        for(PoolThread thread : threads){
+            thread.start();
+        }
+    }
+
+    public synchronized void  execute(Runnable task) throws Exception{
+        if(this.isStopped) throw
+            new IllegalStateException("ThreadPool is stopped");
+
+        this.taskQueue.enqueue(task);
+    }
+
+    public synchronized void stop(){
+        this.isStopped = true;
+        for(PoolThread thread : threads){
+           thread.doStop();
+        }
+    }
+
+}
+public class PoolThread extends Thread {
+
+    private BlockingQueue taskQueue = null;
+    private boolean       isStopped = false;
+
+    public PoolThread(BlockingQueue queue){
+        taskQueue = queue;
+    }
+
+    public void run(){
+        while(!isStopped()){
+            try{
+                Runnable runnable = (Runnable) taskQueue.dequeue();
+                runnable.run();
+            } catch(Exception e){
+                //log or otherwise report exception,
+                //but keep pool thread alive.
+            }
+        }
+    }
+
+    public synchronized void doStop(){
+        isStopped = true;
+        this.interrupt(); //break pool thread out of dequeue() call.
+    }
+
+    public synchronized boolean isStopped(){
+        return isStopped;
+    }
+}
+```
+
+线程池实现包含两部分，`ThreadPool` 类是线程池的公开接口，`PoolThread` 类实现了实际执行任务的线程。
+
+为了执行任务，使用一个 `Runnable` 实现作为参数调用方法 `ThreadPool.execute(Runnable r)` 。该 `Runnable` 在内部会被加入阻塞队列，等待被线程取出。
+
+该 `Runnable` 将被一个空闲线程取出并执行。这个动作可以在 `PoolThread.run()` 方法中看到。任务执行完成之后 `PoolThread` 循环并尝试再次取出一个任务，直到停止。
+
+调用 `ThreadPool.stop()` 以停止 `ThreadPool()`。内部在 `isStopped` 成员上记录了所调用的停止方法。然后，通过在每个线程上调用 `doStop()` 来停止池中的每个线程。注意，如果在调用 `stop()` 之后调用了 `execute()`，则 `execute()` 方法将抛出 `IllegalStateException`。
+
+线程将在完成当前正在执行的所有任务后停止。注意 `PoolThread.doStop()` 中的 `this.interrupt()` 调用。这确保了在 `taskQueue.dequeue()` 调用内的 `wait()` 调用中阻塞的线程脱离了 `wait()` 调用，并使 `dequeue()` 方法调用带有 `InterruptedException` 抛出。此异常将在 `PoolThread.run()` 方法中被捕获并报告，然后检查 `isStopped` 变量。由于 `isStopped` 现在为真，因此 `PoolThread.run()` 将退出并且线程死亡。
 
