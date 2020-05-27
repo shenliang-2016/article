@@ -1768,8 +1768,8 @@ public class SharedObject {
 
 实际上，Java `volatile` 的可见性保证不仅局限于 `volatile` 变量本身。完整的可见性保证如下：
 
--如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
--如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
+- 如果线程 A 写入一个 `volatile` 变量，然后线程 B 随后读取相同的 `volatile` 变量，那么在写入 `volatile` 变量之前，线程 A 可见的所有变量，在线程 B 读取 `volatile` 变量之后也将对其可见。
+- 如果线程 A 读取了 `volatile` 变量，那么读取 `volatile` 变量时线程 A 可见的所有所有变量也将从主内存中重新读取。
 
 代码示例：
 
@@ -1874,9 +1874,9 @@ Java 对此问题有一套解决方案，接下来介绍。
 
 为了应对指令重排序挑战，Java `volatile` 关键字在可见性保证基础上，又提供了 "happens-before" 保证。该保证含义如下：
 
--对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在写入 `volatile` 变量之后，如果该读取和写入本来发生在写入 `volatile` 之前。`volatile` 变量写入操作之前的读写操作保证会发生在 `volatile` 变量写入之前。注意，本来发生在 `volatile` 变量写入操作之后的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量写入操作之前。而非相反。也就是说，经过指令重排序，后面的移动到前面允许，前面移动到后面不允许。
 
--对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
+- 对其他变量的读取和写入不能被重排序为发生在读取 `volatile` 变量之前，如果该读取和写入本来发生在读取 `volatile` 之后。注意，本来发生在 `volatile` 变量读取操作之前的对其他变量的读取操作还是有可能会被重排序到发生在 `volatile` 变量读取操作之后。而非相反。也就是说，经过指令重排序，前面的移动到后面允许，后面的移动到前面不允许。
 
 上述 "happens-before" 保证假定 `volatile` 关键字的可见性保证正在发挥作用。
 
@@ -1970,8 +1970,8 @@ String threadLocalValue = myThreadLocal.get();
 
 可以为 Java `ThreadLocal` 设置一个初始值，该值将在首次调用 `get()` 时使用——在以新值调用 `set()` 之前。您可以通过两种方式为 `ThreadLocal` 指定初始值：
 
--创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
--使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
+- 创建 `ThreadLocal` 子类并覆写 `initialValue()` 方法。
+- 使用 `Supplier` 接口的实现创建 `ThreadLocal` 。
 
 接下来详细介绍两种方法。
 
@@ -2121,7 +2121,7 @@ public class MySignal{
 }
 ```
 
-线程 A 和 B 必须拥有一个共享的 `MySignal` 示例的引用来承载信号。如果两个线程拥有的是不同对象实例的引用，将无法检测到彼此的信号。需要处理的数据可以存储在与 `MySignal` 实例分开的共享缓冲区内。
+线程 A 和 B 必须拥有一个共享的 `MySignal` 实例的引用来承载信号。如果两个线程拥有的是不同对象实例的引用，将无法检测到彼此的信号。需要处理的数据可以存储在与 `MySignal` 实例分开的共享缓冲区内。
 
 ## 忙等
 
@@ -2145,7 +2145,7 @@ while(!sharedSignal.hasDataToProcess()){
 
 Java 拥有一种内置的等待机制允许线程在等待信号时变成不活动状态。`java.lang.Object` 类定义了三个方法，`wait()`，`notify()`，以及 `notifyAll()` 来做到这一点。
 
-在任何对象上调用 `wait()` 的线程会变成不活动状态，直到另外的线程在该对象上调用 `notify()` 方法。为了调用这两个方法，调用者线程必须首先获得该对象的锁。换句话说，调用者线程必须在同步块内部调用着两个方法。下面是示例：
+在任何对象上调用 `wait()` 的线程会变成不活动状态，直到另外的线程在该对象上调用 `notify()` 方法。为了调用这两个方法，调用者线程必须首先获得该对象的锁。换句话说，调用者线程必须在同步块内部调用 `wait()` 和 `notify()` 两个方法。下面是示例：
 
 ```java
 public class MonitorObject{
@@ -2181,7 +2181,7 @@ public class MyWaitNotify{
 
 ## 丢失的信号
 
-万一调用时没有线程在等待，方法 `notify()` 和 `notifyAll()` 不会将方法调用保存到它们中。然后，通知信号就丢失了。因此，如果线程在发出信号的线程调用 `wait()` 之前调用 `notify()` ，则等待的线程将丢失该信号。这可能是问题，也可能不是问题，但是在某些情况下，这可能会导致等待线程永远等待，永远不会醒来，因为错过了唤醒信号。
+万一调用时没有线程在等待，方法 `notify()` 和 `notifyAll()` 不会将方法调用保存到它们中。然后，通知信号就丢失了。因此，如果发出信号的线程在等待线程调用 `wait()` 之前调用 `notify()` ，则等待的线程将丢失该信号。这可能是问题，也可能不是问题，但是在某些情况下，这可能会导致等待线程永远等待，永远不会醒来，因为错过了唤醒信号。
 
 为了避免信号丢失，它们应该被存储在信号类内部。在 `MyWaitNotify` 示例中，唤醒信号应该存储在 `MyWaitNotify` 实例的一个成员变量中。下面是示例：
 
@@ -2405,9 +2405,9 @@ Transaction 2, request 2, tries to lock record 1 for update.
 
 某些情况下预防死锁是可能的。本节介绍三种死锁预防技术：
 
-1.[锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
-2.[锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
-3.[死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
+1. [锁排序](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#ordering)
+2. [锁超时](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#timeout)
+3. [死锁检测](http://tutorials.jenkov.com/java-concurrency/deadlock-prevention.html#detection)
 
 ## 锁排序
 
@@ -2499,11 +2499,11 @@ Thread 2 waits randomly (e.g. 43 millis) before retrying.
 
 下面是三种常见的导致 Java 线程饥饿的原因：
 
-1.优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
+1. 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
-2.线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
+2. 线程无限期阻塞等待进入同步块，由于其他线程始终被允许在它之前访问同步块。
 
-3.线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
+3. 线程在一个对象上等待 (称为在其上 `wait()`) ，保持无限等待，由于其他线程始终会在它之前被唤醒。
 
 ### 优先级高的线程抢占了所有 CPU 时间，完全不留给低优先级线程。
 
@@ -3270,8 +3270,8 @@ Java 5 在 `java.util.concurrent` 包中携带了读/写锁实现。即使如此
 首先，我们来总结一些获取资源读权限和写权限的条件：
 
 | **读访问** | 没有线程正在写入，也没有线程已经请求写入权限。 |
-|  |  |
-| **写访问** | **没有线程正在读取或者写入。** |
+| ---------- | ---------------------------------------------- |
+| **写访问** | **没有线程正在读取或者写入。**                 |
 
 如果一个线程想要读取该资源，前提是没有线程正在写入，也没有线程已经请求该资源的写入权限。通过提升写访问请求的优先级，我们假定写请求比读请求更加重要。另外，如果读操作发生更加频繁，而我们并没有提升写请求的优先级，就可能会发生线程饥饿。请求写操作的线程可能会一直阻塞到所有的读线程释放 `ReadWriteLock`。如果新的读线程始终都能够得到读权限，则等待写入的线程可能会无止境处于阻塞等待状态，也就是线程饥饿。因此，仅当没有线程当前已锁定 `ReadWriteLock` 以进行写操作或请求将其锁定以进行写操作时，才可以授予线程读访问权限。
 
@@ -3331,11 +3331,11 @@ public class ReadWriteLock{
 
 前面的 `ReadWriteLock` 类是非 [可重入的](http://tutorials.jenkov.com/java-concurrency/locks.html#reentrance)。如果一个已经拥有写访问权限的线程再次请求写访问权限，将会阻塞，因为已经存在一个写入者——它自己。进一步地，考虑下列场景：
 
-1.线程 1 获得读访问权限。
+1. 线程 1 获得读访问权限。
 
-2.线程 2 请求写操作权限但是会被阻塞，因为已经存在一个读者。
+2. 线程 2 请求写操作权限但是会被阻塞，因为已经存在一个读者。
 
-3.线程 1 重新请求读访问权限（重新进入锁），将会被阻塞，因为已经存在一个写请求。
+3. 线程 1 重新请求读访问权限（重新进入锁），将会被阻塞，因为已经存在一个写请求。
 
 这种情况下，前文中所述的 `ReadWriteLock` 将会锁死——类似死锁的情况。所有线程的无论是读还是写请求都不会被满足。
 
@@ -3345,7 +3345,7 @@ public class ReadWriteLock{
 
 为了将 `ReadWriteLock` 改造为读者可重入的，我们需要首先建立读者可重入规则：
 
--如果线程可以获取读取访问权限（无写入者或写入请求），或者如果它已经具有读取访问权限（无论写入请求如何），则授予该线程读取重入权限。
+- 如果线程可以获取读取访问权限（无写入者或写入请求），或者如果它已经具有读取访问权限（无论写入请求如何），则授予该线程读取重入权限。
 
 为了确定某个线程是否已经具有读取访问权限，将对每个授予读取访问权限的线程的引用及其已获得读取锁定的次数保留在 Map 中。在确定是否可以授予读取访问权限时，将检查此 Map 以获取对调用线程的引用。这是 `lockRead()` 和 `unlockRead()` 方法在更改后的样子：
 
@@ -3703,8 +3703,40 @@ public class Lock{
 
 有两种选择可以避免重入闭锁：
 
-1.避免编写重新进入锁的代码
-2.使用可重入锁
+1. 避免编写重新进入锁的代码
+2. 使用可重入锁
 
 哪种选择最适合您的项目，取决于您的具体情况。可重入锁的性能通常不如不可重入锁，并且很难实现，但这在您的具体情况下可能不是问题。无论有没有重入，代码是否易于实现都必须视情况而定。
 
+# 信号量
+
+信号量是一种线程同步结构，可以用于在线程之间发送信号以避免 [信号丢失](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#missedsignals)，也可以类似于 [锁](http://tutorials.jenkov.com/java-concurrency/locks.html) 那样保护 [临界区](http://tutorials.jenkov.com/java-concurrency/race-conditions-and-critical-sections.html)。Java 5 在 `java.util.concurrent` 包中提供了信号量实现，你无需自己实现信号量。不过了解其背后的理论还是很有用的。
+
+Java 5 提供了内建的 `Semaphore` 因此你无需自己实现。更多相关细节可以阅读我的 `java.util.concurrent` 教程中 [java.util.concurrent.Semaphore](http://tutorials.jenkov.com/java-util-concurrent/semaphore.html) 相关章节。
+
+## 简单信号量
+
+这里是一个简单的 `Semaphore` 实现：
+
+```java
+public class Semaphore {
+  private boolean signal = false;
+
+  public synchronized void take() {
+    this.signal = true;
+    this.notify();
+  }
+
+  public synchronized void release() throws InterruptedException{
+    while(!this.signal) wait();
+    this.signal = false;
+  }
+
+}
+```
+
+`take()` 方法发送一个信号，该信号内部存储在 `Semaphore` 中。`release()` 方法等待一个信号。收到信号标志后，将再次将其清除，并退出 `release()` 方法。
+
+使用这样的信号量可以避免信号丢失。您将调用 `take()` 而不是 `notify()` 和 `release()` 而不是 `wait()`。如果对 `take()` 的调用发生在对 `release()` 的调用之前，则调用 `release()` 的线程仍会知道调用了 `take()`，因为该信号内部存储在变量 `signal` 中。`wait()` 和 `notify()` 并非如此。
+
+使用信号量进行信号传递时，名称 `take()` 和 `release()` 可能看起来有些奇怪。名称源于使用信号量作为锁，如本文后面所述。在这种情况下，名称更有意义。
