@@ -3740,3 +3740,69 @@ public class Semaphore {
 使用这样的信号量可以避免信号丢失。您将调用 `take()` 而不是 `notify()` 和 `release()` 而不是 `wait()`。如果对 `take()` 的调用发生在对 `release()` 的调用之前，则调用 `release()` 的线程仍会知道调用了 `take()`，因为该信号内部存储在变量 `signal` 中。`wait()` 和 `notify()` 并非如此。
 
 使用信号量进行信号传递时，名称 `take()` 和 `release()` 可能看起来有些奇怪。名称源于使用信号量作为锁，如本文后面所述。在这种情况下，名称更有意义。
+
+## 使用信号量发送信号
+
+这里是两个线程使用 `Semaphore` 相互发送信号的例子：
+
+```java
+Semaphore semaphore = new Semaphore();
+
+SendingThread sender = new SendingThread(semaphore);
+
+ReceivingThread receiver = new ReceivingThread(semaphore);
+
+receiver.start();
+sender.start();
+public class SendingThread {
+  Semaphore semaphore = null;
+
+  public SendingThread(Semaphore semaphore){
+    this.semaphore = semaphore;
+  }
+
+  public void run(){
+    while(true){
+      //do something, then signal
+      this.semaphore.take();
+
+    }
+  }
+}
+public class RecevingThread {
+  Semaphore semaphore = null;
+
+  public ReceivingThread(Semaphore semaphore){
+    this.semaphore = semaphore;
+  }
+
+  public void run(){
+    while(true){
+      this.semaphore.release();
+      //receive signal, then do something...
+    }
+  }
+}
+```
+
+## 计数信号量
+
+上面例子中的 `Semaphore` 实现没有记录通过调用 `take()` 方法发送给它的信号的数量。我们可以修改它来实现这个功能。这被叫做计数信号量。下面是一个简单的计数信号量：
+
+```java
+public class CountingSemaphore {
+  private int signals = 0;
+
+  public synchronized void take() {
+    this.signals++;
+    this.notify();
+  }
+
+  public synchronized void release() throws InterruptedException{
+    while(this.signals == 0) wait();
+    this.signals--;
+  }
+
+}
+```
+
