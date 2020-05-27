@@ -1,16 +1,16 @@
-# Thread Pools
+# 线程池
 
-Thread Pools are useful when you need to limit the number of threads running in your application at the same time. There is a performance overhead associated with starting a new thread, and each thread is also allocated some memory for its stack etc.
+当你需要限制你的应用中同时运行的线程数量的时候线程池就非常有用。启动一个新线程会带来一些性能损耗，同时每个线程都会分配一些内存用于线程栈等等。
 
-Instead of starting a new thread for every task to execute concurrently, the task can be passed to a thread pool. As soon as the pool has any idle threads the task is assigned to one of them and executed. Internally the tasks are inserted into a [Blocking Queue](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) which the threads in the pool are dequeuing from. When a new task is inserted into the queue one of the idle threads will dequeue it successfully and execute it. The rest of the idle threads in the pool will be blocked waiting to dequeue tasks.
+将任务传递给线程池，可以避免为每个并发执行的任务都创建新的线程。只要线程池中还存在空闲的线程，就会将任务分配给空闲线程之一执行。内部机制上，任务会被插入一个阻塞队列，线程池中的线程会将任务从该队列中取出。当一个新的任务被插入队列，一个空闲线程将其从队列中取出并执行。线程池中其他的空闲线程将继续被阻塞等待任务出队。
 
-Thread pools are often used in multi threaded servers. Each connection arriving at the server via the network is wrapped as a task and passed on to a thread pool. The threads in the thread pool will process the requests on the connections concurrently. A later trail will get into detail about implementing multithreaded servers in Java.
+线程池通常用于多线程服务器。每个通过网络到达服务器的连接都被包装成一个任务并被传递给一个线程池。线程池中的线程将并发处理这些连接上的请求。
 
-Java 5 comes with built in thread pools in the `java.util.concurrent` package, so you don't have to implement your own thread pool. You can read more about it in my text on the [java.util.concurrent.ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html). Still it can be useful to know a bit about the implementation of a thread pool anyways.
+Java 5 在 `java.util.concurrent` 包中内置了线程池，你不必实现自己的线程池。可以参考 [java.util.concurrent.ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html) 了解更多细节。了解实现背后的原理还是有用的。
 
-Here is a simple thread pool implementation. Please note that this implementation uses my own `BlockingQueue` class as explained in my [Blocking Queues](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) tutorial. In a real life implementation you would probably use one of Java's built-in blocking queues instead.
+下面是个简单的线程池实现。注意，这个实现使用了在 [Blocking Queues](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) 章节中介绍的 `BlockingQueue` 类。在实际的实现中，你可能需要使用 Java 内建阻塞队列之一。
 
-```
+```java
 public class ThreadPool {
 
     private BlockingQueue taskQueue = null;
@@ -75,12 +75,13 @@ public class PoolThread extends Thread {
 }
 ```
 
-The thread pool implementation consists of two parts. A `ThreadPool` class which is the public interface to the thread pool, and a `PoolThread` class which implements the threads that execute the tasks.
+线程池实现包含两部分，`ThreadPool` 类是线程池的公开接口，`PoolThread` 类实现了实际执行任务的线程。
 
-To execute a task the method `ThreadPool.execute(Runnable r)` is called with a `Runnable` implementation as parameter. The `Runnable` is enqueued in the [blocking queue](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) internally, waiting to be dequeued.
+为了执行任务，使用一个 `Runnable` 实现作为参数调用方法 `ThreadPool.execute(Runnable r)` 。该 `Runnable` 在内部会被加入阻塞队列，等待被线程取出。
 
-The `Runnable` will be dequeued by an idle `PoolThread` and executed. You can see this in the `PoolThread.run()` method. After execution the `PoolThread` loops and tries to dequeue a task again, until stopped.
+该 `Runnable` 将被一个空闲线程取出并执行。这个动作可以在 `PoolThread.run()` 方法中看到。任务执行完成之后 `PoolThread` 循环并尝试再次取出一个任务，直到停止。
 
-To stop the `ThreadPool` the method `ThreadPool.stop()` is called. The stop called is noted internally in the `isStopped` member. Then each thread in the pool is stopped by calling `doStop()` on each thread. Notice how the `execute()` method will throw an `IllegalStateException` if `execute()` is called after `stop()` has been called.
+调用 `ThreadPool.stop()` 以停止 `ThreadPool()`。内部在 `isStopped` 成员上记录了所调用的停止方法。然后，通过在每个线程上调用 `doStop()` 来停止池中的每个线程。注意，如果在调用 `stop()` 之后调用了 `execute()`，则 `execute()` 方法将抛出 `IllegalStateException`。
 
-The threads will stop after finishing any task they are currently executing. Notice the `this.interrupt()` call in `PoolThread.doStop()`. This makes sure that a thread blocked in a `wait()` call inside the `taskQueue.dequeue()` call breaks out of the `wait()` call, and leaves the `dequeue()` method call with an `InterruptedException` thrown. This exception is caught in the `PoolThread.run()` method, reported, and then the `isStopped` variable is checked. Since `isStopped` is now true, the `PoolThread.run()` will exit and the thread dies.
+线程将在完成当前正在执行的所有任务后停止。注意 `PoolThread.doStop()` 中的 `this.interrupt()` 调用。这确保了在 `taskQueue.dequeue()` 调用内的 `wait()` 调用中阻塞的线程脱离了 `wait()` 调用，并使 `dequeue()` 方法调用带有 `InterruptedException` 抛出。此异常将在 `PoolThread.run()` 方法中被捕获并报告，然后检查 `isStopped` 变量。由于 `isStopped` 现在为真，因此 `PoolThread.run()` 将退出并且线程死亡。
+
