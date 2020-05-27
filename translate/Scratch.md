@@ -1,17 +1,89 @@
-# 同步器剖析
+## 状态
 
-即使许多同步器（锁，信号量，阻塞队列等）在功能上有所不同，它们的内部设计通常也没有太大不同。换句话说，它们在内部由相同（或相似）的基本部分组成。在设计同步器时，了解这些基本部分会很有帮助。
+同步器的状态被用于访问条件以确定线程能否获得访问权限。在 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html) 中状态保存在 `boolean` 变量中，表示该 `Lock` 是否被锁定。在 [Bounded Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphores.html#bounded) 中，内部状态存储在一个计数器(`int`)和上界(`int`)中，前者表示当前调用 `takes()` 的线程数量，后者表示可以调用 `takes()` 的线程最大数量。在 [Blocking Queue](http://tutorials.jenkov.com/java-concurrency/blocking-queues.html) 中，状态保存在队列中元素的 `List` 中，如果存在队列长度限制，那么状态就还包括最大队列长度(`int`)。
 
-**注意：**本文内容是 Jakob Jenkov，Toke Johansen 和 LarsBjørn 于 2004 年春季在哥本哈根 IT 大学开设的一个 M.Sc. 学生项目的部分内容。在这个项目中，我们问道格·李（Doug Lea）是否知道类似的工作。有趣的是，在 Java 5 并发实用程序的开发过程中，他独立于该项目也得出了类似的结论。我相信，Doug Lea 的工作在 ["Java Concurrency in Practice"](http://www.amazon.com/Java-Concurrency-Practice-Brian-Goetz/dp/0321349601/ref=pd_bbs_sr_1?ie=UTF8&s=books&qid=1215418711&sr=8-1) 一书中进行了描述。该书包含一章，标题为“同步器解剖”，其内容与本文相似，尽管不完全相同。
+下面是来自 `Lock` 和 `BoundedSemaphore` 的两个代码片段，其中包含状态代码：
 
-大部分(可能不是全部)同步器的目的都是守卫某些代码区域(临界区)以适应多线程并发访问。为了实现这一目标，同步器通常需要下面这几部分：
+```java
+public class Lock{
 
-1. [状态](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#state)
-2. [访问条件](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#accesscondition)
-3. [状态变化](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#statechanges)
-4. [通知策略](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#notificationstrategy)
-5. [Test 和 Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#testandset)
-6. [Set 方法](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#set)
+  //state is kept here
+  private boolean isLocked = false; 
 
-并不是所有同步器都包含以上所有部分，那些同步器可能不具有与此处所述完全相同的部分。通常，您总可以找到其中一个或多个部分。
+  public synchronized void lock()
+  throws InterruptedException{
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  ...
+}
+public class BoundedSemaphore {
+
+  //state is kept here
+      private int signals = 0;
+      private int bound   = 0;
+      
+  public BoundedSemaphore(int upperBound){
+    this.bound = upperBound;
+  }
+
+  public synchronized void take() throws InterruptedException{
+    while(this.signals == bound) wait();
+    this.signal++;
+    this.notify();
+  }
+  ...
+}
+```
+
+## 访问条件
+
+访问条件是确定是否可以允许调用测试和设置状态方法的线程设置状态的条件。访问条件通常基于同步器的 [状态](http://tutorials.jenkov.com/java-concurrency/anatomy-of-a-synchronizer.html#state)。通常在 `while` 循环中检查访问条件，以防止 [Spurious Wakeups](http://tutorials.jenkov.com/java-concurrency/thread-signaling.html#spuriouswakeups)。评估访问条件时，它要么是 `true` 要么是 `false`。
+
+在 [Lock](http://tutorials.jenkov.com/java-concurrency/locks.html) 中，访问条件只是检查 `isLocked` 成员变量的值。在 [Bounded Semaphore](http://tutorials.jenkov.com/java-concurrency/semaphores.html#bounded) 中，实际上有两种访问条件，具体取决于您是要“获取”还是“释放”该信号量。如果线程尝试获取信号量，则将对 `signals` 变量进行上限检查。如果线程试图释放信号量，则将 `signals` 变量与 0 进行比较。
+
+这是 `Lock` 和 `BoundedSemaphore` 的两个代码段，访问条件用粗体标出。注意如何在 `while` 循环中始终检查条件。
+
+```java
+public class Lock{
+
+  private boolean isLocked = false;
+
+  public synchronized void lock()
+  throws InterruptedException{
+    //access condition
+    while(isLocked){
+      wait();
+    }
+    isLocked = true;
+  }
+
+  ...
+}
+public class BoundedSemaphore {
+  private int signals = 0;
+  private int bound   = 0;
+
+  public BoundedSemaphore(int upperBound){
+    this.bound = upperBound;
+  }
+
+  public synchronized void take() throws InterruptedException{
+    //access condition
+    while(this.signals == bound) wait();
+    this.signals++;
+    this.notify();
+  }
+
+  public synchronized void release() throws InterruptedException{
+    //access condition
+    while(this.signals == 0) wait();
+    this.signals--;
+    this.notify();
+  }
+}
+```
 
