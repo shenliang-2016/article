@@ -56,21 +56,21 @@ Java 5 为 Java 平台添加了一个新的包 `java.util.concurrent`。这个�
 
 本文也不会讲解如何实现你自己的 `BlockingQueue` 。如果你感兴趣，可以参考 [Java Concurrency Tutorial](http://tutorials.jenkov.com/java-concurrency/index.html)。
 
-## BlockingQueue Usage
+## BlockingQueue 用途
 
-A `BlockingQueue` is typically used to have one thread produce objects, which another thread consumes. Here is a diagram that illustrates this principle:
+ `BlockingQueue` 通常用于生产者－消费者场景，也就是一个线程生产对象，同时另一个线程消费对象。下面是该场景的示意图：
 
 | ![A BlockingQueue with one thread putting into it, and another thread taking from it.](http://tutorials.jenkov.com/images/java-concurrency-utils/blocking-queue.png) |
 | ------------------------------------------------------------ |
-| **A BlockingQueue with one thread putting into it, and another thread taking from it.** |
+| **一个 BlockingQueue ，一个线程添加元素，另一个线程取出元素。** |
 
-The producing thread will keep producing new objects and insert them into the `BlockingQueue`, until the queue reaches some upper bound on what it can contain. It's limit, in other words. If the blocking queue reaches its upper limit, the producing thread is blocked while trying to insert the new object. It remains blocked until a consuming thread takes an object out of the queue.
+生产者线程将持续不断地生产新的对象并插入 `BlockingQueue` 中，直到队列达到它可以容纳的元素的上限。队列是有限的，换句话说。如果阻塞队列大小达到了其上限，生产者线程在试图插入新元素是就会阻塞，直到消费者线程从队列中取出一个对象。
 
-The consuming thread keeps taking objects out of the `BlockingQueue` to processes them. If the consuming thread tries to take an object out of an empty queue, the consuming thread is blocked until a producing thread puts an object into the queue.
+消费者线程持续不断从 `BlockingQueue` 中取出对象进行处理。如果消费者线程试图从空队列中获取对象，就会阻塞，直到生产者线程将新的对象插入队列。
 
-### BlockingQueue Methods
+### BlockingQueue 方法
 
-The Java `BlockingQueue` interface has 4 different sets of methods for inserting, removing and examining the elements in the queue. Each set of methods behaves differently in case the requested operation cannot be carried out immediately. Here is a table of the methods:
+Java `BlockingQueue` 接口有 4 个类方法用来插入元素、删除元素以及检查队列中的元素。每种方法在请求的操作无法立即执行对情况下行为有所不同。下表列出了这些方法：
 
 |             | **Throws Exception** | **Special Value** | **Blocks** | **Times Out**                 |
 | ----------- | -------------------- | ----------------- | ---------- | ----------------------------- |
@@ -78,24 +78,24 @@ The Java `BlockingQueue` interface has 4 different sets of methods for inserting
 | **Remove**  | `remove(o)`          | `poll()`          | `take()`   | `poll(timeout, timeunit)`     |
 | **Examine** | `element()`          | `peek()`          | ` `        | ` `                           |
 
-The 4 different sets of behaviour means this:
+4 种不同的行为集合含义是：
 
 1. **Throws Exception**:
-   If the attempted operation is not possible immediately, an exception is thrown.
+   如果尝试的操作无法立即执行，则抛出异常。
 2. **Special Value**:
-   If the attempted operation is not possible immediately, a special value is returned (often true / false).
+   如果尝试的操作不可能立即执行，返回特定的值（通常是 `true` 或者 `false`）。
 3. **Blocks**:
-   If the attempted operation is not possible immedidately, the method call blocks until it is.
+   如果尝试的操作不可能立即执行，调用方法的线程阻塞，直到执行变为可能。
 4. **Times Out**:
-   If the attempted operation is not possible immedidately, the method call blocks until it is, but waits no longer than the given timeout. Returns a special value telling whether the operation succeeded or not (typically true / false).
+   如果无法立即进行尝试的操作，则该方法调用将一直阻塞直到可以执行，但等待时间不得长于给定的超时时间。返回一个表示操作是否成功的特殊值（通常为 `true` / `false`）。
 
-It is not possible to insert `null` into a `BlockingQueue`. If you try to insert null, the `BlockingQueue` will throw a `NullPointerException`.
+无法将 `null` 插入 `BlockingQueue`。如果您尝试插入 `null`，则 `BlockingQueue` 将抛出 `NullPointerException`。
 
-It is also possible to access all the elements inside a `BlockingQueue`, and not just the elements at the start and end. For instance, say you have queued an object for processing, but your application decides to cancel it. You can then call e.g. `remove(o)` to remove a specific object in the queue. However, this is not done very efficiently, so you should not use these `Collection` methods unless you really have to.
+也可以访问 `BlockingQueue` 内部的所有元素，而不仅仅是开始和结束的元素。例如，假设您已将一个对象排队等待处理，但是您的应用程序决定取消该对象。然后，您可以调用  `remove(o)` 删除队列中的特定对象。但是，这样做的效率不是很高，因此除非确实需要，否则不应使用这些 `Collection` 方法。
 
-## BlockingQueue Implementations
+## BlockingQueue 实现
 
-Since `BlockingQueue` is an interface, you need to use one of its implementations to use it. The `java.util.concurrent` package has the following implementations of the `BlockingQueue` interface:
+由于 `BlockingQueue` 是一个接口，你需要通过它的实现类使用它。 `java.util.concurrent` 包中已经有了下列的 `BlockingQueue` 接口的实现类：
 
 - [ArrayBlockingQueue](http://tutorials.jenkov.com/java-util-concurrent/arrayblockingqueue.html)
 - [DelayQueue](http://tutorials.jenkov.com/java-util-concurrent/delayqueue.html)
@@ -103,15 +103,15 @@ Since `BlockingQueue` is an interface, you need to use one of its implementation
 - [PriorityBlockingQueue](http://tutorials.jenkov.com/java-util-concurrent/priorityblockingqueue.html)
 - [SynchronousQueue](http://tutorials.jenkov.com/java-util-concurrent/synchronousqueue.html)
 
-Click the links in the list to read more about each implementation.
+查看每个链接了解每种实现。
 
-## Java BlockingQueue Example
+## Java BlockingQueue 示例
 
-Here is a Java `BlockingQueue` example. The example uses the `ArrayBlockingQueue` implementation of the `BlockingQueue` interface.
+这里是一个 Java `BlockingQueue` 示例。使用 `BlockingQueue` 的 `ArrayBlockingQueue` 实现。
 
-First, the `BlockingQueueExample` class which starts a `Producer` and a `Consumer` in separate threads. The `Producer` inserts strings into a shared `BlockingQueue`, and the `Consumer` takes them out.
+首先， `BlockingQueueExample` 类启动一个 `Producer` 线程和一个 `Consumer` 线程。该 `Producer` 将字符串插入共享 `BlockingQueue`，而 `Consumer` 将字符串从队列中取出。
 
-```
+```java
 public class BlockingQueueExample {
 
     public static void main(String[] args) throws Exception {
@@ -129,9 +129,9 @@ public class BlockingQueueExample {
 }
 ```
 
-Here is the `Producer` class. Notice how it sleeps a second between each `put()` call. This will cause the `Consumer` to block, while waiting for objects in the queue.
+下面是 `Producer` 类。注意它在每次 `put()` 调用之间休眠 1 秒钟。这将导致 `Consumer` 被阻塞，以等待对象被插入队列。
 
-```
+```java
 public class Producer implements Runnable{
 
     protected BlockingQueue queue = null;
@@ -154,9 +154,9 @@ public class Producer implements Runnable{
 }
 ```
 
-Here is the `Consumer` class. It just takes out the objects from the queue, and prints them to `System.out`.
+下面是 `Consumer` 类。它将对象从队列中取出，并将它们打印到 `System.out`。
 
-```
+```java
 public class Consumer implements Runnable{
 
     protected BlockingQueue queue = null;
@@ -176,3 +176,4 @@ public class Consumer implements Runnable{
     }
 }
 ```
+
