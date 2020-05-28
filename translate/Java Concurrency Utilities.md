@@ -253,3 +253,23 @@ public class DelayQueueExample {
 ```
 
 `DelayedElement` 是我创建的 `Delayed` 接口的实现。它不是 `java.util.concurrent` 包的一部分。您必须创建自己的 `Delayed` 接口实现，才能使用 `DelayQueue` 类。
+
+# LinkedBlockingQueue
+
+`LinkedBlockingQueue` 类实现了 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 接口。
+
+`LinkedBlockingQueue` 内部将元素存储在链表结构（链表的节点）中。如果需要，此链表的结构可以选择具有上限。如果未指定上限，则将 `Integer.MAX_VALUE` 用作上限。
+
+`LinkedBlockingQueue` 在内部以 FIFO（先进先出）顺序存储元素。队列的 `head` 是已在队列中最长时间的元素，而队列的 `tail` 是已在队列中最短时间的元素。
+
+下面是  `LinkedBlockingQueue` 实例化和使用的例子：
+
+```java
+BlockingQueue<String> unbounded = new LinkedBlockingQueue<String>();
+BlockingQueue<String> bounded   = new LinkedBlockingQueue<String>(1024);
+
+bounded.put("Value");
+
+String value = bounded.take();
+```
+
