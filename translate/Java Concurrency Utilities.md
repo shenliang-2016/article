@@ -205,3 +205,51 @@ queue.put("1");
 String string = queue.take();
 ```
 
+# DelayQueue
+
+`DelayQueue` 类实现了 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 接口。参考 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 更多地了解该接口。
+
+`DelayQueue` 在内部阻塞元素知道某个延迟时间到达。元素必须实现 `java.util.concurrent.Delayed` 接口。下面就是该接口：
+
+```java
+public interface Delayed extends Comparable<Delayed< {
+
+ public long getDelay(TimeUnit timeUnit);
+
+}
+```
+
+`getDelay()` 方法返回的值应该是元素可以被释放之前的延迟剩余时间。如果返回 0 或者负数，延迟会被认为已经超时。元素会在 `DelayQueue` 上的下一次 `take()` 调用时被释放。
+
+传递给 `getDelay()` 方法的 `TimeUnit` 实例是一个 `Enum` ，表示返回的延迟值的时间单位。`TimeUnit` 枚举可以携带以下值：
+
+```
+DAYS
+HOURS
+MINUTES
+SECONDS
+MILLISECONDS
+MICROSECONDS
+NANOSECONDS
+```
+
+`Delayed` 接口还扩展了 `java.lang.Comparable` 接口，如你所见，该接口表示 `Delayed` 对象可以相互比较。着可能会在 `DelayQueue` 内部用来对队列中元素进行排序，从而它们可以按照超时时间顺序被释放。
+
+下面是使用 `DelayQueue` 的例子：
+
+```java
+public class DelayQueueExample {
+
+    public static void main(String[] args) {
+        DelayQueue queue = new DelayQueue();
+
+        Delayed element1 = new DelayedElement();
+
+        queue.put(element1);
+
+        Delayed element2 = queue.take();
+    }
+}
+```
+
+`DelayedElement` 是我创建的 `Delayed` 接口的实现。它不是 `java.util.concurrent` 包的一部分。您必须创建自己的 `Delayed` 接口实现，才能使用 `DelayQueue` 类。
