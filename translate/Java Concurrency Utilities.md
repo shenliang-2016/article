@@ -177,3 +177,31 @@ public class Consumer implements Runnable{
 }
 ```
 
+# ArrayBlockingQueue
+
+`ArrayBlockingQueue` 类实现了 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 接口。参考 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 章节了解更多。
+
+`ArrayBlockingQueue` 是一个有界的，阻塞队列，内部把元素存储在数组中。有界的意思是它不能存储无限数量的元素。队列可以存储的元素数量存在上限。你可以在实例化时刻设置元素数量上界，之后就无法修改。
+
+ `ArrayBlockingQueue` 内部按照 FIFO 顺序存储元素。队列的 `head` 是进入队列时间最长的元素，而 `tail` 就是进入队列时间最短的元素。
+
+下面展示了如何实例化和使用 `ArrayBlockingQueue`：
+
+```java
+BlockingQueue queue = new ArrayBlockingQueue(1024);
+
+queue.put("1");
+
+Object object = queue.take();
+```
+
+下面是一个使用范型的 `BlockingQueue` 示例，注意如何放入和获取字符串：
+
+```java
+BlockingQueue<String> queue = new ArrayBlockingQueue<String>(1024);
+
+queue.put("1");
+
+String string = queue.take();
+```
+
