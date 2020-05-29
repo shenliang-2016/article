@@ -273,3 +273,118 @@ bounded.put("Value");
 String value = bounded.take();
 ```
 
+# PriorityBlockingQueue
+
+`PriorityBlockingQueue` 类实现了 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 接口。
+
+`PriorityBlockingQueue` 是一个无界并发队列。它使用的排序规则与 `java.util.PriorityQueue` 类相同。这种队列中不能插入 null。
+
+所有被插入 `PriorityBlockingQueue` 中的元素必须实现 `java.lang.Comparable` 接口。这些元素会根据你的 `Comparable` 实现中确定的优先级进行排序。
+
+注意， `PriorityBlockingQueue` 并没有强制拥有相同优先级（`compare() == 0`）的元素应该具有任何特定行为。
+
+还要注意，如果从 `PriorityBlockingQueue` 中获得 `Iterator`，则 `Iterator` 并不能保证按优先级顺序迭代元素。
+
+这里是使用 `PriorityBlockingQueue` 的例子：
+
+```java
+BlockingQueue queue   = new PriorityBlockingQueue();
+
+    //String implements java.lang.Comparable
+    queue.put("Value");
+
+    String value = queue.take();
+```
+
+# SynchronousQueue
+
+`SynchronousQueue` 类实现了 [`BlockingQueue`](http://tutorials.jenkov.com/java-util-concurrent/blockingqueue.html) 接口。
+
+`SynchronousQueue` 是一个队列，内部只能包含一个元素。阻塞将元素插入队列的线程，直到另一个线程从队列中获取该元素。同样，如果线程尝试获取一个元素而当前队列中不存在任何元素，则该线程将被阻塞，直到别的线程将一个元素插入队列。
+
+将此类称为队列可能有点夸大其词。更像是一个会和点。
+
+# BlockingDeque
+
+`java.util.concurrent` 类中的 `BlockingDeque` 接口表示一个双端队列，该双端队列可以线程安全地将对象实例放入其中或者从中获取实例。在本文中，我将向您展示如何使用此 `BlockingDeque`。
+
+`BlockingDeque` 类是一个`Deque`，它阻塞尝试向双端队列中插入元素或删除元素的线程，如果当前无法向双端队列中插入元素或从队列中删除元素。
+
+`deque` 是“双端队列”的缩写。因此，“双端队列”是一个队列，您可以从两端插入和取出元素。
+
+## BlockingDeque 用途
+
+如果一个线程同时产生和消耗同一队列的元素，则可以使用 `BlockingDeque`。如果生产线程需要在队列的两端插入，而消费线程需要从队列的两端移除，则也可以使用它。下面是一个示意图：
+
+| ![A BlockingDeque - threads can put and take from both ends of the deque.](http://tutorials.jenkov.com/images/java-concurrency-utils/blocking-deque.png) |
+| ------------------------------------------------------------ |
+| **一个 BlockingDeque - 线程可以从队列两端插入和删除元素。**  |
+
+线程将产生元素并将其插入队列的任一端。如果双端队列当前已满，则插入线程将被阻塞，直到移除线程将一个元素从双端队列中取出。如果双端队列当前为空，则删除线程将被阻塞，直到插入线程将元素插入双端队列为止。
+
+### BlockingDeque 方法
+
+`BlockingDeque` 具有 4 种不同的方法来插入，删除和检查双端队列中的元素。如果无法立即执行所请求的操作，则每组方法的行为都会有所不同。这是方法表：
+
+|             | **Throws Exception** | **Special Value** | **Blocks**     | **Times Out**                      |
+| ----------- | -------------------- | ----------------- | -------------- | ---------------------------------- |
+| **Insert**  | `addFirst(o)`        | `offerFirst(o)`   | `putFirst(o)`  | `offerFirst(o, timeout, timeunit)` |
+| **Remove**  | `removeFirst(o)`     | `pollFirst(o)`    | `takeFirst(o)` | `pollFirst(timeout, timeunit)`     |
+| **Examine** | `getFirst(o)`        | `peekFirst(o)`    | ` `            | ` `                                |
+
+|             | **Throws Exception** | **Special Value** | **Blocks**    | **Times Out**                     |
+| ----------- | -------------------- | ----------------- | ------------- | --------------------------------- |
+| **Insert**  | `addLast(o)`         | `offerLast(o)`    | `putLast(o)`  | `offerLast(o, timeout, timeunit)` |
+| **Remove**  | `removeLast(o)`      | `pollLast(o)`     | `takeLast(o)` | `pollLast(timeout, timeunit)`     |
+| **Examine** | `getLast(o)`         | `peekLast(o)`     | ` `           | ` `                               |
+
+4 种不同行为如下：
+
+1. **Throws Exception**:
+   如果尝试的操作不可能立即执行，则抛出异常。
+2. **Special Value**:
+   如果尝试的操作不可能立即执行，返回一个特定值（通常是 `true`/`false`）。
+3. **Blocks**:
+   如果尝试的操作不可能立即执行，方法阻塞知道操作可执行。
+4. **Times Out**:
+   如果无法立即进行尝试的操作，则该方法调用将一直阻塞直到可以执行，但等待时间不得长于给定的超时。返回一个表示操作是否成功的特殊值（通常为 `true`/`false`）。
+
+## BlockingDeque 扩展了 BlockingQueue
+
+`BlockingDeque` 接口扩展了 `BlockingQueue` 接口。这意味着您可以将 `BlockingDeque` 用作 `BlockingQueue`。如果这样做，各种插入方法会将元素添加到双端队列的末尾，而 `remove` 方法将从双端队列的开头删除这些元素。即，`BlockingQueue` 接口的插入和删除方法。
+
+这是一张表，介绍了 `BlockingQueue` 方法在 `BlockingDeque` 实现中的对应方法：
+
+| **BlockingQueue** | **BlockingDeque** |
+| ----------------- | ----------------- |
+| add()             | addLast()         |
+| offer() x 2       | offerLast() x 2   |
+| put()             | putLast()         |
+|                   |                   |
+| remove()          | removeFirst()     |
+| poll() x 2        | pollFirst()       |
+| take()            | takeFirst()       |
+|                   |                   |
+| element()         | getFirst()        |
+| peek()            | peekFirst()       |
+
+## BlockingDeque 实现
+
+由于 `BlockingDeque` 是一个接口，你需要通过它的实现使用它。`java.util.concurrent` 包中提供了下面的 `BlockingDeque` 接口实现：
+
+- [LinkedBlockingDeque](http://tutorials.jenkov.com/java-util-concurrent/linkedblockingdeque.html)
+
+## BlockingDeque 代码实例
+
+下面是 `BlockingDeque` 方法使用实例：
+
+```java
+BlockingDeque<String> deque = new LinkedBlockingDeque<String>();
+
+deque.addFirst("1");
+deque.addLast("2");
+
+String two = deque.takeLast();
+String one = deque.takeFirst();
+```
+
