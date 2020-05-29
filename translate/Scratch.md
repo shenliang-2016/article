@@ -1,165 +1,121 @@
-# 阿姆达尔定律
+## 创建 CyclicBarrier
 
-阿姆达尔定律可用于计算通过并行运行一部分计算可加速的计算量。阿姆达尔定律以吉恩·阿姆达尔（Gene Amdahl）的名字命名，他在1967年提出了该定律。大多数使用并行或并发系统工作的开发人员都对潜在的加速有着直观的感觉，即使不知道阿姆达尔定律也是如此。无论如何，了解阿姆达尔定律可能仍然有用。
+创建 `CyclicBarrier` 时可以指定希望多少线程在其上等待，才能够释放它们。如下所示：
 
-我将首先以数学方式解释阿姆达尔定律，然后使用图表说明阿姆达尔定律。
-
-## 阿姆达尔定律定义
-
-可并行的程序或者算法都可以分成两部分：
-
-- 不能并行的部分
-- 可以并行的部分
-
-想象一个程序处理磁盘上的文件。该程序的一小部分可能会扫描目录并在内存中内部创建文件列表。之后，每个文件都传递到单独的线程进行处理。扫描目录并创建文件列表的部分无法并行化，但处理文件的部分可以。
-
-串行（非并行）执行程序所花费的总时间称为 T。时间 T 包括不可并行部分和可并行部分的时间。不可并行化的部分称为 B。可并行化的部分称为 T-B。以下列表总结了这些定义：
-
-- T = 串行执行总时间
-- B = 非并行部分执行时间
-- T - B = 可并行化部分的总时间（串行执行时，不是并行执行时）
-
-由此可见：
-
-```
-T = B + (T-B)
+```java
+CyclicBarrier barrier = new CyclicBarrier(2);
 ```
 
-乍一看，程序的可并行化部分在方程式中没有自己的符号，可能看起来有些奇怪。但是，由于可以使用总时间 T 和 B 表示方程的可并行化部分（不可并行化的部分），因此实际上在概念上简化了该方程，这意味着该形式包含的变量较少。
+## 在 CyclicBarrier 处等待
 
-它是可并行化的部分，`T － B` 可以通过并行执行加速。可以加速多少取决于您申请执行多少线程或 CPU。线程或 CPU 的数量称为 N。因此，可并行化部分可以执行的最快速度是：
+线程在 `CyclicBarrier` 处等待：
 
-```
-(T - B) / N
-```
-
-另一种写法：
-
-```
-(1/N) * (T - B)
+```java
+barrier.await();
 ```
 
-维基百科使用此版本。
+您还可以为等待的线程指定超时。当超时时间过去后，即使不是所有的 N 个线程都在 `CyclicBarrier` 上等待，该线程也会被释放。这是您指定超时的方法：
 
-根据阿姆达尔定律，使用 N 个线程或 CPU 执行可并行化部分时，程序的总执行时间为：
-
-```
-T(N) = B + (T - B) / N
+```java
+barrier.await(10, TimeUnit.SECONDS);
 ```
 
-T(N) 表示并行度为 N 的全部执行。因此，T 可以写为 T(1)，并行度为 1 的总执行时间。使用 T(1) 代替 T，阿姆达尔定律看起来像这样：
+等待线程在 `CyclicBarrier` 处等待，直到：
 
-```
-T(N) = B + ( T(1) - B ) / N
-```
+- 最后一个线程到达(调用 `await()`)
+- 被其他线程打断(其他线程调用该线程的 `interrupt()` 方法)
+- 其他等待线程被打断
+- 其他等待线程等待时间超过超时时间
+- `CyclicBarrier.reset()` 方法被某些外部线程调用
 
-含义仍然相同。
+## CyclicBarrier Action
 
-### 计算实例
+`CyclicBarrier` 支持屏障操作，这是一个 `Runnable`，在最后一个线程到达时执行。您将 `Runnable` 屏障操作传递给 `CyclicBarrier` 构造函数，如下所示：
 
-为了更好地理解阿姆达尔定律，我们来看一个计算示例。执行一个程序的总时间设置为 1。程序的不可并行化部分为 40％，这在总时间 1 中等于 0.4。因此，可并行化部分等于 `1 - 0.4 = 0.6`。
-
-具有 2 的并行化因子的程序的执行时间（2 个线程或 CPU 执行可并行化部分，因此 N 为 2）将为：
-
-```
-T(2) = 0.4 + ( 1 - 0.4 ) / 2
-     = 0.4 + 0.6 / 2
-     = 0.4 + 0.3
-     = 0.7
+```java
+Runnable      barrierAction = ... ;
+CyclicBarrier barrier       = new CyclicBarrier(2, barrierAction);
 ```
 
-使用 5 而不是 2 的并行化系数进行相同的计算将如下所示：
+## CyclicBarrier 示例
 
-```
-T(5) = 0.4 + ( 1 - 0.4 ) / 5
-     = 0.4 + 0.6 / 5
-     = 0.4 + 0.12
-     = 0.52
-```
+下面是使用 `CyclicBarrier` 的示例：
 
-## 图解阿姆达尔定律
+```java
+Runnable barrier1Action = new Runnable() {
+    public void run() {
+        System.out.println("BarrierAction 1 executed ");
+    }
+};
+Runnable barrier2Action = new Runnable() {
+    public void run() {
+        System.out.println("BarrierAction 2 executed ");
+    }
+};
 
-为了更好地理解阿姆达尔定律，我将尝试说明该定律是如何得出的。
+CyclicBarrier barrier1 = new CyclicBarrier(2, barrier1Action);
+CyclicBarrier barrier2 = new CyclicBarrier(2, barrier2Action);
 
-首先，程序可以分解为不可并行化的部分 B 和可并行化的部分 1-B，如下图所示：
+CyclicBarrierRunnable barrierRunnable1 =
+        new CyclicBarrierRunnable(barrier1, barrier2);
 
-![](http://tutorials.jenkov.com/images/java-concurrency/amdahls-law-1.png)
+CyclicBarrierRunnable barrierRunnable2 =
+        new CyclicBarrierRunnable(barrier1, barrier2);
 
-顶部带有定界符的线表示总时间 T(1)。
-
-在这里，您可以看到并行化因子为 2 的执行时间：
-
-![](http://tutorials.jenkov.com/images/java-concurrency/amdahls-law-2.png)
-
-在这里，您可以看到并行度为 3 的执行时间：
-
-![](http://tutorials.jenkov.com/images/java-concurrency/amdahls-law-3.png)
-
-## 优化算法
-
-根据阿姆达尔定律，自然可以得出这样的结论：可并行化部分可以通过向其分配硬件来更快地执行。更多线程/ CPU。但是，不可并行化的部分只能通过优化代码来更快地执行。因此，您可以通过优化不可并行化的部分来提高程序的速度和并行性。通常，您甚至可以通过将一些工作移到可并行化部分中，来将算法更改为具有较小的不可并行化部分。
-
-### 优化顺序部分
-
-如果优化程序的顺序部分，还可以使用阿姆达尔定律来计算优化后程序的执行时间。如果将不可并行化的部分 B 优化为因数 O，则阿姆达尔定律如下：
-
-```
-T（O，N）= B / O +（1-B / O）/ N
+new Thread(barrierRunnable1).start();
+new Thread(barrierRunnable2).start();
 ```
 
-请记住，程序的不可并行化部分现在需要 `B / O` 时间，因此并行化部分需要 `1 - B / O` 时间。
+下面是 `CyclicBarrierRunnable` 类：
 
-如果 B 为 0.4，O 为 2，N 为 5，则计算如下：
+```java
+public class CyclicBarrierRunnable implements Runnable{
 
-```
-T（2,5）= 0.4 / 2 +（1-0.4 / 2）/ 5 
-       = 0.2 +（1-0.4 / 2）/ 5 
-       = 0.2 +（1-0.2）/ 5 
-       = 0.2 + 0.8 / 5 
-       = 0.2 + 0.16 
-       = 0.36
-```
+    CyclicBarrier barrier1 = null;
+    CyclicBarrier barrier2 = null;
 
-## 执行时间与加速比
+    public CyclicBarrierRunnable(
+            CyclicBarrier barrier1,
+            CyclicBarrier barrier2) {
 
-到目前为止，我们仅使用阿姆达尔定律来计算优化或并行化之后程序或算法的执行时间。我们还可以使用阿姆达尔定律来计算*加速比*，这意味着新算法或程序比旧版本快多少。
+        this.barrier1 = barrier1;
+        this.barrier2 = barrier2;
+    }
 
-如果程序或算法的旧版本时间为 T，则加速比为
+    public void run() {
+        try {
+            Thread.sleep(1000);
+            System.out.println(Thread.currentThread().getName() +
+                                " waiting at barrier 1");
+            this.barrier1.await();
 
-```
-Speedup = T / T(O,N)
-```
+            Thread.sleep(1000);
+            System.out.println(Thread.currentThread().getName() +
+                                " waiting at barrier 2");
+            this.barrier2.await();
 
-我们通常将 T 设置为 1 只是为了计算执行时间和加速时间，是旧时间的一小部分。等式如下所示：
+            System.out.println(Thread.currentThread().getName() +
+                                " done!");
 
-```
-Speedup = 1 / T（O，N）
-```
-
-如果我们插入阿姆达尔定律计算而不是 T(O, N)，则会得到以下公式：
-
-```
-Speedup = 1 /（B / O +（1-B / O）/ N）
-```
-
-在 B = 0.4，O = 2 和 N = 5 的情况下，计算公式为：
-
-```
-Speedup = 1 /（0.4 / 2 +（1-0.4 / 2）/ 5）
-        = 1 /（0.2 +（1-0.4 / 2）/ 5）
-        = 1 /（0.2 +（1-0.2）/ 5）
-        = 1 
-        /（0.2 + 0.8 / 5）
-        = 1 /（0.2 + 0.16）
-        = 1 / 0.36 = 2.77777 ...
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BrokenBarrierException e) {
+            e.printStackTrace();
+        }
+    }
+}
 ```
 
-这就是说，如果您将不可并行化（顺序）部分优化为 2 倍，并将可并行化部分并行化为 5 倍，则新的程序或算法优化版本的运行速度将比之前提高最高 2.77777 倍。
+这是执行上述代码的控制台输出。请注意，线程执行写入控制台的顺序可能因执行而异。有时 `Thread-0` 首先打印，有时 `Thread-1` 首先打印，等等。
 
-## 测量，而不仅仅是计算
+```
+Thread-0 waiting at barrier 1
+Thread-1 waiting at barrier 1
+BarrierAction 1 executed
+Thread-1 waiting at barrier 2
+Thread-0 waiting at barrier 2
+BarrierAction 2 executed
+Thread-0 done!
+Thread-1 done!
+```
 
-尽管阿姆达尔定律使您能够计算算法并行化的理论速度，但不要过分依赖此类计算。实际上，当您优化或并行化算法时，许多其他因素可能也会起作用。
-
-内存，CPU 高速缓存，磁盘，网卡等（如果使用磁盘或网络）的速度也可能是限制因素。如果该算法的新版本被并行化，但是导致更多的 CPU 高速缓存未命中，您甚至可能无法获得使用 N 个 CPU 所期望的 N 倍加速。如果最终使内存总线，磁盘或网卡或网络连接饱和，情况也是如此。
-
-我的建议是使用阿姆达尔定律来获得关于在何处进行优化的想法，但要使用测量来确定优化的实际速度。请记住，有时，高度序列化的顺序（单 CPU）算法可能会优于并行算法，这仅仅是因为顺序版本没有协调开销（分解工作并重新构建总数），并且因为单个 CPU 算法可能更好地符合基础硬件工作（CPU 管道，CPU 缓存等）。

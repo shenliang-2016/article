@@ -410,7 +410,7 @@ String one = deque.takeFirst();
 
 # ConcurrentMap
 
-# java.util.concurrent.ConcurrentMap
+# ConcurrentMap
 
 `java.util.concurrent.ConcurrentMap` 接口表示一个 [Map](http://tutorials.jenkov.com/java-collections/map.html)，它能够处理对它的并发访问（插入和获取）。
 
@@ -517,4 +517,197 @@ ConcurrentNavigableMap subMap = map.subMap("2", "3");
 - navigableKeySet()
 
 有关这些方法的更多信息，请参见官方 JavaDoc。
+
+# CountDownLatch
+
+`java.util.concurrent.CountDownLatch` 是一种并发结构，它允许一个或多个线程等待一组给定的操作完成。
+
+用给定的计数初始化 `CountDownLatch`。通过调用 `CountDown()` 方法，该计数减少。等待该计数达到零的线程可以调用 `await()` 方法之一。调用 `await()` 会阻塞线程，直到计数达到零为止。
+
+以下是一个简单的示例。`Decrementer` 在 `CountDownLatch` 上调用 `countDown()` 3 次之后，等待的 `Waiter` 从 `await()` 调用中释放。
+
+```java
+CountDownLatch latch = new CountDownLatch(3);
+
+Waiter      waiter      = new Waiter(latch);
+Decrementer decrementer = new Decrementer(latch);
+
+new Thread(waiter)     .start();
+new Thread(decrementer).start();
+
+Thread.sleep(4000);
+public class Waiter implements Runnable{
+
+    CountDownLatch latch = null;
+
+    public Waiter(CountDownLatch latch) {
+        this.latch = latch;
+    }
+
+    public void run() {
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Waiter Released");
+    }
+}
+public class Decrementer implements Runnable {
+
+    CountDownLatch latch = null;
+
+    public Decrementer(CountDownLatch latch) {
+        this.latch = latch;
+    }
+
+    public void run() {
+
+        try {
+            Thread.sleep(1000);
+            this.latch.countDown();
+
+            Thread.sleep(1000);
+            this.latch.countDown();
+
+            Thread.sleep(1000);
+            this.latch.countDown();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+# CyclicBarrier
+
+`java.util.concurrent.CyclicBarrier` 类是一种同步机制，可以使用某种算法同步线程处理。换句话说，它可以看作是所有线程都必须在该处等待的栅栏，所有的线程都不能继续执行，直到所有的线程都到达该处。下面是工作原理示意图：
+
+| ![Two threads waiting for each other at CyclicBarriers.](http://tutorials.jenkov.com/images/java-concurrency-utils/cyclic-barrier.png) |
+| ------------------------------------------------------------ |
+| **两个线程在循环屏障处等待彼此。**                           |
+
+线程通过在 `CyclicBarrier` 上调用 `await()` 方法彼此等待。一旦 N 个线程在 `CyclicBarrier` 处等待，所有的线程就都会被释放并继续运行。
+
+## 创建 CyclicBarrier
+
+创建 `CyclicBarrier` 时可以指定希望多少线程在其上等待，才能够释放它们。如下所示：
+
+```java
+CyclicBarrier barrier = new CyclicBarrier(2);
+```
+
+## 在 CyclicBarrier 处等待
+
+线程在 `CyclicBarrier` 处等待：
+
+```java
+barrier.await();
+```
+
+您还可以为等待的线程指定超时。当超时时间过去后，即使不是所有的 N 个线程都在 `CyclicBarrier` 上等待，该线程也会被释放。这是您指定超时的方法：
+
+```java
+barrier.await(10, TimeUnit.SECONDS);
+```
+
+等待线程在 `CyclicBarrier` 处等待，直到：
+
+- 最后一个线程到达(调用 `await()`)
+- 被其他线程打断(其他线程调用该线程的 `interrupt()` 方法)
+- 其他等待线程被打断
+- 其他等待线程等待时间超过超时时间
+- `CyclicBarrier.reset()` 方法被某些外部线程调用
+
+## CyclicBarrier Action
+
+`CyclicBarrier` 支持屏障操作，这是一个 `Runnable`，在最后一个线程到达时执行。您将 `Runnable` 屏障操作传递给 `CyclicBarrier` 构造函数，如下所示：
+
+```java
+Runnable      barrierAction = ... ;
+CyclicBarrier barrier       = new CyclicBarrier(2, barrierAction);
+```
+
+## CyclicBarrier 示例
+
+下面是使用 `CyclicBarrier` 的示例：
+
+```java
+Runnable barrier1Action = new Runnable() {
+    public void run() {
+        System.out.println("BarrierAction 1 executed ");
+    }
+};
+Runnable barrier2Action = new Runnable() {
+    public void run() {
+        System.out.println("BarrierAction 2 executed ");
+    }
+};
+
+CyclicBarrier barrier1 = new CyclicBarrier(2, barrier1Action);
+CyclicBarrier barrier2 = new CyclicBarrier(2, barrier2Action);
+
+CyclicBarrierRunnable barrierRunnable1 =
+        new CyclicBarrierRunnable(barrier1, barrier2);
+
+CyclicBarrierRunnable barrierRunnable2 =
+        new CyclicBarrierRunnable(barrier1, barrier2);
+
+new Thread(barrierRunnable1).start();
+new Thread(barrierRunnable2).start();
+```
+
+下面是 `CyclicBarrierRunnable` 类：
+
+```java
+public class CyclicBarrierRunnable implements Runnable{
+
+    CyclicBarrier barrier1 = null;
+    CyclicBarrier barrier2 = null;
+
+    public CyclicBarrierRunnable(
+            CyclicBarrier barrier1,
+            CyclicBarrier barrier2) {
+
+        this.barrier1 = barrier1;
+        this.barrier2 = barrier2;
+    }
+
+    public void run() {
+        try {
+            Thread.sleep(1000);
+            System.out.println(Thread.currentThread().getName() +
+                                " waiting at barrier 1");
+            this.barrier1.await();
+
+            Thread.sleep(1000);
+            System.out.println(Thread.currentThread().getName() +
+                                " waiting at barrier 2");
+            this.barrier2.await();
+
+            System.out.println(Thread.currentThread().getName() +
+                                " done!");
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BrokenBarrierException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+这是执行上述代码的控制台输出。请注意，线程执行写入控制台的顺序可能因执行而异。有时 `Thread-0` 首先打印，有时 `Thread-1` 首先打印，等等。
+
+```
+Thread-0 waiting at barrier 1
+Thread-1 waiting at barrier 1
+BarrierAction 1 executed
+Thread-1 waiting at barrier 2
+Thread-0 waiting at barrier 2
+BarrierAction 2 executed
+Thread-0 done!
+Thread-1 done!
+```
 
