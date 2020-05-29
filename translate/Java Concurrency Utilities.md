@@ -388,3 +388,133 @@ String two = deque.takeLast();
 String one = deque.takeFirst();
 ```
 
+# LinkedBlockingDeque
+
+`LinkedBlockingDeque` 类实现了 [`BlockingDeque`](http://tutorials.jenkov.com/java-util-concurrent/blockingdeque.html) 接口。
+
+`Deque` 一词来自“双端队列”一词。因此，`Deque` 是一个队列，您可以从队列的两端插入和删除元素。
+
+`LinkedBlockingDeque` 是一个 `Deque`，如果线程在线程为空时尝试从中取出元素，则该线程将被阻塞，而不管线程试图从哪一端取出元素。
+
+这是实例化和使用 `LinkedBlockingDeque` 的方法：
+
+```java
+BlockingDeque<String> deque = new LinkedBlockingDeque<String>();
+
+deque.addFirst("1");
+deque.addLast("2");
+
+String two = deque.takeLast();
+String one = deque.takeFirst();
+```
+
+# ConcurrentMap
+
+# java.util.concurrent.ConcurrentMap
+
+`java.util.concurrent.ConcurrentMap` 接口表示一个 [Map](http://tutorials.jenkov.com/java-collections/map.html)，它能够处理对它的并发访问（插入和获取）。
+
+`ConcurrentMap` 除了从其父接口 [`java.util.Map`](http://tutorials.jenkov.com/java-collections/map.html) 继承的方法外，还具有一些其他原子方法。
+
+## ConcurrentMap 实现
+
+由于 `ConcurrentMap` 是一个接口，你需要通过实现类来使用它。`java.util.concurrent` 包中提供了下面的 `ConcurrentMap` 接口实现：
+
+- ConcurrentHashMap
+
+### ConcurrentHashMap
+
+`ConcurrentHashMap` 与 `java.util.HashTable` 类非常相似，不同的是 `ConcurrentHashMap` 比 `HashTable` 具有更好的并发性。从中读取时，`ConcurrentHashMap` 不会锁定 `Map`。另外，`ConcurrentHashMap` 在写入时不会锁定整个 `Map`。它仅在内部锁定 `Map` 的写入部分。
+
+另一个区别是，如果在迭代时更改了 `ConcurrentHashMap`，则 `ConcurrentHashMap` 不会引发 `ConcurrentModificationException`。但是，`Iterator` 不能被多个线程使用。
+
+查看官方 JavaDoc 以获取有关 `ConcurrentMap` 和 `ConcurrentHashMap` 的更多详细信息。
+
+## ConcurrentMap 示例
+
+下面是 `ConcurrentMap` 接口的示例。该示例使用了 `ConcurrentHashMap` 实现：
+
+```java
+ConcurrentMap concurrentMap = new ConcurrentHashMap();
+
+concurrentMap.put("key", "value");
+
+Object value = concurrentMap.get("key");
+```
+
+# ConcurrentNavigableMap
+
+`java.util.concurrent.ConcurrentNavigableMap` 类是 [java.util.NavigableMap](http://tutorials.jenkov.com/java-collections/navigablemap.html)，支持并发访问，并且具有为其子图启用的并发访问。“子图”是通过各种方法（例如 `headMap()`，`subMap()` 和 `tailMap()`）返回的图。
+
+与其重新解释在 `NavigableMap` 中的所有方法，不如看一下由 `ConcurrentNavigableMap` 添加的方法。
+
+## headMap()
+
+`headMap(T toKey)` 方法返回一个包含严格小于给定键的键的视图。
+
+如果您对原始图进行更改，这些更改将反映在头部视图中。
+
+这是一个说明使用 `headMap()` 方法的示例。
+
+```java
+ConcurrentNavigableMap map = new ConcurrentSkipListMap();
+
+map.put("1", "one");
+map.put("2", "two");
+map.put("3", "three");
+
+ConcurrentNavigableMap headMap = map.headMap("2");
+```
+
+`headMap` 将指向 `ConcurrentNavigableMap`，其中仅包含键 `1`，因为只有此键严格小于 `2`。
+
+有关此方法如何工作以及其重载版本如何工作的更多特定详细信息，请参见 JavaDoc。
+
+## tailMap()
+
+`tailMap(T fromKey)` 方法返回包含大于或等于给定的 `fromKey` 的键的视图。
+
+如果您对原始图进行更改，则这些更改将反映在尾部视图中。
+
+这是一个示例使用 `tailMap()` 方法的示例：
+
+```java
+ConcurrentNavigableMap map = new ConcurrentSkipListMap();
+
+map.put("1", "one");
+map.put("2", "two");
+map.put("3", "three");
+
+ConcurrentNavigableMap tailMap = map.tailMap("2");
+```
+
+`tailMap` 将包含键 `2` 和 `3`，因为这两个键大于或等于给定键 `2`。
+
+有关此方法如何工作以及其重载版本如何工作的更多特定详细信息，请参见 JavaDoc。
+
+## subMap()
+
+`subMap()` 方法返回原始图的视图，该视图包含从 `from`（包括）到 `to`（不包括）的作为该方法的参数给出的两个键的所有键。这是一个例子：
+
+```java
+ConcurrentNavigableMap map = new ConcurrentSkipListMap();
+
+map.put("1", "one");
+map.put("2", "two");
+map.put("3", "three");
+
+ConcurrentNavigableMap subMap = map.subMap("2", "3");
+```
+
+返回的子图仅包含键 `2`，因为只有此键大于或等于 `2` 且小于 `3`。
+
+## 更多方法
+
+`ConcurrentNavigableMap` 接口包含更多可能有用的方法。 例如：
+
+- descendingKeySet()
+- descendingMap()
+- navigableKeySet()
+
+有关这些方法的更多信息，请参见官方 JavaDoc。
+
