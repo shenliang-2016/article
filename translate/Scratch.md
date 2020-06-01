@@ -1,45 +1,97 @@
-# Java Callable
+# Java Future
 
-Java `Callable` 接口， `java.util.concurrent.Callable`，表示可以被一个单独的线程执行的一个异步任务。比如，可以将一个 `Callable` 对象提交给 [Java ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html) 以便随后异步执行它。
+Java *Future*，即 `java.util.concurrent.Future`，表示异步计算的结果。创建异步任务后，将返回 Java `Future` 对象。这个 `Future` 对象用作异步任务结果的引用。异步任务完成后，可以通过启动任务时返回的 `Future` 对象访问结果。
 
-## Java Callable 接口定义
+Java 的一些内置并发实用程序，例如 [Java ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html)，从其某些方法中返回 Java `Future` 对象。对于 `ExecutorService`，当您提交一个 `Callable` 使其并发（异步）执行时，它将返回一个 `Future`。
 
-Java `Callable` 接口非常简单。它只包含一个方法 `call()`。下面是该接口的样子：
+## Java Future 接口定义
+
+为了理解 Java `Future` 接口如何工作，下面是简要的接口定义：
 
 ```java
-public interface Callable<V> {
+public interface Future<V> {
+    boolean cancel(boolean mayInterruptIfRunning)
+    V       get();
+    V       get(long timeout, TimeUnit unit);
+    boolean isCancelled();
+    boolean isDone();
+}
+```
 
-    V call() throws Exception;
+接下来将逐个介绍这些方法——不过，如你所见， Java `Future` 接口并没有多么复杂。
+
+## 从 Future 获取结果
+
+如前所述，Java `Future` 表示异步任务的结果。为了获得结果，您可以调用 `Future` 上的两个 `get()` 方法之一。 `get()` 方法都返回一个 `Object`，但是返回类型也可以是范型返回类型（意味着特定类的对象，而不仅仅是 `Object`）。这是一个通过 Java `Future` 的 `get()` 方法获得结果的示例：
+
+```java
+Future future = ... // get Future by starting async task
+
+// do something else, until ready to check result via Future
+
+// get result from Future
+try {
+    Object result = future.get();
+} catch (InterruptedException e) {
+    e.printStackTrace();
+} catch (ExecutionException e) {
+    e.printStackTrace();
+}
+```
+
+如果你在异步任务执行完成之前调用 `get()` 方法，该方法将会阻塞直到结果已经准备好。
+
+有一个 `get()` 方法的版本，它可以在经过一定时间后超时，您可以通过方法参数来指定超时时间。这是调用该 `get()` 版本的示例：
+
+```java
+try {
+    Object result =
+        future.get(1000, TimeUnit.MILLISECONDS);
+} catch (InterruptedException e) {
+
+} catch (ExecutionException e) {
+
+} catch (TimeoutException e) {
+    // thrown if timeout time interval passes
+    // before a result is available.
+}
+```
+
+上面的示例最多等待 1000 毫秒，以便结果在 `Future`  中可用。如果在 1000 毫秒内没有结果可用，则抛出 `TimeoutException`。
+
+## 通过 Future cancel() 取消任务
+
+您可以通过调用 `Future` `cancel()` 方法来取消由 Java `Future` 实例表示的异步任务。必须实现异步任务执行以支持取消。没有这样的支持，调用 `cancel()` 将无效。这是通过 Java `Future` `cancel()` 方法取消任务的示例：
+
+```java
+future.cancel();
+```
+
+## 检查任务是否完成
+
+通过调用 `Future` `isDone()` 方法，你可以检查异步任务是否完成（结果可用）。下面是示例：
+
+```java
+Future future = ... // Get Future from somewhere
+
+if(future.isDone()) {
+    Object result = future.get();
+} else {
+    // do something else
+}
+```
+
+## 检查任务是否取消
+
+还可以检查由 Java `Future` 表示的异步任务是否被取消。您可以通过调用 `Future` `isCancelled()` 方法进行检查。这是检查任务是否被取消的示例：
+
+```java
+Future future = ... // get Future from somewhere
+
+if(future.isCancelled()) {
+
+} else {
 
 }
 ```
 
-调用 `call()` 方法以执行异步任务。该方法会返回一个结果。如果任务被异步执行，则结果通常将会通过一个 [Java Future](http://tutorials.jenkov.com/java-util-concurrent/java-future.html) 反向传播给任务的创建者。这是将 `Callable` 提交给 `ExecutorService` 进行并发执行的情况。
-
- `call()` 方法也会抛出 `Exception`，如果任务执行失败。
-
-## 实现 Callable
-
-下面是 `Callable` 接口的一个简单实现：
-
-```java
-public class MyCallable implements Callable<String> {
-
-    @Override
-    public String call() throws Exception {
-        return String.valueOf(System.currentTimeMillis());
-    }
-}
-```
-
-此实现非常简单。它携带设定为 [Java String](http://tutorials.jenkov.com/java/strings.html) 的范型类型。`call()` 方法的结果将返回一个 `String` 。例子中 `call()` 方法实现返回一个字符串表示当前时间的毫秒数。在真实的应用中，任务可能会是更大、更复杂的一系列操作的集合。
-
-IO 操作（例如从磁盘或网络读取或写入磁盘或网络）通常是可以同时执行的任务的理想选择。IO 操作在读取和写入数据块之间通常需要很长的等待时间。通过在单独的线程中执行此类任务，可以避免不必要地阻塞主应用程序线程。
-
-## Callable vs. Runnable
-
-Java `Callable` 接口类似于 Java `Runnable` 接口，因为它们都代表一个任务，该任务打算由一个单独的线程同时执行。
-
-Java `Callable` 与 `Runnable` 的不同之处在于 `Runnable` 接口的 `run()` 方法不返回值，并且它不能抛出已检查的异常（仅 `RuntimeException`）。
-
-另外，`Runnable` 最初是为长时间运行的并发执行而设计的，例如同时运行网络服务器，或监视目录中是否有新文件。 `Callable` 接口更适合一次性任务返回单个结果。
