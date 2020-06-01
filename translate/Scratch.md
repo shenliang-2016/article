@@ -37,3 +37,4 @@ ExecutorService threadPoolExecutor =
 ```
 
 但是，除非您需要为 `ThreadPoolExecutor` 明确指定所有这些参数，否则通常使用 `java.util.concurrent.Executors` 类中的工厂方法之一更容易，如 [ExecutorService](http ：//tutorials.jenkov.com/java-util-concurrent/executorservice.html) 中所述。
+
