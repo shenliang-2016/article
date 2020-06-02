@@ -1,94 +1,99 @@
-# AtomicLong
+# AtomicReference
 
-`AtomicLong` 类提供了一个 `long` 变量，可以原子性地读取和写入，同时还包含高级的原子操作，比如 `compareAndSet()`。`AtomicLong` 类位于 `java.util.concurrent.atomic` 包中，完整类名是 `java.util.concurrent.atomic.AtomicLong`。本文描述的是 Java 8 中的版本，不过最初的版本是在 Java 5 中添加的。
+The `AtomicReference` class provides an object reference variable which can be read and written atomically. By atomic is meant that multiple threads attempting to change the same `AtomicReference` (e.g. with a compare-and-swap operation) will not make the `AtomicReference` end up in an inconsistent state. `AtomicReference` even has an advanced `compareAndSet()` method which lets you compare the reference to an expected value (reference) and if they are equal, set a new reference inside the `AtomicReference` object.
 
-`AtomicLong` 设计背后的动机在我的并发教程的 [Compare and Swap](http://tutorials.jenkov.com/java-concurrency/compare-and-swap.html) 部分中做了解释。
+## Creating an AtomicReference
 
-## 创建 AtomicLong
+You can create an `AtomicReference` instance like this:
 
-如下创建 `AtomicLong` ：
-
-```java
-AtomicLong atomicLong = new AtomicLong();
+```
+AtomicReference atomicReference = new AtomicReference();
 ```
 
-使用初始值 `0` 创建 `AtomicLong` 。
+If you need to create the `AtomicReference` with an initial reference, you can do so like this:
 
-如果你想要使用初始值创建 `AtomicLong` ，可以这样做：
-
-```java
-AtomicLong atomicLong = new AtomicLong(123);
+```
+String initialReference = "the initially referenced string";
+AtomicReference atomicReference = new AtomicReference(initialReference);
 ```
 
-上面的例子将 `123` 作为参数传递给 `AtomicLong` 的构造器，这将新的 `AtomicLong` 实例的初始值设定为 `123` 。
+### Creating a Typed AtomicReference
 
-## 获取 AtomicLong 的值
+You can use Java generics to create a typed `AtomicReference`. Here is a typed `AtomicReference` example:
 
-你可以通过 `get()` 方法得到 `AtomicLong` 实例的值。如下所示：
-
-```java
-AtomicLong atomicLong = new AtomicLong(123);
-
-long theValue = atomicLong.get();
+```
+AtomicReference<String> atomicStringReference =
+    new AtomicReference<String>();
 ```
 
-## 设置 AtomicLong 的值
+You can also set an initial value for a typed `AtomicReference`. Here is a typed `AtomicReference` instantiation example with an initial value:
 
-你可以通过 `set()` 方法设定 `AtomicLong` 实例的值。如下所示：
-
-```java
-AtomicLong atomicLong = new AtomicLong(123);
-
-atomicLong.set(234);
+```
+String initialReference = "the initially referenced string";
+AtomicReference<String> atomicStringReference =
+    new AtomicReference<String>(initialReference);
 ```
 
-例子使用初始值 `123` 创建 `AtomicLong` 实例，下一行代码设定其值为 `234`。
+## Getting the AtomicReference Reference
 
-## 比较并设定 AtomicLong 的值
+You can get the reference stored in an `AtomicReference` using the `AtomicReference`'s `get()` method. If you have an untyped `AtomicReference` then the `get()` method returns an `Object` reference. If you have a typed `AtomicReference` then `get()` returns a reference to the type you declared on the `AtomicReference` variable when you created it.
 
-`AtomicLong` 类还有一个原子性 `compareAndSet()` 方法。该方法比较 `AtomicLong` 实例的当前值与期望值，如果两者相等，则为 `AtomicLong` 实例设置新值。下面是 `AtomicLong.compareAndSet()` 的示例：
+Here is first an untyped `AtomicReference` `get()` example:
 
-```java
-AtomicLong atomicLong = new AtomicLong(123);
+```
+AtomicReference atomicReference = new AtomicReference("first value referenced");
 
-long expectedValue = 123;
-long newValue      = 234;
-atomicLong.compareAndSet(expectedValue, newValue);
+String reference = (String) atomicReference.get();
 ```
 
-本示例首先创建一个初始值为 `123` 的 `AtomicLong` 实例。然后，它将 `AtomicLong` 的值与期望值 `123` 进行比较，如果它们相等，则 `AtomicLong` 的新值将变为 `234`。
+Notice how it is necessary to cast the reference returned by `get()` to a `String` because `get()` returns an `Object` reference when the `AtomicReference` is untyped.
 
-## 增加 AtomicLong 的值
+Here is a typed `AtomicReference` example:
 
-`AtomicLong` 类包含一些可以增加 `AtomicLong` 的值并返回其值的方法。如下：
+```
+AtomicReference<String> atomicReference = 
+     new AtomicReference<String>("first value referenced");
 
-- `addAndGet()`
-- `getAndAdd()`
-- `getAndIncrement()`
-- `incrementAndGet()`
-
-第一个方法 `addAndGet()` 将一个数字添加到 `AtomicLong` 中，并在添加后返回其值。第二种方法 `getAndAdd()` 也向 `AtomicLong` 添加了一个数字，但是返回了 `AtomicLong` 在添加之前的值。您应该使用这两种方法中的哪一种取决于您的场景。这是示例：
-
-```java
-AtomicLong atomicLong = new AtomicLong();
-
-
-System.out.println(atomicLong.getAndAdd(10));
-System.out.println(atomicLong.addAndGet(10));
+String reference = atomicReference.get();
 ```
 
-本示例将打印出值 `0` 和 `20`。首先，示例在增加 `10` 之前获得 `AtomicLong` 的值。其加法前的值为 `0`。然后，该示例将 `10` 加到 `AtomicLong` 中，并获得加法后的值。现在的值为 `20`。
+Notice how it is no longer necessary to cast the referenced returned by `get()` because the compiler knows it will return a `String` reference.
 
-您也可以通过这两种方法在 `AtomicLong` 中添加负数。结果实际上是相减。
+## Setting the AtomicReference Reference
 
-`getAndIncrement()` 和 `incrementAndGet()` 方法的工作方式与 `getAndAdd()` 和 `addAndGet()` 的工作原理相同，只是将 `AtomicLong` 的值加 `1`。
+You can set the reference stored in an `AtomicReference` instance using its `set()` method. In an untyped `AtomicReference` instance the `set()` method takes an `Object` reference as parameter. In a typed `AtomicReference` the `set()` method takes whatever type as parameter you declared as its type when you declared the `AtomicReference`.
 
-## 减少 AtomicLong 的值
+Here is an `AtomicReference` `set()` example:
 
-`AtomicLong` 类还包含一些原子性减少其值的方法。如下：
+```
+AtomicReference atomicReference = 
+     new AtomicReference();
+    
+atomicReference.set("New object referenced");
+```
 
-- `decrementAndGet()`
-- `getAndDecrement()`
+There is no difference to see in the use of the `set()` method for an untyped or typed reference. The only real difference you will experience is that the compiler will restrict the types you can set on a typed `AtomicReference`.
 
-`decrementAndGet()` 从 `AtomicLong` 值中减去 `1`，并在减去后返回其值。`getAndDecrement()` 也从 `AtomicLong` 值中减去 `1`，但返回减法前 `AtomicLong` 的值。
+## Comparing and Setting the AtomicReference Reference
 
+The `AtomicReference` class contains a useful method named `compareAndSet()`. The `compareAndSet()` method can compare the reference stored in the `AtomicReference` instance with an expected reference, and if they two references are the same (not equal as in `equals()` but same as in `==`), then a new reference can be set on the `AtomicReference` instance.
+
+If `compareAndSet()` sets a new reference in the `AtomicReference` the `compareAndSet()` method returns `true`. Otherwise `compareAndSet()` returns `false`.
+
+Here is an `AtomicReference` `compareAndSet()` example:
+
+```
+String initialReference = "initial value referenced";
+
+AtomicReference<String> atomicStringReference =
+    new AtomicReference<String>(initialReference);
+
+String newReference = "new value referenced";
+boolean exchanged = atomicStringReference.compareAndSet(initialReference, newReference);
+System.out.println("exchanged: " + exchanged);
+
+exchanged = atomicStringReference.compareAndSet(initialReference, newReference);
+System.out.println("exchanged: " + exchanged);
+```
+
+This example creates a typed `AtomicReference` with an initial reference. Then it calls `comparesAndSet()` two times to compare the stored reference to the initial reference, and set a new reference if the stored reference is equal to the initial reference. The first time the two references are the same, so a new reference is set on the `AtomicReference`. The second time the stored reference is the new reference just set in the call to `compareAndSet()` before, so the stored reference is of course not equal to the initial reference. Thus, a new reference is not set on the `AtomicReference` and the `compareAndSet()` method returns `false`.
