@@ -1,109 +1,203 @@
-# ScheduledExecutorService
+# 使用 ForkJoinPool 的 Java Fork 和 Join 
 
- `java.util.concurrent.ScheduledExecutorService` 是一个 [`ExecutorService`](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html) ，可以调度任务在一段延迟时间之后执行，或者按照固定时间间隔重复执行任务。任务将由工作者线程异步执行，而不是由将任务分派给 `ScheduledExecutorService` 的线程执行。
+ Java 7 添加了 `ForkJoinPool` 。 `ForkJoinPool` 类似于 [Java ExecutorService](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html) ，除了一个不同点。`ForkJoinPool` 使得将任务分解为若干个粒度更小的任务并同样提交给 `ForkJoinPool` 执行变的容易。只要可以拆分任务，任务就可以继续将其工作拆分为较小的子任务。听起来可能有点抽象，所以在此 fork 和 join 教程中，我将解释 `ForkJoinPool` 的工作方式以及拆分任务的工作方式。
 
-## ScheduledExecutorService 示例
+## Fork 和 Join 解释
 
-这是一个简单的 `ScheduledExecutorService` 示例：
+在介绍 `ForkJoinPool` 之前，我先解释一下普遍意义上的 fork 和 join 工作原理。
+
+fork 和 join 原理包括两个步骤，这些步骤以递归方式执行。这两个步骤是 fork 步骤和 join 步骤。
+
+### Fork
+
+使用 fork 和 join 原理的任务可以将自身分解为多干个可以并发执行的子任务。如下图所示：
+
+![](http://tutorials.jenkov.com/images/java-concurrency-utils/java-fork-and-join-1.png)
+
+通过将任务分解为若干个子任务，每个子任务都可以在不同的 CPU 上，或者同一个 CPU 上不同线程中并行执行。
+
+如果给定任务的工作足够大，则任务只能将自身拆分为子任务。将任务拆分为子任务会产生开销，因此对于少量工作，此开销可能会大于同时执行子任务所实现的加速。
+
+何时适合将任务分解到子任务中的合理时限也称为阈值。不同的任务合理的阈值各不相同。这在很大程度上取决于所完成的工作。
+
+### Join
+
+当一个任务已经被分解为若干子任务，则该任务会等待所有子任务全部执行完成。
+
+一旦所有的子任务都执行完成，任务将会将所有的子结果合并为一个结果。如下图所示：
+
+![](http://tutorials.jenkov.com/images/java-concurrency-utils/java-fork-and-join-2.png)
+
+当然，并非所有类型的任务都可能返回结果。如果任务未返回结果，则任务仅等待其子任务完成。这样就不会进行结果合并。
+
+## ForkJoinPool
+
+`ForkJoinPool` 是一种特殊的线程池，被设计为完美适配 fork-and-join 任务分解。 `ForkJoinPool` 位于 `java.util.concurrent` 包中，完整类名 `java.util.concurrent.ForkJoinPool`。
+
+### 创建 ForkJoinPool
+
+你可以使用构造器创建 `ForkJoinPool`。你可以将所有的并行度作为 `ForkJoinPool` 构造函数的参数，并行度表示要在传递给 `ForkJoinPool` 的任务同时使用多少个线程或 CPU。这是一个 `ForkJoinPool` 创建示例：
 
 ```java
-ScheduledExecutorService scheduledExecutorService =
-        Executors.newScheduledThreadPool(5);
+ForkJoinPool forkJoinPool = new ForkJoinPool(4);
+```
 
-ScheduledFuture scheduledFuture =
-    scheduledExecutorService.schedule(new Callable() {
-        public Object call() throws Exception {
-            System.out.println("Executed!");
-            return "Called!";
+本示例创建一个并行度水平为 4 的 `ForkJoinPool` 。
+
+### 向 ForkJoinPool 提交任务
+
+您将任务提交给 `ForkJoinPool` 的方式类似于将任务提交给 `ExecutorService` 的方式。您可以提交两种类型的任务。一个不返回任何结果的任务（一个“action”），一个返回结果的任务（一个“task”）。这两种任务由 `RecursiveAction` 和 `RecursiveTask` 类表示。如何使用这两项任务以及如何提交这些任务将在以下各节中介绍。
+
+## RecursiveAction
+
+`RecursiveAction` 是一种不返回任何值的任务。它只是执行某些工作，比如，将数据写入磁盘然后退出。
+
+`RecursiveAction` 可能仍然需要将它的工作分解为多哥分片，以便可以使用各自独立的线程或者 CPU 执行。
+
+你可以通过实现子类来实现 `RecursiveAction` 。下面是 `RecursiveAction` 的例子：
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.RecursiveAction;
+
+public class MyRecursiveAction extends RecursiveAction {
+
+    private long workLoad = 0;
+
+    public MyRecursiveAction(long workLoad) {
+        this.workLoad = workLoad;
+    }
+
+    @Override
+    protected void compute() {
+
+        //if work is above threshold, break tasks up into smaller tasks
+        if(this.workLoad > 16) {
+            System.out.println("Splitting workLoad : " + this.workLoad);
+
+            List<MyRecursiveAction> subtasks =
+                new ArrayList<MyRecursiveAction>();
+
+            subtasks.addAll(createSubtasks());
+
+            for(RecursiveAction subtask : subtasks){
+                subtask.fork();
+            }
+
+        } else {
+            System.out.println("Doing workLoad myself: " + this.workLoad);
         }
-    },
-    5,
-    TimeUnit.SECONDS);
+    }
+
+    private List<MyRecursiveAction> createSubtasks() {
+        List<MyRecursiveAction> subtasks =
+            new ArrayList<MyRecursiveAction>();
+
+        MyRecursiveAction subtask1 = new MyRecursiveAction(this.workLoad / 2);
+        MyRecursiveAction subtask2 = new MyRecursiveAction(this.workLoad / 2);
+
+        subtasks.add(subtask1);
+        subtasks.add(subtask2);
+
+        return subtasks;
+    }
+
+}
 ```
 
-首先创建一个带有 5 个线程的 `ScheduledExecutorService`。然后，创建 `Callable` 接口的匿名实现，并将其传递给 `schedule()` 方法。最后两个参数指定 `Callable` 应在 5 秒钟后执行。
+这个例子非常简化。`MyRecursiveAction` 只是将虚构的 `workLoad` 作为其构造函数的参数。如果 `workLoad` 高于某个阈值，则将工作拆分为多个子任务，这些子任务也调度执行（通过子任务的 `.fork()` 方法）。如果 `workLoad` 低于某个阈值，则该工作由 `MyRecursiveAction` 本身执行。
 
-## ScheduledExecutorService 实现
-
-由于 `ScheduledExecutorService` 是一个接口，你需要使用位于 `java.util.concurrent` 包中的接口实现。 `ScheduledExecutorService` 的一个实现如下：
-
-- ScheduledThreadPoolExecutor
-
-## 创建 ScheduledExecutorService
-
-如何创建 `ScheduledExecutorService` 取决于你使用的实现。不过，你也可以使用 `Executors` 工厂类创建 `ScheduledExecutorService` 实例。示例如下：
+您可以像这样安排 `MyRecursiveAction` 执行：
 
 ```java
-ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
+MyRecursiveAction myRecursiveAction = new MyRecursiveAction(24);
+
+forkJoinPool.invoke(myRecursiveAction);
 ```
 
-## ScheduledExecutorService 使用
+## RecursiveTask
 
-一旦创建了 `ScheduledExecutorService` 就可以通过调用它的方法来使用它：
-
-- schedule (Callable task, long delay, TimeUnit timeunit)
-- schedule (Runnable task, long delay, TimeUnit timeunit)
-- scheduleAtFixedRate (Runnable, long initialDelay, long period, TimeUnit timeunit)
-- scheduleWithFixedDelay (Runnable, long initialDelay, long period, TimeUnit timeunit)
-
-下面简要介绍这些方法。
-
-### schedule (Callable task, long delay, TimeUnit timeunit)
-
-此方法在给定的延迟后安排给定的 `Callable` 执行。
-
-该方法返回一个 `ScheduledFuture`，可用于在开始执行之前取消任务，或在执行后获取结果。
-
-这是一个例子：
+ `RecursiveTask` 是一种返回结果的任务。它可以将任务分解为若干更小的任务，执行完成之后将所有小任务的结果合并为集合式结果。这种分解合并可能发生在多个层面。下面是一个 `RecursiveTask` 示例：
 
 ```java
-ScheduledExecutorService scheduledExecutorService =
-        Executors.newScheduledThreadPool(5);
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+    
+    
+public class MyRecursiveTask extends RecursiveTask<Long> {
 
-ScheduledFuture scheduledFuture =
-    scheduledExecutorService.schedule(new Callable() {
-        public Object call() throws Exception {
-            System.out.println("Executed!");
-            return "Called!";
+    private long workLoad = 0;
+
+    public MyRecursiveTask(long workLoad) {
+        this.workLoad = workLoad;
+    }
+
+    protected Long compute() {
+
+        //if work is above threshold, break tasks up into smaller tasks
+        if(this.workLoad > 16) {
+            System.out.println("Splitting workLoad : " + this.workLoad);
+
+            List<MyRecursiveTask> subtasks =
+                new ArrayList<MyRecursiveTask>();
+            subtasks.addAll(createSubtasks());
+
+            for(MyRecursiveTask subtask : subtasks){
+                subtask.fork();
+            }
+
+            long result = 0;
+            for(MyRecursiveTask subtask : subtasks) {
+                result += subtask.join();
+            }
+            return result;
+
+        } else {
+            System.out.println("Doing workLoad myself: " + this.workLoad);
+            return workLoad * 3;
         }
-    },
-    5,
-    TimeUnit.SECONDS);
+    }
 
-System.out.println("result = " + scheduledFuture.get());
+    private List<MyRecursiveTask> createSubtasks() {
+        List<MyRecursiveTask> subtasks =
+        new ArrayList<MyRecursiveTask>();
 
-scheduledExecutorService.shutdown();
+        MyRecursiveTask subtask1 = new MyRecursiveTask(this.workLoad / 2);
+        MyRecursiveTask subtask2 = new MyRecursiveTask(this.workLoad / 2);
+
+        subtasks.add(subtask1);
+        subtasks.add(subtask2);
+
+        return subtasks;
+    }
+}
 ```
 
-这个例子输出
+这个例子类似于 `RecursiveAction` 示例，唯一不同是它返回一个结果。 `MyRecursiveTask` 扩展了 `RecursiveTask<Long>` ，这就意味着任务返回的结果是一个 `Long` 。
 
+ `MyRecursiveTask` 示例也将任务分解为子任务，然后通过使用子任务的 `fork()` 方法调度执行。
+
+另外，此示例然后通过调用每个子任务的 `join()` 方法接收每个子任务返回的结果。子任务结果将合并为更大的结果，然后将其返回。这种子任务结果的合并可能会针对多个递归级别进行递归发生。
+
+您可以像这样调度 `RecursiveTask`：
+
+```java
+MyRecursiveTask myRecursiveTask = new MyRecursiveTask(128);
+
+long mergedResult = forkJoinPool.invoke(myRecursiveTask);
+
+System.out.println("mergedResult = " + mergedResult);    
 ```
-Executed!
-result = Called!
-```
 
-### schedule (Runnable task, long delay, TimeUnit timeunit)
+注意如何通过调用 `ForkJoinPool.invoke()` 方法获取最终结果。
 
-该方法的工作方式类似于以 `Callable` 作为参数的方法版本，除了 `Runnable` 无法返回值之外。因此 `ScheduledFuture.get()` 方法在任务完成时返回 `null`。
+## ForkJoinPool 用户体验
 
-### scheduleAtFixedRate (Runnable, long initialDelay, long period, TimeUnit timeunit)
+似乎并不是每个人都对 Java 7 中的新 `ForkJoinPool` 感到同样满意。在搜索有关 `ForkJoinPool` 的经验和意见时，我遇到了以下批评：
 
-此方法调度要定期执行的任务。该任务在 `initialDelay` 之后第一次执行，然后在每次 `period` 到期时重复执行。
+[A Java Fork-Join Calamity](http://coopsoft.com/ar/CalamityArticle.html)
 
-如果给定任务的任何执行均引发异常，则该任务将不再执行。如果没有抛出异常，则该任务将继续执行，直到关闭 `ScheduledExecutorService` 为止。
+如果你打算在你的项目中使用 `ForkJoinPool` ，这就值得一读。
 
-如果任务执行的时间比调度执行时间间更长，则下一次执行将在当前执行完成后开始。被调度的任务一次不会同时由多个线程执行。
-
-### scheduleWithFixedDelay (Runnable, long initialDelay, long period, TimeUnit timeunit)
-
-该方法非常类似于 `scheduleAtFixedRate()`，除了 `period` 的解释不同。
-
-在 `scheduleAtFixedRate()` 方法中，`period` 被解释为上一次执行开始到下一次执行开始之间的时间间隔。
-
-但是，在此方法中，`period` 被解释为上一次执行的“结束”到下一次开始的时间间隔。因此，延迟是在完成执行之间，而不是在执行开始之间。
-
-## ScheduledExecutorService 关闭
-
-就像 `ExecutorService` 一样，`ScheduledExecutorService` 在使用完毕后也需要关闭。如果没有，即使所有其他线程都已关闭，它也将保持 JVM 运行。
-
-您可以使用从 `ExecutorService` 接口继承的 `Shutdown()` 或 `ShutdownNow()` 方法来关闭 `ScheduledExecutorService`。有关更多信息，请参见 [ExecutorService Shutdown](http://tutorials.jenkov.com/java-util-concurrent/executorservice.html#executorservice-shutdown) 部分。
