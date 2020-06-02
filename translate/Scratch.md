@@ -58,11 +58,11 @@ boolean oldValue = atomicBoolean.getAndSet(false);
 
 ## 比较并替换 AtomicBoolean 的值
 
-The method `compareAndSet()` allows you to compare the current value of the `AtomicBoolean` to an expected value, and if current value is equal to the expected value, a new value can be set on the `AtomicBoolean`. The `compareAndSet()` method is atomic, so only a single thread can execute it at the same time. Thus, the `compareAndSet()` method can be used to implemented simple synchronizers like locks.
+`compareAndSet()` 方法允许您将 `AtomicBoolean` 的当前值与期望值进行比较，如果当前值等于期望值，则可以在 `AtomicBoolean` 上设置一个新值。`compareAndSet()` 方法是原子的，因此只有一个线程可以同时执行它。因此，`compareAndSet()` 方法可用于实现类似于锁的简单的同步器。
 
-Here is a `compareAndSet()` example:
+这是一个 `compareAndSet()` 示例：
 
-```
+```java
 AtomicBoolean atomicBoolean = new AtomicBoolean(true);
 
 boolean expectedValue = true;
@@ -72,4 +72,4 @@ boolean wasNewValueSet = atomicBoolean.compareAndSet(
     expectedValue, newValue);
 ```
 
-This example compares the current value of the `AtomicBoolean` to `true` and if the two values are equal, sets the new value of the `AtomicBoolean` to `false` .
+本示例将 `AtomicBoolean` 的当前值与 `true` 进行比较，如果两个值相等，则将 `AtomicBoolean` 的新值设置为 `false`。
