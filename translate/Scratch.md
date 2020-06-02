@@ -1,51 +1,75 @@
-# ReadWriteLock
+# AtomicBoolean
 
-`java.util.concurrent.locks.ReadWriteLock` 是一种高级线程锁定机制。同一时刻，它允许多个线程读取某个资源，但只能有一个线程写入该资源。
+`AtomicBoolean` 类向你提供了一个 `boolean` 变量，该变量可以原子地读写。同时它还拥有其他一些高级的原子性操作，比如 `compareAndSet()`。`AtomicBoolean` 类位于 `java.util.concurrent.atomic` 包中，完整类名是 `java.util.concurrent.atomic.AtomicBoolean` 。本教程介绍的 `AtomicBoolean` 是 Java 8 版本，不过该类最初是 Java 5 版本加入的。
 
-基本想法是，多个线程可以从共享资源读取而不会引起并发错误。并发错误首先发生在对共享资源的读写同时发生，或者并发发生多个写入时。
+`AtomicBoolean` 类设计的背后动机在我的 Java 并发教程的 [Compare and Swap](http://tutorials.jenkov.com/java-concurrency/compare-and-swap.html) 部分做了解释。
 
-在本文中，我仅介绍 Java 的内置 `ReadWriteLock`。如果您想阅读更多有关实现 `ReadWriteLock` 的理论，请参考我的 Java 并发教程中 [Read Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 部分。
+## 创建 AtomicBoolean
 
-## ReadWriteLock 锁定规则
-
-允许线程锁定 `ReadWriteLock` 以读取或写入受保护资源的规则如下：
-
-| **Read Lock**  | 如果没有线程锁定`ReadWriteLock`进行写操作，并且没有线程请求写锁（但尚未获得写锁）。因此，多个线程可以锁定该锁以进行读取。 |
-| -------------- | ------------------------------------------------------------ |
-| **Write Lock** | **如果没有线程正在读取或写入。因此，一次只能有一个线程可以锁定该锁以进行写入。** |
-
-## ReadWriteLock 实现
-
-`ReadWriteLock` 是一个接口，因此，你需要使用它的一个实现。
-
-`java.util.concurrent.locks` 包含下列 `ReadWriteLock` 实现：
-
-- ReentrantReadWriteLock
-
-## ReadWriteLock 代码示例
-
-下面的例子展示了如何创建 `ReadWriteLock` 以及如何为了读取或者写入而锁定它：
+如下创建 `AtomicBoolean` ：
 
 ```java
-ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-
-readWriteLock.readLock().lock();
-
-    // multiple readers can enter this section
-    // if not locked for writing, and not writers waiting
-    // to lock for writing.
-
-readWriteLock.readLock().unlock();
-
-
-readWriteLock.writeLock().lock();
-
-    // only one writer can enter this section,
-    // and only if no threads are currently reading.
-
-readWriteLock.writeLock().unlock();
+AtomicBoolean atomicBoolean = new AtomicBoolean();
 ```
 
-注意 `ReadWriteLock` 实际上如何在内部维护两个 `Lock` 实例，分别负责守卫读操纵和写操作。
+这个例子使用值 `false` 创建了一个新的 `AtomicBoolean` 。
 
+如果你需要为 `AtomicBoolean` 实例显式设定初始值，你可以向 `AtomicBoolean` 构造器传递初始值参数：
+
+```java
+AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+```
+
+## 获取 AtomicBoolean 的值
+
+你可以使用 `get()` 方法获取 `AtomicBoolean` 的值：
+
+```java
+AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+
+boolean value = atomicBoolean.get();
+```
+
+代码执行之后 `value` 变量将包含 `true`。
+
+## 设定 AtomicBoolean 的值
+
+你可以使用 `set()` 方法设定 `AtomicBoolean` 的值：
+
+```java
+AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+
+atomicBoolean.set(false);
+```
+
+代码执行之后 `AtomicBoolean` 变量将包含 `false`。
+
+## 替换 AtomicBoolean 的值
+
+你可以使用 `getAndSet()` 方法替换 `AtomicBoolean` 的值。`getAndSet()` 方法返回 `AtomicBoolean` 的当前值，并为其设置一个新值：
+
+```java
+AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+
+boolean oldValue = atomicBoolean.getAndSet(false);
+```
+
+执行完此代码后，`oldValue` 变量将包含值 `true`，而 `AtomicBoolean` 实例将包含值 `false`。该代码有效地将 `AtomicBoolean` 的当前值 `true` 交换为 `false` 。
+
+## 比较并替换 AtomicBoolean 的值
+
+The method `compareAndSet()` allows you to compare the current value of the `AtomicBoolean` to an expected value, and if current value is equal to the expected value, a new value can be set on the `AtomicBoolean`. The `compareAndSet()` method is atomic, so only a single thread can execute it at the same time. Thus, the `compareAndSet()` method can be used to implemented simple synchronizers like locks.
+
+Here is a `compareAndSet()` example:
+
+```
+AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+
+boolean expectedValue = true;
+boolean newValue      = false;
+
+boolean wasNewValueSet = atomicBoolean.compareAndSet(
+    expectedValue, newValue);
+```
+
+This example compares the current value of the `AtomicBoolean` to `true` and if the two values are equal, sets the new value of the `AtomicBoolean` to `false` .
