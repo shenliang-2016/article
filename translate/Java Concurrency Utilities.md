@@ -1765,7 +1765,7 @@ boolean oldValue = atomicBoolean.getAndSet(false);
 
 执行完此代码后，`oldValue` 变量将包含值 `true`，而 `AtomicBoolean` 实例将包含值 `false`。该代码有效地将 `AtomicBoolean` 的当前值 `true` 交换为 `false` 。
 
-## 比较并替换 AtomicBoolean 的值
+## 比较并设定 AtomicBoolean 的值
 
 `compareAndSet()` 方法允许您将 `AtomicBoolean` 的当前值与期望值进行比较，如果当前值等于期望值，则可以在 `AtomicBoolean` 上设置一个新值。`compareAndSet()` 方法是原子的，因此只有一个线程可以同时执行它。因此，`compareAndSet()` 方法可用于实现类似于锁的简单的同步器。
 
@@ -1829,7 +1829,7 @@ atomicInteger.set(234);
 
 例子使用初始值 `123` 创建一个 `AtomicInteger` ，下一行代码将其值设定为 `234`。
 
-## 比较并替换 AtomicInteger 的值
+## 比较并设定 AtomicInteger 的值
 
 `AtomicInteger` 类还具有原子的 `compareAndSet()` 方法。该方法将 `AtomicInteger` 实例的当前值与期望值进行比较，如果两个值相等，则为 `AtomicInteger` 实例设置一个新值。这是一个 `AtomicInteger.compareAndSet()` 示例：
 
