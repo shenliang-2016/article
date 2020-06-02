@@ -1,34 +1,32 @@
 # ReadWriteLock
 
-A `java.util.concurrent.locks.ReadWriteLock` is an advanced thread lock mechanism. It allows multiple threads to read a certain resource, but only one to write it, at a time.
+`java.util.concurrent.locks.ReadWriteLock` 是一种高级线程锁定机制。同一时刻，它允许多个线程读取某个资源，但只能有一个线程写入该资源。
 
-The idea is, that multiple threads can read from a shared resource without causing concurrency errors. The concurrency errors first occur when reads and writes to a shared resource occur concurrently, or if multiple writes take place concurrently.
+基本想法是，多个线程可以从共享资源读取而不会引起并发错误。并发错误首先发生在对共享资源的读写同时发生，或者并发发生多个写入时。
 
-In this text I only cover Java's built-in `ReadWriteLock`. If you want to read more about the theory behind the implemenation of a ReadWriteLock, you can read it in my text on [Read Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) in my Java Concurrency tutorial.
+在本文中，我仅介绍 Java 的内置 `ReadWriteLock`。如果您想阅读更多有关实现 `ReadWriteLock` 的理论，请参考我的 Java 并发教程中 [Read Write Locks](http://tutorials.jenkov.com/java-concurrency/read-write-locks.html) 部分。
 
-## ReadWriteLock Locking Rules
+## ReadWriteLock 锁定规则
 
-The rules by which a thread is allowed to lock the `ReadWriteLock` either for reading or writing the guarded resource, are as follows:
+允许线程锁定 `ReadWriteLock` 以读取或写入受保护资源的规则如下：
 
-| **Read Lock**  | If no threads have locked the `ReadWriteLock` for writing, and no thread have requested a write lock (but not yet obtained it). Thus, multiple threads can lock the lock for reading. |
+| **Read Lock**  | 如果没有线程锁定`ReadWriteLock`进行写操作，并且没有线程请求写锁（但尚未获得写锁）。因此，多个线程可以锁定该锁以进行读取。 |
 | -------------- | ------------------------------------------------------------ |
-| **Write Lock** | **If no threads are reading or writing. Thus, only one thread at a time can lock the lock for writing.** |
+| **Write Lock** | **如果没有线程正在读取或写入。因此，一次只能有一个线程可以锁定该锁以进行写入。** |
 
-## ReadWriteLock Implementations
+## ReadWriteLock 实现
 
-```
-ReadWriteLock` is an interface. Thus, to use a `ReadWriteLock
-```
+`ReadWriteLock` 是一个接口，因此，你需要使用它的一个实现。
 
-The `java.util.concurrent.locks` package contains the following `ReadWriteLock` implementation:
+`java.util.concurrent.locks` 包含下列 `ReadWriteLock` 实现：
 
 - ReentrantReadWriteLock
 
-## ReadWriteLock Code Example
+## ReadWriteLock 代码示例
 
-Here is a simple code example that shows how to create a `ReadWriteLock` and how to lock it for reading and writing:
+下面的例子展示了如何创建 `ReadWriteLock` 以及如何为了读取或者写入而锁定它：
 
-```
+```java
 ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 
@@ -49,4 +47,5 @@ readWriteLock.writeLock().lock();
 readWriteLock.writeLock().unlock();
 ```
 
-Notice how the `ReadWriteLock` actually internally keeps two `Lock` instances. One guarding read access, and one guarding write access.
+注意 `ReadWriteLock` 实际上如何在内部维护两个 `Lock` 实例，分别负责守卫读操纵和写操作。
+
