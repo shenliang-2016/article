@@ -135,17 +135,17 @@ Heap
 
 下面观察每一步语句执行后，jvm内存的变化情况，并给出解析。
 
-#### 1)在执行第一个语句，alloc1分配2M空间
+#### 1)执行第一个语句，alloc1分配2M空间
 
 ```java
 alloc1 = new byte[tenMB / 5];
 ```
 
-后，根据分代策略，在新生代的eden区分配2M的空间存储对象。
+之后，根据分代策略，在新生代的eden区分配2M的空间存储对象。
 
 ![img](http://www.idouba.net/wp-content/uploads/2014/07/02-alloc1-allocation.png)
 
-#### 2)在执行第二语句，alloc2分配50M
+#### 2)执行第二语句，alloc2分配50M
 
 ```java
 alloc2 = new byte[5 * tenMB];
@@ -155,13 +155,13 @@ alloc2 = new byte[5 * tenMB];
 
 ![img](http://www.idouba.net/wp-content/uploads/2014/07/03-alloc2-allocation.png)
 
-#### 3）当执行第三句，alloc3分配40M
+#### 3)执行第三句，alloc3分配40M
 
 ```java
 alloc3 = new byte[4 * tenMB];
 ```
 
-还是尝试在eden上分配，但是eden空间只剩下28M，不能容纳alloc3要求的40M空间。于是触发在新生代上的一次gc，将Eden区的存活对象转移到Survivor区。在这个里先将2M的alloc1对象存放（其实是copy，参见[java 垃圾回收策略](http://www.idouba.net/java-gc-policies/)的描述）到from区，然后copy 50M的alloc2对象，显然survivor区不能容纳下alloc2对象，该对象被直接copy到年老代。需要说明的是复制到Survivor区的对象在经历一次gc后期对象年龄会被加一。
+还是尝试在eden上分配，但是eden空间只剩下28M，不能容纳alloc3要求的40M空间。于是触发在新生代上的一次gc，将Eden区的存活对象转移到Survivor区。在这里先将2M的alloc1对象存放（其实是copy，参见[java 垃圾回收策略](http://www.idouba.net/java-gc-policies/)的描述）到from区，然后copy 50M的alloc2对象，显然survivor区不能容纳下alloc2对象，该对象被直接copy到年老代。需要说明的是复制到Survivor区的对象在经历一次gc后期对象年龄会被加一。
 
 ![img](http://www.idouba.net/wp-content/uploads/2014/07/04-gc1.png)
 
