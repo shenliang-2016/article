@@ -504,9 +504,16 @@ public class MyRule extends AbstractLoadBalancerRule {
 
 然后把 MyRule 注册到 SPring IOC 容器中就好了，在初始化时就会代替默认的 Rule 负载规则。
 
+# 本文小结
 
+整体来看，文章更 注重表达设计思想以及源码分析，所以阅读文章需要一定的源码功底。同时文章是针对问题而展开叙述，哪怕源码不理解也能有所收获。
 
+Ribbon 这块内容从初始化负载均衡客户端 ILoadBalancer 说起，讲述了初始化过程中具体的内容，包括如何开启 IPing 定时器以及服务列表更新定时器。
 
+另外通过源码查看到 Ribbon 的服务列表其实是向 Nacos 提供的接口发起服务调用 获取并保存到本地缓存，继而牵引出如何保证不健康实例下线：IPing 定时器和服务更新定时器。
+————————————————
+版权声明：本文为CSDN博主「wh柒八九」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_31960623/article/details/118882312
 
 
 
