@@ -25,7 +25,7 @@ Dubbo 核心部件（如下图）:
 
 - Container：服务运行的容器。
 
-![img](https://pic1.zhimg.com/50/v2-1e5314300774ecf868675ddf9d74553a_hd.jpg?source=1940ef5c)![img](https://pic1.zhimg.com/80/v2-1e5314300774ecf868675ddf9d74553a_720w.jpg?source=1940ef5c)
+![img](https://pic1.zhimg.com/50/v2-1e5314300774ecf868675ddf9d74553a_hd.jpg?source=1940ef5c)
 
 Spring Cloud总体架构（如下图）：
 
@@ -35,13 +35,11 @@ Spring Cloud总体架构（如下图）：
 
 - EureKa Server： 服务注册中心和服务发现中心。
 
-![img](https://pic1.zhimg.com/50/v2-c41b9ee1ff2c764b4f2ec3e566a0a59b_hd.jpg?source=1940ef5c)![img](https://pic1.zhimg.com/80/v2-c41b9ee1ff2c764b4f2ec3e566a0a59b_720w.jpg?source=1940ef5c)
+![img](https://pic1.zhimg.com/50/v2-c41b9ee1ff2c764b4f2ec3e566a0a59b_hd.jpg?source=1940ef5c)
 
 点评：从整体架构上来看，二者模式接近，都需要服务提供方，注册中心，服务消费方。
 
 **微服务架构核心要素**
-
-![img](https://pic1.zhimg.com/50/v2-4247d585bf66686490a90ef7f9788e72_hd.jpg?source=1940ef5c)
 
 ![img](https://pic1.zhimg.com/80/v2-4247d585bf66686490a90ef7f9788e72_720w.jpg?source=1940ef5c)
 
@@ -73,7 +71,7 @@ Spring Cloud
 
 Spring Cloud 使用 HTTP 协议的 REST API。性能比较使用一个 Pojo 对象包含 10 个属性，请求 10 万次，Dubbo 和 Spring Cloud 在不同的线程数量下，每次请求耗时（ms）如下：
 
-![img](https://pic4.zhimg.com/50/v2-cc0cf7e4c15c14e585b13dc95b275eba_hd.jpg?source=1940ef5c)
+
 
 ![img](https://pic4.zhimg.com/80/v2-cc0cf7e4c15c14e585b13dc95b275eba_720w.jpg?source=1940ef5c)
 
@@ -97,11 +95,11 @@ Dubbo服务提供方与消费方通过接口的方式依赖，服务调用设计
 
 在开发调试阶段只发布 Snapshot 版本，等到服务调试完成再发布 Release 版本，通过版本号来区分每次迭代的版本。通过 xml 配置方式即可接入 Dubbo，对程序无入侵。
 
-![img](https://pic2.zhimg.com/50/v2-c28d1d99eb7affa4352cffdb6f7b2a32_hd.jpg?source=1940ef5c)![img](https://pic2.zhimg.com/80/v2-c28d1d99eb7affa4352cffdb6f7b2a32_720w.jpg?source=1940ef5c)
+![img](https://pic2.zhimg.com/80/v2-c28d1d99eb7affa4352cffdb6f7b2a32_720w.jpg?source=1940ef5c)
 
 Spring Cloud服务提供方和服务消费方通过 Json 方式交互，因此只需要定义好相关 Json 字段即可，消费方和提供方无接口依赖。通过注解方式来实现服务配置，对于程序有一定入侵。
 
-![img](https://pic1.zhimg.com/50/v2-eab142d93cf7c9054e6425537b8ef639_hd.jpg?source=1940ef5c)![img](https://pic1.zhimg.com/80/v2-eab142d93cf7c9054e6425537b8ef639_720w.jpg?source=1940ef5c)
+![img](https://pic1.zhimg.com/80/v2-eab142d93cf7c9054e6425537b8ef639_720w.jpg?source=1940ef5c)
 
 点评：Dubbo 服务依赖略重，需要有完善的版本管理机制，但是程序入侵少。而 Spring Cloud 通过 Json 交互，省略了版本管理的问题，但是具体字段含义需要统一管理，自身 Rest API 方式交互，为跨平台调用奠定了基础。
 
@@ -111,7 +109,7 @@ Dubbo
 
 下图中的每个组件都是需要部署在单独的服务器上，Gateway 用来接受前端请求、聚合服务，并批量调用后台原子服务。每个 Service 层和单独的 DB 交互。
 
-![img](https://pic1.zhimg.com/50/v2-02ee49de3204bf9ff0d591a4d37fa1e8_hd.jpg?source=1940ef5c)
+
 
 ![img](https://pic1.zhimg.com/80/v2-02ee49de3204bf9ff0d591a4d37fa1e8_720w.jpg?source=1940ef5c)
 
@@ -123,7 +121,7 @@ Dubbo 组件运行：
 
 - Zookeeper：原子服务注册到 ZK 上。
 
-![img](https://pic1.zhimg.com/50/v2-8872c667518b9712464312f53905d9e6_hd.jpg?source=1940ef5c)
+
 
 ![img](https://pic1.zhimg.com/80/v2-8872c667518b9712464312f53905d9e6_720w.jpg?source=1940ef5c)
 
@@ -145,7 +143,7 @@ Spring Cloud组件运行：
 
 到底使用是 Dubbo 还是 Spring Cloud 并不重要，重点在于如何合理的利用微服务。下面是一张互联网通用的架构图，其中每个环节都是微服务的核心部分。
 
-![img](https://pic4.zhimg.com/50/v2-6b2ea91943b29f2cd3b1857e020a4beb_hd.jpg?source=1940ef5c)
+
 
 ![img](https://pic4.zhimg.com/80/v2-6b2ea91943b29f2cd3b1857e020a4beb_720w.jpg?source=1940ef5c)
 
